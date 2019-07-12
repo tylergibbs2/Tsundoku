@@ -92,6 +92,9 @@ class DelugeClient:
     async def ensure_authorization(self):
         """
         Authorizes with the Deluge WebAPI.
+
+        This has to use the aiohttp ClientSession itself
+        due to some recursion thingys.
         """
         payload = {
             "id": self._request_counter,
