@@ -47,13 +47,17 @@ async def setup_db():
     )
 
 
-@app.route('/')
+@app.route("/")
 async def index():
-    return "test"
+    return "placeholder"
 
 
 @app.after_serving
 async def cleanup():
+    """
+    Closes the database pool and the
+    aiohttp ClientSession on script closure.
+    """
     await app.db_pool.close()
     await app.session.close()
 
