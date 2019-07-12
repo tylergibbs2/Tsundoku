@@ -1,9 +1,10 @@
 class Nyaa:
     def __init__(self):
         """
-        Change 'self.url' to be the URL of the desired
-        RSS feed to parse.
+        Change 'self.url' and 'self.name' to be the URL 
+        and name of the desired RSS feed to parse.
         """
+        self.name = "nyaa.si"
         self.url = "https://nyaa.si/?page=rss"
 
     def get_link_location(self, item):

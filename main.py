@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 
 import aiohttp
 import asyncpg
@@ -6,6 +7,7 @@ from quart import Quart
 
 from config import get_config_value
 from deluge import DelugeClient
+import exceptions
 
 
 app = Quart("Tsundoku")
@@ -45,6 +47,38 @@ async def setup_db():
         database=database,
         loop=loop
     )
+
+
+@app.before_serving
+async def load_parsers():
+    """
+    Load all of the custom RSS parsers into the app.
+    """
+    parsers = [f"parsers.{p}" for p in get_config_value("Tsundoku", "parsers")]
+    app.rss_parsers = []
+
+    for parser in parsers:
+        spec = importlib.util.find_spec(parser)
+        if spec is None:
+            raise exceptions.ParserNotFound(parser)
+
+        lib = importlib.util.module_from_spec(spec)
+        
+        try:
+            spec.loader.exec_module(lib)
+        except Exception as e:
+            raise exceptions.ParserFailed(parser, e) from e
+
+        try:
+            setup = getattr(lib, "setup")
+        except AttributeError:
+            raise exceptions.ParserMissingSetup(parser)
+
+        try:
+            app.rss_parsers.append(setup())
+        except Exception as e:
+            raise exceptions.ParserFailed(parser, e) from e
+
 
 
 @app.route("/")
