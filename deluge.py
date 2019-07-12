@@ -41,6 +41,9 @@ class DelugeClient:
         Will take a file location or an internet location for a torrent file.
         The magnet URL for that torrent is then resolved and returned.
 
+        If the location parameter is already detected to be a magnet URL,
+        it will instantly return it.
+
         Parameters
         ----------
         location: str
@@ -51,7 +54,9 @@ class DelugeClient:
         str
             The magnet URL for the torrent at the given location.
         """
-        if location.endswith(".torrent"):
+        if location.startswith("magnet:?"):
+            return location
+        elif location.endswith(".torrent"):
             async with self.session.get(location) as resp:
                 torrent_bytes = await resp.read()
                 metadata = bencodepy.decode(torrent_bytes)
