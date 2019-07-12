@@ -1,8 +1,12 @@
 import asyncio
+import base64
+import hashlib
+import sys
 import typing
 import json
 
 import aiohttp
+import bencodepy
 
 from config import get_config_value
 from exceptions import DelugeAuthorizationError
@@ -30,6 +34,40 @@ class DelugeClient:
         port = get_config_value("Deluge", "port")
 
         return f"http://{host}:{port}/json"
+
+
+    async def get_magnet(self, location: str) -> str:
+        """
+        Will take a file location or an internet location for a torrent file.
+        The magnet URL for that torrent is then resolved and returned.
+
+        Parameters
+        ----------
+        location: str
+            A file location or web address.
+
+        Returns
+        -------
+        str
+            The magnet URL for the torrent at the given location.
+        """
+        if location.endswith(".torrent"):
+            async with self.session.get(location) as resp:
+                torrent_bytes = await resp.read()
+                metadata = bencodepy.decode(torrent_bytes)
+        else:
+            metadata = bencodepy.decode_from_file(location)
+
+        subject = metadata[b'info']
+
+        hash_data = bencodepy.encode(subject)
+        digest = hashlib.sha1(hash_data).digest()
+        base32_hash = base64.b32encode(digest).decode()
+
+        return "magnet:?"\
+            + f"xt=urn:btih:{base32_hash}"\
+            + f"&dn={metadata[b'info'][b'name'].decode()}"\
+            + f"&tr={metadata[b'announce'].decode()}"
 
 
     async def get_torrents(self, torrent_ids: typing.Union[str, int]) -> typing.List:
