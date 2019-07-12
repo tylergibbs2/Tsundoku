@@ -1,4 +1,5 @@
 import configparser
+import json
 import typing
 
 
@@ -6,13 +7,12 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 
-def get_config_value(section: str, value: str) -> typing.Union[int, str]:
+def get_config_value(section: str, value: str) -> typing.Any:
     """
     Returns a specified value from the config.ini file.
 
-    All values retrieved are strings. If the string is composed
-    entirely of integers, the value will be automatically casted
-    to an integer.
+    All values retrieved are strings. If the value contains
+    non-string elements, they will be casted using json.loads.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def get_config_value(section: str, value: str) -> typing.Union[int, str]:
 
     Returns
     -------
-    typing.Union[int, str]
+    typing.Any
         The requested value.
 
     Raises
@@ -37,6 +37,11 @@ def get_config_value(section: str, value: str) -> typing.Union[int, str]:
         raise KeyError("The specified section does not exist.")
 
     try:
-        return int(section[value]) if section[value].isdigit() else section[value]
+        value = section[value]
     except KeyError:
         raise KeyError("The specified value does not exist.")
+
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
