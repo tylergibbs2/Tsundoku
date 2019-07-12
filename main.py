@@ -6,7 +6,7 @@ import asyncpg
 from quart import Quart
 
 from config import get_config_value
-from deluge import DelugeClient
+from deluge.main import DelugeClient
 import exceptions
 import feed_poller
 
@@ -76,7 +76,8 @@ async def load_parsers():
             raise exceptions.ParserMissingSetup(parser)
 
         try:
-            app.rss_parsers.append(setup())
+            new_context = app.app_context()
+            app.rss_parsers.append(setup(new_context.app))
         except Exception as e:
             raise exceptions.ParserFailed(parser, e) from e
 

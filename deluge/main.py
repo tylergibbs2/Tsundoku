@@ -9,7 +9,7 @@ import aiohttp
 import bencodepy
 
 from config import get_config_value
-from exceptions import DelugeAuthorizationError
+from deluge.exceptions import DelugeError, DelugeAuthorizationError
 
 
 class DelugeClient:
@@ -92,10 +92,10 @@ class DelugeClient:
         if isinstance(torrent_ids, str):
             torrent_ids = [torrent_ids]
 
-        await self.request("webapi.get_torrents", [torrent_ids])
+        return await self.request("webapi.get_torrents", [torrent_ids])
 
 
-    async def add_torrent(self, magnet_url: str) -> bool:
+    async def add_torrent(self, magnet_url: str) -> typing.Union[str, None]:
         """
         Adds a torrent to Deluge with the given magnet URL.
 
@@ -106,10 +106,11 @@ class DelugeClient:
 
         Returns
         -------
-        bool
-            True if success, False otherwise.
+        typing.Union[str, None]
+            The torrent ID if success, None if torrent not added.
         """
-        await self.request("webapi.add_torrent", [magnet_url])
+        data = await self.request("webapi.add_torrent", [magnet_url])
+        return data["result"]
 
 
     async def remove_torrent(self, torrent_id: str, remove_data=False) -> bool:
@@ -128,9 +129,10 @@ class DelugeClient:
         Returns
         -------
         bool
-            True of success, False otherwise.
+            True if success, False otherwise.
         """
-        await self.request("webapi.remove_torrent", [torrent_id, remove_data])
+        data = await self.request("webapi.remove_torrent", [torrent_id, remove_data])
+        return data["result"]
 
     async def ensure_authorization(self):
         """
