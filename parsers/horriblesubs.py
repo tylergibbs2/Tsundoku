@@ -1,11 +1,13 @@
 class HorribleSubs:
-    def __init__(self):
+    def __init__(self, app):
         """
         Change 'self.url' and 'self.name' to be the URL 
         and name of the desired RSS feed to parse.
         """
         self.name = "HorribleSubs"
         self.url = "http://www.horriblesubs.info/rss.php?res=720"
+
+        self.app = app
 
     def get_link_location(self, item):
         """
@@ -19,6 +21,7 @@ class HorribleSubs:
         please do that here.
         """
         return item["link"]
+        
 
-def setup():
-    return HorribleSubs()
+def setup(app):
+    return HorribleSubs(app)
