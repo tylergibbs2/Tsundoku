@@ -8,6 +8,7 @@ from quart import Quart
 from config import get_config_value
 from deluge import DelugeClient
 import exceptions
+import feed_poller
 
 
 app = Quart("Tsundoku")
@@ -79,6 +80,13 @@ async def load_parsers():
         except Exception as e:
             raise exceptions.ParserFailed(parser, e) from e
 
+
+@app.before_serving
+async def setup_poller():
+    async def bg_task():
+        await feed_poller.feed_poller(app.app_context())
+
+    asyncio.ensure_future(bg_task())
 
 
 @app.route("/")
