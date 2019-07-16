@@ -17,10 +17,3 @@ class ParserFailed(Exception):
     Some error occurred when attempting to load the parser.
     """
     pass
-
-
-class DelugeAuthorizationError(Exception):
-    """
-    Represents a Deluge authorization error.
-    """
-    pass

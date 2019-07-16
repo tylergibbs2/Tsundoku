@@ -8,7 +8,7 @@ from quart import Quart
 from config import get_config_value
 from deluge.main import DelugeClient
 import exceptions
-import feed_poller
+from feeds.poller import Poller
 
 
 app = Quart("Tsundoku")
@@ -21,7 +21,7 @@ async def setup_session():
     """
     loop = asyncio.get_event_loop()
 
-    jar = aiohttp.CookieJar(unsafe=True)
+    jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
     app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar)
     app.deluge = DelugeClient(app.session)
@@ -85,7 +85,8 @@ async def load_parsers():
 @app.before_serving
 async def setup_poller():
     async def bg_task():
-        await feed_poller.feed_poller(app.app_context())
+        app.poller = Poller(app.app_context())
+        await app.poller.start()
 
     asyncio.ensure_future(bg_task())
 
