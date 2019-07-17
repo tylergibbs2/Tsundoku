@@ -58,6 +58,11 @@ async def load_parsers():
     parsers = [f"parsers.{p}" for p in get_config_value("Tsundoku", "parsers")]
     app.rss_parsers = []
 
+    required_functions = [
+        "get_show_name",
+        "get_episode_number"
+    ]
+
     for parser in parsers:
         spec = importlib.util.find_spec(parser)
         if spec is None:
@@ -77,7 +82,11 @@ async def load_parsers():
 
         try:
             new_context = app.app_context()
-            app.rss_parsers.append(setup(new_context.app))
+            parser_object = setup(new_context.app)
+            for func in required_functions:
+                if not hasattr(parser_object, func):
+                    raise exceptions.ParserMissingRequiredFunction(f"{parser}: missing {func}")
+            app.rss_parsers.append(parser_object)
         except Exception as e:
             raise exceptions.ParserFailed(parser, e) from e
 

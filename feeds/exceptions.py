@@ -9,3 +9,4 @@ class InvalidPollerInterval(PollerError):
     """
     The configured interval for polling is invalid.
     """
+    pass

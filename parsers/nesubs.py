@@ -1,11 +1,13 @@
-class Example:
+import re
+
+class NeSubs:
     def __init__(self, app):
         """
         Change 'self.url' and 'self.name' to be the URL 
         and name of the desired RSS feed to parse.
         """
-        self.name = "Example - this is entirely aesthetic"
-        self.url = "http://www.example.com/rss"
+        self.name = "NeSubs"
+        self.url = "https://www.shanaproject.com/feeds/subber/NeSubs/"
 
         self.app = app
 
@@ -16,7 +18,10 @@ class Example:
 
         Failure to do so will result in incorrect matching.
         """
-        return file_name
+        pattern = re.compile(r"\[NeSubs\] (.+) - .*(\d+)")
+        match = re.match(pattern, file_name)
+
+        return match.group(1)
 
     def get_episode_number(self, file_name: str) -> int:
         """
@@ -25,7 +30,10 @@ class Example:
 
         Failure to do so will result in incorrect matching.
         """
-        return 0
+        pattern = re.compile(r"\[NeSubs\] (.+) - .*(\d+)")
+        match = re.match(pattern, file_name)
+
+        return match.group(2)
 
     def get_link_location(self, item: dict) -> str:
         """
@@ -42,7 +50,7 @@ class Example:
 
         If this method does not exist, item["link"] will be used.
         """
-        return item["link"]
+        return item["guid"]
 
     def get_file_name(self, item: dict) -> str:
         """
@@ -53,7 +61,7 @@ class Example:
 
         If this method does not exist, item["title"] will be used.
         """
-        return item["title"]
+        return item["description"]
 
     def ignore_logic(self, item: dict):
         """
@@ -69,4 +77,4 @@ class Example:
 
 
 def setup(app):
-    return Example(app)
+    return NeSubs(app)

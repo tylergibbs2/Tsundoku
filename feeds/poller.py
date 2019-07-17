@@ -78,7 +78,10 @@ class Poller:
         else:
             torrent_name = item["title"]
 
-        print(torrent_name)
+        show_name = self.current_parser.get_show_name(torrent_name)
+        show_episode = self.current_parser.get_episode_number(torrent_name)
+
+        print(show_name, show_episode)
 
 
     async def get_feed_from_parser(self) -> dict:
