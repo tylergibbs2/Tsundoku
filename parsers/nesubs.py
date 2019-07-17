@@ -63,18 +63,6 @@ class NeSubs:
         """
         return item["description"]
 
-    def ignore_logic(self, item: dict):
-        """
-        Optional
-
-        This is the first function a parser runs.
-
-        If this returns False, the item will instantly
-        be ignored by Tsundoku. Any other return value
-        will continue operation as normal.
-        """
-        pass
-
 
 def setup(app):
     return NeSubs(app)
