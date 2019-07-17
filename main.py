@@ -8,6 +8,7 @@ from quart import Quart
 from config import get_config_value
 from deluge.main import DelugeClient
 import exceptions
+from feeds.downloader import Downloader
 from feeds.poller import Poller
 
 
@@ -96,6 +97,15 @@ async def setup_poller():
     async def bg_task():
         app.poller = Poller(app.app_context())
         await app.poller.start()
+
+    asyncio.ensure_future(bg_task())
+
+
+@app.before_serving
+async def setup_downloader():
+    async def bg_task():
+        app.downloader = Downloader(app.app_context())
+        await app.downloader.start()
 
     asyncio.ensure_future(bg_task())
 

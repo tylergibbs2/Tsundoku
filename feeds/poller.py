@@ -179,7 +179,11 @@ class Poller:
             return
 
         magnet_url = await self.get_torrent_link(item)
-        print(magnet_url)
+        await self.app.downloader.begin_handling(
+            match.matched_id,
+            show_episode,
+            magnet_url
+        )
 
 
     async def get_feed_from_parser(self) -> dict:
