@@ -178,11 +178,8 @@ class Poller:
         if entry_is_parsed:
             return
 
-        if hasattr(self.current_parser, "get_link_location"):
-            torrent_url = await self.get_torrent_link(item)
-        else:
-            torrent_url = item["link"]
-
+        magnet_url = await self.get_torrent_link(item)
+        print(magnet_url)
 
 
     async def get_feed_from_parser(self) -> dict:
@@ -216,6 +213,10 @@ class Poller:
             The found magnet URL.
         """
         deluge = self.app.deluge
-        torrent_location = self.current_parser.get_link_location(item)
+
+        if hasattr(self.current_parser, "get_link_location"):
+            torrent_location = self.current_parser.get_link_location(item)
+        else:
+            torrent_location = item["link"]
 
         return await deluge.get_magnet(torrent_location)
