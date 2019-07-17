@@ -33,7 +33,7 @@ class HorribleSubs:
         pattern = re.compile(r"\[HorribleSubs\] (.+) -[.\s]*(\d+)")
         match = re.match(pattern, file_name)
 
-        return match.group(2)
+        return int(match.group(2))
 
 
 def setup(app):

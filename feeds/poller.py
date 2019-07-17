@@ -20,13 +20,13 @@ class EntryMatch:
     ----------
     passed_name: str
         The name initially passed to the matching function.
-    matched_name: str
-        The name in the database that the passed name was matched with.
+    matched_id: str
+        The ID in the database that the passed name was matched with.
     match_percent: int
         The percent match the two names are on a scale of 0 to 100.
     """
     passed_name: str
-    matched_name: str
+    matched_id: int
     match_percent: int
 
 
@@ -78,6 +78,31 @@ class Poller:
         for item in feed["items"]:
             await self.check_item(item)
 
+        
+    async def is_parsed(self, show_id: int, episode: int) -> bool:
+        """
+        Will check if a specified episode of a
+        show has already been parsed.
+
+        Parameters
+        ----------
+        show_id: int
+            The ID of the show to check.
+        episode: int
+            The episode to check if it has been parsed.
+
+        Returns
+        -------
+        bool
+            True if the episode has been parsed, False otherwise.
+        """
+        async with self.app.db_pool.acquire() as con:
+            show_entry = await con.fetchval("""
+                SELECT id FROM show_entry WHERE show_id=$1 AND episode=$2;
+            """, show_id, episode)
+
+        return bool(show_entry)
+
 
     async def check_item_for_match(self, show_name: str, episode: int) -> typing.Optional[EntryMatch]:
         """
@@ -103,18 +128,18 @@ class Poller:
         """
         async with self.app.db_pool.acquire() as con:
             desired_shows = await con.fetch("""
-                SELECT search_title FROM shows;
+                SELECT id, search_title FROM shows;
             """)
-        show_list = [show["search_title"] for show in desired_shows]
+        show_list = {show["search_title"]: show["id"] for show in desired_shows}
 
         if not show_list:
             return
 
-        match = process.extractOne(show_name, show_list)
+        match = process.extractOne(show_name, show_list.keys())
 
         return EntryMatch(
             show_name,
-            match[0],
+            show_list[match[0]],
             match[1]
         )
 
@@ -149,12 +174,15 @@ class Poller:
         elif match.match_percent < 90:
             return
 
+        entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)
+        if entry_is_parsed:
+            return
+
         if hasattr(self.current_parser, "get_link_location"):
             torrent_url = await self.get_torrent_link(item)
         else:
             torrent_url = item["link"]
 
-        print(show_name, show_episode)
 
 
     async def get_feed_from_parser(self) -> dict:

@@ -33,7 +33,7 @@ class NeSubs:
         pattern = re.compile(r"\[NeSubs\] (.+) - .*(\d+)")
         match = re.match(pattern, file_name)
 
-        return match.group(2)
+        return int(match.group(2))
 
     def get_link_location(self, item: dict) -> str:
         """
