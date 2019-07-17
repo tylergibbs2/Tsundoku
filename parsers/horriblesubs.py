@@ -5,9 +5,6 @@ class HorribleSubs:
 
         self.app = app
 
-    def get_link_location(self, item):
-        return item["link"]
-        
 
 def setup(app):
     return HorribleSubs(app)
