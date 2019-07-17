@@ -49,6 +49,9 @@ class Poller:
         Iterates through every installed RSS parser
         and will check for new items to download.
 
+        The order of the parsers used is determined
+        by how they are listed in the configuration.
+
         The program will poll every n seconds, as specified
         in the configuration file.
         """
