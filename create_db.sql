@@ -1,4 +1,4 @@
-CREATE TYPE show_state AS ENUM ('new', 'downloading', 'seeding', 'complete');
+CREATE TYPE show_state AS ENUM ('new', 'downloading', 'complete');
 
 CREATE TABLE IF NOT EXISTS shows (
     id BIGSERIAL PRIMARY KEY,
