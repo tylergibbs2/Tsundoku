@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 import typing
 
 import feedparser
@@ -7,6 +8,26 @@ from quart.ctx import AppContext
 
 from config import get_config_value
 from feeds.exceptions import InvalidPollerInterval
+
+
+@dataclass
+class EntryMatch:
+    """
+    Represents a match between an RSS feed item
+    and the app's local database.
+
+    Attributes
+    ----------
+    passed_name: str
+        The name initially passed to the matching function.
+    matched_name: str
+        The name in the database that the passed name was matched with.
+    match_percent: int
+        The percent match the two names are on a scale of 0 to 100.
+    """
+    passed_name: str
+    matched_name: str
+    match_percent: int
 
 
 class Poller:
@@ -55,7 +76,7 @@ class Poller:
             await self.check_item(item)
 
 
-    async def check_item_for_match(self, show_name: str, episode: int) -> typing.Optional[str]:
+    async def check_item_for_match(self, show_name: str, episode: int) -> typing.Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
@@ -73,22 +94,26 @@ class Poller:
 
         Returns
         -------
-        typing.Optional[str]
-            The name of the matched show.
+        typing.Optional[EntryMatch]
+            The EntryMatch for the passed show name.
+            Could be None if no shows are desired.
         """
         async with self.app.db_pool.acquire() as con:
             desired_shows = await con.fetch("""
                 SELECT search_title FROM shows;
             """)
         show_list = [show["search_title"] for show in desired_shows]
-        
+
         if not show_list:
             return
 
         match = process.extractOne(show_name, show_list)
 
-        if match[1] >= 90:
-            return match[0]
+        return EntryMatch(
+            show_name,
+            match[0],
+            match[1]
+        )
 
 
     async def check_item(self, item: dict) -> None:
@@ -117,6 +142,8 @@ class Poller:
         match = await self.check_item_for_match(show_name, show_episode)
 
         if match is None:
+            return
+        elif match.match_percent < 90:
             return
 
         if hasattr(self.current_parser, "get_link_location"):
