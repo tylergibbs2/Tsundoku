@@ -75,26 +75,44 @@ class DelugeClient:
             + f"&tr={metadata[b'announce'].decode()}"
 
 
-    async def get_torrents(self, torrent_ids: typing.Union[str, list]) -> typing.List:
+    async def get_torrents(self, torrent_ids: typing.List[str]) -> typing.List:
         """
         Returns information for all specified torrents.
 
         Parameters
         ----------
-        torrent_ids: typing.Union[str, list]
-            The torrent ID or IDs to return information for.
+        torrent_ids: list
+            The torrent IDs to return information for.
 
         Returns
         -------
         list[dict]
             The information for the given torrents.
         """
-        if isinstance(torrent_ids, str):
-            torrent_ids = [torrent_ids]
-
         result = await self.request("webapi.get_torrents", [torrent_ids, None])
 
         return result["result"]["torrents"]
+
+
+    async def get_torrent(self, torrent_id: str) -> dict:
+        """
+        Returns information for a specified torrent.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to return information for.
+
+        Returns
+        -------
+        dict
+            The information for the given torrent.
+        """
+        torrent_id = [torrent_id]
+
+        result = await self.request("webapi.get_torrents", [torrent_id, None])
+
+        return result["result"]["torrents"][0]
 
 
     async def add_torrent(self, magnet_url: str) -> typing.Union[str, None]:
