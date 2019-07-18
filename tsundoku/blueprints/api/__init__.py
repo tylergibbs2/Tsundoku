@@ -12,6 +12,7 @@ async def get_shows():
             SELECT id, search_title, desired_format, desired_folder,
             season, episode_offset FROM shows;
         """)
+
     return json.dumps([dict(record) for record in shows])
 
 
