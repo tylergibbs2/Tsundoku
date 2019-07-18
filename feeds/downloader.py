@@ -4,7 +4,7 @@ from pathlib import Path
 from asyncpg import Record
 from quart.ctx import AppContext
 
-from feeds.exceptions import EntryNotInDeluge
+from feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
 
 
 class Downloader:
@@ -43,22 +43,28 @@ class Downloader:
             """, show_id, episode, torrent_hash)
 
 
-    def is_downloaded(self, path: str) -> bool:
+    def is_downloaded(self, file_location: str, file_name: str) -> bool:
         """
         Detects whether a file at a designated path
         is downloaded.
 
         Parameters
         ----------
-        path: str
+        file_location: str
             The file's location.
+        file_name: str
+            The name of the file at the location.
 
         Returns
         -------
         bool
             True if the file is downloaded, False otherwise.
         """
-        file_path = Path(path)
+        location = Path(file_location)
+        if not location.is_dir():
+            raise SavePathDoesNotExist(f"'{file_location}' could not be read")
+
+        file_path = Path(f"{file_location}/{file_name}")
 
         return file_path.is_file()
 
@@ -83,8 +89,7 @@ class Downloader:
         file_location = deluge_info["save_path"]
         file_name = deluge_info["name"]
 
-        if not self.is_downloaded(f"{file_location}/{file_name}"):
-            print("not downloaded")
+        if not self.is_downloaded(file_location, file_name):
             return
 
         print("downloaded")
