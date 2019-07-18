@@ -1,6 +1,10 @@
 import asyncio
+from pathlib import Path
 
+from asyncpg import Record
 from quart.ctx import AppContext
+
+from feeds.exceptions import EntryNotInDeluge
 
 
 class Downloader:
@@ -8,8 +12,9 @@ class Downloader:
         self.app = app_context.app
 
 
-    async def start(self):
+    async def start(self) -> None:
         while True:
+            await self.check_show_entries()
             await asyncio.sleep(15)
 
     
@@ -36,3 +41,66 @@ class Downloader:
             await con.execute("""
                 INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3);
             """, show_id, episode, torrent_hash)
+
+
+    def is_downloaded(self, path: str) -> bool:
+        """
+        Detects whether a file at a designated path
+        is downloaded.
+
+        Parameters
+        ----------
+        path: str
+            The file's location.
+
+        Returns
+        -------
+        bool
+            True if the file is downloaded, False otherwise.
+        """
+        file_path = Path(path)
+
+        return file_path.is_file()
+
+
+    async def check_show_entry(self, entry: Record) -> None:
+        """
+        Checks a specific show entry for download completion.
+        If an entry is completed, send it to renaming and moving.
+
+        Parameters
+        ----------
+        entry: asyncpg.Record
+            The record object of the entry in the database.
+        """
+        deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"])
+
+        if not deluge_info:
+            show_id = entry["show_id"]
+            episode = entry["episode"]
+            raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
+
+        file_location = deluge_info["save_path"]
+        file_name = deluge_info["name"]
+
+        if not self.is_downloaded(f"{file_location}/{file_name}"):
+            print("not downloaded")
+            return
+
+        print("downloaded")
+
+    
+    async def check_show_entries(self) -> None:
+        """
+        Queries the database for show entries marked as
+        downloading, then passes them to a separate function
+        to check for completion.
+        """
+        async with self.app.db_pool.acquire() as con:
+            entries = await con.fetch("""
+                SELECT show_id, episode, torrent_hash FROM show_entry
+                WHERE current_state = 'downloading';
+            """)
+
+        for entry in entries:
+            await self.check_show_entry(entry)
