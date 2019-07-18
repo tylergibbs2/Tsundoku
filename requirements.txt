@@ -1,5 +1,6 @@
 aiohttp==3.5.4
 asyncpg==0.18.3
+bencodepy==0.9.5
 feedparser==5.2.1
 fuzzywuzzy==0.17.0
 quart==0.9.1
