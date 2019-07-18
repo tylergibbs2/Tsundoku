@@ -11,6 +11,20 @@ from feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
 
 
 class Downloader:
+    """
+    Begins handling by adding the torrent to Deluge
+    and inserting a row into the `show_entry` table.
+
+    The download manager will then check for the
+    entry's completion periodically (15 seconds) until
+    the item is found to be complete.
+
+    A completed item, once found, will be renamed and then
+    subsequently moved to a target destination.
+
+    Finally, the item will be marked as complete in the
+    `show_entry` table.
+    """
     def __init__(self, app_context: AppContext):
         self.app = app_context.app
 
