@@ -31,6 +31,18 @@ class EntryMatch:
 
 
 class Poller:
+    """
+    The polling manager handles all RSS feed related
+    activities.
+
+    Once started, the manager will iterate through every
+    enabled RSS feed parser and parse their respective
+    feeds using custom logic defined in each parser.
+
+    Items that are matched with the `shows` database will
+    be then passed onto the download manager for downloading,
+    renaming, and moving.
+    """
     def __init__(self, app_context: AppContext):
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
