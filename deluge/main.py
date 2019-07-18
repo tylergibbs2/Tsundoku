@@ -75,7 +75,7 @@ class DelugeClient:
             + f"&tr={metadata[b'announce'].decode()}"
 
 
-    async def get_torrents(self, torrent_ids: typing.List[str]) -> typing.List:
+    async def get_torrents(self, torrent_ids: typing.List[str], status_keys: typing.Optional[typing.List[str]]=None) -> typing.List:
         """
         Returns information for all specified torrents.
 
@@ -83,18 +83,20 @@ class DelugeClient:
         ----------
         torrent_ids: list
             The torrent IDs to return information for.
+        status_keys: typing.Optional[typing.List[str]]
+            Specific status keys to retrieve information on.
 
         Returns
         -------
         list[dict]
             The information for the given torrents.
         """
-        result = await self.request("webapi.get_torrents", [torrent_ids, None])
+        result = await self.request("webapi.get_torrents", [torrent_ids, status_keys])
 
         return result["result"]["torrents"]
 
 
-    async def get_torrent(self, torrent_id: str) -> dict:
+    async def get_torrent(self, torrent_id: str, status_keys: typing.Optional[typing.List[str]]=None) -> dict:
         """
         Returns information for a specified torrent.
 
@@ -102,6 +104,8 @@ class DelugeClient:
         ----------
         torrent_id: str
             The torrent ID to return information for.
+        status_keys: typing.Optional[typing.List[str]]
+            Specific status keys to retrieve information on.
 
         Returns
         -------
@@ -110,7 +114,7 @@ class DelugeClient:
         """
         torrent_id = [torrent_id]
 
-        result = await self.request("webapi.get_torrents", [torrent_id, None])
+        result = await self.request("webapi.get_torrents", [torrent_id, status_keys])
 
         return result["result"]["torrents"][0]
 
