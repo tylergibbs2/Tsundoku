@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS shows (
     search_title TEXT NOT NULL,
     desired_format TEXT,
     desired_folder TEXT,
-    season SMALLINT NOT NULL
+    season SMALLINT NOT NULL,
+    episode_offset SMALLINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS show_entry (

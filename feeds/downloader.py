@@ -1,5 +1,7 @@
 import asyncio
+import os
 from pathlib import Path
+import re
 
 from asyncpg import Record
 from quart.ctx import AppContext
@@ -43,10 +45,64 @@ class Downloader:
             """, show_id, episode, torrent_hash)
 
 
-    def is_downloaded(self, file_location: str, file_name: str) -> bool:
+    async def handle_rename(self, entry: Record, path: Path) -> Path:
         """
-        Detects whether a file at a designated path
-        is downloaded.
+        Handles the rename for a downloaded entry.
+        Returns the pathlib.Path of the renamed file.
+
+        Parameters
+        ----------
+        entry: asyncpg.Record
+            The downloaded entry.
+        path: pathlib.Path
+            The path of the downloaded file.
+        
+        Returns
+        -------
+        pathlib.Path
+            The path of the renamed file.
+        """
+        suffix = path.suffix
+
+        async with self.app.db_pool.acquire() as con:
+            show_info = await con.fetchrow("""
+                SELECT search_title, desired_format, desired_folder, season, episode_offset FROM shows WHERE id=$1;
+            """, entry["show_id"])
+
+        if show_info["desired_format"]:
+            file_fmt = show_info["desired_format"]
+        else:
+            file_fmt = "{n} - {s00e00}"
+
+        def formatting_re(match: re.Match):
+            expression = match.group(1)
+
+            season = str(show_info["season"])
+            episode = str(entry["episode"] + show_info["episode_offset"])
+
+            format_exprs = {
+                "n": show_info["search_title"],
+                "s": season,
+                "e": episode,
+                "s00": season.zfill(2),
+                "e00": episode.zfill(2),
+                "s00e00": f"S{season.zfill(2)}E{episode.zfill(2)}",
+                "sxe": f"{season}x{episode.zfill(2)}"
+            }
+
+            return format_exprs.get(expression, expression)
+        
+        name = re.sub(r"{(\w+)}", formatting_re, file_fmt)
+
+        new_path = path.with_name(name + suffix)
+        os.rename(path, new_path)
+
+        return new_path
+
+
+    def get_file_path(self, file_location: str, file_name: str) -> bool:
+        """
+        Calculates the path of the file given location and name.
 
         Parameters
         ----------
@@ -57,17 +113,16 @@ class Downloader:
 
         Returns
         -------
-        bool
-            True if the file is downloaded, False otherwise.
+        pathlib.Path
+            The Path of the file.
         """
+        file_location = "C:\\Users\\Tyler\\Documents\\GitHub\\Tsundoku\\test\\"
         file_location = file_location.replace("\\", "/")
         location = Path(file_location)
         if not location.is_dir():
             raise SavePathDoesNotExist(f"'{file_location}' could not be read")
 
-        file_path = Path(f"{file_location}/{file_name}")
-
-        return file_path.is_file()
+        return location / file_name
 
 
     async def check_show_entry(self, entry: Record) -> None:
@@ -80,9 +135,9 @@ class Downloader:
         entry: asyncpg.Record
             The record object of the entry in the database.
         """
-        deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"])
-
-        if not deluge_info:
+        try:
+            deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"])
+        except IndexError:
             show_id = entry["show_id"]
             episode = entry["episode"]
             raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
@@ -90,10 +145,11 @@ class Downloader:
         file_location = deluge_info["save_path"]
         file_name = deluge_info["name"]
 
-        if not self.is_downloaded(file_location, file_name):
+        path = self.get_file_path(file_location, file_name)
+        if not path.is_file():
             return
 
-        print("downloaded")
+        new_path = await self.handle_rename(entry, path)
 
     
     async def check_show_entries(self) -> None:
@@ -104,7 +160,7 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             entries = await con.fetch("""
-                SELECT show_id, episode, torrent_hash FROM show_entry
+                SELECT id, show_id, episode, torrent_hash FROM show_entry
                 WHERE current_state = 'downloading';
             """)
 
