@@ -60,6 +60,7 @@ class Downloader:
         bool
             True if the file is downloaded, False otherwise.
         """
+        file_location = file_location.replace("\\", "/")
         location = Path(file_location)
         if not location.is_dir():
             raise SavePathDoesNotExist(f"'{file_location}' could not be read")
