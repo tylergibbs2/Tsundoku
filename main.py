@@ -94,6 +94,10 @@ async def load_parsers():
 
 @app.before_serving
 async def setup_poller():
+    """
+    Creates in instance of the polling manager
+    and starts it.
+    """
     async def bg_task():
         app.poller = Poller(app.app_context())
         await app.poller.start()
@@ -103,6 +107,10 @@ async def setup_poller():
 
 @app.before_serving
 async def setup_downloader():
+    """
+    Creates an instance of the downloader manager
+    and starts it.
+    """
     async def bg_task():
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
