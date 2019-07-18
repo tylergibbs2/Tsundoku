@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS show_entry (
     show_id BIGSERIAL NOT NULL REFERENCES shows(id),
     episode SMALLINT NOT NULL,
     current_state show_state NOT NULL DEFAULT 'downloading',
-    torrent_hash TEXT
+    torrent_hash TEXT NOT NULL
 );
