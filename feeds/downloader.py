@@ -185,15 +185,15 @@ class Downloader:
             The record object of the entry in the database.
         """
         try:
-            deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"])
+            deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"], ["name", "move_completed_path"])
         except IndexError:
             show_id = entry["show_id"]
             episode = entry["episode"]
             raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
 
-        file_location = deluge_info["save_path"]
+        file_location = deluge_info["move_completed_path"]
         file_name = deluge_info["name"]
-
+        
         path = self.get_file_path(file_location, file_name)
         if not path.is_file():
             return
