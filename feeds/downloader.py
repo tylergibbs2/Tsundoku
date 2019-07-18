@@ -166,7 +166,6 @@ class Downloader:
         pathlib.Path
             The Path of the file.
         """
-        file_location = "C:\\Users\\Tyler\\Documents\\GitHub\\Tsundoku\\test\\"
         file_location = file_location.replace("\\", "/")
         location = Path(file_location)
         if not location.is_dir():
