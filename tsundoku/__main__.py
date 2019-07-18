@@ -6,10 +6,10 @@ import asyncpg
 from quart import Quart
 
 from tsundoku.config import get_config_value
-from tsundoku.deluge.main import DelugeClient
+from tsundoku.deluge import DelugeClient
 import tsundoku.exceptions as exceptions
-from tsundoku.feeds.downloader import Downloader
-from tsundoku.feeds.poller import Poller
+from tsundoku.feeds import Downloader
+from tsundoku.feeds import Poller
 
 
 app = Quart("Tsundoku")
@@ -135,4 +135,5 @@ async def cleanup():
 host = get_config_value("Tsundoku", "host")
 port = get_config_value("Tsundoku", "port")
 
-app.run(host=host, port=port)
+if __name__ == "__main__":
+    app.run(host=host, port=port)
