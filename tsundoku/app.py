@@ -106,7 +106,7 @@ async def setup_poller():
         app.poller = Poller(app.app_context())
         await app.poller.start()
 
-    asyncio.ensure_future(bg_task())
+    asyncio.create_task(bg_task())
 
 
 @app.before_serving
@@ -119,7 +119,7 @@ async def setup_downloader():
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
-    asyncio.ensure_future(bg_task())
+    asyncio.create_task(bg_task())
 
 
 @app.route("/")
