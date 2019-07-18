@@ -7,7 +7,7 @@ import shutil
 from asyncpg import Record
 from quart.ctx import AppContext
 
-from feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
+from tsundoku.feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
 
 
 class Downloader:

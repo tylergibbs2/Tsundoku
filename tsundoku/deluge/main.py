@@ -8,8 +8,8 @@ import json
 import aiohttp
 import bencodepy
 
-from config import get_config_value
-from deluge.exceptions import DelugeError, DelugeAuthorizationError
+from tsundoku.config import get_config_value
+from tsundoku.deluge.exceptions import DelugeError, DelugeAuthorizationError
 
 
 class DelugeClient:

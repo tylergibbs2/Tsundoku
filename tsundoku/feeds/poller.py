@@ -6,8 +6,8 @@ import feedparser
 from fuzzywuzzy import process
 from quart.ctx import AppContext
 
-from config import get_config_value
-from feeds.exceptions import InvalidPollerInterval
+from tsundoku.config import get_config_value
+from tsundoku.feeds.exceptions import InvalidPollerInterval
 
 
 @dataclass

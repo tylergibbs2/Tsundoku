@@ -5,11 +5,11 @@ import aiohttp
 import asyncpg
 from quart import Quart
 
-from config import get_config_value
-from deluge.main import DelugeClient
-import exceptions
-from feeds.downloader import Downloader
-from feeds.poller import Poller
+from tsundoku.config import get_config_value
+from tsundoku.deluge.main import DelugeClient
+import tsundoku.exceptions as exceptions
+from tsundoku.feeds.downloader import Downloader
+from tsundoku.feeds.poller import Poller
 
 
 app = Quart("Tsundoku")
