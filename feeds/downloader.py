@@ -2,6 +2,7 @@ import asyncio
 import os
 from pathlib import Path
 import re
+import shutil
 
 from asyncpg import Record
 from quart.ctx import AppContext
@@ -44,11 +45,60 @@ class Downloader:
                 INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3);
             """, show_id, episode, torrent_hash)
 
+        
+    async def mark_entry_complete(self, entry: Record) -> None:
+        """
+        Marks an entry as `complete` in the `show_entry` table.
+
+        Parameters
+        ----------
+        entry: asyncpg.Record
+            The entry to mark as complete.
+        """
+        async with self.app.db_pool.acquire() as con:
+            await con.execute("""
+                UPDATE show_entry SET current_state='complete' WHERE id=$1
+            """, entry["id"])
+
+
+    async def handle_move(self, entry: Record, target: Path) -> Path:
+        """
+        Handles the move for a downloaded entry.
+        Returns the new pathlib.Path of the moved file.
+
+        Parameters
+        ----------
+        entry: asyncpg.Record
+            The downloaded entry.
+        target: pathlib.Path
+            The downloaded entry to be moved.
+
+        Returns
+        -------
+        pathlib.Path
+            The new path of the moved file.
+        """
+        async with self.app.db_pool.acquire() as con:
+            show_info = await con.fetchrow("""
+                SELECT desired_folder FROM shows WHERE id=$1;
+            """, entry["show_id"])
+
+        desired_folder = show_info["desired_folder"]
+        if desired_folder is None:
+            desired_folder = target.parent
+        else:
+            Path(desired_folder).mkdir(parents=True, exist_ok=True)
+            desired_folder = Path(desired_folder)
+
+        shutil.move(str(target), str(desired_folder))
+
+        return desired_folder / target.name
+
 
     async def handle_rename(self, entry: Record, path: Path) -> Path:
         """
         Handles the rename for a downloaded entry.
-        Returns the pathlib.Path of the renamed file.
+        Returns the new pathlib.Path of the renamed file.
 
         Parameters
         ----------
@@ -60,13 +110,13 @@ class Downloader:
         Returns
         -------
         pathlib.Path
-            The path of the renamed file.
+            The new path of the renamed file.
         """
         suffix = path.suffix
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT search_title, desired_format, desired_folder, season, episode_offset FROM shows WHERE id=$1;
+                SELECT search_title, desired_format, season, episode_offset FROM shows WHERE id=$1;
             """, entry["show_id"])
 
         if show_info["desired_format"]:
@@ -149,7 +199,12 @@ class Downloader:
         if not path.is_file():
             return
 
-        new_path = await self.handle_rename(entry, path)
+        renamed_path = await self.handle_rename(entry, path)
+        moved_path = await self.handle_move(entry, renamed_path)
+
+        await self.mark_entry_complete(entry)
+
+        print(moved_path)
 
     
     async def check_show_entries(self) -> None:
