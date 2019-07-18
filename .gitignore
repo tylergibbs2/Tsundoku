@@ -218,3 +218,5 @@ _Pvt_Extensions
 
 # Python Cache Files
 *.pyc
+
+\.vscode/
