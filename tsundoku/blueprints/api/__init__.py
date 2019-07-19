@@ -9,7 +9,7 @@ api_blueprint = Blueprint('api', __name__, url_prefix="/api")
 async def get_shows():
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
-            SELECT id, search_title, desired_format, desired_folder,
+            SELECT id, title, desired_format, desired_folder,
             season, episode_offset FROM shows;
         """)
 
@@ -20,7 +20,7 @@ async def get_shows():
 async def get_show_by_id(show_id: int):
     async with app.db_pool.acquire() as con:
         show = await con.fetchrow("""
-            SELECT id, search_title, desired_format, desired_folder,
+            SELECT id, title, desired_format, desired_folder,
             season, episode_offset FROM shows WHERE id=$1;
         """, show_id)
 

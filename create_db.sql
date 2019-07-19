@@ -2,7 +2,7 @@ CREATE TYPE show_state AS ENUM ('downloading', 'complete');
 
 CREATE TABLE IF NOT EXISTS shows (
     id BIGSERIAL PRIMARY KEY,
-    search_title TEXT NOT NULL,
+    title TEXT NOT NULL,
     desired_format TEXT,
     desired_folder TEXT,
     season SMALLINT NOT NULL,

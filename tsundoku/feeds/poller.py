@@ -140,9 +140,9 @@ class Poller:
         """
         async with self.app.db_pool.acquire() as con:
             desired_shows = await con.fetch("""
-                SELECT id, search_title FROM shows;
+                SELECT id, title FROM shows;
             """)
-        show_list = {show["search_title"]: show["id"] for show in desired_shows}
+        show_list = {show["title"]: show["id"] for show in desired_shows}
 
         if not show_list:
             return

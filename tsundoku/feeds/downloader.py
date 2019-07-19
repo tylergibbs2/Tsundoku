@@ -130,7 +130,7 @@ class Downloader:
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT search_title, desired_format, season, episode_offset FROM shows WHERE id=$1;
+                SELECT title, desired_format, season, episode_offset FROM shows WHERE id=$1;
             """, entry["show_id"])
 
         if show_info["desired_format"]:
@@ -145,7 +145,7 @@ class Downloader:
             episode = str(entry["episode"] + show_info["episode_offset"])
 
             format_exprs = {
-                "n": show_info["search_title"],
+                "n": show_info["title"],
                 "s": season,
                 "e": episode,
                 "s00": season.zfill(2),
