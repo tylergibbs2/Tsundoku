@@ -3,7 +3,13 @@ import json
 from quart import Blueprint, render_template
 from quart import current_app as app
 
-ux_blueprint = Blueprint('interface', __name__, template_folder="templates", static_folder="static")
+ux_blueprint = Blueprint(
+    'ux',
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+    static_url_path="/ux/static"
+)
 
 @ux_blueprint.route("/", methods=["GET"])
 async def index():

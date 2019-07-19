@@ -5,7 +5,7 @@ import aiohttp
 import asyncpg
 from quart import Quart
 
-from tsundoku.blueprints import api, interface
+from tsundoku.blueprints import api, ux
 from tsundoku.config import get_config_value
 from tsundoku.deluge import DelugeClient
 import tsundoku.exceptions as exceptions
@@ -13,10 +13,10 @@ from tsundoku.feeds import Downloader
 from tsundoku.feeds import Poller
 
 
-app = Quart("Tsundoku")
+app = Quart("Tsundoku", static_folder=None)
 
 app.register_blueprint(api.api_blueprint)
-app.register_blueprint(interface.ux_blueprint)
+app.register_blueprint(ux.ux_blueprint)
 
 
 @app.before_serving
