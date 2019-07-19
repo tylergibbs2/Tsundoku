@@ -94,15 +94,35 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT desired_folder FROM shows WHERE id=$1;
+                SELECT title, desired_folder, episode_offset FROM shows WHERE id=$1;
             """, entry["show_id"])
+
+        def formatting_re(match: re.Match):
+            expression = match.group(1)
+
+            season = str(show_info["season"])
+            episode = str(entry["episode"] + show_info["episode_offset"])
+
+            format_exprs = {
+                "n": show_info["title"],
+                "s": season,
+                "e": episode,
+                "s00": season.zfill(2),
+                "e00": episode.zfill(2),
+                "s00e00": f"S{season.zfill(2)}E{episode.zfill(2)}",
+                "sxe": f"{season}x{episode.zfill(2)}"
+            }
+
+            return format_exprs.get(expression, expression)
 
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
             desired_folder = target.parent
-        else:
-            Path(desired_folder).mkdir(parents=True, exist_ok=True)
-            desired_folder = Path(desired_folder)
+        else: 
+            expressive_folder = re.sub(r"{(\w+)}", formatting_re, desired_folder)
+
+            Path(expressive_folder).mkdir(parents=True, exist_ok=True)
+            desired_folder = Path(expressive_folder)
 
         shutil.move(str(target), str(desired_folder))
 
