@@ -58,6 +58,16 @@ async def update_show_by_id(show_id: int):
     return json.dumps({"success": True})
 
 
+@api_blueprint.route("/shows/<int:show_id>", methods=["DELETE"])
+async def delete_show_by_id(show_id: int):
+    async with app.db_pool.acquire() as con:
+        await con.execute("""
+            DELETE FROM shows WHERE id=$1;
+        """, show_id)
+
+    return json.dumps({"success": True})
+
+
 @api_blueprint.route("/shows/<int:show_id>/entries", methods=["GET"])
 async def get_show_entries_by_show_id(show_id: int):
     async with app.db_pool.acquire() as con:

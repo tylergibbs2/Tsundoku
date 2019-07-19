@@ -41,18 +41,30 @@ function openEditShowModal(show)
 }
 
 
-function resetEditShowForm()
+function openDeleteShowModal(show)
 {
-    var form = document.getElementById("edit-show-form");
+    var modal = document.getElementById("delete-show-modal");
+    var btn = document.getElementById("delete-show-button");
 
-    form.reset();
+    btn.onclick = function(e) {
+        e.preventDefault();
+        $.ajax(
+            {
+                url: "/api/shows/" + show.id,
+                type: "DELETE",
+                success: function() {
+                    location.reload();
+                }
+            }
+        );
+    }
+
+    modal.classList.add("is-active");
 }
 
 
 function closeModals()
 {
-    resetEditShowForm();
-
     modals = document.getElementsByClassName("modal");
     for (var i=0; i<modals.length; i++)
     {
