@@ -1,13 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <!-- Page Meta -->
-        <meta charset="UTF-8">
-        <title>積ん読 Anime</title>
-        <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
 
-    </head>
-    <body>
-        <image src="https://i.imgur.com/zkHuh3U.png"></image>
-    </body>
+<head>
+    <!-- Page Meta -->
+    <meta charset="UTF-8">
+    <title>積ん読 Anime</title>
+    <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css">
+    <link rel="stylesheet" href="{{ url_for('ux.static', filename='css/index.css') }}">
+
+    <!-- JS -->
+    <script
+			  src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="{{ url_for('ux.static', filename='js/index.js') }}"></script>
+</head>
+
+<body>
+
+    <div class="tabs is-centered">
+        <ul>
+            <li class="is-active"><a>Shows</a></li>
+            <li><a>Configuration</a></li>
+        </ul>
+    </div>
+
+    <div id="edit-show-modal" class="modal">
+        <div onclick="closeModals();" class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Title</p>
+                <button onclick="closeModals();" class="delete" aria-label="close"></button>
+            </header>
+
+            <section class="modal-card-body">
+                <form id="edit-show-form" method="POST" submit>
+                    <div class="field">
+                        <label class="label">Name</label>
+                        <div class="control">
+                            <input name="title" class="input" type="text" placeholder="Show title" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Desired Format</label>
+                        <div class="control">
+                            <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Desired Folder</label>
+                        <div class="control">
+                            <input name="desired_folder" class="input" type="text" placeholder="{n}/Season {s00}/">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Season</label>
+                        <div class="control">
+                            <input name="season" class="input" type="number" value="1" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Episode Offset</label>
+                        <div class="control">
+                            <input name="episode_offset" class="input" type="number" value="0" required>
+                        </div>
+                    </div>
+
+                </form>
+
+            </section>
+
+            <footer class="modal-card-foot">
+                <input class="button is-success" type="submit" form="edit-show-form" value="Save changes"></button>
+                <button onclick="closeModals();" class="button">Cancel</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="show-card-display columns is-multiline is-vcentered">
+        {% for show in shows %}
+        <div class="column is-one-fifth">
+            <div class="card">
+                <div class="card-content">
+                    <p class="subtitle">
+                        <b>{{ show.title }}</b>
+                    </p>
+                </div>
+                <footer class="card-footer">
+                    <p class="card-footer-item">
+                        <a onclick="openEditShowModal( {{ show }} );">Edit</a>
+                    </p>
+                    <p class="card-footer-item">
+                        <a>Delete</a>
+                    </p>
+                </footer>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+
+</body>
+
 </html>

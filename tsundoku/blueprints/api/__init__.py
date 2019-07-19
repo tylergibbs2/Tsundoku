@@ -30,6 +30,34 @@ async def get_show_by_id(show_id: int):
     return json.dumps(dict(show))
 
 
+@api_blueprint.route("/shows/<int:show_id>", methods=["POST"])
+async def update_show_by_id(show_id: int):
+    await request.get_data()
+    arguments = await request.form
+
+    if not arguments["desired_format"]:
+        desired_format = None
+    else:
+        desired_format = arguments["desired_format"]
+
+    if not arguments["desired_folder"]:
+        desired_folder = None
+    else:
+        desired_folder = arguments["desired_folder"]
+
+    season = int(arguments["season"])
+    episode_offset = int(arguments["episode_offset"])
+
+    async with app.db_pool.acquire() as con:
+        await con.execute("""
+            UPDATE shows SET title=$1, desired_format=$2, desired_folder=$3,
+            season=$4, episode_offset=$5 WHERE id=$6;
+        """, arguments["title"], desired_format, desired_folder, season,
+        episode_offset, show_id)
+
+    return json.dumps({"success": True})
+
+
 @api_blueprint.route("/shows/<int:show_id>/entries", methods=["GET"])
 async def get_show_entries_by_show_id(show_id: int):
     async with app.db_pool.acquire() as con:

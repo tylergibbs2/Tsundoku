@@ -13,4 +13,13 @@ ux_blueprint = Blueprint(
 
 @ux_blueprint.route("/", methods=["GET"])
 async def index():
-    return await render_template("index.html")
+    kwargs = {}
+    async with app.db_pool.acquire() as con:
+        response = await con.fetch("""
+            SELECT id, title, desired_format, desired_folder,
+            season, episode_offset FROM shows ORDER BY title;
+        """)
+
+    kwargs["shows"] = [dict(s) for s in response]
+
+    return await render_template("index.html", **kwargs)
