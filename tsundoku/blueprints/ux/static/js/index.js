@@ -37,6 +37,7 @@ function openEditShowModal(show)
     form.action = "/api/shows/" + show.id;
     form.onsubmit = submitForm;
 
+    document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");
 }
 
@@ -59,6 +60,7 @@ function openDeleteShowModal(show)
         );
     }
 
+    document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");
 }
 
@@ -70,4 +72,5 @@ function closeModals()
     {
         modals[i].classList.remove("is-active");
     }
+    document.documentElement.classList.remove("is-clipped");
 }
