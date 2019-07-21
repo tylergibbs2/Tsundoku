@@ -8,7 +8,6 @@ api_blueprint = Blueprint('api', __name__, url_prefix="/api")
 
 
 class ShowsAPI(views.MethodView):
-
     async def get(self, show_id: int=None) -> typing.Union[dict, typing.List[dict]]:
         """
         Can retrieve either a list of all rows in
