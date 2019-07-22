@@ -20,6 +20,7 @@
 
     <div class="tabs is-centered">
         <ul>
+            <li><a onclick="openAddShowModal();">Add Show</a></li>
             <li class="is-active"><a>Shows</a></li>
             <li><a>Configuration</a></li>
         </ul>
@@ -44,16 +45,16 @@
         </div>
     </div>
 
-    <div id="edit-show-modal" class="modal">
+    <div id="show-modal" class="modal">
         <div class="modal-background" onclick="closeModals();"></div>
         <div class="modal-card">
             <header class="modal-card-head">
-                <p class="modal-card-title">Edit Show</p>
+                <p id="show-modal-title" class="modal-card-title">Edit Show</p>
                 <button class="delete" onclick="closeModals();" aria-label="close"></button>
             </header>
 
             <section class="modal-card-body">
-                <form id="edit-show-form" method="PUT" submit>
+                <form id="show-form" method="PUT" submit>
                     <div class="field">
                         <label class="label">Name</label>
                         <div class="control">
@@ -94,7 +95,7 @@
             </section>
 
             <footer class="modal-card-foot">
-                <input class="button is-success" type="submit" form="edit-show-form" value="Save changes"></button>
+                <input id="show-save-button" class="button is-success" type="submit" form="show-form" value="Save changes"></button>
                 <button class="button" onclick="closeModals();">Cancel</button>
             </footer>
         </div>

@@ -19,11 +19,35 @@ function submitForm(event)
     );
 }
 
+function openAddShowModal()
+{
+    var modal = document.getElementById("show-modal");
+    var form = document.getElementById("show-form");
+
+    var saveBtn = document.getElementById("show-save-button");
+    var modalTitle = document.getElementById("show-modal-title");
+
+    form.action = "/api/shows/";
+    form.method = "POST";
+    form.reset();
+
+    form.onsubmit = submitForm;
+
+    saveBtn.value = "Add show";
+    modalTitle.innerHTML = "Add Show";
+
+    document.documentElement.classList.add("is-clipped");
+    modal.classList.add("is-active");  
+}
+
 
 function openEditShowModal(show)
 {
-    var modal = document.getElementById("edit-show-modal");
-    var form = document.getElementById("edit-show-form");
+    var modal = document.getElementById("show-modal");
+    var form = document.getElementById("show-form");
+
+    var saveBtn = document.getElementById("show-save-button");
+    var modalTitle = document.getElementById("show-modal-title");
 
     form.reset();
 
@@ -35,7 +59,11 @@ function openEditShowModal(show)
     }
 
     form.action = "/api/shows/" + show.id;
+    form.method = "PUT";
     form.onsubmit = submitForm;
+
+    saveBtn.value = "Save changes";
+    modalTitle.innerHTML = "Edit Show";
 
     document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");

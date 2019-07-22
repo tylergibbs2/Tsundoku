@@ -1,0 +1,163 @@
+import json
+import typing
+
+from quart import request, views
+from quart import current_app as app
+
+
+class ShowsAPI(views.MethodView):
+    async def get(self, show_id: int=None) -> typing.Union[dict, typing.List[dict]]:
+        """
+        Can retrieve either a list of all rows in
+        the shows table, or a single row given a show
+        ID.
+
+        Returns
+        -------
+        typing.Union[dict, typing.List[dict]]
+            A dict or a list of dict containing
+            the requested show information.
+        """
+        if show_id is None:
+            async with app.db_pool.acquire() as con:
+                shows = await con.fetch("""
+                    SELECT id, title, desired_format, desired_folder,
+                    season, episode_offset FROM shows;
+                """)
+
+                return json.dumps([dict(record) for record in shows])   
+        else:
+            async with app.db_pool.acquire() as con:
+                show = await con.fetchrow("""
+                    SELECT id, title, desired_format, desired_folder,
+                    season, episode_offset FROM shows WHERE id=$1;
+                """, show_id)
+
+            if not show:
+                show = {}
+
+            return json.dumps(dict(show))
+
+
+    async def post(self, show_id) -> dict:
+        """
+        Updates a specified show in the shows table
+        using the given parameters.
+
+        Parameters
+        ----------
+        title: str
+            The title.
+        desired_format: str
+            The file format.
+        desired_folder: str
+            The final move location.
+        season: int
+            The season.
+        episode_offset: int
+            The episode offset.
+
+        Returns
+        -------
+        dict
+            Single key: `success`. Value is True if success,
+            False otherwise.
+        """
+        await request.get_data()
+        arguments = await request.form
+
+        if not arguments["desired_format"]:
+            desired_format = None
+        else:
+            desired_format = arguments["desired_format"]
+
+        if not arguments["desired_folder"]:
+            desired_folder = None
+        else:
+            desired_folder = arguments["desired_folder"]
+
+        season = int(arguments["season"])
+        episode_offset = int(arguments["episode_offset"])
+
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                INSERT INTO shows (title, desired_format, desired_folder,
+                season, episode_offset) VALUES ($1, $2, $3, $4, $5);
+            """, arguments["title"], desired_format, desired_folder, season,
+            episode_offset)
+
+        return json.dumps({"success": True})
+
+
+    async def put(self, show_id: int) -> dict:
+        """
+        Updates a specified show in the shows table
+        using the given parameters.
+
+        Parameters
+        ----------
+        title: str
+            The updated title.
+        desired_format: str
+            The updated file format.
+        desired_folder: str
+            The updated final move location.
+        season: int
+            The updated season.
+        episode_offset: int
+            The updated episode offset.
+
+        Returns
+        -------
+        dict
+            Single key: `success`. Value is True if success,
+            False otherwise.
+        """
+        await request.get_data()
+        arguments = await request.form
+
+        if not arguments["desired_format"]:
+            desired_format = None
+        else:
+            desired_format = arguments["desired_format"]
+
+        if not arguments["desired_folder"]:
+            desired_folder = None
+        else:
+            desired_folder = arguments["desired_folder"]
+
+        season = int(arguments["season"])
+        episode_offset = int(arguments["episode_offset"])
+
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                UPDATE shows SET title=$1, desired_format=$2, desired_folder=$3,
+                season=$4, episode_offset=$5 WHERE id=$6;
+            """, arguments["title"], desired_format, desired_folder, season,
+            episode_offset, show_id)
+
+        return json.dumps({"success": True})
+
+
+    async def delete(self, show_id: int) -> dict:
+        """
+        Deletes a show with specified ID from the
+        shows table.
+
+        This will delete all entries of that show as well.
+
+        Returns
+        -------
+        dict
+            Single key: `success`. Value is True if success,
+            False otherwise.
+        """
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                DELETE FROM show_entry WHERE show_id=$1;
+            """, show_id)
+            await con.execute("""
+                DELETE FROM shows WHERE id=$1;
+            """, show_id)
+
+        return json.dumps({"success": True})
