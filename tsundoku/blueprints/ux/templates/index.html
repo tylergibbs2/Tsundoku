@@ -18,13 +18,14 @@
 
 <body>
 
-    <div class="tabs is-centered">
-        <ul>
-            <li><a onclick="openAddShowModal();">Add Show</a></li>
-            <li class="is-active"><a>Shows</a></li>
-            <li><a>Configuration</a></li>
-        </ul>
-    </div>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img src="{{ url_for('ux.static', filename='img/logo.png') }}" width="112" height="28">
+            </a>
+        </div>
+
+    </nav>
 
     <div id="delete-show-modal" class="modal">
         <div class="modal-background" onclick="closeModals();"></div>
