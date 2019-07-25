@@ -1,7 +1,7 @@
 import json
 import typing
 
-from quart import Blueprint, Response, request, views
+from quart import Blueprint
 from quart import current_app as app
 
 from .shows import ShowsAPI
@@ -9,7 +9,20 @@ from .entries import EntriesAPI
 
 
 api_blueprint = Blueprint('api', __name__, url_prefix="/api")
-        
+
+
+@api_blueprint.route("/shows/seen", methods=["GET"])
+async def get_seen_shows():
+    """
+    Returns a list of shows that the program
+    has seen while scraping RSS feeds.
+
+    Returns
+    -------
+    typing.List[str]
+    """
+    return json.dumps(list(app.seen_titles))
+
 
 def setup_views():
     # Setup ShowsAPI URL rules.
