@@ -68,7 +68,7 @@ class Poller:
         in the configuration file.
         """
         while True:
-            self.app.show_titles = set()
+            self.app.seen_titles = set()
 
             for parser in self.app.rss_parsers:
                 self.current_parser = parser
@@ -181,7 +181,7 @@ class Poller:
         show_name = self.current_parser.get_show_name(torrent_name)
         show_episode = self.current_parser.get_episode_number(torrent_name)
 
-        self.app.show_titles.add(show_name)
+        self.app.seen_titles.add(show_name)
 
         match = await self.check_item_for_match(show_name, show_episode)
 

@@ -18,7 +18,7 @@ app = Quart("Tsundoku", static_folder=None)
 app.register_blueprint(api.api_blueprint)
 app.register_blueprint(ux.ux_blueprint)
 
-app.show_titles = set()
+app.seen_titles = set()
 
 
 @app.before_serving
