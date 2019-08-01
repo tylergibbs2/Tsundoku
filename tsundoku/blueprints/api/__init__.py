@@ -29,7 +29,7 @@ def setup_views():
     shows_view = ShowsAPI.as_view("shows_api")
 
     api_blueprint.add_url_rule(
-        "/shows/",
+        "/shows",
         defaults={
             "show_id": None
         },
@@ -46,17 +46,17 @@ def setup_views():
     entries_view = EntriesAPI.as_view("entries_api")
 
     api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/entries/",
+        "/shows/<int:show_id>/entries",
         defaults={
             "entry_id": None
         },
         view_func=entries_view,
-        methods=["GET"]
+        methods=["GET", "POST"]
     )
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/entries/<int:entry_id>",
         view_func=entries_view,
-        methods=["GET", "POST", "DELETE"]
+        methods=["GET", "DELETE"]
     )
 
 setup_views()

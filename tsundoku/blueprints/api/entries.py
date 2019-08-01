@@ -38,11 +38,15 @@ class EntriesAPI(views.MethodView):
             return json.dumps(dict(entry))
 
     
-    async def post(self, show_id: int):
+    async def post(self, show_id: int, entry_id: int=None):
         """
         Manually begins handling of an entry for
         a specified show. Handling involves downloading,
         moving, and renaming.
+
+        If an empty string is passed for a magnet URL,
+        nothing will be downloaded and the entry will
+        be marked as complete.
 
         Parameters
         ----------
@@ -74,7 +78,15 @@ class EntriesAPI(views.MethodView):
             response["error"] = "episode argument must be int"
             return Response(json.dumps(response), status=400)
 
-        await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
+        if arguments["magnet"]:
+            await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
+        else:
+            async with app.db_pool.acquire() as con:
+                await con.execute("""
+                    INSERT INTO show_entry (show_id, episode, current_state, torrent_hash)
+                    VALUES ($1, $2, $3, $4);
+                """, show_id, episode, "complete", "")
+
         response["success"] = True
 
         return json.dumps(response)

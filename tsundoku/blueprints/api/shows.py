@@ -39,10 +39,9 @@ class ShowsAPI(views.MethodView):
             return json.dumps(dict(show))
 
 
-    async def post(self, show_id) -> dict:
+    async def post(self, show_id: int=None) -> dict:
         """
-        Updates a specified show in the shows table
-        using the given parameters.
+        Creates a show row in the shows table.
 
         Parameters
         ----------
