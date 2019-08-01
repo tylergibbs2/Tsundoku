@@ -60,7 +60,7 @@ class Downloader:
         torrent_hash = await self.app.deluge.add_torrent(magnet_url)
 
         async with self.app.db_pool.acquire() as con:
-            entry_id = await con.execute("""
+            entry_id = await con.fetchval("""
                 INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3) RETURNING id;
             """, show_id, episode, torrent_hash)
 
