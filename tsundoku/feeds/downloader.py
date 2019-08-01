@@ -244,8 +244,6 @@ class Downloader:
 
         await self.mark_entry_complete(entry)
 
-        print(moved_path)
-
     
     async def check_show_entries(self) -> None:
         """
