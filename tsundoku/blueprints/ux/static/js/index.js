@@ -12,8 +12,51 @@ function submitForm(event)
             url: url,
             type: method,
             data: data,
-            success: function() {
+            success: function(data) {
                 location.reload();
+            }
+        }
+    );
+}
+
+
+function addShowEntryFormSubmit(event)
+{
+    event.preventDefault();
+
+    var table = document.querySelector("#show-entry-table tbody");
+    var form = $(this).closest("form");
+
+    var url = form.attr("action");
+    var method = form.attr("method");
+    var data = form.serialize();
+    $.ajax(
+        {
+            url: url,
+            type: method,
+            data: data,
+            success: function(data) {
+                var data = JSON.parse(data);
+                var entry = data.entry;
+                var row = table.insertRow(-1);
+
+                var cell_id = row.insertCell(0);
+                var cell_episode = row.insertCell(1);
+                var cell_status = row.insertCell(2);
+                var cell_delete = row.insertCell(3);
+            
+                cell_id.innerHTML = entry.id;
+                cell_episode.innerHTML = entry.episode;
+                cell_status.innerHTML = entry.current_state;
+            
+                var deleteBtn = document.createElement("button");
+                deleteBtn.classList.add("delete");
+                deleteBtn.setAttribute(
+                    "onclick",
+                    `deleteShowEntry(${entry.show_id}, ${entry.id});this.parentNode.parentNode.remove();`
+                );
+            
+                cell_delete.appendChild(deleteBtn);
             }
         }
     );
@@ -26,10 +69,7 @@ function deleteShowEntry(show_id, entry_id)
     $.ajax(
         {
             url: url,
-            type: "DELETE",
-            success: function() {
-
-            }
+            type: "DELETE"
         }
     );
 }
@@ -140,7 +180,7 @@ function openEditShowModal(show)
 
     addEntryForm.action = `/api/shows/${show.id}/entries`;
     addEntryForm.method = "POST";
-    addEntryForm.onsubmit = submitForm;
+    addEntryForm.onsubmit = addShowEntryFormSubmit;
 
     document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");

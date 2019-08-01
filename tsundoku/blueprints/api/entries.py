@@ -79,15 +79,22 @@ class EntriesAPI(views.MethodView):
             return Response(json.dumps(response), status=400)
 
         if arguments["magnet"]:
-            await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
+            entry_id = await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
         else:
             async with app.db_pool.acquire() as con:
-                await con.execute("""
+                entry_id = await con.fetchval("""
                     INSERT INTO show_entry (show_id, episode, current_state, torrent_hash)
-                    VALUES ($1, $2, $3, $4);
+                    VALUES ($1, $2, $3, $4) RETURNING id;
                 """, show_id, episode, "complete", "")
 
+        async with app.db_pool.acquire() as con:
+            new_entry = await con.fetchrow("""
+                SELECT id, show_id, episode, current_state, torrent_hash
+                FROM show_entry WHERE id=$1;
+            """, entry_id)
+
         response["success"] = True
+        response["entry"] = dict(new_entry)
 
         return json.dumps(response)
 
