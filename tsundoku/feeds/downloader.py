@@ -101,7 +101,7 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT title, desired_folder, episode_offset FROM shows WHERE id=$1;
+                SELECT title, desired_folder, episode_offset, season FROM shows WHERE id=$1;
             """, entry["show_id"])
 
         def formatting_re(match: re.Match):
