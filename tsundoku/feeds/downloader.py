@@ -35,7 +35,7 @@ class Downloader:
             await asyncio.sleep(15)
 
     
-    async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> None:
+    async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> int:
         """
         Begins downloading an episode of a show
         using the passed magnet URL.
@@ -51,13 +51,20 @@ class Downloader:
             The episode of the show downloading.
         magnet_url: str
             The magnet URL to use to initiate the download.
+
+        Returns
+        -------
+        int:
+            The ID of the added entry.
         """
         torrent_hash = await self.app.deluge.add_torrent(magnet_url)
 
         async with self.app.db_pool.acquire() as con:
-            await con.execute("""
-                INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3);
+            entry_id = await con.execute("""
+                INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3) RETURNING id;
             """, show_id, episode, torrent_hash)
+
+        return entry_id
 
         
     async def mark_entry_complete(self, entry: Record) -> None:
