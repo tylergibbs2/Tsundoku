@@ -22,7 +22,7 @@ async def index():
         shows = [dict(s) for s in shows]
         for s in shows:
             entries = await con.fetch("""
-                SELECT id, episode, current_state FROM
+                SELECT id, show_id, episode, current_state FROM
                 show_entry WHERE show_id=$1 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]

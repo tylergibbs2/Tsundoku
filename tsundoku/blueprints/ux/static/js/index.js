@@ -1,8 +1,9 @@
 var None = null;
 
 
-function submitForm(event)
+function submitAddOrEditShowForm(event)
 {
+
     event.preventDefault();
     var url = $(this).closest("form").attr("action");
     var method = $(this).closest("form").attr("method");
@@ -24,9 +25,7 @@ function addShowEntryFormSubmit(event)
 {
     event.preventDefault();
 
-    var table = document.querySelector("#show-entry-table tbody");
     var form = $(this).closest("form");
-
     var url = form.attr("action");
     var method = form.attr("method");
     var data = form.serialize();
@@ -38,28 +37,33 @@ function addShowEntryFormSubmit(event)
             success: function(data) {
                 var data = JSON.parse(data);
                 var entry = data.entry;
-                var row = table.insertRow(-1);
-
-                var cell_id = row.insertCell(0);
-                var cell_episode = row.insertCell(1);
-                var cell_status = row.insertCell(2);
-                var cell_delete = row.insertCell(3);
-            
-                cell_id.innerHTML = entry.id;
-                cell_episode.innerHTML = entry.episode;
-                cell_status.innerHTML = entry.current_state;
-            
-                var deleteBtn = document.createElement("button");
-                deleteBtn.classList.add("delete");
-                deleteBtn.setAttribute(
-                    "onclick",
-                    `deleteShowEntry(${entry.show_id}, ${entry.id});this.parentNode.parentNode.remove();`
-                );
-            
-                cell_delete.appendChild(deleteBtn);
+                addRowToShowEntryTable(entry);
             }
         }
     );
+}
+
+
+function addRowToShowEntryTable(entry)
+{
+    var table = document.querySelector("#show-entry-table tbody"); 
+    var row = table.insertRow(-1);
+
+    var cell_episode = row.insertCell(0);
+    var cell_status = row.insertCell(1);
+    var cell_delete = row.insertCell(2);
+
+    cell_episode.innerHTML = entry.episode;
+    cell_status.innerHTML = entry.current_state;
+
+    var deleteBtn = document.createElement("button");
+    deleteBtn.classList.add("delete");
+    deleteBtn.setAttribute(
+        "onclick",
+        `deleteShowEntry(${entry.show_id}, ${entry.id});this.parentNode.parentNode.remove();`
+    );
+
+    cell_delete.appendChild(deleteBtn);
 }
 
 
@@ -116,7 +120,7 @@ function openAddShowModal()
 
     form.action = "/api/shows";
     form.method = "POST";
-    form.onsubmit = submitForm;
+    form.onsubmit = submitAddOrEditShowForm;
 
     document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");  
@@ -151,32 +155,15 @@ function openEditShowModal(show)
     
     for (var i=0; i < show.entries.length; i++)
     {
-        var row = table.insertRow(i);
-
-        var cell_id = row.insertCell(0);
-        var cell_episode = row.insertCell(1);
-        var cell_status = row.insertCell(2);
-        var cell_delete = row.insertCell(3);
-
-        cell_id.innerHTML = show.entries[i].id;
-        cell_episode.innerHTML = show.entries[i].episode;
-        cell_status.innerHTML = show.entries[i].current_state;
-
-        var deleteBtn = document.createElement("button");
-        deleteBtn.classList.add("delete");
-        deleteBtn.setAttribute(
-            "onclick",
-            `deleteShowEntry(${show.id}, ${show.entries[i].id});this.parentNode.parentNode.remove();`
-        );
-
-        cell_delete.appendChild(deleteBtn);
+        var entry = show.entries[i];
+        addRowToShowEntryTable(entry);
     }
 
     tableCaption.innerHTML = show.title;
 
     form.action = `/api/shows/${show.id}`;
     form.method = "PUT";
-    form.onsubmit = submitForm;
+    form.onsubmit = submitAddOrEditShowForm;
 
     addEntryForm.action = `/api/shows/${show.id}/entries`;
     addEntryForm.method = "POST";
