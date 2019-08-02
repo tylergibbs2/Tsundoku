@@ -28,5 +28,6 @@ async def index():
             s["entries"] = [dict(e) for e in entries]
 
     kwargs["shows"] = shows
+    kwargs["seen_titles"] = list(app.seen_titles)
 
     return await render_template("index.html", **kwargs)

@@ -9,15 +9,16 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.css">
     <link rel="stylesheet" href="{{ url_for('ux.static', filename='css/index.css') }}">
 
     <!-- JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.js"></script>
     <script src="{{ url_for('ux.static', filename='js/index.js') }}"></script>
 </head>
 
 <body>
-
     <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
             <a class="navbar-item" href="/">
@@ -164,7 +165,12 @@
                     <div class="field">
                         <label class="label">Name</label>
                         <div class="control">
-                            <input name="title" class="input" type="text" placeholder="Show title" required>
+                            <input name="title" class="input awesomplete" list="titles-datalist" type="text" placeholder="Show title" required>
+                            <datalist id="titles-datalist">
+                                {% for title in seen_titles %}
+                                <option>{{ title }}</option>
+                                {% endfor %}
+                            </datalist>
                         </div>
                     </div>
 
