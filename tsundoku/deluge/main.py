@@ -32,8 +32,11 @@ class DelugeClient:
         """
         host = get_config_value("Deluge", "host")
         port = get_config_value("Deluge", "port")
+        secure = get_config_value("Deluge", "secure")
 
-        return f"http://{host}:{port}/json"
+        protocol = "https" if secure else "http"
+
+        return f"{protocol}://{host}:{port}/json"
 
 
     async def get_magnet(self, location: str) -> str:
