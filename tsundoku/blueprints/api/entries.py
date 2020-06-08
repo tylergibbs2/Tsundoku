@@ -85,7 +85,7 @@ class EntriesAPI(views.MethodView):
                 entry_id = await con.fetchval("""
                     INSERT INTO show_entry (show_id, episode, current_state, torrent_hash)
                     VALUES ($1, $2, $3, $4) RETURNING id;
-                """, show_id, episode, "complete", "")
+                """, show_id, episode, "completed", "")
 
         async with app.db_pool.acquire() as con:
             new_entry = await con.fetchrow("""

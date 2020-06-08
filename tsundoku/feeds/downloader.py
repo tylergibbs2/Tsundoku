@@ -78,7 +78,7 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             await con.execute("""
-                UPDATE show_entry SET current_state='complete' WHERE id=$1
+                UPDATE show_entry SET current_state='completed' WHERE id=$1
             """, entry["id"])
 
 
