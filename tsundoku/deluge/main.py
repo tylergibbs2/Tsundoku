@@ -140,7 +140,7 @@ class DelugeClient:
     async def remove_torrent(self, torrent_id: str, remove_data=False) -> bool:
         """
         Removes a torrent of specified ID from Deluge.
-        
+
         Can also optionally remove data from disk upon deletion.
 
         Parameters
@@ -203,7 +203,7 @@ class DelugeClient:
             auth_request = await auth_request.json(content_type=None)
 
             self._request_counter += 1
-            
+
             error = auth_request.get("error")
             if error:
                 raise DelugeAuthorizationError(error["message"])
@@ -213,7 +213,7 @@ class DelugeClient:
     async def request(self, method: str, data: list=[]) -> dict:
         """
         Authorizes and makes a request with the Deluge WebAPI.
-        
+
         Results will be returned in the 'result' key in the response dict.
         Errors will be returned as an 'error' key in the response dict.
 
