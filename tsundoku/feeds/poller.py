@@ -85,6 +85,7 @@ class Poller:
                 logger.info(f"{parser.name} - Checked for New Releases")
 
             self.current_parser = None
+            logger.info("Checked for New Releases")
 
             await asyncio.sleep(self.interval)
 
