@@ -230,6 +230,8 @@ class Downloader:
         entry: asyncpg.Record
             The record object of the entry in the database.
         """
+        logger.info(f"Checking Release Status - {entry['show_id'], entry['episode']}")
+
         try:
             deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"], ["name", "move_completed_path"])
         except IndexError:
@@ -243,6 +245,8 @@ class Downloader:
         path = self.get_file_path(file_location, file_name)
         if not path.is_file():
             return
+
+        logger.info(f"Found Downloaded Release - {entry['show_id'], entry['episode']}")
 
         async with self.app.db_pool.acquire() as con:
             await con.execute("""
