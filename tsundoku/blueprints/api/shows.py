@@ -4,6 +4,8 @@ import typing
 from quart import request, views
 from quart import current_app as app
 
+from tsundoku import kitsu
+
 
 class ShowsAPI(views.MethodView):
     async def get(self, show_id: int=None) -> typing.Union[dict, typing.List[dict]]:
@@ -22,7 +24,7 @@ class ShowsAPI(views.MethodView):
             async with app.db_pool.acquire() as con:
                 shows = await con.fetch("""
                     SELECT id, title, desired_format, desired_folder,
-                    season, episode_offset FROM shows;
+                    season, episode_offset, show_image FROM shows;
                 """)
 
                 return json.dumps([dict(record) for record in shows])
@@ -30,7 +32,7 @@ class ShowsAPI(views.MethodView):
             async with app.db_pool.acquire() as con:
                 show = await con.fetchrow("""
                     SELECT id, title, desired_format, desired_folder,
-                    season, episode_offset FROM shows WHERE id=$1;
+                    season, episode_offset, show_image FROM shows WHERE id=$1;
                 """, show_id)
 
             if not show:
@@ -78,12 +80,14 @@ class ShowsAPI(views.MethodView):
         season = int(arguments["season"])
         episode_offset = int(arguments["episode_offset"])
 
+        kitsu_id = await kitsu.get_id(arguments["title"])
+
         async with app.db_pool.acquire() as con:
             await con.execute("""
                 INSERT INTO shows (title, desired_format, desired_folder,
-                season, episode_offset) VALUES ($1, $2, $3, $4, $5);
+                season, episode_offset, kitsu_id) VALUES ($1, $2, $3, $4, $5, $6);
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset)
+            episode_offset, kitsu_id)
 
         return json.dumps({"success": True})
 
@@ -129,11 +133,19 @@ class ShowsAPI(views.MethodView):
         episode_offset = int(arguments["episode_offset"])
 
         async with app.db_pool.acquire() as con:
+            og_data = await con.fetchrow("""
+                SELECT title, kitsu_id FROM shows WHERE id=$1;
+            """, show_id)
+            if arguments["title"] != og_data["title"]:
+                kitsu_id = await kitsu.get_id(arguments["title"])
+            else:
+                kitsu_id = og_data["kitsu_id"]
+
             await con.execute("""
                 UPDATE shows SET title=$1, desired_format=$2, desired_folder=$3,
-                season=$4, episode_offset=$5 WHERE id=$6;
+                season=$4, episode_offset=$5, kitsu_id=$6 WHERE id=$7;
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset, show_id)
+            episode_offset, kitsu_id, show_id)
 
         return json.dumps({"success": True})
 

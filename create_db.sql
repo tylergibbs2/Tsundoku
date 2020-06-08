@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS shows (
     desired_format TEXT,
     desired_folder TEXT,
     season SMALLINT NOT NULL,
-    episode_offset SMALLINT NOT NULL DEFAULT 0
+    episode_offset SMALLINT NOT NULL DEFAULT 0,
+    kitsu_id INT
 );
 
 CREATE TABLE IF NOT EXISTS show_entry (

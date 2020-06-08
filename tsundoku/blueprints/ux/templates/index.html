@@ -165,7 +165,8 @@
                     <div class="field">
                         <label class="label">Name</label>
                         <div class="control">
-                            <input name="title" class="input awesomplete" list="titles-datalist" type="text" placeholder="Show title" required>
+                            <input name="title" class="input awesomplete" list="titles-datalist" type="text"
+                                placeholder="Show title" required>
                             <datalist id="titles-datalist">
                                 {% for title in seen_titles %}
                                 <option>{{ title }}</option>
@@ -222,9 +223,22 @@
                 {% for show in shows %}
                 <div class="column is-one-fifth">
                     <div class="card">
+                        {% if show.image is not none %}
+                        <div class="card-image">
+                            <a href="{{ show.link }}">
+                                <figure class="image is-3by4">
+                                    <img src="{{ show.image }}">
+                                </figure>
+                            </a>
+                        </div>
+                        {% endif %}
                         <div class="card-content">
                             <p class="subtitle">
+                                {% if show.link is not none %}
+                                <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
+                                {% else %}
                                 <b>{{ show.title }}</b>
+                                {% endif %}
                             </p>
                         </div>
                         <footer class="card-footer">
