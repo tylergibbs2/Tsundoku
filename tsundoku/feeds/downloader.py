@@ -239,24 +239,25 @@ class Downloader:
         if not path.is_file():
             return
 
-        await con.execute("""
-            UPDATE show_entry SET current_state = 'downloaded'
-            WHERE torrent_hash=$1;
-        """, entry["torrent_hash"])
+        async with self.app.db_pool.acquire() as con:
+            await con.execute("""
+                UPDATE show_entry SET current_state = 'downloaded'
+                WHERE torrent_hash=$1;
+            """, entry["torrent_hash"])
 
-        renamed_path = await self.handle_rename(entry, path)
+            renamed_path = await self.handle_rename(entry, path)
 
-        await con.execute("""
-            UPDATE show_entry SET current_state = 'renamed'
-            WHERE torrent_hash=$1;
-        """, entry["torrent_hash"])
+            await con.execute("""
+                UPDATE show_entry SET current_state = 'renamed'
+                WHERE torrent_hash=$1;
+            """, entry["torrent_hash"])
 
-        moved_path = await self.handle_move(entry, renamed_path)
+            moved_path = await self.handle_move(entry, renamed_path)
 
-        await con.execute("""
-            UPDATE show_entry SET current_state = 'moved'
-            WHERE torrent_hash=$1;
-        """, entry["torrent_hash"])
+            await con.execute("""
+                UPDATE show_entry SET current_state = 'moved'
+                WHERE torrent_hash=$1;
+            """, entry["torrent_hash"])
 
         await self.mark_entry_complete(entry)
 
