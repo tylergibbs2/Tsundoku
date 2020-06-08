@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from pathlib import Path
 import re
@@ -8,6 +9,9 @@ from asyncpg import Record
 from quart.ctx import AppContext
 
 from tsundoku.feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
+
+
+logger = logging.getLogger("tsundoku")
 
 
 class Downloader:
@@ -63,6 +67,7 @@ class Downloader:
             entry_id = await con.fetchval("""
                 INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3) RETURNING id;
             """, show_id, episode, torrent_hash)
+        logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
 
         return entry_id
 
@@ -244,6 +249,7 @@ class Downloader:
                 UPDATE show_entry SET current_state = 'downloaded'
                 WHERE torrent_hash=$1;
             """, entry["torrent_hash"])
+            logger.info(f"Release Marked as Downloaded - {entry['show_id']}, {entry['episode']}")
 
             renamed_path = await self.handle_rename(entry, path)
 
@@ -251,6 +257,7 @@ class Downloader:
                 UPDATE show_entry SET current_state = 'renamed'
                 WHERE torrent_hash=$1;
             """, entry["torrent_hash"])
+            logger.info(f"Release Marked as Renamed - {entry['show_id']}, {entry['episode']}")
 
             moved_path = await self.handle_move(entry, renamed_path)
 
@@ -258,8 +265,10 @@ class Downloader:
                 UPDATE show_entry SET current_state = 'moved'
                 WHERE torrent_hash=$1;
             """, entry["torrent_hash"])
+            logger.info(f"Release Marked as Moved - {entry['show_id']}, {entry['episode']}")
 
         await self.mark_entry_complete(entry)
+        logger.info(f"Release Marked as Completed - {entry['show_id']}, {entry['episode']}")
 
 
     async def check_show_entries(self) -> None:

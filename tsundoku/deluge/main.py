@@ -1,15 +1,19 @@
 import asyncio
 import base64
 import hashlib
+import json
+import logging
 import sys
 import typing
-import json
 
 import aiohttp
 import bencodepy
 
 from tsundoku.config import get_config_value
 from tsundoku.deluge.exceptions import DelugeError, DelugeAuthorizationError
+
+
+logger = logging.getLogger("tsundoku")
 
 
 class DelugeClient:
@@ -189,7 +193,7 @@ class DelugeClient:
         self._request_counter += 1
         result = auth_status.get("result")
         if not result:
-            # TODO: add invalid password message
+            logger.warn("Deluge Failed to Authenticate")
 
             password = get_config_value("Deluge", "password")
 

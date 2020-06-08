@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+import logging
 import typing
 
 import feedparser
@@ -8,6 +9,9 @@ from quart.ctx import AppContext
 
 from tsundoku.config import get_config_value
 from tsundoku.feeds.exceptions import InvalidPollerInterval
+
+
+logger = logging.getLogger("tsundoku")
 
 
 @dataclass
@@ -68,12 +72,17 @@ class Poller:
         in the configuration file.
         """
         while True:
+            logger.info("Checking for New Releases...")
+
             self.app.seen_titles = set()
 
             for parser in self.app.rss_parsers:
                 self.current_parser = parser
                 feed = await self.get_feed_from_parser()
+
+                logger.info(f"{parser.name} - Checking for New Releases...")
                 await self.check_feed(feed)
+                logger.info(f"{parser.name} - Checked for New Releases")
 
             await asyncio.sleep(self.interval)
 
@@ -171,6 +180,7 @@ class Poller:
         """
         if hasattr(self.current_parser, "ignore_logic"):
             if self.current_parser.ignore_logic(item) == False:
+                logger.debug(f"{self.current_parser.name} - Release Ignored")
                 return
 
         if hasattr(self.current_parser, "get_file_name"):
@@ -194,6 +204,7 @@ class Poller:
         if entry_is_parsed:
             return
 
+        logger.info(f"{self.current_parser.name} - Release Found - {show_name}, {show_episode}")
 
         magnet_url = await self.get_torrent_link(item)
         await self.app.downloader.begin_handling(

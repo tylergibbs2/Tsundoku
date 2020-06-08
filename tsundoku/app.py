@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+from logging.config import dictConfig
 
 import aiohttp
 import asyncpg
@@ -19,6 +20,38 @@ app.register_blueprint(api.api_blueprint)
 app.register_blueprint(ux.ux_blueprint)
 
 app.seen_titles = set()
+
+
+dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        }
+    },
+    "handlers": {
+        "stream": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "default"
+        },
+        "file": {
+            "filename": "tsundoku.log",
+            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "formatter": "default",
+            "encoding": "utf-8"
+        }
+    },
+    "loggers": {
+        "tsundoku": {
+            "handlers": ["stream", "file"],
+            "level": "DEBUG",
+            "propagate": True
+        }
+    }
+})
 
 
 @app.before_serving
@@ -76,7 +109,7 @@ async def load_parsers():
             raise exceptions.ParserNotFound(parser)
 
         lib = importlib.util.module_from_spec(spec)
-        
+
         try:
             spec.loader.exec_module(lib)
         except Exception as e:

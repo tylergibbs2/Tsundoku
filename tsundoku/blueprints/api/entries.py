@@ -37,7 +37,7 @@ class EntriesAPI(views.MethodView):
 
             return json.dumps(dict(entry))
 
-    
+
     async def post(self, show_id: int, entry_id: int=None):
         """
         Manually begins handling of an entry for
@@ -71,7 +71,7 @@ class EntriesAPI(views.MethodView):
         if set(arguments.keys()) != required_arguments:
             response["error"] = "too many arguments or missing required argument"
             return Response(json.dumps(response), status=400)
-        
+
         try:
             episode = int(arguments["episode"])
         except ValueError:
@@ -98,7 +98,7 @@ class EntriesAPI(views.MethodView):
 
         return json.dumps(response)
 
-    
+
     async def delete(self, show_id: int, entry_id: int):
         """
         Deletes a single entry from a show.
