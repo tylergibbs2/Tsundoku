@@ -193,7 +193,7 @@ class DelugeClient:
         self._request_counter += 1
         result = auth_status.get("result")
         if not result:
-            logger.warn("Deluge Failed to Authenticate")
+            logger.warn("Deluge - Failed to Authenticate")
 
             password = get_config_value("Deluge", "password")
 
@@ -240,6 +240,8 @@ class DelugeClient:
         while not await self.ensure_authorization():
             await asyncio.sleep(10)
             continue
+
+        logger.info("Deluge - Successfully Authenticated")
 
         payload = {
             "id": self._request_counter,

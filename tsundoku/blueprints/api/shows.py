@@ -25,7 +25,7 @@ class ShowsAPI(views.MethodView):
                     season, episode_offset FROM shows;
                 """)
 
-                return json.dumps([dict(record) for record in shows])   
+                return json.dumps([dict(record) for record in shows])
         else:
             async with app.db_pool.acquire() as con:
                 show = await con.fetchrow("""

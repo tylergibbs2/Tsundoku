@@ -1,4 +1,5 @@
 import json
+import logging
 import typing
 
 from quart import Blueprint
@@ -9,6 +10,7 @@ from .entries import EntriesAPI
 
 
 api_blueprint = Blueprint('api', __name__, url_prefix="/api")
+logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
@@ -22,6 +24,30 @@ async def get_seen_shows():
     typing.List[str]
     """
     return json.dumps(list(app.seen_titles))
+
+
+@api_blueprint.route("/shows/check", methods=["GET"])
+async def check_for_releases():
+    """
+    Forces Tsundoku to check for new releases.
+
+    Returns
+    -------
+    typing.List[typing.Tuple(int, int)]
+        A list of show IDs
+    """
+    logger.info("API - Force New Releases Check")
+
+    found_items = []
+    for parser in app.rss_parsers:
+        current_parser = parser
+        feed = await app.poller.get_feed_from_parser(parser)
+
+        logger.info(f"{parser.name} - Checking for New Releases...")
+        found_items += await app.poller.check_feed(feed)
+        logger.info(f"{parser.name} - Checked for New Releases")
+
+    return json.dumps(found_items)
 
 
 def setup_views():

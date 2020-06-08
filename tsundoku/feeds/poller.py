@@ -84,6 +84,8 @@ class Poller:
                 await self.check_feed(feed)
                 logger.info(f"{parser.name} - Checked for New Releases")
 
+            self.current_parser = None
+
             await asyncio.sleep(self.interval)
 
 
@@ -98,8 +100,14 @@ class Poller:
         feed: dict
             The RSS feed.
         """
+        found_items = []
+
         for item in feed["items"]:
-            await self.check_item(item)
+            found = await self.check_item(item)
+            if found:
+                found_items.append(found)
+
+        return found_items
 
 
     async def is_parsed(self, show_id: int, episode: int) -> bool:
@@ -213,8 +221,10 @@ class Poller:
             magnet_url
         )
 
+        return (match.matched_id, show_episode)
 
-    async def get_feed_from_parser(self) -> dict:
+
+    async def get_feed_from_parser(self, parser=None) -> dict:
         """
         Returns the RSS feed dict from the
         current parser.
@@ -224,6 +234,9 @@ class Poller:
         dict
             The parsed RSS feed.
         """
+        if self.current_parser is None:
+            self.current_parser = parser
+
         return await self.loop.run_in_executor(None, feedparser.parse, self.current_parser.url)
 
 
