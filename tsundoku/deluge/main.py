@@ -187,9 +187,10 @@ class DelugeClient:
         auth_status = await auth_status.json(content_type=None)
 
         self._request_counter += 1
-
         result = auth_status.get("result")
         if not result:
+            # TODO: add invalid password message
+
             password = get_config_value("Deluge", "password")
 
             payload = {

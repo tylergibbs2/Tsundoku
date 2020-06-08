@@ -34,7 +34,7 @@ class Downloader:
             await self.check_show_entries()
             await asyncio.sleep(15)
 
-    
+
     async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> int:
         """
         Begins downloading an episode of a show
@@ -66,7 +66,7 @@ class Downloader:
 
         return entry_id
 
-        
+
     async def mark_entry_complete(self, entry: Record) -> None:
         """
         Marks an entry as `complete` in the `show_entry` table.

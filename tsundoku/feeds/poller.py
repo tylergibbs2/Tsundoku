@@ -92,7 +92,7 @@ class Poller:
         for item in feed["items"]:
             await self.check_item(item)
 
-        
+
     async def is_parsed(self, show_id: int, episode: int) -> bool:
         """
         Will check if a specified episode of a
@@ -160,7 +160,7 @@ class Poller:
 
     async def check_item(self, item: dict) -> None:
         """
-        Checks an item to see if it is from a 
+        Checks an item to see if it is from a
         desired show entry, and will then begin
         downloading the item if so.
 
@@ -193,6 +193,7 @@ class Poller:
         entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)
         if entry_is_parsed:
             return
+
 
         magnet_url = await self.get_torrent_link(item)
         await self.app.downloader.begin_handling(

@@ -124,11 +124,6 @@ async def setup_downloader():
     asyncio.create_task(bg_task())
 
 
-@app.route("/")
-async def index():
-    return "placeholder"
-
-
 @app.after_serving
 async def cleanup():
     """
