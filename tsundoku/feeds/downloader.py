@@ -125,7 +125,7 @@ class Downloader:
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
             desired_folder = target.parent
-        else: 
+        else:
             expressive_folder = re.sub(r"{(\w+)}", formatting_re, desired_folder)
 
             Path(expressive_folder).mkdir(parents=True, exist_ok=True)
@@ -147,7 +147,7 @@ class Downloader:
             The downloaded entry.
         path: pathlib.Path
             The path of the downloaded file.
-        
+
         Returns
         -------
         pathlib.Path
@@ -182,7 +182,7 @@ class Downloader:
             }
 
             return format_exprs.get(expression, expression)
-        
+
         name = re.sub(r"{(\w+)}", formatting_re, file_fmt)
 
         new_path = path.with_name(name + suffix)
@@ -234,17 +234,33 @@ class Downloader:
 
         file_location = deluge_info["move_completed_path"]
         file_name = deluge_info["name"]
-        
+
         path = self.get_file_path(file_location, file_name)
         if not path.is_file():
             return
 
+        await con.execute("""
+            UPDATE show_entry SET current_state = 'downloaded'
+            WHERE torrent_hash=$1;
+        """, entry["torrent_hash"])
+
         renamed_path = await self.handle_rename(entry, path)
+
+        await con.execute("""
+            UPDATE show_entry SET current_state = 'renamed'
+            WHERE torrent_hash=$1;
+        """, entry["torrent_hash"])
+
         moved_path = await self.handle_move(entry, renamed_path)
+
+        await con.execute("""
+            UPDATE show_entry SET current_state = 'moved'
+            WHERE torrent_hash=$1;
+        """, entry["torrent_hash"])
 
         await self.mark_entry_complete(entry)
 
-    
+
     async def check_show_entries(self) -> None:
         """
         Queries the database for show entries marked as
