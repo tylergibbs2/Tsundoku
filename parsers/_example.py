@@ -55,7 +55,7 @@ class Example:
         """
         return item["title"]
 
-    def ignore_logic(self, item: dict):
+    def ignore_logic(self, item: dict) -> bool:
         """
         Optional
 
