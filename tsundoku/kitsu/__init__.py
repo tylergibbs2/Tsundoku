@@ -59,7 +59,7 @@ def get_link(show_id: int) -> str:
 
     return KITSU_SHOW_BASE.format(show_id)
 
-def get_poster_image(show_id: int, size: str) -> str:
+async def get_poster_image(show_id: int) -> str:
     """
     Returns the link to the show's poster
     with the specified size.
@@ -68,9 +68,6 @@ def get_poster_image(show_id: int, size: str) -> str:
     ----------
     show_id: int
         The ID of the show.
-    size: str
-        The desired poster size.
-        [tiny, small, medium, large, original]
 
     Returns
     -------
@@ -80,4 +77,11 @@ def get_poster_image(show_id: int, size: str) -> str:
     if show_id is None:
         return
 
-    return KITSU_MEDIA_BASE.format(show_id, size)
+    async with aiohttp.ClientSession() as sess:
+        for size in ["original", "large", "medium", "small", "tiny"]:
+            url = KITSU_MEDIA_BASE.format(show_id, size)
+            async with sess.head(url) as resp:
+                if resp.status == 404:
+                    continue
+
+                return url

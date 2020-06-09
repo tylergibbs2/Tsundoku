@@ -30,7 +30,7 @@ async def index():
                 show_entry WHERE show_id=$1 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
-            s["image"] = kitsu.get_poster_image(s["kitsu_id"], "large")
+            s["image"] = await kitsu.get_poster_image(s["kitsu_id"])
             s["link"] = kitsu.get_link(s["kitsu_id"])
 
     kwargs["shows"] = shows
