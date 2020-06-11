@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS shows (
     desired_folder TEXT,
     season SMALLINT NOT NULL,
     episode_offset SMALLINT NOT NULL DEFAULT 0,
-    kitsu_id INT
+    kitsu_id INT,
+    cached_poster_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS show_entry (
