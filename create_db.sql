@@ -1,5 +1,12 @@
 CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved', 'completed');
 
+CREATE TABLE IF NOT EXISTS users (
+    id SMALLSERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS shows (
     id BIGSERIAL PRIMARY KEY,
     title TEXT NOT NULL,

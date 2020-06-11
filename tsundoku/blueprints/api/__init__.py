@@ -4,6 +4,7 @@ import typing
 
 from quart import Blueprint
 from quart import current_app as app
+from quart_auth import login_required
 
 from .shows import ShowsAPI
 from .entries import EntriesAPI
@@ -14,6 +15,7 @@ logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
+@login_required
 async def get_seen_shows():
     """
     Returns a list of shows that the program
@@ -27,6 +29,7 @@ async def get_seen_shows():
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
+@login_required
 async def check_for_releases():
     """
     Forces Tsundoku to check for new releases.

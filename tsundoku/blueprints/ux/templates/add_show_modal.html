@@ -1,0 +1,59 @@
+<div id="add-show-modal" class="modal">
+    <div class="modal-background" onclick="closeModals();"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Add Show</p>
+            <button class="delete" onclick="closeModals();" aria-label="close"></button>
+        </header>
+
+        <section class="modal-card-body">
+            <form id="add-show-form" submit>
+                <div class="field">
+                    <label class="label">Name</label>
+                    <div class="control">
+                        <input name="title" class="input awesomplete" list="titles-datalist" type="text"
+                            placeholder="Show title" required>
+                        <datalist id="titles-datalist">
+                            {% for title in seen_titles %}
+                            <option>{{ title }}</option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Desired Format</label>
+                    <div class="control">
+                        <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Desired Folder</label>
+                    <div class="control">
+                        <input name="desired_folder" class="input" type="text">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Season</label>
+                    <div class="control">
+                        <input name="season" class="input" type="number" value="1" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Episode Offset</label>
+                    <div class="control">
+                        <input name="episode_offset" class="input" type="number" value="0" required>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <footer class="modal-card-foot">
+            <input class="button is-success" type="submit" form="add-show-form" value="Add show"></button>
+            <button class="button" onclick="closeModals();">Cancel</button>
+        </footer>
+    </div>
+</div>

@@ -1,0 +1,92 @@
+<div id="edit-show-modal" class="modal">
+    <div class="modal-background" onclick="closeModals();"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Edit Show</p>
+            <button class="delete" onclick="closeModals();" aria-label="close"></button>
+        </header>
+
+        <section class="modal-card-body">
+
+            <div class="tabs">
+                <ul>
+                    <li id="show-info-tab" class="is-active"><a onclick="displayShowInfo();">Information</a></li>
+                    <li id="show-entry-tab"><a onclick="displayShowEntries();">Entries</a></li>
+                </ul>
+            </div>
+
+            <div id="entry-tab-display" class="container is-hidden">
+                <table id="show-entry-table" class="table is-fullwidth is-hoverable">
+                    <caption id="entry-table-caption">Show Title</caption>
+                    <thead>
+                        <tr>
+                            <th>Episode</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+
+                <form id="add-show-entry-form" submit>
+                    <div class="field is-horizontal">
+                        <div class="field-body">
+                            <div class="field-label is-normal">
+                                <label class="label">Episode</label>
+                            </div>
+                            <div class="field">
+                                <input name="episode" class="input" type="number" value="0" required>
+                            </div>
+                            <div class="field">
+                                <input name="magnet" class="input" type="text" placeholder="Magnet URL">
+                            </div>
+                            <input class="button is-success" type="submit" value="Add entry"></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <form id="edit-show-form" submit>
+                <div class="field">
+                    <label class="label">Name</label>
+                    <div class="control">
+                        <input name="title" class="input" type="text" placeholder="Show title" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Desired Format</label>
+                    <div class="control">
+                        <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Desired Folder</label>
+                    <div class="control">
+                        <input name="desired_folder" class="input" type="text">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Season</label>
+                    <div class="control">
+                        <input name="season" class="input" type="number" value="1" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Episode Offset</label>
+                    <div class="control">
+                        <input name="episode_offset" class="input" type="number" value="0" required>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <footer class="modal-card-foot">
+            <input class="button is-success" type="submit" form="edit-show-form" value="Save changes"></button>
+            <button class="button" onclick="closeModals();">Cancel</button>
+        </footer>
+    </div>
+</div>

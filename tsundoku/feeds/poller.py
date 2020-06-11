@@ -71,6 +71,10 @@ class Poller:
         The program will poll every n seconds, as specified
         in the configuration file.
         """
+        if not self.app.rss_parsers:
+            logger.error("No RSS parsers found.")
+            return
+
         while True:
             logger.info("Checking for New Releases...")
 

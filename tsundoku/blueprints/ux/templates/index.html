@@ -1,266 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <!-- Page Meta -->
-    <meta charset="UTF-8">
-    <title>積ん読 ANIME</title>
-    <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
+{% block extralib %}
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.css">
+<link rel="stylesheet" href="{{ url_for('ux.static', filename='css/index.css') }}">
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.css">
-    <link rel="stylesheet" href="{{ url_for('ux.static', filename='css/index.css') }}">
+<!-- JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.js"></script>
+<script src="{{ url_for('ux.static', filename='js/index.js') }}"></script>
+{% endblock %}
 
-    <!-- JS -->
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.js"></script>
-    <script src="{{ url_for('ux.static', filename='js/index.js') }}"></script>
-</head>
+{% block content %}
 
-<body>
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-            <a class="navbar-item" href="/">
-                <img src="{{ url_for('ux.static', filename='img/logo.png') }}" width="112" height="28">
-            </a>
-        </div>
+{% include "delete_show_modal.html" %}
 
-        <div class="navbar-menu is-active">
-            <div class="navbar-start">
-                <a href="/" class="navbar-item">
-                    Shows
-                </a>
+{% include "edit_show_modal.html" %}
 
-                <a class="navbar-item">
-                    Settings
-                </a>
+{% include "add_show_modal.html" %}
+
+<section class="section">
+    <div class="container" style="margin-bottom: 10px;">
+        <h1 class="title">Shows</h1>
+        <h2 class="subtitle">Tracked shows in RSS</h2>
+    </div>
+
+    <div id="show-card-container" class="container">
+        <div class="columns is-multiline is-vcentered">
+            {% for show in shows %}
+            <div class="column is-one-fifth">
+                <div class="card">
+                    {% if show.image is not none %}
+                    <div class="card-image">
+                        <a href="{{ show.link }}">
+                            <figure class="image is-3by4">
+                                <img src="{{ show.image }}">
+                            </figure>
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="card-content">
+                        <p class="subtitle" style="font-size: 50vw;">
+                            {% if show.link is not none %}
+                            <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
+                            {% else %}
+                            <b>{{ show.title }}</b>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="card-footer-item">
+                            <a onclick="openEditShowModal( {{ show }} );">Edit</a>
+                        </p>
+                        <p class="card-footer-item">
+                            <a onclick="openDeleteShowModal( {{ show }} );">Delete</a>
+                        </p>
+                    </footer>
+                </div>
             </div>
-        </div>
-
-    </nav>
-
-    <div id="delete-show-modal" class="modal">
-        <div class="modal-background" onclick="closeModals();"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Delete Show</p>
-                <button class="delete" onclick="closeModals();" aria-label="close"></button>
-            </header>
-
-            <section class="modal-card-body">
-                <p>Are you sure you want to delete this item?</p>
-            </section>
-
-            <footer class="modal-card-foot">
-                <button id="delete-show-button" class="button is-danger">Delete</button>
-                <button class="button" onclick="closeModals();">No, take me back</button>
-            </footer>
+            {% endfor %}
         </div>
     </div>
 
-    <div id="edit-show-modal" class="modal">
-        <div class="modal-background" onclick="closeModals();"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Edit Show</p>
-                <button class="delete" onclick="closeModals();" aria-label="close"></button>
-            </header>
-
-            <section class="modal-card-body">
-
-                <div class="tabs">
-                    <ul>
-                        <li id="show-info-tab" class="is-active"><a onclick="displayShowInfo();">Information</a></li>
-                        <li id="show-entry-tab"><a onclick="displayShowEntries();">Entries</a></li>
-                    </ul>
-                </div>
-
-                <div id="entry-tab-display" class="container is-hidden">
-                    <table id="show-entry-table" class="table is-fullwidth is-hoverable">
-                        <caption id="entry-table-caption">Show Title</caption>
-                        <thead>
-                            <tr>
-                                <th>Episode</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-
-                    <form id="add-show-entry-form" submit>
-                        <div class="field is-horizontal">
-                            <div class="field-body">
-                                <div class="field-label is-normal">
-                                    <label class="label">Episode</label>
-                                </div>
-                                <div class="field">
-                                    <input name="episode" class="input" type="number" value="0" required>
-                                </div>
-                                <div class="field">
-                                    <input name="magnet" class="input" type="text" placeholder="Magnet URL">
-                                </div>
-                                <input class="button is-success" type="submit" value="Add entry"></button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <form id="edit-show-form" submit>
-                    <div class="field">
-                        <label class="label">Name</label>
-                        <div class="control">
-                            <input name="title" class="input" type="text" placeholder="Show title" required>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Desired Format</label>
-                        <div class="control">
-                            <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Desired Folder</label>
-                        <div class="control">
-                            <input name="desired_folder" class="input" type="text">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Season</label>
-                        <div class="control">
-                            <input name="season" class="input" type="number" value="1" required>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Episode Offset</label>
-                        <div class="control">
-                            <input name="episode_offset" class="input" type="number" value="0" required>
-                        </div>
-                    </div>
-                </form>
-            </section>
-
-            <footer class="modal-card-foot">
-                <input class="button is-success" type="submit" form="edit-show-form" value="Save changes"></button>
-                <button class="button" onclick="closeModals();">Cancel</button>
-            </footer>
-        </div>
+    <div class="container has-text-centered" style="margin-top: 10px;">
+        <button class="button is-medium is-success" onclick="openAddShowModal();">Add show</button>
     </div>
 
-    <div id="add-show-modal" class="modal">
-        <div class="modal-background" onclick="closeModals();"></div>
-        <div class="modal-card">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Add Show</p>
-                <button class="delete" onclick="closeModals();" aria-label="close"></button>
-            </header>
+</section>
 
-            <section class="modal-card-body">
-                <form id="add-show-form" submit>
-                    <div class="field">
-                        <label class="label">Name</label>
-                        <div class="control">
-                            <input name="title" class="input awesomplete" list="titles-datalist" type="text"
-                                placeholder="Show title" required>
-                            <datalist id="titles-datalist">
-                                {% for title in seen_titles %}
-                                <option>{{ title }}</option>
-                                {% endfor %}
-                            </datalist>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Desired Format</label>
-                        <div class="control">
-                            <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Desired Folder</label>
-                        <div class="control">
-                            <input name="desired_folder" class="input" type="text">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Season</label>
-                        <div class="control">
-                            <input name="season" class="input" type="number" value="1" required>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Episode Offset</label>
-                        <div class="control">
-                            <input name="episode_offset" class="input" type="number" value="0" required>
-                        </div>
-                    </div>
-                </form>
-            </section>
-
-            <footer class="modal-card-foot">
-                <input class="button is-success" type="submit" form="add-show-form" value="Add show"></button>
-                <button class="button" onclick="closeModals();">Cancel</button>
-            </footer>
-        </div>
-    </div>
-
-    <section class="section">
-        <div class="container" style="margin-bottom: 10px;">
-            <h1 class="title">Shows</h1>
-            <h2 class="subtitle">Tracked shows in RSS</h2>
-        </div>
-
-        <div id="show-card-container" class="container">
-            <div class="columns is-multiline is-vcentered">
-                {% for show in shows %}
-                <div class="column is-one-fifth">
-                    <div class="card">
-                        {% if show.image is not none %}
-                        <div class="card-image">
-                            <a href="{{ show.link }}">
-                                <figure class="image is-3by4">
-                                    <img src="{{ show.image }}">
-                                </figure>
-                            </a>
-                        </div>
-                        {% endif %}
-                        <div class="card-content">
-                            <p class="subtitle">
-                                {% if show.link is not none %}
-                                <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
-                                {% else %}
-                                <b>{{ show.title }}</b>
-                                {% endif %}
-                            </p>
-                        </div>
-                        <footer class="card-footer">
-                            <p class="card-footer-item">
-                                <a onclick="openEditShowModal( {{ show }} );">Edit</a>
-                            </p>
-                            <p class="card-footer-item">
-                                <a onclick="openDeleteShowModal( {{ show }} );">Delete</a>
-                            </p>
-                        </footer>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="container has-text-centered" style="margin-top: 10px;">
-            <button class="button is-medium is-success" onclick="openAddShowModal();">Add show</button>
-        </div>
-
-    </section>
-
-</body>
-
-</html>
+{% endblock %}

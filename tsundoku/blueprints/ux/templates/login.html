@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="columns is-centered">
+    <div class="column is-half">
+        <form action="{{ url_for('ux.login') }}" method="POST">
+            <div class="field">
+                <label class="label">Username</label>
+                <input class="input" type="text" name="username" placeholder="Username" required>
+            </div>
+
+            <div class="field">
+                <label class="label">Password</label>
+                <input class="input" type="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <button type="submit" class="button is-link">Login</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,8 +1,9 @@
 import json
 import typing
 
-from quart import request, views
+from quart import abort, request, views
 from quart import current_app as app
+from quart_auth import current_user
 
 from tsundoku import kitsu
 
@@ -20,6 +21,9 @@ class ShowsAPI(views.MethodView):
             A dict or a list of dict containing
             the requested show information.
         """
+        if not await current_user.is_authenticated:
+            return abort(401, "You are not authorized to access this resource.")
+
         if show_id is None:
             async with app.db_pool.acquire() as con:
                 shows = await con.fetch("""
@@ -64,6 +68,9 @@ class ShowsAPI(views.MethodView):
             Single key: `success`. Value is True if success,
             False otherwise.
         """
+        if not await current_user.is_authenticated:
+            return abort(401, "You are not authorized to access this resource.")
+
         await request.get_data()
         arguments = await request.form
 
@@ -116,6 +123,9 @@ class ShowsAPI(views.MethodView):
             Single key: `success`. Value is True if success,
             False otherwise.
         """
+        if not await current_user.is_authenticated:
+            return abort(401, "You are not authorized to access this resource.")
+
         await request.get_data()
         arguments = await request.form
 
@@ -163,6 +173,9 @@ class ShowsAPI(views.MethodView):
             Single key: `success`. Value is True if success,
             False otherwise.
         """
+        if not await current_user.is_authenticated:
+            return abort(401, "You are not authorized to access this resource.")
+
         async with app.db_pool.acquire() as con:
             await con.execute("""
                 DELETE FROM show_entry WHERE show_id=$1;

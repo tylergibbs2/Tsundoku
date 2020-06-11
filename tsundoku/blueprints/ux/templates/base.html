@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Page Meta -->
+    <meta charset="UTF-8">
+    <title>積ん読 ANIME</title>
+    <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.0/css/bulma.min.css">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    {% block extralib %}
+    {% endblock %}
+</head>
+
+<body>
+
+{% include "nav_top.html" %}
+
+<div class="container">
+    {% block content %}
+
+    {% endblock %}
+</div>
+
+</body>
+</html>

@@ -1,10 +1,14 @@
 import asyncio
 import importlib
+import logging
 from logging.config import dictConfig
+import secrets
+import sys
 
 import aiohttp
 import asyncpg
-from quart import Quart
+from quart import Quart, redirect, url_for
+from quart_auth import AuthManager, Unauthorized
 
 from tsundoku.blueprints import api, ux
 from tsundoku.config import get_config_value
@@ -12,7 +16,11 @@ from tsundoku.deluge import DelugeClient
 import tsundoku.exceptions as exceptions
 from tsundoku.feeds import Downloader
 from tsundoku.feeds import Poller
+from tsundoku.user import User
 
+
+auth = AuthManager()
+auth.user_class = User
 
 app = Quart("Tsundoku", static_folder=None)
 
@@ -20,6 +28,15 @@ app.register_blueprint(api.api_blueprint)
 app.register_blueprint(ux.ux_blueprint)
 
 app.seen_titles = set()
+logger = logging.getLogger("tsundoku")
+
+
+class Config:
+    SECRET_KEY = secrets.token_urlsafe(16)
+    QUART_AUTH_COOKIE_SECURE = False
+
+
+app.config.from_object(Config())
 
 
 dictConfig({
@@ -52,6 +69,11 @@ dictConfig({
         }
     }
 })
+
+
+@app.errorhandler(Unauthorized)
+async def redirect_to_login(*_):
+    return redirect(url_for("ux.login"))
 
 
 @app.before_serving
@@ -88,6 +110,14 @@ async def setup_db():
         database=database,
         loop=loop
     )
+
+    async with app.db_pool.acquire() as con:
+        users = await con.fetchval("""
+            SELECT COUNT(*) FROM users;
+        """)
+
+    if not users:
+        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
 @app.before_serving
@@ -170,4 +200,5 @@ host = get_config_value("Tsundoku", "host")
 port = get_config_value("Tsundoku", "port")
 
 def run():
+    auth.init_app(app)
     app.run(host=host, port=port)
