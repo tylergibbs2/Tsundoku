@@ -78,7 +78,7 @@ async def get_poster_image(show_id: int) -> str:
         return
 
     async with aiohttp.ClientSession() as sess:
-        for size in ["original", "large", "medium", "small", "tiny"]:
+        for size in ["large", "medium", "small", "tiny"]:
             url = KITSU_MEDIA_BASE.format(show_id, size)
             async with sess.head(url) as resp:
                 if resp.status == 404:
