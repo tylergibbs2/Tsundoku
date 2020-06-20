@@ -53,6 +53,26 @@ async def check_for_releases():
     return json.dumps(found_items)
 
 
+@api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
+@login_required
+async def delete_show_cache(show_id: int):
+    """
+    Force Tsundoku to delete the cache for a show.
+
+    Returns
+    -------
+    None
+    """
+    logger.info(f"API - Deleting cache for Show {show_id}")
+
+    async with app.db_pool.acquire() as con:
+        await con.execute("""
+            UPDATE shows SET cached_poster_url=NULL WHERE id=$1;
+        """, show_id)
+
+    return json.dumps([])
+
+
 def setup_views():
     # Setup ShowsAPI URL rules.
     shows_view = ShowsAPI.as_view("shows_api")

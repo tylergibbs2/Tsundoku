@@ -75,6 +75,17 @@ function deleteShowEntry(show_id, entry_id) {
 }
 
 
+function deleteShowCache(show_id) {
+    var url = `/api/shows/${show_id}/cache`;
+    $.ajax(
+        {
+            url: url,
+            type: "DELETE"
+        }
+    );
+}
+
+
 function displayShowInfo() {
     var form = document.getElementById("edit-show-form");
     var table = document.getElementById("entry-tab-display");
@@ -128,6 +139,7 @@ function openEditShowModal(show) {
     var tableCaption = document.getElementById("entry-table-caption");
 
     var addEntryForm = document.getElementById("add-show-entry-form");
+    var delCacheBtn = document.getElementById("del-cache-btn");
 
     displayShowInfo();
     form.reset();
@@ -160,6 +172,10 @@ function openEditShowModal(show) {
     addEntryForm.action = `/api/shows/${show.id}/entries`;
     addEntryForm.method = "POST";
     addEntryForm.onsubmit = addShowEntryFormSubmit;
+
+    delCacheBtn.onclick = function () {
+        deleteShowCache(show.id);
+    }
 
     document.documentElement.classList.add("is-clipped");
     modal.classList.add("is-active");
