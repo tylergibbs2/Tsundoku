@@ -32,7 +32,7 @@ async def get_id(show_name: str) -> typing.Optional[int]:
     typing.Optional[int]
         The ID of the show on Kitsu.
     """
-    logger.info(f"Retrieving Kitsu ID for Show {show_id}")
+    logger.info(f"Retrieving Kitsu ID for Show {show_name}")
 
     async with aiohttp.ClientSession(headers=HEADERS) as sess:
         payload = {
