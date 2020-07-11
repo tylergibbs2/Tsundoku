@@ -220,6 +220,6 @@ _Pvt_Extensions
 *.pyc
 
 \.vscode/
-tsundoku-env/
+.venv
 config.ini
 tsundoku.log
