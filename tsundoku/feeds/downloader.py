@@ -227,6 +227,7 @@ class Downloader:
         file_location = file_location.replace("\\", "/")
         location = Path(file_location)
         if not location.is_dir():
+            logger.error(f"'{file_location}' could not be read")
             raise SavePathDoesNotExist(f"'{file_location}' could not be read")
 
         return location / file_name
@@ -249,6 +250,7 @@ class Downloader:
         except IndexError:
             show_id = entry["show_id"]
             episode = entry["episode"]
+            logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
             raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
 
         file_location = deluge_info["move_completed_path"]

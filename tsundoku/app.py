@@ -136,6 +136,7 @@ async def load_parsers():
     for parser in parsers:
         spec = importlib.util.find_spec(parser)
         if spec is None:
+            logger.error(f"Parser '{parser}' Not Found")
             raise exceptions.ParserNotFound(parser)
 
         lib = importlib.util.module_from_spec(spec)
@@ -143,11 +144,13 @@ async def load_parsers():
         try:
             spec.loader.exec_module(lib)
         except Exception as e:
+            logger.error(f"Parser '{parser}' Failed")
             raise exceptions.ParserFailed(parser, e) from e
 
         try:
             setup = getattr(lib, "setup")
         except AttributeError:
+            logger.error(f"Parser '{parser}' Missing Setup Function")
             raise exceptions.ParserMissingSetup(parser)
 
         try:
@@ -155,9 +158,11 @@ async def load_parsers():
             parser_object = setup(new_context.app)
             for func in required_functions:
                 if not hasattr(parser_object, func):
+                    logger.error(f"Parser '{parser}' Missing {func}")
                     raise exceptions.ParserMissingRequiredFunction(f"{parser}: missing {func}")
             app.rss_parsers.append(parser_object)
         except Exception as e:
+            logger.error(f"Parser '{parser}' Failed: {e}")
             raise exceptions.ParserFailed(parser, e) from e
 
 
