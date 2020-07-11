@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+from typing import Optional
 
 from asyncpg import Record
 from quart.ctx import AppContext
@@ -87,7 +88,7 @@ class Downloader:
             """, entry["id"])
 
 
-    async def handle_move(self, entry: Record, target: Path) -> Path:
+    async def handle_move(self, entry: Record, target: Path) -> Optional[Path]:
         """
         Handles the move for a downloaded entry.
         Returns the new pathlib.Path of the moved file.
@@ -101,7 +102,7 @@ class Downloader:
 
         Returns
         -------
-        pathlib.Path
+        Optional[pathlib.Path]
             The new path of the moved file.
         """
         async with self.app.db_pool.acquire() as con:
@@ -121,7 +122,8 @@ class Downloader:
                 "e": episode,
                 "s00": season.zfill(2),
                 "e00": episode.zfill(2),
-                "s00e00": f"S{season.zfill(2)}E{episode.zfill(2)}",
+                "s00e00": f"s{season.zfill(2)}e{episode.zfill(2)}",
+                "S00E00": f"S{season.zfill(2)}E{episode.zfill(2)}",
                 "sxe": f"{season}x{episode.zfill(2)}"
             }
 
@@ -136,12 +138,16 @@ class Downloader:
             Path(expressive_folder).mkdir(parents=True, exist_ok=True)
             desired_folder = Path(expressive_folder)
 
-        shutil.move(str(target), str(desired_folder))
+        try:
+            shutil.move(str(target), str(desired_folder))
+        except PermissionError:
+            logger.error("Error Moving Release - Invalid Permissions")
+            return
 
         return desired_folder / target.name
 
 
-    async def handle_rename(self, entry: Record, path: Path) -> Path:
+    async def handle_rename(self, entry: Record, path: Path) -> Optional[Path]:
         """
         Handles the rename for a downloaded entry.
         Returns the new pathlib.Path of the renamed file.
@@ -155,7 +161,7 @@ class Downloader:
 
         Returns
         -------
-        pathlib.Path
+        Optional[pathlib.Path]
             The new path of the renamed file.
         """
         suffix = path.suffix
@@ -182,7 +188,8 @@ class Downloader:
                 "e": episode,
                 "s00": season.zfill(2),
                 "e00": episode.zfill(2),
-                "s00e00": f"S{season.zfill(2)}E{episode.zfill(2)}",
+                "s00e00": f"s{season.zfill(2)}e{episode.zfill(2)}",
+                "S00E00": f"S{season.zfill(2)}E{episode.zfill(2)}",
                 "sxe": f"{season}x{episode.zfill(2)}"
             }
 
@@ -191,7 +198,12 @@ class Downloader:
         name = re.sub(r"{(\w+)}", formatting_re, file_fmt)
 
         new_path = path.with_name(name + suffix)
-        os.rename(path, new_path)
+
+        try:
+            os.rename(path, new_path)
+        except PermissionError:
+            logger.error("Error Renaming Release - Invalid Permissions")
+            return
 
         return new_path
 
@@ -256,6 +268,8 @@ class Downloader:
             logger.info(f"Release Marked as Downloaded - {entry['show_id']}, {entry['episode']}")
 
             renamed_path = await self.handle_rename(entry, path)
+            if renamed_path is None:
+                return
 
             await con.execute("""
                 UPDATE show_entry SET current_state = 'renamed'
@@ -264,6 +278,8 @@ class Downloader:
             logger.info(f"Release Marked as Renamed - {entry['show_id']}, {entry['episode']}")
 
             moved_path = await self.handle_move(entry, renamed_path)
+            if moved_path is None:
+                return
 
             await con.execute("""
                 UPDATE show_entry SET current_state = 'moved'
