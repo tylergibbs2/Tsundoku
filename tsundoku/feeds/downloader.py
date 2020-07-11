@@ -294,7 +294,7 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             entries = await con.fetch("""
-                SELECT id, show_id, episode, torrent_hash FROM show_entry
+                SELECT id, show_id, episode, torrent_hash, current_state, file_path FROM show_entry
                 WHERE current_state != 'completed';
             """)
 
