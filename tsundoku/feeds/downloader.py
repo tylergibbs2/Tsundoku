@@ -299,5 +299,5 @@ class Downloader:
             """)
 
         for entry in entries:
-            entry = Entry(app, entry)
+            entry = Entry(self.app, entry)
             await self.check_show_entry(entry)
