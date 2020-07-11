@@ -52,3 +52,7 @@ port=8112
 password=password
 secure=false           # Use HTTPS
 ```
+
+## Parsers
+
+Please see the [example parser](https://github.com/tylergibbs2/Tsundoku/blob/master/parsers/_example.py) for writing custom parsers.
