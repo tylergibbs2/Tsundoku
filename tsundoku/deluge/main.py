@@ -193,8 +193,6 @@ class DelugeClient:
         self._request_counter += 1
         result = auth_status.get("result")
         if not result:
-            logger.warn("Deluge - Failed to Authenticate")
-
             password = get_config_value("Deluge", "password")
 
             payload = {
@@ -214,6 +212,7 @@ class DelugeClient:
 
             error = auth_request.get("error")
             if error:
+                logger.warn("Deluge - Failed to Authenticate")
                 raise DelugeAuthorizationError(error["message"])
 
         return result
