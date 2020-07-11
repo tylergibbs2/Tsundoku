@@ -27,7 +27,7 @@ class Entry:
             The new state to update to.
         """
         self.state = new_state
-        async with self.app.db_pool.acquire() as con:
+        async with app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE show_entry SET
                     current_state = $1
@@ -44,7 +44,7 @@ class Entry:
             The new path to update to.
         """
         self.file_path = new_path
-        async with self.app.db_pool.acquire() as con:
+        async with app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE show_entry SET
                     file_path = $1
