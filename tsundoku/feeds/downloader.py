@@ -9,6 +9,7 @@ from typing import Optional
 from asyncpg import Record
 from quart.ctx import AppContext
 
+from tsundoku.feeds import Entry
 from tsundoku.feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
 
 
@@ -73,48 +74,35 @@ class Downloader:
         return entry_id
 
 
-    async def mark_entry_complete(self, entry: Record) -> None:
-        """
-        Marks an entry as `complete` in the `show_entry` table.
-
-        Parameters
-        ----------
-        entry: asyncpg.Record
-            The entry to mark as complete.
-        """
-        async with self.app.db_pool.acquire() as con:
-            await con.execute("""
-                UPDATE show_entry SET current_state='completed' WHERE id=$1
-            """, entry["id"])
-
-
-    async def handle_move(self, entry: Record, target: Path) -> Optional[Path]:
+    async def handle_move(self, entry: Entry) -> Optional[Path]:
         """
         Handles the move for a downloaded entry.
         Returns the new pathlib.Path of the moved file.
 
         Parameters
         ----------
-        entry: asyncpg.Record
+        entry: Entry
             The downloaded entry.
-        target: pathlib.Path
-            The downloaded entry to be moved.
 
         Returns
         -------
         Optional[pathlib.Path]
             The new path of the moved file.
         """
+        if entry.file_path is None:
+            logger.error("entry.file_path is None?")
+            return
+
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
                 SELECT title, desired_folder, episode_offset, season FROM shows WHERE id=$1;
-            """, entry["show_id"])
+            """, entry.show_id)
 
         def formatting_re(match: re.Match):
             expression = match.group(1)
 
             season = str(show_info["season"])
-            episode = str(entry["episode"] + show_info["episode_offset"])
+            episode = str(entry.episode + show_info["episode_offset"])
 
             format_exprs = {
                 "n": show_info["title"],
@@ -131,7 +119,7 @@ class Downloader:
 
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
-            desired_folder = target.parent
+            desired_folder = entry.file_path.parent
         else:
             expressive_folder = re.sub(r"{(\w+)}", formatting_re, desired_folder)
 
@@ -139,37 +127,39 @@ class Downloader:
             desired_folder = Path(expressive_folder)
 
         try:
-            shutil.move(str(target), str(desired_folder))
+            shutil.move(str(entry.file_path), str(desired_folder))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
             return
 
-        return desired_folder / target.name
+        return desired_folder / entry.file_path.name
 
 
-    async def handle_rename(self, entry: Record, path: Path) -> Optional[Path]:
+    async def handle_rename(self, entry: Entry) -> Optional[Path]:
         """
         Handles the rename for a downloaded entry.
         Returns the new pathlib.Path of the renamed file.
 
         Parameters
         ----------
-        entry: asyncpg.Record
+        entry: Entry
             The downloaded entry.
-        path: pathlib.Path
-            The path of the downloaded file.
 
         Returns
         -------
         Optional[pathlib.Path]
             The new path of the renamed file.
         """
-        suffix = path.suffix
+        if entry.file_path is None:
+            logger.error("entry.file_path is None?")
+            return
+
+        suffix = entry.file_path.suffix
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
                 SELECT title, desired_format, season, episode_offset FROM shows WHERE id=$1;
-            """, entry["show_id"])
+            """, entry.show_id)
 
         if show_info["desired_format"]:
             file_fmt = show_info["desired_format"]
@@ -180,7 +170,7 @@ class Downloader:
             expression = match.group(1)
 
             season = str(show_info["season"])
-            episode = str(entry["episode"] + show_info["episode_offset"])
+            episode = str(entry.episode + show_info["episode_offset"])
 
             format_exprs = {
                 "n": show_info["title"],
@@ -197,10 +187,10 @@ class Downloader:
 
         name = re.sub(r"{(\w+)}", formatting_re, file_fmt)
 
-        new_path = path.with_name(name + suffix)
+        new_path = entry.file_path.with_name(name + suffix)
 
         try:
-            os.rename(path, new_path)
+            os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error("Error Renaming Release - Invalid Permissions")
             return
@@ -233,63 +223,66 @@ class Downloader:
         return location / file_name
 
 
-    async def check_show_entry(self, entry: Record) -> None:
+    async def check_show_entry(self, entry: Entry) -> None:
         """
         Checks a specific show entry for download completion.
         If an entry is completed, send it to renaming and moving.
 
         Parameters
         ----------
-        entry: asyncpg.Record
-            The record object of the entry in the database.
+        entry: Entry
+            The object of the entry in the database.
         """
-        logger.info(f"Checking Release Status - {entry['show_id'], entry['episode']}")
+        logger.info(f"Checking Release Status - {entry.show_id, entry.episode}")
 
-        try:
-            deluge_info = await self.app.deluge.get_torrent(entry["torrent_hash"], ["name", "move_completed_path"])
-        except IndexError:
-            show_id = entry["show_id"]
-            episode = entry["episode"]
-            logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
-            raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
+        if entry.state == "downloading":
+            try:
+                deluge_info = await self.app.deluge.get_torrent(
+                    entry.torrent_hash,
+                    ["name", "move_completed_path"]
+                )
+            except IndexError:
+                show_id = entry.show_id
+                episode = entry.episode
+                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
+                raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
 
-        file_location = deluge_info["move_completed_path"]
-        file_name = deluge_info["name"]
+            file_location = deluge_info["move_completed_path"]
+            file_name = deluge_info["name"]
 
-        path = self.get_file_path(file_location, file_name)
-        if not path.is_file():
+            path = self.get_file_path(file_location, file_name)
+        else:
+            path = entry.file_path
+
+        if path is None or not path.is_file():
             return
 
-        logger.info(f"Found Downloaded Release - {entry['show_id'], entry['episode']}")
+        logger.info(f"Found Release to Process - {entry['show_id'], entry['episode']}")
 
-        async with self.app.db_pool.acquire() as con:
-            await con.execute("""
-                UPDATE show_entry SET current_state = 'downloaded'
-                WHERE torrent_hash=$1;
-            """, entry["torrent_hash"])
+        if entry.state == "downloading":
+            await entry.set_state("downloaded")
+            await entry.set_path(path)
             logger.info(f"Release Marked as Downloaded - {entry['show_id']}, {entry['episode']}")
 
-            renamed_path = await self.handle_rename(entry, path)
+        if entry.state == "downloaded":
+            renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
                 return
 
-            await con.execute("""
-                UPDATE show_entry SET current_state = 'renamed'
-                WHERE torrent_hash=$1;
-            """, entry["torrent_hash"])
+            await entry.set_state("renamed")
+            await entry.set_path(renamed_path)
             logger.info(f"Release Marked as Renamed - {entry['show_id']}, {entry['episode']}")
 
-            moved_path = await self.handle_move(entry, renamed_path)
+        if entry.state == "renamed":
+            moved_path = await self.handle_move(entry)
             if moved_path is None:
                 return
 
-            await con.execute("""
-                UPDATE show_entry SET current_state = 'moved'
-                WHERE torrent_hash=$1;
-            """, entry["torrent_hash"])
+            await entry.set_state("moved")
+            await entry.set_path(moved_path)
             logger.info(f"Release Marked as Moved - {entry['show_id']}, {entry['episode']}")
 
-        await self.mark_entry_complete(entry)
+        await entry.set_state("completed")
         logger.info(f"Release Marked as Completed - {entry['show_id']}, {entry['episode']}")
 
 
@@ -306,4 +299,5 @@ class Downloader:
             """)
 
         for entry in entries:
+            entry = Entry(entry)
             await self.check_show_entry(entry)
