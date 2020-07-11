@@ -16,7 +16,7 @@ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 pip install -r requirements.txt
-python -m tsundoku --create-user   # Creates a user for logging in, passwords are securely stored
+python -m tsundoku --create-user   # Creates a user for logging in, must be done after PSQL config
 ```
 
 Copy `config.ini.example` to `config.ini` and then [configure](#Configuration).
