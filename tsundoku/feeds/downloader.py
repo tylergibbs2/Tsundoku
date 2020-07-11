@@ -9,7 +9,7 @@ from typing import Optional
 from asyncpg import Record
 from quart.ctx import AppContext
 
-from tsundoku.feeds import Entry
+from . import Entry
 from tsundoku.feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
 
 
