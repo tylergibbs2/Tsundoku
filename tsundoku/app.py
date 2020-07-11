@@ -14,8 +14,7 @@ from tsundoku.blueprints import api, ux
 from tsundoku.config import get_config_value
 from tsundoku.deluge import DelugeClient
 import tsundoku.exceptions as exceptions
-from tsundoku.feeds import Downloader
-from tsundoku.feeds import Poller
+from tsundoku.feeds import Downloader, Poller
 from tsundoku.user import User
 
 
