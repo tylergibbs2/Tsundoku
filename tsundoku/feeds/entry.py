@@ -1,11 +1,10 @@
 from pathlib import Path
-from quart import current_app as app
 
 from asyncpg import Record
 
 
 class Entry:
-    def __init__(self, record: Record):
+    def __init__(self, app, record: Record):
         self.id = record["id"]
         self.show_id = record["show_id"]
         self.episode = record["episode"]
@@ -15,6 +14,7 @@ class Entry:
         fp = record["file_path"]
         self.file_path = Path(fp) if fp is not None else None
 
+        self._app = app
         self._record = record
 
     async def set_state(self, new_state: str) -> None:
@@ -27,7 +27,7 @@ class Entry:
             The new state to update to.
         """
         self.state = new_state
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE show_entry SET
                     current_state = $1
@@ -44,7 +44,7 @@ class Entry:
             The new path to update to.
         """
         self.file_path = new_path
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE show_entry SET
                     file_path = $1
