@@ -257,12 +257,12 @@ class Downloader:
         if path is None or not path.is_file():
             return
 
-        logger.info(f"Found Release to Process - {entry['show_id'], entry['episode']}")
+        logger.info(f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")
 
         if entry.state == "downloading":
             await entry.set_state("downloaded")
             await entry.set_path(path)
-            logger.info(f"Release Marked as Downloaded - {entry['show_id']}, {entry['episode']}")
+            logger.info(f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
 
         if entry.state == "downloaded":
             renamed_path = await self.handle_rename(entry)
@@ -271,7 +271,7 @@ class Downloader:
 
             await entry.set_state("renamed")
             await entry.set_path(renamed_path)
-            logger.info(f"Release Marked as Renamed - {entry['show_id']}, {entry['episode']}")
+            logger.info(f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
 
         if entry.state == "renamed":
             moved_path = await self.handle_move(entry)
@@ -280,10 +280,10 @@ class Downloader:
 
             await entry.set_state("moved")
             await entry.set_path(moved_path)
-            logger.info(f"Release Marked as Moved - {entry['show_id']}, {entry['episode']}")
+            logger.info(f"Release Marked as Moved - {entry.show_id}, {entry.episode}")
 
         await entry.set_state("completed")
-        logger.info(f"Release Marked as Completed - {entry['show_id']}, {entry['episode']}")
+        logger.info(f"Release Marked as Completed - {entry.show_id}, {entry.episode}")
 
 
     async def check_show_entries(self) -> None:
