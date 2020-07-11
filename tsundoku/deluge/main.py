@@ -4,13 +4,13 @@ import hashlib
 import json
 import logging
 import sys
-import typing
+from typing import List, Optional
 
 import aiohttp
 import bencodepy
 
 from tsundoku.config import get_config_value
-from tsundoku.deluge.exceptions import DelugeError, DelugeAuthorizationError
+from tsundoku.deluge.exceptions import DelugeAuthorizationError
 
 
 logger = logging.getLogger("tsundoku")
@@ -82,7 +82,7 @@ class DelugeClient:
             + f"&tr={metadata[b'announce'].decode()}"
 
 
-    async def get_torrents(self, torrent_ids: typing.List[str], status_keys: typing.Optional[typing.List[str]]=None) -> typing.List:
+    async def get_torrents(self, torrent_ids: List[str], status_keys: Optional[List[str]]=None) -> List:
         """
         Returns information for all specified torrents.
 
@@ -90,7 +90,7 @@ class DelugeClient:
         ----------
         torrent_ids: list
             The torrent IDs to return information for.
-        status_keys: typing.Optional[typing.List[str]]
+        status_keys: Optional[List[str]]
             Specific status keys to retrieve information on.
 
         Returns
@@ -103,7 +103,7 @@ class DelugeClient:
         return result["result"]["torrents"]
 
 
-    async def get_torrent(self, torrent_id: str, status_keys: typing.Optional[typing.List[str]]=None) -> dict:
+    async def get_torrent(self, torrent_id: str, status_keys: Optional[List[str]]=None) -> dict:
         """
         Returns information for a specified torrent.
 
@@ -111,7 +111,7 @@ class DelugeClient:
         ----------
         torrent_id: str
             The torrent ID to return information for.
-        status_keys: typing.Optional[typing.List[str]]
+        status_keys: Optional[List[str]]
             Specific status keys to retrieve information on.
 
         Returns
@@ -126,7 +126,7 @@ class DelugeClient:
         return result["result"]["torrents"][0]
 
 
-    async def add_torrent(self, magnet_url: str) -> typing.Union[str, None]:
+    async def add_torrent(self, magnet_url: str) -> Optional[str]:
         """
         Adds a torrent to Deluge with the given magnet URL.
 
@@ -137,7 +137,7 @@ class DelugeClient:
 
         Returns
         -------
-        typing.Union[str, None]
+        Optional[str]
             The torrent ID if success, None if torrent not added.
         """
         data = await self.request("webapi.add_torrent", [magnet_url])

@@ -1,5 +1,5 @@
 import json
-import typing
+from typing import List, Union
 
 from quart import abort, Response, request, views
 from quart import current_app as app
@@ -7,14 +7,14 @@ from quart_auth import current_user
 
 
 class EntriesAPI(views.MethodView):
-    async def get(self, show_id: int, entry_id: int=None) -> typing.Union[dict, typing.List[dict]]:
+    async def get(self, show_id: int, entry_id: int=None) -> Union[dict, List[dict]]:
         """
         Retrieve all entries or a single entry
         for a specified show.
 
         Returns
         -------
-        typing.Union[dict, typing.List[dict]]
+        Union[dict, List[dict]]
             A dict or a list of dict containing
             the requested entry information.
         """

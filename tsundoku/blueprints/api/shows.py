@@ -1,5 +1,5 @@
 import json
-import typing
+from typing import List, Union
 
 from quart import abort, request, views
 from quart import current_app as app
@@ -9,7 +9,7 @@ from tsundoku import kitsu
 
 
 class ShowsAPI(views.MethodView):
-    async def get(self, show_id: int=None) -> typing.Union[dict, typing.List[dict]]:
+    async def get(self, show_id: int=None) -> Union[dict, List[dict]]:
         """
         Can retrieve either a list of all rows in
         the shows table, or a single row given a show
@@ -17,7 +17,7 @@ class ShowsAPI(views.MethodView):
 
         Returns
         -------
-        typing.Union[dict, typing.List[dict]]
+        Union[dict, List[dict]]
             A dict or a list of dict containing
             the requested show information.
         """

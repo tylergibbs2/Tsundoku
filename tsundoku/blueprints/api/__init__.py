@@ -1,6 +1,5 @@
 import json
 import logging
-import typing
 
 from quart import Blueprint
 from quart import current_app as app
@@ -23,7 +22,7 @@ async def get_seen_shows():
 
     Returns
     -------
-    typing.List[str]
+    List[str]
     """
     return json.dumps(list(app.seen_titles))
 
@@ -36,7 +35,7 @@ async def check_for_releases():
 
     Returns
     -------
-    typing.List[typing.Tuple(int, int)]
+    List[Tuple(int, int)]
         A list of show IDs
     """
     logger.info("API - Force New Releases Check")

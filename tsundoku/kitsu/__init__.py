@@ -1,6 +1,6 @@
 import aiohttp
 import logging
-import typing
+from typing import Optional
 
 from quart import current_app as app
 
@@ -17,7 +17,7 @@ HEADERS = {
 logger = logging.getLogger("tsundoku")
 
 
-async def get_id(show_name: str) -> typing.Optional[int]:
+async def get_id(show_name: str) -> Optional[int]:
     """
     Attempts to retrieve an image of the
     passed show name.
@@ -29,7 +29,7 @@ async def get_id(show_name: str) -> typing.Optional[int]:
 
     Returns
     -------
-    typing.Optional[int]
+    Optional[int]
         The ID of the show on Kitsu.
     """
     logger.info(f"Retrieving Kitsu ID for Show {show_name}")

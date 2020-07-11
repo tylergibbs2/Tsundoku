@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 import logging
-import typing
+from typing import Optional
 
 import feedparser
 from fuzzywuzzy import process
@@ -140,7 +140,7 @@ class Poller:
         return bool(show_entry)
 
 
-    async def check_item_for_match(self, show_name: str, episode: int) -> typing.Optional[EntryMatch]:
+    async def check_item_for_match(self, show_name: str, episode: int) -> Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
@@ -158,7 +158,7 @@ class Poller:
 
         Returns
         -------
-        typing.Optional[EntryMatch]
+        Optional[EntryMatch]
             The EntryMatch for the passed show name.
             Could be None if no shows are desired.
         """

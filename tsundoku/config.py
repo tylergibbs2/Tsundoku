@@ -1,13 +1,13 @@
 import configparser
 import json
-import typing
+from typing import Any
 
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
 
-def get_config_value(section: str, value: str) -> typing.Any:
+def get_config_value(section: str, value: str) -> Any:
     """
     Returns a specified value from the config.ini file.
 
@@ -23,7 +23,7 @@ def get_config_value(section: str, value: str) -> typing.Any:
 
     Returns
     -------
-    typing.Any
+    Any
         The requested value.
 
     Raises
