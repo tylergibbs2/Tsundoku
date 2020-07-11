@@ -302,7 +302,7 @@ class Downloader:
         async with self.app.db_pool.acquire() as con:
             entries = await con.fetch("""
                 SELECT id, show_id, episode, torrent_hash FROM show_entry
-                WHERE current_state = 'downloading';
+                WHERE current_state != 'completed';
             """)
 
         for entry in entries:
