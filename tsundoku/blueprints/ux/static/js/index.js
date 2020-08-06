@@ -2,7 +2,6 @@ var None = null;
 
 
 function submitAddOrEditShowForm(event) {
-
     event.preventDefault();
     var url = $(this).closest("form").attr("action");
     var method = $(this).closest("form").attr("method");
@@ -87,38 +86,25 @@ function deleteShowCache(show_id) {
 
 
 function displayShowInfo() {
-    var form = document.getElementById("edit-show-form");
-    var table = document.getElementById("entry-tab-display");
+    $("#show-info-tab").addClass("is-active");
+    $("#show-entry-tab").removeClass("is-active");
 
-    var infoTab = document.getElementById("show-info-tab");
-    var entryTab = document.getElementById("show-entry-tab");
-
-    infoTab.classList.add("is-active");
-    entryTab.classList.remove("is-active");
-
-    form.classList.remove("is-hidden");
-    table.classList.add("is-hidden");
+    $("#edit-show-form").addClass("is-hidden");
+    $("#entry-tab-display").removeClass("is-hidden");
 }
 
 
 function displayShowEntries() {
-    var form = document.getElementById("edit-show-form");
-    var table = document.getElementById("entry-tab-display");
+    $("#show-info-tab").removeClass("is-active");
+    $("#show-entry-tab").addClass("is-active");
 
-    var infoTab = document.getElementById("show-info-tab");
-    var entryTab = document.getElementById("show-entry-tab");
-
-    infoTab.classList.remove("is-active");
-    entryTab.classList.add("is-active");
-
-    form.classList.add("is-hidden");
-    table.classList.remove("is-hidden");
+    $("#edit-show-form").addClass("is-hidden");
+    $("#entry-tab-display").removeClass("is-hidden");
 }
 
 
 function openAddShowModal() {
-    var modal = document.getElementById("add-show-modal");
-    var form = document.getElementById("add-show-form");
+    let form = document.getElementById("add-show-form");
 
     form.reset();
 
@@ -126,20 +112,19 @@ function openAddShowModal() {
     form.method = "POST";
     form.onsubmit = submitAddOrEditShowForm;
 
-    document.documentElement.classList.add("is-clipped");
-    modal.classList.add("is-active");
+    $(document.documentElement).addClass("is-clipped");
+    $("#add-show-modal").addClass("is-active");
 }
 
 
 function openEditShowModal(show) {
-    var modal = document.getElementById("edit-show-modal");
-    var form = document.getElementById("edit-show-form");
+    let form = document.getElementById("edit-show-form");
 
-    var table = document.querySelector("#show-entry-table tbody");
-    var tableCaption = document.getElementById("entry-table-caption");
+    let table = document.querySelector("#show-entry-table tbody");
+    let tableCaption = document.getElementById("entry-table-caption");
 
-    var addEntryForm = document.getElementById("add-show-entry-form");
-    var delCacheBtn = document.getElementById("del-cache-btn");
+    let addEntryForm = document.getElementById("add-show-entry-form");
+    let delCacheBtn = document.getElementById("del-cache-btn");
 
     displayShowInfo();
     form.reset();
@@ -147,7 +132,7 @@ function openEditShowModal(show) {
 
     inputs = form.getElementsByTagName("input");
 
-    for (var i=0; i<inputs.length; i++)
+    for (let i=0; i<inputs.length; i++)
     {
         inputs[i].value = show[inputs[i].name];
     }
@@ -157,7 +142,7 @@ function openEditShowModal(show) {
         table.removeChild(table.childNodes[0]);
     }
 
-    for (var i=0; i < show.entries.length; i++)
+    for (let i=0; i < show.entries.length; i++)
     {
         var entry = show.entries[i];
         addRowToShowEntryTable(entry);
@@ -177,20 +162,19 @@ function openEditShowModal(show) {
         deleteShowCache(show.id);
     }
 
-    document.documentElement.classList.add("is-clipped");
-    modal.classList.add("is-active");
+    $(document.documentElement).addClass("is-clipped");
+    $("#edit-show-modal").addClass("is-active");
 }
 
 
 function openDeleteShowModal(show) {
-    var modal = document.getElementById("delete-show-modal");
-    var btn = document.getElementById("delete-show-button");
+    let btn = document.getElementById("delete-show-button");
 
     btn.onclick = function(e) {
         e.preventDefault();
         $.ajax(
             {
-                url: "/api/shows/" + show.id,
+                url: `/api/shows/${show_id}`,
                 type: "DELETE",
                 success: function() {
                     location.reload();
@@ -199,16 +183,12 @@ function openDeleteShowModal(show) {
         );
     }
 
-    document.documentElement.classList.add("is-clipped");
-    modal.classList.add("is-active");
+    $(document.documentElement).addClass("is-clipped");
+    $("#delete-show-modal").addClass("is-active");
 }
 
 
 function closeModals() {
-    modals = document.getElementsByClassName("modal");
-    for (var i=0; i<modals.length; i++)
-    {
-        modals[i].classList.remove("is-active");
-    }
-    document.documentElement.classList.remove("is-clipped");
+    $(".modal").removeClass("is-active");
+    $(document.documentElement).removeClass("is-clipped");
 }
