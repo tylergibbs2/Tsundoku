@@ -130,9 +130,10 @@ class Downloader:
             shutil.move(str(entry.file_path), str(desired_folder))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
-            return
-
-        return desired_folder / entry.file_path.name
+        except Exception as e:
+            logger.error(f"Error Moving Release - {e}")
+        else:
+            return desired_folder / entry.file_path.name
 
 
     async def handle_rename(self, entry: Entry) -> Optional[Path]:
@@ -193,9 +194,10 @@ class Downloader:
             os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error("Error Renaming Release - Invalid Permissions")
-            return
-
-        return new_path
+        except Exception as e:
+            logger.error(f"Error Renaming Release - {e}")
+        else:
+            return new_path
 
 
     def get_file_path(self, file_location: str, file_name: str) -> bool:
