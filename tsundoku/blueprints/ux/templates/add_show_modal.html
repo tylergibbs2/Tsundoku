@@ -9,7 +9,10 @@
         <section class="modal-card-body">
             <form id="add-show-form" submit>
                 <div class="field">
-                    <label class="label">Name</label>
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Name of the title as it appears in the RSS feed.">Name</span>
+                    </label>
                     <div class="control">
                         <input name="title" class="input awesomplete" list="titles-datalist" type="text"
                             placeholder="Show title" required>
@@ -22,28 +25,41 @@
                 </div>
 
                 <div class="field">
-                    <label class="label">Desired Format</label>
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Desired name of the file after it is renamed.">Desired Format</span>
+                    </label>
                     <div class="control">
                         <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
                     </div>
                 </div>
 
                 <div class="field">
-                    <label class="label">Desired Folder</label>
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Folder which to place the completed file.">Desired Folder</span>
+                    </label>
                     <div class="control">
                         <input name="desired_folder" class="input" type="text">
                     </div>
                 </div>
 
                 <div class="field">
-                    <label class="label">Season</label>
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Value to use for the season of the series when renaming.">Season</span>
+                    </label>
                     <div class="control">
                         <input name="season" class="input" type="number" value="1" required>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label class="label">Episode Offset</label>
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Positive or negative value by which to modify the episode number as it appears in the RSS feed.">Episode
+                            Offset</span>
+                    </label>
                     <div class="control">
                         <input name="episode_offset" class="input" type="number" value="0" required>
                     </div>
