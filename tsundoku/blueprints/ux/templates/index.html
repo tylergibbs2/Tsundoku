@@ -19,7 +19,7 @@
 {% include "add_show_modal.html" %}
 
 <section class="section">
-    <div class="container" style="margin-bottom: 10px;">
+    <div class="container mb-3">
         <h1 class="title">Shows</h1>
         <h2 class="subtitle">Tracked shows in RSS</h2>
     </div>
@@ -57,11 +57,16 @@
                     </footer>
                 </div>
             </div>
+            {% else %}
+            <div class="container has-text-centered my-6">
+                <h3 class="title is-3">Nothing to see here!</h3>
+                <h4 class="subtitle is-5">Begin by adding a show below.</h4>
+            </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="container has-text-centered" style="margin-top: 10px;">
+    <div class="container has-text-centered mt-3">
         <button class="button is-medium is-success" onclick="openAddShowModal();">Add show</button>
     </div>
 
