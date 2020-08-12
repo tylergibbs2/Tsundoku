@@ -3,9 +3,9 @@ var None = null;
 
 function submitAddOrEditShowForm(event) {
     event.preventDefault();
-    var url = $(this).closest("form").attr("action");
-    var method = $(this).closest("form").attr("method");
-    var data = $(this).closest("form").serialize();
+    let url = $(this).closest("form").attr("action");
+    let method = $(this).closest("form").attr("method");
+    let data = $(this).closest("form").serialize();
     $.ajax(
         {
             url: url,
@@ -25,18 +25,18 @@ function submitAddOrEditShowForm(event) {
 function addShowEntryFormSubmit(event) {
     event.preventDefault();
 
-    var form = $(this).closest("form");
-    var url = form.attr("action");
-    var method = form.attr("method");
-    var data = form.serialize();
+    let form = $(this).closest("form");
+    let url = form.attr("action");
+    let method = form.attr("method");
+    let data = form.serialize();
     $.ajax(
         {
             url: url,
             type: method,
             data: data,
             success: function (data) {
-                var data = JSON.parse(data);
-                var entry = data.entry;
+                data = JSON.parse(data);
+                let entry = data.entry;
                 addRowToShowEntryTable(entry);
             },
             error: function (jqXHR, status, error) {
@@ -55,22 +55,22 @@ function addRowToShowEntryTable(entry) {
     let cell_status = row.insertCell(1);
     let cell_delete = row.insertCell(2);
 
-    cell_episode.innerHTML = entry.episode;
-    cell_status.innerHTML = entry.current_state;
+    $(cell_episode).html(entry.episode);
+    $(cell_status).html(entry.current_state);
 
-    var deleteBtn = document.createElement("button");
-    deleteBtn.classList.add("delete");
-    deleteBtn.onclick = function() {
+    let deleteBtn = document.createElement("button");
+    $(deleteBtn).addClass("delete");
+    $(deleteBtn).on("click", function() {
         deleteShowEntry(entry.show_id, entry.id);
         this.parentNode.parentNode.remove();
-    }
+    })
 
     cell_delete.appendChild(deleteBtn);
 }
 
 
 function deleteShowEntry(show_id, entry_id) {
-    var url = `/api/shows/${show_id}/entries/${entry_id}`;
+    let url = `/api/shows/${show_id}/entries/${entry_id}`;
     $.ajax(
         {
             url: url,
@@ -81,7 +81,7 @@ function deleteShowEntry(show_id, entry_id) {
 
 
 function deleteShowCache(show_id) {
-    var url = `/api/shows/${show_id}/cache`;
+    let url = `/api/shows/${show_id}/cache`;
     $.ajax(
         {
             url: url,
@@ -113,13 +113,13 @@ function displayShowEntries() {
 
 
 function openAddShowModal() {
-    let form = document.getElementById("add-show-form");
+    let form = $("#add-show-form");
 
-    form.reset();
+    form.trigger("reset");
 
-    form.action = "/api/shows";
-    form.method = "POST";
-    form.onsubmit = submitAddOrEditShowForm;
+    form.attr("action", "/api/shows");
+    form.attr("method", "POST");
+    form.on("submit", submitAddOrEditShowForm);
 
     $(document.documentElement).addClass("is-clipped");
     $("#add-show-modal").addClass("is-active");
@@ -127,46 +127,38 @@ function openAddShowModal() {
 
 
 function openEditShowModal(show) {
-    let form = document.getElementById("edit-show-form");
+    let form = $("#edit-show-form");
+    let addEntryForm = $("#add-show-entry-form");
 
-    let table = document.querySelector("#show-entry-table tbody");
-    let tableCaption = document.getElementById("entry-table-caption");
-
-    let addEntryForm = document.getElementById("add-show-entry-form");
-    let delCacheBtn = document.getElementById("del-cache-btn");
+    let table = $("#show-entry-table tbody");
 
     displayShowInfo();
-    form.reset();
-    addEntryForm.reset();
+    form.trigger("reset");
+    addEntryForm.trigger("reset");
 
-    inputs = form.getElementsByTagName("input");
+    $("#edit-show-form :input").each(function() {
+        $(this).val(show[this.name])
+    });
 
-    for (let i = 0; i < inputs.length; i++) {
-        inputs[i].value = show[inputs[i].name];
-    }
+    table.empty();
 
-    while (table.childNodes.length) {
-        table.removeChild(table.childNodes[0]);
-    }
-
-    for (let i = 0; i < show.entries.length; i++) {
-        var entry = show.entries[i];
+    for (const entry of show.entries) {
         addRowToShowEntryTable(entry);
     }
 
-    tableCaption.innerHTML = show.title;
+    $("#entry-table-caption").html(show.title);
 
-    form.action = `/api/shows/${show.id}`;
-    form.method = "PUT";
-    form.onsubmit = submitAddOrEditShowForm;
+    form.attr("action", `/api/shows/${show.id}`);
+    form.attr("method", "PUT");
+    form.on("submit", submitAddOrEditShowForm);
 
-    addEntryForm.action = `/api/shows/${show.id}/entries`;
-    addEntryForm.method = "POST";
-    addEntryForm.onsubmit = addShowEntryFormSubmit;
+    addEntryForm.attr("action", `/api/shows/${show.id}/entries`);
+    addEntryForm.attr("method", "POST");
+    addEntryForm.on("submit", addShowEntryFormSubmit);
 
-    delCacheBtn.onclick = function () {
+    $("#del-cache-btn").on("click", function() {
         deleteShowCache(show.id);
-    }
+    })
 
     $(document.documentElement).addClass("is-clipped");
     $("#edit-show-modal").addClass("is-active");
@@ -174,9 +166,7 @@ function openEditShowModal(show) {
 
 
 function openDeleteShowModal(show) {
-    let btn = document.getElementById("delete-show-button");
-
-    btn.onclick = function (e) {
+    $("#delete-show-button").on("click", function(e) {
         e.preventDefault();
         $.ajax(
             {
@@ -187,7 +177,7 @@ function openDeleteShowModal(show) {
                 }
             }
         );
-    }
+    });
 
     $(document.documentElement).addClass("is-clipped");
     $("#delete-show-modal").addClass("is-active");
