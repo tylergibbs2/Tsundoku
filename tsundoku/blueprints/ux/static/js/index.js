@@ -82,6 +82,7 @@ function deleteShowCache(show_id) {
             type: "DELETE"
         }
     );
+    window.location.reload();
 }
 
 
