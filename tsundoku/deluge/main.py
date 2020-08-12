@@ -183,12 +183,17 @@ class DelugeClient:
             "Content-Type": "application/json"
         }
 
-        auth_status = await self.session.post(
-            self.url,
-            json=payload,
-            headers=headers
-        )
-        auth_status = await auth_status.json(content_type=None)
+        try:
+            auth_status = await self.session.post(
+                self.url,
+                json=payload,
+                headers=headers
+            )
+        except aiohttp.ClientConnectionError:
+            logger.error("Deluge - Failed to Connect")
+            auth_status = {}
+        else:
+            auth_status = await auth_status.json(content_type=None)
 
         self._request_counter += 1
         result = auth_status.get("result")
