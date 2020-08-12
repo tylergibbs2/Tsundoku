@@ -98,8 +98,8 @@ function displayShowInfo() {
     $("#show-info-tab").addClass("is-active");
     $("#show-entry-tab").removeClass("is-active");
 
-    $("#edit-show-form").addClass("is-hidden");
-    $("#entry-tab-display").removeClass("is-hidden");
+    $("#edit-show-form").removeClass("is-hidden");
+    $("#entry-tab-display").addClass("is-hidden");
 }
 
 
