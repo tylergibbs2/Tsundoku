@@ -13,6 +13,9 @@ function submitAddOrEditShowForm(event) {
             data: data,
             success: function (data) {
                 location.reload();
+            },
+            error: function (jqXHR, status, error) {
+                alert("There was an error processing the request.");
             }
         }
     );
@@ -35,6 +38,9 @@ function addShowEntryFormSubmit(event) {
                 var data = JSON.parse(data);
                 var entry = data.entry;
                 addRowToShowEntryTable(entry);
+            },
+            error: function (jqXHR, status, error) {
+                alert("There was an error processing the request.");
             }
         }
     );
