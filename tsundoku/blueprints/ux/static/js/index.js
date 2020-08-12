@@ -42,22 +42,22 @@ function addShowEntryFormSubmit(event) {
 
 
 function addRowToShowEntryTable(entry) {
-    var table = document.querySelector("#show-entry-table tbody");
-    var row = table.insertRow(-1);
+    let table = document.querySelector("#show-entry-table tbody");
+    let row = table.insertRow(-1);
 
-    var cell_episode = row.insertCell(0);
-    var cell_status = row.insertCell(1);
-    var cell_delete = row.insertCell(2);
+    let cell_episode = row.insertCell(0);
+    let cell_status = row.insertCell(1);
+    let cell_delete = row.insertCell(2);
 
     cell_episode.innerHTML = entry.episode;
     cell_status.innerHTML = entry.current_state;
 
     var deleteBtn = document.createElement("button");
     deleteBtn.classList.add("delete");
-    deleteBtn.setAttribute(
-        "onclick",
-        `deleteShowEntry(${entry.show_id}, ${entry.id});this.parentNode.parentNode.remove();`
-    );
+    deleteBtn.onclick = function() {
+        deleteShowEntry(entry.show_id, entry.id);
+        this.parentNode.parentNode.remove();
+    }
 
     cell_delete.appendChild(deleteBtn);
 }
