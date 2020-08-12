@@ -6,6 +6,7 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 ## Requirements
 
 - Python 3.7+
+- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
 
 ## Installation
 
