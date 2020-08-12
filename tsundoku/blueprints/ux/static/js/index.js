@@ -85,10 +85,12 @@ function deleteShowCache(show_id) {
     $.ajax(
         {
             url: url,
-            type: "DELETE"
+            type: "DELETE",
+            success: function() {
+                window.location.reload();
+            }
         }
     );
-    window.location.reload();
 }
 
 
