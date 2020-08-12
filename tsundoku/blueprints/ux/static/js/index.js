@@ -172,7 +172,7 @@ function openDeleteShowModal(show) {
         e.preventDefault();
         $.ajax(
             {
-                url: `/api/shows/${show_id}`,
+                url: `/api/shows/${show.id}`,
                 type: "DELETE",
                 success: function () {
                     location.reload();
