@@ -10,7 +10,7 @@ from asyncpg import Record
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry
-from tsundoku.feeds.exceptions import EntryNotInDeluge, SavePathDoesNotExist
+from tsundoku.feeds.exceptions import EntryNotInDeluge, FeedsError, SavePathDoesNotExist
 
 
 logger = logging.getLogger("tsundoku")
@@ -64,6 +64,10 @@ class Downloader:
             The ID of the added entry.
         """
         torrent_hash = await self.app.deluge.add_torrent(magnet_url)
+
+        if torrent_hash is None:
+            logger.warn(f"Failed to add Magnet URL {magnet_url} to Deluge")
+            raise FeedsError(f"Failed to add Magnet URL {magnet_url} to Deluge")
 
         async with self.app.db_pool.acquire() as con:
             entry_id = await con.fetchval("""
