@@ -11,7 +11,7 @@ function submitAddOrEditShowForm(event) {
             url: url,
             type: method,
             data: data,
-            success: function(data) {
+            success: function (data) {
                 location.reload();
             }
         }
@@ -31,7 +31,7 @@ function addShowEntryFormSubmit(event) {
             url: url,
             type: method,
             data: data,
-            success: function(data) {
+            success: function (data) {
                 var data = JSON.parse(data);
                 var entry = data.entry;
                 addRowToShowEntryTable(entry);
@@ -132,18 +132,15 @@ function openEditShowModal(show) {
 
     inputs = form.getElementsByTagName("input");
 
-    for (let i=0; i<inputs.length; i++)
-    {
+    for (let i = 0; i < inputs.length; i++) {
         inputs[i].value = show[inputs[i].name];
     }
 
-    while (table.childNodes.length)
-    {
+    while (table.childNodes.length) {
         table.removeChild(table.childNodes[0]);
     }
 
-    for (let i=0; i < show.entries.length; i++)
-    {
+    for (let i = 0; i < show.entries.length; i++) {
         var entry = show.entries[i];
         addRowToShowEntryTable(entry);
     }
@@ -170,13 +167,13 @@ function openEditShowModal(show) {
 function openDeleteShowModal(show) {
     let btn = document.getElementById("delete-show-button");
 
-    btn.onclick = function(e) {
+    btn.onclick = function (e) {
         e.preventDefault();
         $.ajax(
             {
                 url: `/api/shows/${show_id}`,
                 type: "DELETE",
-                success: function() {
+                success: function () {
                     location.reload();
                 }
             }
@@ -192,3 +189,12 @@ function closeModals() {
     $(".modal").removeClass("is-active");
     $(document.documentElement).removeClass("is-clipped");
 }
+
+
+$(document).ready(function() {
+    $('.notification .delete').each(function () {
+        $(this).on("click", function () {
+            $(this).parent().remove();
+        })
+    });
+});

@@ -2,7 +2,7 @@ import json
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import abort, Blueprint, render_template, redirect, url_for
+from quart import abort, Blueprint, flash, render_template, redirect, url_for
 from quart import current_app as app
 from quart import request
 from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
@@ -42,6 +42,11 @@ async def index():
 
     kwargs["shows"] = shows
     kwargs["seen_titles"] = list(app.seen_titles)
+
+    if not len(app.rss_parsers):
+        await flash("No RSS parsers installed.")
+    elif not len(app.seen_titles):
+        await flash("No shows found, is there an error with your parsers?")
 
     return await render_template("index.html", **kwargs)
 
