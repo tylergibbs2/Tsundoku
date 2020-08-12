@@ -148,6 +148,11 @@ class ShowsAPI(views.MethodView):
             """, show_id)
             if arguments["title"] != og_data["title"]:
                 kitsu_id = await kitsu.get_id(arguments["title"])
+            elif int(arguments["kitsu_id"]) != og_data["kitsu_id"]:
+                kitsu_id = int(arguments["kitsu_id"])
+                await con.execute("""
+                    UPDATE shows SET cached_poster_url=NULL where id=$1;
+                """, show_id)
             else:
                 kitsu_id = og_data["kitsu_id"]
 

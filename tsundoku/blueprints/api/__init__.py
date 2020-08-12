@@ -7,6 +7,7 @@ from quart_auth import login_required
 
 from .shows import ShowsAPI
 from .entries import EntriesAPI
+from tsundoku import kitsu
 
 
 api_blueprint = Blueprint('api', __name__, url_prefix="/api")
@@ -65,9 +66,14 @@ async def delete_show_cache(show_id: int):
     logger.info(f"API - Deleting cache for Show {show_id}")
 
     async with app.db_pool.acquire() as con:
-        await con.execute("""
-            UPDATE shows SET cached_poster_url=NULL WHERE id=$1;
+        show_name = await con.fetchval("""
+            SELECT title FROM shows WHERE id=$1;
         """, show_id)
+        new_kitsu_id = await kitsu.get_id(show_name)
+
+        await con.execute("""
+            UPDATE shows SET kitsu_id=$1, cached_poster_url=NULL WHERE id=$2;
+        """, new_kitsu_id, show_id)
 
     return json.dumps([])
 

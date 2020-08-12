@@ -140,6 +140,8 @@ function openEditShowModal(show) {
         $(this).val(show[this.name])
     });
 
+    $("#fix-match-input").val(show.kitsu_id);
+
     table.empty();
 
     for (const entry of show.entries) {
@@ -184,6 +186,11 @@ function openDeleteShowModal(show) {
 }
 
 
+function toggleFixMatchDropdown() {
+    $("#fix-match-dropdown").toggleClass("is-active");
+}
+
+
 function closeModals() {
     $(".modal").removeClass("is-active");
     $(document.documentElement).removeClass("is-clipped");
@@ -195,5 +202,9 @@ $(document).ready(function() {
         $(this).on("click", function () {
             $(this).parent().remove();
         })
+    });
+
+    $("#fix-match-input").on("change", function() {
+        $("input[name='kitsu_id']").val($(this).val());
     });
 });

@@ -5,12 +5,27 @@
             <p class="modal-card-title">Edit Show</p>
             <div class="buttons">
                 <button id="del-cache-btn" class="button is-warning">Clear Cache</button>
-                <button class="button is-link">Fix Match</button>
+                <div id="fix-match-dropdown" class="dropdown is-right">
+                    <div class="dropdown-trigger">
+                        <button class="button is-link" onclick="toggleFixMatchDropdown();">
+                            <span>Fix Match</span>
+                        </button>
+                    </div>
+                    <div class="dropdown-menu" id="dropdown-menu2">
+                        <div class="dropdown-content">
+                            <div class="dropdown-item">
+                                <p><strong>Kitsu.io Show ID</strong></p>
+                            </div>
+                            <div class="dropdown-item">
+                                <input id="fix-match-input" type="number" min="0" class="input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
         <section class="modal-card-body">
-
             <div class="tabs">
                 <ul>
                     <li id="show-info-tab" class="is-active"><a onclick="displayShowInfo();">Information</a></li>
@@ -100,6 +115,8 @@
                         <input name="episode_offset" class="input" type="number" value="0" required>
                     </div>
                 </div>
+
+                <input name="kitsu_id" type="hidden">
             </form>
         </section>
 
