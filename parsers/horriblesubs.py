@@ -3,11 +3,11 @@ import re
 class HorribleSubs:
     def __init__(self, app):
         """
-        Change 'self.url' and 'self.name' to be the URL 
+        Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
         """
         self.name = "HorribleSubs"
-        self.url = "http://www.horriblesubs.info/rss.php?res=720"
+        self.url = "http://www.horriblesubs.info/rss.php?res=1080"
 
         self.app = app
 
