@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import List, Union
 
 from quart import abort, request, views
@@ -6,6 +7,9 @@ from quart import current_app as app
 from quart_auth import current_user
 
 from tsundoku import kitsu
+
+
+logger = logging.getLogger("tsundoku")
 
 
 class ShowsAPI(views.MethodView):
@@ -96,6 +100,15 @@ class ShowsAPI(views.MethodView):
             """, arguments["title"], desired_format, desired_folder, season,
             episode_offset, kitsu_id)
 
+        logger.info("New Show Added - Preparing to Check for New Releases")
+        for parser in app.rss_parsers:
+            current_parser = parser
+            feed = await app.poller.get_feed_from_parser(parser)
+
+            logger.info(f"{parser.name} - Checking for New Releases...")
+            await app.poller.check_feed(feed)
+            logger.info(f"{parser.name} - Checked for New Releases")
+
         return json.dumps({"success": True})
 
 
@@ -161,6 +174,15 @@ class ShowsAPI(views.MethodView):
                 season=$4, episode_offset=$5, kitsu_id=$6 WHERE id=$7;
             """, arguments["title"], desired_format, desired_folder, season,
             episode_offset, kitsu_id, show_id)
+
+        logger.info("Existing Show Updated - Preparing to Check for New Releases")
+        for parser in app.rss_parsers:
+            current_parser = parser
+            feed = await app.poller.get_feed_from_parser(parser)
+
+            logger.info(f"{parser.name} - Checking for New Releases...")
+            await app.poller.check_feed(feed)
+            logger.info(f"{parser.name} - Checked for New Releases")
 
         return json.dumps({"success": True})
 
