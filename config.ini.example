@@ -1,20 +1,20 @@
 [Tsundoku]
-host=localhost
-port=6439
-parsers=[
+host = localhost
+port = 6439
+parsers = [
     "horriblesubs"
     ]
-polling_interval=900
+polling_interval = 900
 
 [PostgreSQL]
-host=localhost
-port=5432
-database=tsundoku
-user=postgres
-password=password
+host = localhost
+port = 5432
+database = tsundoku
+user = postgres
+password = password
 
 [Deluge]
-host=localhost
-port=8112
-password=password
-secure=false
+host = localhost
+port = 8112
+password = password
+secure = false

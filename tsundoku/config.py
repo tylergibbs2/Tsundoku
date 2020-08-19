@@ -45,3 +45,32 @@ def get_config_value(section: str, value: str) -> Any:
         return json.loads(value)
     except json.JSONDecodeError:
         return value
+
+
+def set_config_value(section: str, value: str, data: Any):
+    """
+    Set a specified value to the config.ini file.
+
+    All values will be casted using json.dumps.
+
+    Parameters
+    ----------
+    section: str
+        The section to set the value in.
+    value: str
+        The value to set.
+    data: Any
+        The data to write.
+
+    Returns
+    -------
+    None
+    """
+    if not isinstance(data, str):
+        data = json.dumps(data)
+
+    config.read("config.ini")
+    config.set(section, value, data)
+
+    with open("config.ini", "w") as f:
+        config.write(f)
