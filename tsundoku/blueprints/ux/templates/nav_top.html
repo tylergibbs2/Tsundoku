@@ -11,5 +11,12 @@
                 Shows
             </a>
         </div>
+        {% if current_user.is_authenticated %}
+        <div class="navbar-end">
+            <a href="{{ url_for('ux.logout') }}" class="navbar-item">
+                Logout
+            </a>
+        </div>
+        {% endif %}
     </div>
 </nav>

@@ -94,3 +94,4 @@ async def login():
 @login_required
 async def logout():
     logout_user()
+    return redirect(url_for("ux.index"))
