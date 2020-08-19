@@ -66,11 +66,8 @@ def set_config_value(section: str, value: str, data: Any):
     -------
     None
     """
-    if not isinstance(data, str):
-        data = json.dumps(data)
-
     config.read("config.ini")
-    config.set(section, value, data)
+    config.set(section, value, json.dumps(data))
 
     with open("config.ini", "w") as f:
         config.write(f)
