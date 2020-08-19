@@ -85,7 +85,9 @@ async def login():
                     UPDATE users SET password_hash=$1 WHERE username=$2;
                 """, hasher.hash(password), username)
 
-        login_user(User(user_data["id"]), remember=True)
+        remember = form.get("remember", False)
+
+        login_user(User(user_data["id"]), remember=remember)
 
         return redirect(url_for("ux.index"))
 
