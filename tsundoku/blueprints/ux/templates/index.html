@@ -18,19 +18,7 @@
 
 {% include "add_show_modal.html" %}
 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-<div class="container">
-    {% for message in messages %}
-    <div class="notification is-danger">
-        <button class="delete"></button>
-        {{ message }}
-    </div>
-    {% endfor %}
-</div>
-</div>
-{% endif %}
-{% endwith %}
+{% include "messages.html" %}
 
 <section class="section">
     <div class="container mb-3">

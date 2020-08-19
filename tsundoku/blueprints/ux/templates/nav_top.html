@@ -10,6 +10,9 @@
             <a href="{{ url_for('ux.index') }}" class="navbar-item">
                 Shows
             </a>
+            <a href="{{ url_for('ux.config') }}" class="navbar-item">
+                Config
+            </a>
         </div>
         {% if current_user.is_authenticated %}
         <div class="navbar-end">

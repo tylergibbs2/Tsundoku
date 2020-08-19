@@ -95,3 +95,9 @@ async def login():
 async def logout():
     logout_user()
     return redirect(url_for("ux.index"))
+
+
+@ux_blueprint.route("/config", methods=["GET", "POST", "PUT"])
+@login_required
+async def config():
+    return await render_template("config.html")
