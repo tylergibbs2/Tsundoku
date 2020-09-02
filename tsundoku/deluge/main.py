@@ -18,7 +18,6 @@ logger = logging.getLogger("tsundoku")
 
 class DelugeClient:
     def __init__(self, session: aiohttp.ClientSession):
-        self._first_auth = False  # whether or not the script has authorized before.
         self._request_counter = 0  # counts the number of requests made to Deluge.
 
         self.session = session
