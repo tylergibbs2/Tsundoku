@@ -17,6 +17,7 @@ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 pip install -r requirements.txt
+python -m tsundoku --load-schema   # Loads the database schema into PSQL, must be done after PSQL config
 python -m tsundoku --create-user   # Creates a user for logging in, must be done after PSQL config
 ```
 
