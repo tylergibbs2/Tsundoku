@@ -68,7 +68,7 @@ class qBittorrentClient:
             "hash": torrent_id
         }
 
-        data = await self.request("get", "torrent", "properties", payload)
+        data = await self.request("get", "torrents", "properties", params=payload)
         if not data or not data.get("save_path"):
             return
 
@@ -94,7 +94,7 @@ class qBittorrentClient:
             "category": "tsundoku"
         }
 
-        await self.request("post", "torrents", "add", payload)
+        await self.request("post", "torrents", "add", payload=payload)
 
         payload = {
             "category": "tsundoku",
@@ -102,7 +102,7 @@ class qBittorrentClient:
             "limit": 1
         }
 
-        t_list = await self.request("get", "torrents", "info", payload)
+        t_list = await self.request("get", "torrents", "info", payload=payload)
         try:
             return t_list[0]["hash"]
         except (IndexError, KeyError):
@@ -142,7 +142,7 @@ class qBittorrentClient:
         return status == 200
 
 
-    async def request(self, http_method: str, location: str, method: str, payload: dict={}) -> dict:
+    async def request(self, http_method: str, location: str, method: str, payload: dict={}, params: dict={}) -> dict:
         """
         Makes a request to qBittorrent.
 
@@ -169,7 +169,7 @@ class qBittorrentClient:
         retries = 5
 
         while retries:
-            async with self.session.request(http_method, request_url, data=payload) as r:
+            async with self.session.request(http_method, request_url, data=payload, params=params) as r:
                 data = await r.text(encoding="utf-8")
                 if r.headers.get("Content-Type") == "application/json":
                     data = json.loads(data)
