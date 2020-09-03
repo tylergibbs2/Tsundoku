@@ -33,7 +33,7 @@ python -m tsundoku
 
 ## Configuration
 
-```
+```ini
 [Tsundoku]
 host=localhost         # IP that Tsundoku will be hosted at
 port=6439              # Port to use for hosting
