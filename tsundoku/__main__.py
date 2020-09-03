@@ -4,6 +4,8 @@ import getpass
 
 from argon2 import PasswordHasher
 import asyncpg
+from yoyo import get_backend
+from yoyo import read_migrations
 
 from tsundoku import app
 from tsundoku.config import get_config_value
@@ -36,7 +38,7 @@ async def insert_user(username: str, password: str):
     await conn.close()
 
 
-async def load_schema():
+async def migrate():
     host = get_config_value("PostgreSQL", "host")
     port = get_config_value("PostgreSQL", "port")
     user = get_config_value("PostgreSQL", "user")
@@ -72,24 +74,27 @@ async def load_schema():
         database=database
     )
 
-    with open("create_db.sql", "r") as f:
-        await con.execute(f.read())
-
     await con.close()
+
+    backend = get_backend(f"postgres://{user}:{db_password}@{host}:{port}/{database}")
+    migrations = read_migrations("migrations")
+
+    with backend.lock():
+        backend.apply_migrations(backend.to_apply(migrations))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tsundoku Command Line")
-    parser.add_argument("--load-schema", action="store_true")
+    parser.add_argument("--migrate", action="store_true")
     parser.add_argument("--create-user", action="store_true")
     args = parser.parse_args()
 
-    if args.load_schema:
+    if args.migrate:
         loop = asyncio.get_event_loop()
 
-        print("Loading database schema...")
-        loop.run_until_complete(load_schema())
-        print("Database schema loaded.")
+        print("Applying database migrations...")
+        loop.run_until_complete(migrate())
+        print("Database migrations applied.")
     elif args.create_user:
         username = input("Username: ")
         match = False
