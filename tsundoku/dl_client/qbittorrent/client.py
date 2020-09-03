@@ -103,7 +103,6 @@ class qBittorrentClient:
         }
 
         t_list = await self.request("get", "torrents", "info", payload)
-        print(t_list)
         try:
             return t_list[0]["hash"]
         except (IndexError, KeyError):
