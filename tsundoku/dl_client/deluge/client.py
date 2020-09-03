@@ -1,108 +1,57 @@
 import asyncio
-import base64
-import hashlib
 import json
 import logging
+from pathlib import Path
 import sys
 from typing import List, Optional
 
 import aiohttp
-import bencodepy
 
 from tsundoku.config import get_config_value
-from tsundoku.deluge.exceptions import DelugeAuthorizationError
 
 
 logger = logging.getLogger("tsundoku")
 
 
 class DelugeClient:
-    def __init__(self, session: aiohttp.ClientSession):
+    def __init__(self, session: aiohttp.ClientSession, **kwargs):
         self._request_counter = 0  # counts the number of requests made to Deluge.
 
         self.session = session
-        self.url = self.build_api_url()
+
+        host = kwargs.pop("host")
+        port = kwargs.pop("port")
+        secure = kwargs.pop("secure")
+
+        self.password = kwargs.pop("auth")
+
+        self.url = self.build_api_url(host, port, secure)
 
 
-    def build_api_url(self) -> str:
+    def build_api_url(self, host: str, port: int, secure: bool) -> str:
         """
         Builds the URL to make requests to the Deluge WebAPI.
+
+        Parameters
+        ----------
+        host: str
+            API host URL.
+        port: int
+            API port.
+        secure: bool
+            Use HTTPS.
 
         Returns
         -------
         str
             The API's URL.
         """
-        host = get_config_value("Deluge", "host")
-        port = get_config_value("Deluge", "port")
-        secure = get_config_value("Deluge", "secure")
-
         protocol = "https" if secure else "http"
 
         return f"{protocol}://{host}:{port}/json"
 
 
-    async def get_magnet(self, location: str) -> str:
-        """
-        Will take a file location or an internet location for a torrent file.
-        The magnet URL for that torrent is then resolved and returned.
-
-        If the location parameter is already detected to be a magnet URL,
-        it will instantly return it.
-
-        Parameters
-        ----------
-        location: str
-            A file location or web address.
-
-        Returns
-        -------
-        str
-            The magnet URL for the torrent at the given location.
-        """
-        if location.startswith("magnet:?"):
-            return location
-        elif location.endswith(".torrent"):
-            async with self.session.get(location) as resp:
-                torrent_bytes = await resp.read()
-                metadata = bencodepy.decode(torrent_bytes)
-        else:
-            metadata = bencodepy.decode_from_file(location)
-
-        subject = metadata[b'info']
-
-        hash_data = bencodepy.encode(subject)
-        digest = hashlib.sha1(hash_data).digest()
-        base32_hash = base64.b32encode(digest).decode()
-
-        return "magnet:?"\
-            + f"xt=urn:btih:{base32_hash}"\
-            + f"&dn={metadata[b'info'][b'name'].decode()}"\
-            + f"&tr={metadata[b'announce'].decode()}"
-
-
-    async def get_torrents(self, torrent_ids: List[str], status_keys: Optional[List[str]]=None) -> List:
-        """
-        Returns information for all specified torrents.
-
-        Parameters
-        ----------
-        torrent_ids: list
-            The torrent IDs to return information for.
-        status_keys: Optional[List[str]]
-            Specific status keys to retrieve information on.
-
-        Returns
-        -------
-        list[dict]
-            The information for the given torrents.
-        """
-        result = await self.request("webapi.get_torrents", [torrent_ids, status_keys])
-
-        return result["result"]["torrents"]
-
-
-    async def get_torrent(self, torrent_id: str, status_keys: Optional[List[str]]=None) -> dict:
+    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Returns information for a specified torrent.
 
@@ -110,19 +59,23 @@ class DelugeClient:
         ----------
         torrent_id: str
             The torrent ID to return information for.
-        status_keys: Optional[List[str]]
-            Specific status keys to retrieve information on.
 
         Returns
         -------
-        dict
-            The information for the given torrent.
+        Optional[Path]:
+            The torrent's downloaded file path.
         """
         torrent_id = [torrent_id]
+        ret = await self.request("webapi.get_torrents", [torrent_id, ["name", "move_completed_path"]])
 
-        result = await self.request("webapi.get_torrents", [torrent_id, status_keys])
+        ret_list = ret["result"].get("torrents", [])
 
-        return result["result"]["torrents"][0]
+        try:
+            data = ret_list[0]
+        except IndexError:
+            return
+
+        return Path(data["move_completed_path"], data["name"])
 
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
@@ -140,29 +93,8 @@ class DelugeClient:
             The torrent ID if success, None if torrent not added.
         """
         data = await self.request("webapi.add_torrent", [magnet_url])
-        return data["result"]
+        return data.get("result")
 
-
-    async def remove_torrent(self, torrent_id: str, remove_data=False) -> bool:
-        """
-        Removes a torrent of specified ID from Deluge.
-
-        Can also optionally remove data from disk upon deletion.
-
-        Parameters
-        ----------
-        torrent_id: str
-            The ID of the torrent to remove.
-        remove_data: bool, optional
-            Whether or not to remove data from disk on deletion.
-
-        Returns
-        -------
-        bool
-            True if success, False otherwise.
-        """
-        data = await self.request("webapi.remove_torrent", [torrent_id, remove_data])
-        return data["result"]
 
     async def ensure_authorization(self):
         """
@@ -197,14 +129,11 @@ class DelugeClient:
         self._request_counter += 1
         result = auth_status.get("result")
         if not result:
-            password = get_config_value("Deluge", "password")
-
             payload = {
                 "id": self._request_counter,
                 "method": "auth.login",
-                "params": [password]
+                "params": [self.password]
             }
-
             auth_request = await self.session.post(
                 self.url,
                 json=payload,
@@ -215,11 +144,12 @@ class DelugeClient:
             self._request_counter += 1
 
             error = auth_request.get("error")
-            if error:
+            if error or auth_request["result"] == False:
                 logger.warn("Deluge - Failed to Authenticate")
-                raise DelugeAuthorizationError(error["message"])
+                return
 
         return result
+
 
     async def request(self, method: str, data: list=[]) -> dict:
         """

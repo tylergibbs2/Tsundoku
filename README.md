@@ -6,7 +6,7 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 ## Requirements
 
 - Python 3.7+
-- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
+- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi) OR [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 
 ## Installation
 
@@ -48,9 +48,11 @@ database=tsundoku
 user=postgres
 password=password
 
-[Deluge]               # Deluge connection info
+[TorrentClient]        # Torrent client connection info
+client=deluge          # Can be either 'deluge' or 'qbittorrent'
 host=localhost
 port=8112
+username=admin         # Only needed if using qBittorrent
 password=password
 secure=false           # Use HTTPS
 ```

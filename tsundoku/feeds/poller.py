@@ -8,7 +8,6 @@ from fuzzywuzzy import process
 from quart.ctx import AppContext
 
 from tsundoku.config import get_config_value
-from tsundoku.feeds.exceptions import InvalidPollerInterval
 
 
 logger = logging.getLogger("tsundoku")
@@ -57,7 +56,8 @@ class Poller:
         try:
             self.interval = int(interval)
         except ValueError:
-            raise InvalidPollerInterval(f"'{interval}' is an invalid polling interval.")
+            logger.error(f"'{interval}' is an invalid polling interval.")
+            raise Exception(f"'{interval}' is an invalid polling interval.")
 
 
     async def start(self) -> None:
@@ -262,11 +262,11 @@ class Poller:
         str
             The found magnet URL.
         """
-        deluge = self.app.deluge
+        client = self.app.dl_client
 
         if hasattr(self.current_parser, "get_link_location"):
             torrent_location = self.current_parser.get_link_location(item)
         else:
             torrent_location = item["link"]
 
-        return await deluge.get_magnet(torrent_location)
+        return await client.get_magnet(torrent_location)

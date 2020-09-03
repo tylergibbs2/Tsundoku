@@ -12,7 +12,7 @@ from quart_auth import AuthManager, Unauthorized
 
 from tsundoku.blueprints import api, ux
 from tsundoku.config import get_config_value
-from tsundoku.deluge import DelugeClient
+from tsundoku.dl_client import Manager
 import tsundoku.exceptions as exceptions
 from tsundoku.feeds import Downloader, Poller
 from tsundoku.user import User
@@ -85,7 +85,7 @@ async def setup_session():
     jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
     app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar)
-    app.deluge = DelugeClient(app.session)
+    app.dl_client = Manager(app.session)
 
 
 @app.before_serving

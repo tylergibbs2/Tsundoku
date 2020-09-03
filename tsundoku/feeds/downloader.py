@@ -10,7 +10,6 @@ from asyncpg import Record
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry
-from tsundoku.feeds.exceptions import EntryNotInDeluge, FeedsError, SavePathDoesNotExist
 
 
 logger = logging.getLogger("tsundoku")
@@ -18,7 +17,7 @@ logger = logging.getLogger("tsundoku")
 
 class Downloader:
     """
-    Begins handling by adding the torrent to Deluge
+    Begins handling by adding the torrent to a download client
     and inserting a row into the `show_entry` table.
 
     The download manager will then check for the
@@ -63,11 +62,11 @@ class Downloader:
         int:
             The ID of the added entry.
         """
-        torrent_hash = await self.app.deluge.add_torrent(magnet_url)
+        torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
 
         if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet_url} to Deluge")
-            raise FeedsError(f"Failed to add Magnet URL {magnet_url} to Deluge")
+            logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")
+            return
 
         async with self.app.db_pool.acquire() as con:
             entry_id = await con.fetchval("""
@@ -203,32 +202,6 @@ class Downloader:
         else:
             return new_path
 
-
-    def get_file_path(self, file_location: str, file_name: str) -> bool:
-        """
-        Calculates the path of the file given location and name.
-
-        Parameters
-        ----------
-        file_location: str
-            The file's location.
-        file_name: str
-            The name of the file at the location.
-
-        Returns
-        -------
-        pathlib.Path
-            The Path of the file.
-        """
-        file_location = file_location.replace("\\", "/")
-        location = Path(file_location)
-        if not location.is_dir():
-            logger.error(f"'{file_location}' could not be read")
-            raise SavePathDoesNotExist(f"'{file_location}' could not be read")
-
-        return location / file_name
-
-
     async def check_show_entry(self, entry: Entry) -> None:
         """
         Checks a specific show entry for download completion.
@@ -242,21 +215,15 @@ class Downloader:
         logger.info(f"Checking Release Status - {entry.show_id, entry.episode}")
 
         if entry.state == "downloading":
-            try:
-                deluge_info = await self.app.deluge.get_torrent(
-                    entry.torrent_hash,
-                    ["name", "move_completed_path"]
-                )
-            except IndexError:
+            path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
+            if not path:
                 show_id = entry.show_id
                 episode = entry.episode
-                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
-                raise EntryNotInDeluge(f"Show Entry with ID {show_id} Episode {episode} missing from Deluge.")
-
-            file_location = deluge_info["move_completed_path"]
-            file_name = deluge_info["name"]
-
-            path = self.get_file_path(file_location, file_name)
+                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
+                return
+            elif not path.parent.is_dir():
+                logger.error(f"'{file_location}' could not be read")
+                return
         else:
             path = entry.file_path
 

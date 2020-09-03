@@ -13,8 +13,10 @@ database = tsundoku
 user = postgres
 password = password
 
-[Deluge]
+[TorrentClient]
+client = deluge
 host = localhost
 port = 8112
+username = admin
 password = password
 secure = false
