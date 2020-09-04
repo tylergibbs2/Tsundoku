@@ -4,17 +4,19 @@ import importlib
 import logging
 from logging.config import dictConfig
 import secrets
-import sys
 
 from argon2 import PasswordHasher
 import aiohttp
 import asyncpg
+from hypercorn.asyncio import serve
+from hypercorn.config import Config
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
 from yoyo import get_backend
 from yoyo import read_migrations
 
-from tsundoku.blueprints import api, ux
+from tsundoku.blueprints.ux import ux_blueprint
+from tsundoku.blueprints.api import api_blueprint
 from tsundoku.config import get_config_value
 from tsundoku.dl_client import Manager
 import tsundoku.exceptions as exceptions
@@ -30,19 +32,19 @@ auth.user_class = User
 
 app = Quart("Tsundoku", static_folder=None)
 
-app.register_blueprint(api.api_blueprint)
-app.register_blueprint(ux.ux_blueprint)
+app.register_blueprint(api_blueprint)
+app.register_blueprint(ux_blueprint)
 
 app.seen_titles = set()
 logger = logging.getLogger("tsundoku")
 
 
-class Config:
+class QuartConfig:
     SECRET_KEY = secrets.token_urlsafe(16)
     QUART_AUTH_COOKIE_SECURE = False
 
 
-app.config.from_object(Config())
+app.config.from_object(QuartConfig())
 
 
 dictConfig({
@@ -101,60 +103,6 @@ async def insert_user(username: str, password: str):
     await con.close()
 
 
-async def migrate():
-    host = get_config_value("PostgreSQL", "host")
-    port = get_config_value("PostgreSQL", "port")
-    user = get_config_value("PostgreSQL", "user")
-    db_password = get_config_value("PostgreSQL", "password")
-    database = get_config_value("PostgreSQL", "database")
-
-    try:
-        con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database=database
-        )
-    except asyncpg.InvalidCatalogNameError:
-        sys_con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database="template1"
-        )
-        await sys_con.execute(f"""
-            CREATE DATABASE "{database}" OWNER "{user}";
-        """)
-        await sys_con.close()
-
-    con = await asyncpg.connect(
-        host=host,
-        user=user,
-        password=db_password,
-        port=port,
-        database=database
-    )
-
-    await con.close()
-
-    backend = get_backend(f"postgres://{user}:{db_password}@{host}:{port}/{database}")
-    migrations = read_migrations("migrations")
-
-    with backend.lock():
-        backend.apply_migrations(backend.to_apply(migrations))
-
-
-async def check_for_updates():
-    """
-    Checks for updates from GitHub.
-
-    If commit is newer, prompt for an update.
-    """
-    out, e = git.run("rev-parse --short HEAD")
-
-
 @app.errorhandler(Unauthorized)
 async def redirect_to_login(*_):
     return redirect(url_for("ux.login"))
@@ -167,9 +115,16 @@ async def update_check_needed():
     last update check. If it has been more
     than 1 day, check for an update.
     """
-    next_ = app.last_update_check + datetime.timedelta(hours=24)
+    should_we = get_config_value("Tsundoku", "do_update_checks")
+    if not should_we:
+        return
+
+    every = get_config_value("Tsundoku", "check_every_n_days")
+    frequency = 24 * every
+
+    next_ = app.last_update_check + datetime.timedelta(hours=frequency)
     if next_ < datetime.datetime.utcnow():
-        await check_for_updates()
+        git.check_for_updates()
         app.last_update_check = datetime.datetime.utcnow()
 
 
@@ -185,8 +140,8 @@ async def setup_session():
     app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar)
     app.dl_client = Manager(app.session)
 
-    app.can_update = False
-    await check_for_updates()
+    app.update_info = []
+    git.check_for_updates()
     app.last_update_check = datetime.datetime.utcnow()
 
 
@@ -302,9 +257,10 @@ async def cleanup():
     await app.db_pool.close()
     await app.session.close()
 
+
 host = get_config_value("Tsundoku", "host")
 port = get_config_value("Tsundoku", "port")
 
 def run():
     auth.init_app(app)
-    app.run(host=host, port=port)
+    app.run(host=host, port=port, use_reloader=True)

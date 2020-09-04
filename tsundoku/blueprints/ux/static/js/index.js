@@ -19,6 +19,43 @@ function hideAddorEditProgressBars() {
 }
 
 
+function updateTsundoku() {
+    modalsCanBeClosed = false;
+
+    $("#updating-pg-bar").removeClass("is-hidden");
+    $("#update-button").addClass("is-hidden");
+    $("#close-update-modal-button").addClass("is-hidden");
+
+    $.ajax({
+        url: "/update",
+        type: "GET"
+    });
+
+    function poll() {
+        setTimeout(function () {
+            $.ajax({
+                url: "/",
+                type: "GET",
+                success: function () {
+                    location.reload();
+                },
+                statusCode: {
+                    302: function (xhr) {
+                        location.reload();
+                    }
+                },
+                complete: function () {
+                    poll();
+                },
+                timeout: 1000
+            });
+        }, 1000);
+    };
+
+    setTimeout(poll, 5000);
+}
+
+
 function submitAddOrEditShowForm(event) {
     showAddorEditProgressBars();
 
@@ -88,7 +125,7 @@ function addRowToShowEntryTable(entry) {
 
     let deleteBtn = document.createElement("button");
     $(deleteBtn).addClass("delete");
-    $(deleteBtn).on("click", function() {
+    $(deleteBtn).on("click", function () {
         bufferShowEntryDeletion(entry.show_id, entry.id);
         this.parentNode.parentNode.remove();
     })
@@ -119,7 +156,7 @@ function deleteShowCache(show_id) {
         {
             url: url,
             type: "DELETE",
-            success: function() {
+            success: function () {
                 window.location.reload();
             }
         }
@@ -169,7 +206,7 @@ function openEditShowModal(show) {
     form.trigger("reset");
     addEntryForm.trigger("reset");
 
-    $("#edit-show-form :input").each(function() {
+    $("#edit-show-form :input").each(function () {
         $(this).val(show[this.name])
     });
 
@@ -191,7 +228,7 @@ function openEditShowModal(show) {
     addEntryForm.attr("method", "POST");
     addEntryForm.on("submit", addShowEntryFormSubmit);
 
-    $("#del-cache-btn").on("click", function() {
+    $("#del-cache-btn").on("click", function () {
         deleteShowCache(show.id);
     })
 
@@ -201,7 +238,7 @@ function openEditShowModal(show) {
 
 
 function openDeleteShowModal(show) {
-    $("#delete-show-button").on("click", function(e) {
+    $("#delete-show-button").on("click", function (e) {
         e.preventDefault();
         $.ajax(
             {
@@ -233,14 +270,14 @@ function closeModals() {
 }
 
 
-$(document).ready(function() {
+$(document).ready(function () {
     $('.notification .delete').each(function () {
         $(this).on("click", function () {
             $(this).parent().remove();
         })
     });
 
-    $("#fix-match-input").on("change", function() {
+    $("#fix-match-input").on("change", function () {
         $("input[name='kitsu_id']").val($(this).val());
     });
 });

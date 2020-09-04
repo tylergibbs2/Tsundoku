@@ -1,0 +1,53 @@
+{% if updates|length > 0 %}
+<div id="update-modal" class="modal modal-fx-fadeInScale is-active">
+    <div class="modal-background" onclick="closeModals();"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Tsundoku Update Detected</p>
+            <button class="delete" onclick="closeModals();" aria-label="close"></button>
+        </header>
+
+        <section class="modal-card-body">
+            <p class="has-text-centered">You are currently <b>{{ updates|length }}</b> commit{% if updates|length > 1 %}s{% endif %} behind!</p>
+            <hr>
+            <p>Would you like to update? The most recent
+                {% if updates|length > 10 %}10{% else %}{{ updates|length }}{% endif %} commit{% if updates|length > 1 %}s{% endif %} are
+                displayed below, most recent at the top.</p>
+            <div class="table-container">
+                <table class="table is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th>Commit #</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hash_, msg in updates[:10] %}
+                        {% if loop.index0 == 0 %}
+                        <tr class="is-selected">
+                        {% else %}
+                        <tr>
+                        {% endif %}
+                            <th><a href="https://github.com/tylergibbs2/Tsundoku/commit/{{ hash_ }}">{{ hash_[:6] }}</a>
+                            </th>
+                            <td>{{ msg }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if updates|length > 10 %}
+                        <tr>
+                            <td>...</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="modal-card-foot">
+            <progress id="updating-pg-bar" class="progress is-large is-primary is-hidden" max="100"></progress>
+            <button id="update-button" class="button is-primary" onclick="updateTsundoku();">Update</button>
+            <button id="close-update-modal-button" class="button" onclick="closeModals();">No, not now</button>
+        </footer>
+    </div>
+</div>
+{% endif %}

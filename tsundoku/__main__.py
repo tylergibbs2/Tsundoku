@@ -1,8 +1,9 @@
 import argparse
 import asyncio
 import getpass
+import time
 
-from tsundoku import app
+from tsundoku import app, git
 
 
 if __name__ == "__main__":
@@ -13,10 +14,7 @@ if __name__ == "__main__":
 
     if args.migrate:
         loop = asyncio.get_event_loop()
-
-        print("Applying database migrations...")
-        loop.run_until_complete(app.migrate())
-        print("Database migrations applied.")
+        loop.run_until_complete(git.migrate())
     elif args.create_user:
         username = input("Username: ")
         match = False

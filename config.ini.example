@@ -5,6 +5,8 @@ parsers = [
     "horriblesubs"
     ]
 polling_interval = 900
+do_update_checks = true
+check_every_n_days = 1
 git_path = git
 
 [PostgreSQL]
