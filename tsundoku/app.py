@@ -153,7 +153,6 @@ async def check_for_updates():
     If commit is newer, prompt for an update.
     """
     out, e = git.run("rev-parse --short HEAD")
-    print(out)
 
 
 @app.errorhandler(Unauthorized)
