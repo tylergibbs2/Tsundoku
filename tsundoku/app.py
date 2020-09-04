@@ -5,10 +5,13 @@ from logging.config import dictConfig
 import secrets
 import sys
 
+from argon2 import PasswordHasher
 import aiohttp
 import asyncpg
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
+from yoyo import get_backend
+from yoyo import read_migrations
 
 from tsundoku.blueprints import api, ux
 from tsundoku.config import get_config_value
@@ -17,6 +20,8 @@ import tsundoku.exceptions as exceptions
 from tsundoku.feeds import Downloader, Poller
 from tsundoku.user import User
 
+
+hasher = PasswordHasher()
 
 auth = AuthManager()
 auth.user_class = User
@@ -68,6 +73,75 @@ dictConfig({
         }
     }
 })
+
+
+async def insert_user(username: str, password: str):
+    host = get_config_value("PostgreSQL", "host")
+    port = get_config_value("PostgreSQL", "port")
+    user = get_config_value("PostgreSQL", "user")
+    db_password = get_config_value("PostgreSQL", "password")
+    database = get_config_value("PostgreSQL", "database")
+
+    con = await asyncpg.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=db_password,
+        database=database
+    )
+
+    pw_hash = hasher.hash(password)
+
+    await con.execute("""
+        INSERT INTO users (username, password_hash) VALUES ($1, $2);
+    """, username, pw_hash)
+
+    await con.close()
+
+
+async def migrate():
+    host = get_config_value("PostgreSQL", "host")
+    port = get_config_value("PostgreSQL", "port")
+    user = get_config_value("PostgreSQL", "user")
+    db_password = get_config_value("PostgreSQL", "password")
+    database = get_config_value("PostgreSQL", "database")
+
+    try:
+        con = await asyncpg.connect(
+            host=host,
+            user=user,
+            password=db_password,
+            port=port,
+            database=database
+        )
+    except asyncpg.InvalidCatalogNameError:
+        sys_con = await asyncpg.connect(
+            host=host,
+            user=user,
+            password=db_password,
+            port=port,
+            database="template1"
+        )
+        await sys_con.execute(f"""
+            CREATE DATABASE "{database}" OWNER "{user}";
+        """)
+        await sys_con.close()
+
+    con = await asyncpg.connect(
+        host=host,
+        user=user,
+        password=db_password,
+        port=port,
+        database=database
+    )
+
+    await con.close()
+
+    backend = get_backend(f"postgres://{user}:{db_password}@{host}:{port}/{database}")
+    migrations = read_migrations("migrations")
+
+    with backend.lock():
+        backend.apply_migrations(backend.to_apply(migrations))
 
 
 @app.errorhandler(Unauthorized)
