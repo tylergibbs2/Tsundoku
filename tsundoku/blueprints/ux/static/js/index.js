@@ -28,7 +28,7 @@ function updateTsundoku() {
 
     $.ajax({
         url: "/update",
-        type: "GET"
+        type: "POST"
     });
 
     function poll() {

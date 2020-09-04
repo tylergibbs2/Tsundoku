@@ -16,9 +16,17 @@
         </div>
         {% if current_user.is_authenticated %}
         <div class="navbar-end">
-            <a href="{{ url_for('ux.logout') }}" class="navbar-item">
-                Logout
-            </a>
+            <div class="navbar-item has-dropdown is-hoverable">
+                <a href="{{ url_for('ux.logout') }}" class="navbar-item">
+                    Logout
+                </a>
+
+                <div class="navbar-dropdown is-right">
+                    <a href="{{ url_for('ux.update_') }}" class="navbar-item">
+                        Check for Updates
+                    </a>
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>

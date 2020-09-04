@@ -8,7 +8,7 @@ from quart import request
 from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
 
 from tsundoku import kitsu
-from tsundoku.git import update
+from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
 
 
@@ -57,10 +57,14 @@ async def index():
     return await render_template("index.html", **kwargs)
 
 
-@ux_blueprint.route("/update", methods=["GET"])
+@ux_blueprint.route("/update", methods=["GET", "POST"])
 @login_required
 async def update_():
-    await update()
+    if request.method == "GET":
+        check_for_updates()
+    else:
+        await update()
+
     return redirect(url_for("ux.index"))
 
 
