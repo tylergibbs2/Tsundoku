@@ -1,4 +1,5 @@
 var None = null;
+var entriesToDelete = [];
 
 
 function submitAddOrEditShowForm(event) {
@@ -6,6 +7,12 @@ function submitAddOrEditShowForm(event) {
     let url = $(this).closest("form").attr("action");
     let method = $(this).closest("form").attr("method");
     let data = $(this).closest("form").serialize();
+
+    for (const entry of entriesToDelete) {
+        // entry[0] is show_id, entry[1] is entry_id
+        deleteShowEntry(entry[0], entry[1]);
+    }
+
     $.ajax(
         {
             url: url,
@@ -61,11 +68,16 @@ function addRowToShowEntryTable(entry) {
     let deleteBtn = document.createElement("button");
     $(deleteBtn).addClass("delete");
     $(deleteBtn).on("click", function() {
-        deleteShowEntry(entry.show_id, entry.id);
+        bufferShowEntryDeletion(entry.show_id, entry.id);
         this.parentNode.parentNode.remove();
     })
 
     cell_delete.appendChild(deleteBtn);
+}
+
+
+function bufferShowEntryDeletion(show_id, entry_id) {
+    entriesToDelete.push([show_id, entry_id]);
 }
 
 
@@ -192,6 +204,7 @@ function toggleFixMatchDropdown() {
 
 
 function closeModals() {
+    entriesToDelete = [];
     $(".modal").removeClass("is-active");
     $(document.documentElement).removeClass("is-clipped");
 }
