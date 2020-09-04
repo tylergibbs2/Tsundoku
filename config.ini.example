@@ -5,6 +5,7 @@ parsers = [
     "horriblesubs"
     ]
 polling_interval = 900
+git_path = git
 
 [PostgreSQL]
 host = localhost

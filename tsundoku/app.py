@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import importlib
 import logging
 from logging.config import dictConfig
@@ -18,6 +19,7 @@ from tsundoku.config import get_config_value
 from tsundoku.dl_client import Manager
 import tsundoku.exceptions as exceptions
 from tsundoku.feeds import Downloader, Poller
+import tsundoku.git as git
 from tsundoku.user import User
 
 
@@ -144,9 +146,32 @@ async def migrate():
         backend.apply_migrations(backend.to_apply(migrations))
 
 
+async def check_for_updates():
+    """
+    Checks for updates from GitHub.
+
+    If commit is newer, prompt for an update.
+    """
+    out, e = git.run("rev-parse --short HEAD")
+    print(out)
+
+
 @app.errorhandler(Unauthorized)
 async def redirect_to_login(*_):
     return redirect(url_for("ux.login"))
+
+
+@app.before_request
+async def update_check_needed():
+    """
+    Compares the time between now and the
+    last update check. If it has been more
+    than 1 day, check for an update.
+    """
+    next_ = app.last_update_check + datetime.timedelta(hours=24)
+    if next_ < datetime.datetime.utcnow():
+        await check_for_updates()
+        app.last_update_check = datetime.datetime.utcnow()
 
 
 @app.before_serving
@@ -160,6 +185,10 @@ async def setup_session():
 
     app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar)
     app.dl_client = Manager(app.session)
+
+    app.can_update = False
+    await check_for_updates()
+    app.last_update_check = datetime.datetime.utcnow()
 
 
 @app.before_serving
