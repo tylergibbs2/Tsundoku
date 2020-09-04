@@ -1,13 +1,33 @@
 var None = null;
 var entriesToDelete = [];
+var modalsCanBeClosed = true;
+
+
+function showAddorEditProgressBars() {
+    modalsCanBeClosed = false;
+    $(".closes-modals").addClass("is-hidden");
+    $(".submits-modals").addClass("is-hidden");
+    $("progress").removeClass("is-hidden");
+}
+
+
+function hideAddorEditProgressBars() {
+    modalsCanBeClosed = true;
+    $(".closes-modals").removeClass("is-hidden");
+    $(".submits-modals").removeClass("is-hidden");
+    $("progress").addClass("is-hidden");
+}
 
 
 function submitAddOrEditShowForm(event) {
+    showAddorEditProgressBars();
+
     event.preventDefault();
     let url = $(this).closest("form").attr("action");
     let method = $(this).closest("form").attr("method");
     let data = $(this).closest("form").serialize();
 
+    // delete all buffered deletions
     for (const entry of entriesToDelete) {
         // entry[0] is show_id, entry[1] is entry_id
         deleteShowEntry(entry[0], entry[1]);
@@ -22,6 +42,7 @@ function submitAddOrEditShowForm(event) {
                 location.reload();
             },
             error: function (jqXHR, status, error) {
+                hideAddorEditProgressBars();
                 alert("There was an error processing the request.");
             }
         }
@@ -204,9 +225,11 @@ function toggleFixMatchDropdown() {
 
 
 function closeModals() {
-    entriesToDelete = [];
-    $(".modal").removeClass("is-active");
-    $(document.documentElement).removeClass("is-clipped");
+    if (modalsCanBeClosed) {
+        entriesToDelete = [];
+        $(".modal").removeClass("is-active");
+        $(document.documentElement).removeClass("is-clipped");
+    }
 }
 
 
