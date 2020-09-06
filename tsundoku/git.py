@@ -120,6 +120,8 @@ async def update():
             logger.error(f"Git: Unable to update, {line}")
             return
 
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+
     await migrate()
 
     app.update_info = []
