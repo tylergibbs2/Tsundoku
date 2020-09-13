@@ -4,7 +4,6 @@ asyncpg==0.20.1
 bencodepy==0.9.5
 feedparser==5.2.1
 fuzzywuzzy==0.18.0
-tusker==0.2.2
 quart-auth==0.4.0
 quart==0.13.0
 yoyo-migrations==7.2.0
