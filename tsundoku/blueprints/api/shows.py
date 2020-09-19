@@ -205,9 +205,6 @@ class ShowsAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
-                DELETE FROM show_entry WHERE show_id=$1;
-            """, show_id)
-            await con.execute("""
                 DELETE FROM shows WHERE id=$1;
             """, show_id)
 
