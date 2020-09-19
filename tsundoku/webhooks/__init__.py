@@ -50,7 +50,7 @@ def generate_slack_block(content: str) -> dict:
     return block
 
 
-def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -> dict:
+async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -> dict:
     """
     Generates the complete payload for
     a webhook send.
@@ -122,7 +122,7 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
     event: str
         The event that occurred, can be any `show_state`.
     """
-    payload = generate_payload(wh_id, show_id, episode, event)
+    payload = await generate_payload(wh_id, show_id, episode, event)
 
     if not payload:
         return
