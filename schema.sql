@@ -1,4 +1,5 @@
 CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved', 'completed');
+CREATE TYPE webhook_service AS ENUM ('discord', 'slack', 'custom');
 
 CREATE TABLE IF NOT EXISTS users (
     id SMALLSERIAL PRIMARY KEY,
@@ -20,9 +21,24 @@ CREATE TABLE IF NOT EXISTS shows (
 
 CREATE TABLE IF NOT EXISTS show_entry (
     id SMALLSERIAL PRIMARY KEY,
-    show_id SMALLINT NOT NULL REFERENCES shows(id),
+    show_id SMALLINT NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
     episode SMALLINT NOT NULL,
     current_state show_state NOT NULL DEFAULT 'downloading',
     torrent_hash TEXT NOT NULL,
     file_path TEXT
+);
+
+CREATE TABLE IF NOT EXISTS webhook (
+    id SMALLSERIAL,
+    show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
+    wh_service webhook_service,
+    wh_url TEXT NOT NULL,
+    content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]',
+    PRIMARY KEY (show_id, wh_service)
+);
+
+CREATE TABLE IF NOT EXISTS wh_trigger (
+    wh_id SMALLINT REFERENCES webhook(id) ON DELETE CASCADE,
+    trigger show_state,
+    PRIMARY KEY (wh_id, trigger)
 );
