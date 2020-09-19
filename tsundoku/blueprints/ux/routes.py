@@ -8,6 +8,7 @@ from quart import request
 from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
 
 from tsundoku import kitsu
+from tsundoku.blueprints.api.webhooks import get_webhook_record
 from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
 
@@ -119,4 +120,21 @@ async def logout():
 @ux_blueprint.route("/webhooks", methods=["GET"])
 @login_required
 async def webhooks():
-    return await render_template("webhooks.html")
+    ctx = {}
+    async with app.db_pool.acquire() as con:
+        shows = await con.fetch("""
+            SELECT
+                id,
+                title
+            FROM
+                shows
+            ORDER BY title;
+        """)
+        shows = [dict(s) for s in shows]
+        for s in shows:
+            s["webhooks"] = await get_webhook_record(show_id=s["id"])
+
+    ctx["shows"] = shows
+    print(ctx)
+
+    return await render_template("webhooks.html", **ctx)
