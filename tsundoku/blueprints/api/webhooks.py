@@ -6,17 +6,27 @@ from quart import current_app as app
 from quart_auth import current_user
 
 
-async def get_webhook_record(wh_id: int=None) -> List[dict]:
+async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
     """
     Retrieve all webhooks or a specific webhook
     for a specified show.
+
+    Only one of the parameters can be specified at a time.
+
+    Parameters
+    ----------
+    wh_id: Optional[int]
+        The ID of the webhook to retrieve.
+    show_id: Optional[int]
+        The ID of the show to retrieve
+        webhooks from.
 
     Returns
     -------
     List[Optional[dict]]
          A list of results.
     """
-    if wh_id is None:
+    if show_id is not None:
         async with app.db_pool.acquire() as con:
             webhooks = await con.fetch("""
                 SELECT
@@ -37,7 +47,7 @@ async def get_webhook_record(wh_id: int=None) -> List[dict]:
                 wh["triggers"] = [t["trigger"] for t in triggers]
 
         return webhooks
-    else:
+    elif wh_id is not None:
         async with app.db_pool.acquire() as con:
             webhook = await con.fetchrow("""
                 SELECT
@@ -46,8 +56,8 @@ async def get_webhook_record(wh_id: int=None) -> List[dict]:
                     content_fmt
                 FROM
                     webhook
-                WHERE show_id=$1 AND id=$2;
-            """, show_id, wh_id)
+                WHERE id=$1;
+            """, wh_id)
             webhook = dict(webhook)
             if webhook:
                 triggers = await con.fetch("""
@@ -67,6 +77,13 @@ class WebhooksAPI(views.MethodView):
         Retrieve all webhooks or a specific webhook
         for a specified show.
 
+        Parameters
+        ----------
+        show_id: int
+            The show to retrieve webhooks for.
+        wh_id: int
+            The specific webhook to retrieve.
+
         Returns
         -------
         List[dict]
@@ -76,9 +93,9 @@ class WebhooksAPI(views.MethodView):
             return abort(401, "You are not authorized to access this resource.")
 
         if wh_id is None:
-            return json.dumps(get_webhook_record())
+            return json.dumps(await get_webhook_record(show_id=show_id))
         else:
-            return json.dumps(get_webhook_record(wh_id))
+            return json.dumps(await get_webhook_record(wh_id=wh_id))
 
 
     async def post(self, show_id: int, entry_id: int=None) -> dict:
@@ -137,7 +154,7 @@ class WebhooksAPI(views.MethodView):
                 ($1, $2, $3);
             """, show_id, service, url)
 
-        webhook = get_webhook_record(wh_id)
+        webhook = await get_webhook_record(wh_id=wh_id)
 
         # We could technically avoid doing this
         # and attempt to send the first result,
@@ -182,7 +199,7 @@ class WebhooksAPI(views.MethodView):
         content_fmt = arguments.get("content_fmt")
 
         triggers = triggers.split(",")
-        wh = get_webhook_record(wh_id)
+        wh = await get_webhook_record(wh_id=wh_id)
 
         if not wh:
             response = {"error": "invalid webhook"}
@@ -223,7 +240,7 @@ class WebhooksAPI(views.MethodView):
                 WHERE id=$4;
             """, service, url, content_fmt, wh_id)
 
-        return json.dumps(get_webhook_record(wh_id)[0])
+        return json.dumps(await get_webhook_record(wh_id=wh_id)[0])
 
 
     async def delete(self, show_id: int, wh_id: int) -> Optional[dict]:
@@ -256,6 +273,6 @@ class WebhooksAPI(views.MethodView):
             """, wh_id)
 
             if deleted:
-                return json.dumps(get_webhook_record(deleted))
+                return json.dumps(await get_webhook_record(wh_id=deleted))
             else:
                 return json.dumps([])
