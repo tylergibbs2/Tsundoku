@@ -29,12 +29,11 @@ CREATE TABLE IF NOT EXISTS show_entry (
 );
 
 CREATE TABLE IF NOT EXISTS webhook (
-    id SMALLSERIAL,
+    id SMALLSERIAL PRIMARY KEY,
     show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
     wh_service webhook_service,
     wh_url TEXT NOT NULL,
-    content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]',
-    PRIMARY KEY (show_id, wh_service)
+    content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]'
 );
 
 CREATE TABLE IF NOT EXISTS wh_trigger (
