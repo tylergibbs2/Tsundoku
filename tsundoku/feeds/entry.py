@@ -2,6 +2,8 @@ from pathlib import Path
 
 from asyncpg import Record
 
+from tsundoku.webhooks import send
+
 
 class Entry:
     def __init__(self, app, record: Record):
@@ -34,6 +36,8 @@ class Entry:
                 WHERE id=$2;
             """, new_state, self.id)
 
+        await self._handle_webhooks()
+
     async def set_path(self, new_path: Path) -> None:
         """
         Updates the database and local object's file path.
@@ -50,3 +54,35 @@ class Entry:
                     file_path = $1
                 WHERE id=$2;
             """, str(new_path), self.id)
+
+    async def _handle_webhooks(self) -> None:
+        """
+        On a state change, if the state is listed as a post event
+        for this show, then send this entry to the webhook handling.
+
+        This is an internal method and shouldn't be called unless
+        a state change occurs. If called improperly, duplicate
+        sends could occur.
+
+        Uses the `self.state` attribute, so call this after
+        that is updated.
+        """
+        async with self._app.db_pool.acquire() as con:
+            trigger = await con.fetchrow("""
+                SELECT
+                    wh.id,
+                    t.trigger
+                FROM
+                    webhook wh
+                LEFT JOIN wh_trigger t
+                    ON wh.id = t.wh_id
+                WHERE wh.show_id = $1 AND t.trigger = $2;
+            """, self.show_id, self.state)
+
+        if trigger:
+            await send(
+                trigger["id"],
+                self.show_id,
+                self.episode,
+                self.state
+            )
