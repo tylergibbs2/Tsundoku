@@ -4,6 +4,11 @@ import aiohttp
 from quart import current_app as app
 
 
+class ExprDict(dict):
+    def __missing__(self, value):
+        return value
+
+
 def generate_discord_embed(content: str) -> dict:
     """
     Generates a Discord sendable embed.
@@ -20,7 +25,7 @@ def generate_discord_embed(content: str) -> dict:
     embed = {}
 
     embed["title"] = "Tsundoku Progress Event"
-    embed["color"] = "#05a825"
+    embed["color"] = 370725
     embed["description"] = content
 
     return embed
@@ -73,27 +78,30 @@ async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -
         show_name = await con.fetchval("""
             SELECT title FROM shows WHERE id=$1;
         """, show_id)
-        content_fmt = await con.fetchval("""
-            SELECT content_fmt FROM webhook WHERE id=$1;
+        webhook = await con.fetchrow("""
+            SELECT
+                wh_service as service,
+                content_fmt
+            FROM
+                webhook
+            WHERE id=$1;
         """, wh_id)
 
-    if not show_name or not content_fmt:
+    service = webhook.get("service")
+    content_fmt = webhook.get("content_fmt")
+
+    if not show_name or not content_fmt or not service:
         return
 
     payload = {}
 
-    def sub_func(match: re.Match):
-        expr = match.group(1)
+    expr = ExprDict(
+        name=show_name,
+        episode=episode,
+        state=event
+    )
 
-        keywords = {
-            "name": show_name,
-            "episode": episode,
-            "state": event
-        }
-
-        return keywords.get(expr, expr)
-
-    content = re.sub(r"{(\w+)}", sub_func, content_fmt)
+    content = content_fmt.format_map(expr)
 
     if service == "discord":
         # Discord expects an array
