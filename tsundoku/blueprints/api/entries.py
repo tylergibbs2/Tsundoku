@@ -5,6 +5,8 @@ from quart import abort, Response, request, views
 from quart import current_app as app
 from quart_auth import current_user
 
+from tsundoku.feeds.entry import Entry
+
 
 class EntriesAPI(views.MethodView):
     async def get(self, show_id: int, entry_id: int=None) -> Union[dict, List[dict]]:
@@ -96,9 +98,12 @@ class EntriesAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             new_entry = await con.fetchrow("""
-                SELECT id, show_id, episode, current_state, torrent_hash
+                SELECT id, show_id, episode, current_state, torrent_hash, file_path
                 FROM show_entry WHERE id=$1;
             """, entry_id)
+
+        entry = Entry(app, new_entry)
+        await entry._handle_webhooks()
 
         response["success"] = True
         response["entry"] = dict(new_entry)
