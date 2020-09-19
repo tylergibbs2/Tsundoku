@@ -133,4 +133,4 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
         """, wh_id)
 
     async with aiohttp.ClientSession() as sess:
-        async with sess.post(url, json=payload)
+        await sess.post(url, json=payload)
