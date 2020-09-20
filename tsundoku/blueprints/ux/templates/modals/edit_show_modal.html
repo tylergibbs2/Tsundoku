@@ -26,10 +26,11 @@
         </header>
 
         <section class="modal-card-body">
-            <div class="tabs">
+            <div id="edit-control-tabs" class="tabs">
                 <ul>
                     <li id="show-info-tab" class="is-active"><a onclick="displayShowInfo();">Information</a></li>
                     <li id="show-entry-tab"><a onclick="displayShowEntries();">Entries</a></li>
+                    <li id="show-webhooks-tab"><a onclick="displayShowWebhooks();">Webhooks</a></li>
                 </ul>
             </div>
 
@@ -63,6 +64,10 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <div id="webhook-tab-display" class="container is-hidden">
+                
             </div>
 
             <form id="edit-show-form" submit>
@@ -123,7 +128,8 @@
 
         <footer class="modal-card-foot">
             <progress class="progress is-primary is-hidden is-small mt-2" max="100"></progress>
-            <input class="button is-success submits-modals" type="submit" form="edit-show-form" value="Save changes"></button>
+            <input class="button is-success submits-modals" type="submit" form="edit-show-form"
+                value="Save changes"></button>
             <button class="button closes-modals" onclick="closeModals();">Cancel</button>
         </footer>
     </div>

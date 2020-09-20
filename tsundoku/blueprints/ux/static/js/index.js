@@ -210,20 +210,32 @@ function deleteShowCache(show_id) {
 
 
 function displayShowInfo() {
+    $("#edit-control-tabs ul li").removeClass("is-active");
     $("#show-info-tab").addClass("is-active");
-    $("#show-entry-tab").removeClass("is-active");
 
     $("#edit-show-form").removeClass("is-hidden");
     $("#entry-tab-display").addClass("is-hidden");
+    $("#webhook-tab-display").addClass("is-hidden");
 }
 
 
 function displayShowEntries() {
-    $("#show-info-tab").removeClass("is-active");
+    $("#edit-control-tabs ul li").removeClass("is-active");
     $("#show-entry-tab").addClass("is-active");
 
     $("#edit-show-form").addClass("is-hidden");
     $("#entry-tab-display").removeClass("is-hidden");
+    $("#webhook-tab-display").addClass("is-hidden");
+}
+
+
+function displayShowWebhooks() {
+    $("#edit-control-tabs ul li").removeClass("is-active");
+    $("#show-webhooks-tab").addClass("is-active");
+
+    $("#edit-show-form").addClass("is-hidden");
+    $("#entry-tab-display").addClass("is-hidden");
+    $("#webhook-tab-display").removeClass("is-hidden");
 }
 
 
