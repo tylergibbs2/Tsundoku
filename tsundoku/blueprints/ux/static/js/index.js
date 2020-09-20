@@ -112,9 +112,34 @@ function addShowEntryFormSubmit(event) {
 }
 
 
+function sortedIndex(arr, val) {
+    let low = 0;
+    let high = arr.length;
+
+    while (low < high) {
+        let mid = (low + high) >>> 1;
+        if (arr[mid] < val)
+            low = mid + 1;
+        else
+            high = mid;
+    }
+
+    return low;
+}
+
+
 function addRowToShowEntryTable(entry) {
     let table = document.querySelector("#show-entry-table tbody");
-    let row = table.insertRow(-1);
+
+    let episodes = [];
+    for (const row of table.rows) {
+        let ep_cell = row.cells[0];
+        let ep = parseInt(ep_cell.innerHTML);
+        episodes.push(ep);
+    }
+
+    let insertionIdx = sortedIndex(episodes, entry.episode);
+    let row = table.insertRow(insertionIdx);
 
     let cell_episode = row.insertCell(0);
     let cell_status = row.insertCell(1);
