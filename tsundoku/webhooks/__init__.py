@@ -1,8 +1,12 @@
+import logging
 import re
 from typing import List
 
 import aiohttp
 from quart import current_app as app
+
+
+logger = logging.getLogger("tsundoku")
 
 
 class ExprDict(dict):
@@ -136,14 +140,18 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
     event: str
         The event that occurred, can be any `show_state`.
     """
+    logger.debug(f"Webhooks - Generating payload for Webhook with ID {wh_id}")
     payload = await generate_payload(wh_id, show_id, episode, event)
 
     if not payload:
         return
+
+    logger.debug(f"Webhooks - Payload generated for Webhook with ID {wh_id}")
 
     async with app.db_pool.acquire() as con:
         url = await con.fetchval("""
             SELECT wh_url FROM webhook WHERE id=$1;
         """, wh_id)
 
+    logger.debug(f"Webhooks - Sending payload to {url}")
     await app.session.post(url, json=payload)
