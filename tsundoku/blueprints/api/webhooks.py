@@ -30,6 +30,7 @@ async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
         async with app.db_pool.acquire() as con:
             webhooks = await con.fetch("""
                 SELECT
+                    id,
                     wh_service,
                     wh_url,
                     content_fmt
