@@ -86,7 +86,6 @@ async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -
                 webhook
             WHERE id=$1;
         """, wh_id)
-
     service = webhook.get("service")
     content_fmt = webhook.get("content_fmt")
 
@@ -140,5 +139,4 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
             SELECT wh_url FROM webhook WHERE id=$1;
         """, wh_id)
 
-    async with aiohttp.ClientSession() as sess:
-        await sess.post(url, json=payload)
+    await app.session.post(url, json=payload)

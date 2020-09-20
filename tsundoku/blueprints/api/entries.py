@@ -74,7 +74,6 @@ class EntriesAPI(views.MethodView):
         required_arguments = {"episode", "magnet"}
         await request.get_data()
         arguments = await request.form
-
         response = {"success": False}
 
         if set(arguments.keys()) != required_arguments:

@@ -68,10 +68,9 @@ class Entry:
         that is updated.
         """
         async with self._app.db_pool.acquire() as con:
-            trigger = await con.fetchrow("""
+            trigger = await con.fetchval("""
                 SELECT
-                    wh.id,
-                    t.trigger
+                    wh.id
                 FROM
                     webhook wh
                 LEFT JOIN wh_trigger t
@@ -81,7 +80,7 @@ class Entry:
 
         if trigger:
             await send(
-                trigger["id"],
+                trigger,
                 self.show_id,
                 self.episode,
                 self.state

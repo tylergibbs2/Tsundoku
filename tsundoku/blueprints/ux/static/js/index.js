@@ -1,5 +1,6 @@
 var None = null;
 var entriesToDelete = [];
+var entriesToAdd = [];
 var modalsCanBeClosed = true;
 
 
@@ -69,6 +70,14 @@ function submitAddOrEditShowForm(event) {
         // entry[0] is show_id, entry[1] is entry_id
         deleteShowEntry(entry[0], entry[1]);
     }
+    for (const entry of entriesToAdd) {
+        /*
+        entry[0] is show_id
+        entry[1] is episode
+        entry[2] is magnet
+        */
+       addShowEntry(entry[0], entry[1], entry[2]);
+    }
 
     $.ajax(
         {
@@ -87,28 +96,24 @@ function submitAddOrEditShowForm(event) {
 }
 
 
-function addShowEntryFormSubmit(event) {
+function bufferShowEntryAddition(event) {
     event.preventDefault();
 
-    let form = $(this).closest("form");
-    let url = form.attr("action");
-    let method = form.attr("method");
-    let data = form.serialize();
-    $.ajax(
-        {
-            url: url,
-            type: method,
-            data: data,
-            success: function (data) {
-                data = JSON.parse(data);
-                let entry = data.entry;
-                addRowToShowEntryTable(entry);
-            },
-            error: function (jqXHR, status, error) {
-                alert("There was an error processing the request.");
-            }
-        }
-    );
+    let form = $(this).closest("form")[0];
+    let data = new FormData(form);
+
+    let show_id = parseInt(data.get("show_id"));
+    let episode = parseInt(data.get("episode"));
+    let magnet = data.get("magnet");
+
+    entriesToAdd.push([show_id, episode, magnet])
+
+    let entry = {
+        "show_id": show_id,
+        "current_state": "buffered",
+        "episode": episode
+    }
+    addRowToShowEntryTable(entry);
 }
 
 
@@ -150,8 +155,10 @@ function addRowToShowEntryTable(entry) {
 
     let deleteBtn = document.createElement("button");
     $(deleteBtn).addClass("delete");
+
     $(deleteBtn).on("click", function () {
-        bufferShowEntryDeletion(entry.show_id, entry.id);
+        if (entry.current_state !== "buffered")
+            bufferShowEntryDeletion(entry.show_id, entry.id);
         this.parentNode.parentNode.remove();
     })
 
@@ -166,12 +173,25 @@ function bufferShowEntryDeletion(show_id, entry_id) {
 
 function deleteShowEntry(show_id, entry_id) {
     let url = `/api/shows/${show_id}/entries/${entry_id}`;
-    $.ajax(
-        {
-            url: url,
-            type: "DELETE"
-        }
-    );
+    $.ajax({
+        url: url,
+        type: "DELETE"
+    });
+}
+
+
+function addShowEntry(show_id, episode, magnet_url) {
+    let url = `/api/shows/${show_id}/entries`;
+    let payload = {
+        episode: episode,
+        magnet: magnet_url
+    }
+    $.ajax({
+        url: url,
+        type: "POST",
+        data: $.param(payload),
+        async: false
+    });
 }
 
 
@@ -244,14 +264,11 @@ function openEditShowModal(show) {
     }
 
     $("#entry-table-caption").html(show.title);
+    $("#add-show-entry-form input[name='show_id']").val(show.id);
 
-    form.attr("action", `/api/shows/${show.id}`);
-    form.attr("method", "PUT");
     form.on("submit", submitAddOrEditShowForm);
 
-    addEntryForm.attr("action", `/api/shows/${show.id}/entries`);
-    addEntryForm.attr("method", "POST");
-    addEntryForm.on("submit", addShowEntryFormSubmit);
+    addEntryForm.on("submit", bufferShowEntryAddition);
 
     $("#del-cache-btn").on("click", function () {
         deleteShowCache(show.id);
@@ -289,6 +306,7 @@ function toggleFixMatchDropdown() {
 function closeModals() {
     if (modalsCanBeClosed) {
         entriesToDelete = [];
+        entriesToAdd = [];
         $(".modal").removeClass("is-active");
         $(document.documentElement).removeClass("is-clipped");
     }
