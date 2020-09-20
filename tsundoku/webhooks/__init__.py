@@ -1,4 +1,5 @@
 import re
+from typing import List
 
 import aiohttp
 from quart import current_app as app
@@ -31,7 +32,7 @@ def generate_discord_embed(content: str) -> dict:
     return embed
 
 
-def generate_slack_block(content: str) -> dict:
+def generate_slack_blocks(content: str) -> List[dict]:
     """
     Generates a Slack Block for the content.
 
@@ -44,15 +45,23 @@ def generate_slack_block(content: str) -> dict:
     -------
     A block that can be sent to Slack.
     """
-    block = {}
-
-    block["type"] = "section"
-    block["text"] = {
-        "type": "mrkdwn",
-        "text": content
+    title_block = {
+        "type": "header",
+        "text": {
+            "type": "plain_text",
+            "text": "Tsundoku Progress Event"
+        }
     }
 
-    return block
+    content_block = {
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": content
+        }
+    }
+
+    return [title_block, content_block]
 
 
 async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -> dict:
@@ -106,9 +115,7 @@ async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -
         # Discord expects an array
         payload["embeds"] = [generate_discord_embed(content)]
     elif service == "slack":
-        # Slack also expects an array
-        payload["text"] = "Tsundoku Progress Event"
-        payload["blocks"] = [generate_slack_block(content)]
+        payload["blocks"] = generate_slack_blocks(content)
     else:
         payload["content"] = content
         payload["text"] = content
