@@ -60,6 +60,7 @@ async def index():
                 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
+            s["webhooks"] = await get_webhook_record(show_id=s["id"])
             s["image"] = await kitsu.get_poster_image(s["kitsu_id"])
             s["link"] = kitsu.get_link(s["kitsu_id"])
 
@@ -140,25 +141,3 @@ async def login():
 async def logout():
     logout_user()
     return redirect(url_for("ux.index"))
-
-
-@ux_blueprint.route("/webhooks", methods=["GET"])
-@login_required
-async def webhooks():
-    ctx = {}
-    async with app.db_pool.acquire() as con:
-        shows = await con.fetch("""
-            SELECT
-                id,
-                title
-            FROM
-                shows
-            ORDER BY title;
-        """)
-        shows = [dict(s) for s in shows]
-        for s in shows:
-            s["webhooks"] = await get_webhook_record(show_id=s["id"])
-
-    ctx["shows"] = shows
-
-    return await render_template("webhooks.html", **ctx)
