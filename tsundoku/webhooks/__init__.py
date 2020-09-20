@@ -144,6 +144,7 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
     payload = await generate_payload(wh_id, show_id, episode, event)
 
     if not payload:
+        logger.warn(f"Webhooks - Failed to generate a valid payload for Webhook with ID {wh_id}")
         return
 
     logger.debug(f"Webhooks - Payload generated for Webhook with ID {wh_id}")
@@ -153,5 +154,5 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
             SELECT wh_url FROM webhook WHERE id=$1;
         """, wh_id)
 
-    logger.debug(f"Webhooks - Sending payload to {url}")
+    logger.debug(f"Webhooks - Webhook {wh_id} sending payload...")
     await app.session.post(url, json=payload)
