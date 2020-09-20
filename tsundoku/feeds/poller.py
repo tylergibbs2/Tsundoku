@@ -134,7 +134,11 @@ class Poller:
         """
         async with self.app.db_pool.acquire() as con:
             show_entry = await con.fetchval("""
-                SELECT id FROM show_entry WHERE show_id=$1 AND episode=$2;
+                SELECT
+                    id
+                FROM
+                    show_entry
+                WHERE show_id=$1 AND episode=$2;
             """, show_id, episode)
 
         return bool(show_entry)
@@ -164,7 +168,11 @@ class Poller:
         """
         async with self.app.db_pool.acquire() as con:
             desired_shows = await con.fetch("""
-                SELECT id, title FROM shows;
+                SELECT
+                    id,
+                    title
+                FROM
+                    shows;
             """)
         show_list = {show["title"]: show["id"] for show in desired_shows}
 

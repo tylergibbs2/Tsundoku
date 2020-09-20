@@ -97,7 +97,11 @@ async def insert_user(username: str, password: str):
     pw_hash = hasher.hash(password)
 
     await con.execute("""
-        INSERT INTO users (username, password_hash) VALUES ($1, $2);
+        INSERT INTO
+            users
+            (username, password_hash)
+        VALUES
+            ($1, $2);
     """, username, pw_hash)
 
     await con.close()
@@ -169,7 +173,10 @@ async def setup_db():
 
     async with app.db_pool.acquire() as con:
         users = await con.fetchval("""
-            SELECT COUNT(*) FROM users;
+            SELECT
+                COUNT(*)
+            FROM
+                users;
         """)
 
     if not users:

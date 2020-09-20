@@ -34,7 +34,9 @@ async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
                     wh_service,
                     wh_url,
                     content_fmt
-                FROM webhook WHERE show_id=$1;
+                FROM
+                    webhook
+                WHERE show_id=$1;
             """, show_id)
             webhooks = [dict(record) for record in webhooks]
 
@@ -42,7 +44,8 @@ async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
                 triggers = await con.fetch("""
                     SELECT
                         trigger
-                    FROM wh_trigger
+                    FROM
+                        wh_trigger
                     WHERE wh_id=$1;
                 """, wh["id"])
                 wh["triggers"] = [t["trigger"] for t in triggers]
@@ -64,7 +67,8 @@ async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
                 triggers = await con.fetch("""
                     SELECT
                         trigger
-                    FROM wh_trigger
+                    FROM
+                        wh_trigger
                     WHERE wh_id=$1;
                 """, webhook["id"])
                 webhook["triggers"] = [t["trigger"] for t in triggers]
@@ -150,9 +154,11 @@ class WebhooksAPI(views.MethodView):
                 return Response(json.dumps(response), status=400)
 
             wh_id = await con.fetchval("""
-                INSERT INTO webhook (show_id, wh_service, wh_url)
+                INSERT INTO
+                    webhook
+                    (show_id, wh_service, wh_url)
                 VALUES
-                ($1, $2, $3);
+                    ($1, $2, $3);
             """, show_id, service, url)
 
         webhook = await get_webhook_record(wh_id=wh_id)
@@ -227,13 +233,16 @@ class WebhooksAPI(views.MethodView):
             """, wh_id)
             for trigger in triggers:
                 await con.execute("""
-                    INSERT INTO wh_trigger (wh_id, trigger)
+                    INSERT INTO
+                        wh_trigger
+                        (wh_id, trigger)
                     VALUES
-                    ($1, $2);
+                        ($1, $2);
                 """, wh_id, trigger)
 
             await con.execute("""
-                UPDATE webhook
+                UPDATE
+                    webhook
                 SET
                     wh_service=$1,
                     wh_url=$2,

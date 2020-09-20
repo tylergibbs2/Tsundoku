@@ -73,7 +73,12 @@ async def delete_show_cache(show_id: int):
         new_kitsu_id = await kitsu.get_id(show_name)
 
         await con.execute("""
-            UPDATE shows SET kitsu_id=$1, cached_poster_url=NULL WHERE id=$2;
+            UPDATE
+                shows
+            SET
+                kitsu_id=$1,
+                cached_poster_url=NULL
+            WHERE id=$2;
         """, new_kitsu_id, show_id)
 
     return json.dumps([])

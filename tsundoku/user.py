@@ -12,7 +12,11 @@ class User(AuthUser):
         if not self._resolved:
             async with app.db_pool.acquire() as con:
                 self._username = await con.fetchval("""
-                    SELECT username FROM users WHERE id = $1;
+                    SELECT
+                        username
+                    FROM
+                        users
+                    WHERE id = $1;
                 """, self.auth_id)
             self._resolved = True
 

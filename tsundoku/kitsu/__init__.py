@@ -87,7 +87,11 @@ async def get_poster_image(show_id: int) -> str:
 
     async with app.db_pool.acquire() as con:
         url = await con.fetchval("""
-            SELECT cached_poster_url FROM shows WHERE kitsu_id=$1;
+            SELECT
+                cached_poster_url
+            FROM
+                shows
+            WHERE kitsu_id=$1;
         """, show_id)
         if url:
             return url
@@ -111,7 +115,11 @@ async def get_poster_image(show_id: int) -> str:
 
     async with app.db_pool.acquire() as con:
         await con.execute("""
-            UPDATE shows SET cached_poster_url=$1 WHERE kitsu_id=$2;
+            UPDATE
+                shows
+            SET
+                cached_poster_url=$1
+            WHERE kitsu_id=$2;
         """, to_cache, show_id)
 
     return to_cache

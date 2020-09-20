@@ -89,7 +89,11 @@ async def generate_payload(wh_id: int, show_id: int, episode: int, event: str) -
     """
     async with app.db_pool.acquire() as con:
         show_name = await con.fetchval("""
-            SELECT title FROM shows WHERE id=$1;
+            SELECT
+                title
+            FROM
+                shows
+            WHERE id=$1;
         """, show_id)
         webhook = await con.fetchrow("""
             SELECT
@@ -151,7 +155,11 @@ async def send(wh_id: int, show_id: int, episode: int, event: str):
 
     async with app.db_pool.acquire() as con:
         url = await con.fetchval("""
-            SELECT wh_url FROM webhook WHERE id=$1;
+            SELECT
+                wh_url
+            FROM
+                webhook
+            WHERE id=$1;
         """, wh_id)
 
     logger.debug(f"Webhooks - Webhook {wh_id} sending payload...")

@@ -26,16 +26,28 @@ class EntriesAPI(views.MethodView):
         if entry_id is None:
             async with app.db_pool.acquire() as con:
                 entries = await con.fetch("""
-                    SELECT id, episode, current_state, torrent_hash
-                    FROM show_entry WHERE show_id=$1;
+                    SELECT
+                        id,
+                        episode,
+                        current_state,
+                        torrent_hash
+                    FROM
+                        show_entry
+                    WHERE show_id=$1;
                 """, show_id)
 
             return json.dumps([dict(record) for record in entries])
         else:
             async with app.db_pool.acquire() as con:
                 entry = await con.fetchrow("""
-                    SELECT id, episode, current_state, torrent_hash
-                    FROM show_entry WHERE show_id=$1 AND id=$2;
+                    SELECT
+                        id,
+                        episode,
+                        current_state,
+                        torrent_hash
+                    FROM
+                        show_entry
+                    WHERE show_id=$1 AND id=$2;
                 """, show_id, entry_id)
 
             if entry is None:
@@ -91,14 +103,25 @@ class EntriesAPI(views.MethodView):
         else:
             async with app.db_pool.acquire() as con:
                 entry_id = await con.fetchval("""
-                    INSERT INTO show_entry (show_id, episode, current_state, torrent_hash)
-                    VALUES ($1, $2, $3, $4) RETURNING id;
+                    INSERT INTO
+                        show_entry (show_id, episode, current_state, torrent_hash)
+                    VALUES
+                        ($1, $2, $3, $4)
+                    RETURNING id;
                 """, show_id, episode, "completed", "")
 
         async with app.db_pool.acquire() as con:
             new_entry = await con.fetchrow("""
-                SELECT id, show_id, episode, current_state, torrent_hash, file_path
-                FROM show_entry WHERE id=$1;
+                SELECT
+                    id,
+                    show_id,
+                    episode,
+                    current_state,
+                    torrent_hash,
+                    file_path
+                FROM
+                    show_entry
+                WHERE id=$1;
             """, entry_id)
 
         entry = Entry(app, new_entry)
@@ -125,7 +148,9 @@ class EntriesAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
-                DELETE FROM show_entry WHERE id=$1;
+                DELETE FROM
+                    show_entry
+                WHERE id=$1;
             """, entry_id)
 
         return json.dumps({"success": True})

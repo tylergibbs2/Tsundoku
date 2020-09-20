@@ -31,16 +31,33 @@ class ShowsAPI(views.MethodView):
         if show_id is None:
             async with app.db_pool.acquire() as con:
                 shows = await con.fetch("""
-                    SELECT id, title, desired_format, desired_folder,
-                    season, episode_offset, show_image FROM shows;
+                    SELECT
+                        id,
+                        title,
+                        desired_format,
+                        desired_folder,
+                        season,
+                        episode_offset,
+                        show_image
+                    FROM
+                        shows;
                 """)
 
                 return json.dumps([dict(record) for record in shows])
         else:
             async with app.db_pool.acquire() as con:
                 show = await con.fetchrow("""
-                    SELECT id, title, desired_format, desired_folder,
-                    season, episode_offset, show_image FROM shows WHERE id=$1;
+                    SELECT
+                        id,
+                        title,
+                        desired_format,
+                        desired_folder,
+                        season,
+                        episode_offset,
+                        show_image
+                    FROM
+                        shows
+                    WHERE id=$1;
                 """, show_id)
 
             if not show:
@@ -95,8 +112,12 @@ class ShowsAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
-                INSERT INTO shows (title, desired_format, desired_folder,
-                season, episode_offset, kitsu_id) VALUES ($1, $2, $3, $4, $5, $6);
+                INSERT INTO
+                    shows
+                    (title, desired_format, desired_folder,
+                    season, episode_offset, kitsu_id)
+                VALUES
+                    ($1, $2, $3, $4, $5, $6);
             """, arguments["title"], desired_format, desired_folder, season,
             episode_offset, kitsu_id)
 
@@ -157,21 +178,38 @@ class ShowsAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             og_data = await con.fetchrow("""
-                SELECT title, kitsu_id FROM shows WHERE id=$1;
+                SELECT
+                    title,
+                    kitsu_id
+                FROM
+                    shows
+                WHERE id=$1;
             """, show_id)
             if arguments["title"] != og_data["title"]:
                 kitsu_id = await kitsu.get_id(arguments["title"])
             elif int(arguments["kitsu_id"]) != og_data["kitsu_id"]:
                 kitsu_id = int(arguments["kitsu_id"])
                 await con.execute("""
-                    UPDATE shows SET cached_poster_url=NULL where id=$1;
+                    UPDATE
+                        shows
+                    SET
+                        cached_poster_url=NULL
+                    WHERE id=$1;
                 """, show_id)
             else:
                 kitsu_id = og_data["kitsu_id"]
 
             await con.execute("""
-                UPDATE shows SET title=$1, desired_format=$2, desired_folder=$3,
-                season=$4, episode_offset=$5, kitsu_id=$6 WHERE id=$7;
+                UPDATE
+                    shows
+                SET
+                    title=$1,
+                    desired_format=$2,
+                    desired_folder=$3,
+                    season=$4,
+                    episode_offset=$5,
+                    kitsu_id=$6
+                WHERE id=$7;
             """, arguments["title"], desired_format, desired_folder, season,
             episode_offset, kitsu_id, show_id)
 
@@ -205,7 +243,9 @@ class ShowsAPI(views.MethodView):
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
-                DELETE FROM shows WHERE id=$1;
+                DELETE FROM
+                    shows
+                WHERE id=$1;
             """, show_id)
 
         return json.dumps({"success": True})

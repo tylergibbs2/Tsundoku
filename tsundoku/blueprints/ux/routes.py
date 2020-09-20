@@ -34,14 +34,30 @@ async def index():
     kwargs = {}
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
-            SELECT id, title, desired_format, desired_folder,
-            season, episode_offset, kitsu_id FROM shows ORDER BY title;
+            SELECT
+                id,
+                title,
+                desired_format,
+                desired_folder,
+                season,
+                episode_offset,
+                kitsu_id
+            FROM
+                shows
+            ORDER BY title;
         """)
         shows = [dict(s) for s in shows]
         for s in shows:
             entries = await con.fetch("""
-                SELECT id, show_id, episode, current_state FROM
-                show_entry WHERE show_id=$1 ORDER BY episode ASC;
+                SELECT
+                    id,
+                    show_id,
+                    episode,
+                    current_state
+                FROM
+                    show_entry
+                WHERE show_id=$1
+                ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
             s["image"] = await kitsu.get_poster_image(s["kitsu_id"])
@@ -86,7 +102,12 @@ async def login():
 
         async with app.db_pool.acquire() as con:
             user_data = await con.fetchrow("""
-                SELECT id, password_hash FROM users WHERE LOWER(username) = $1;
+                SELECT
+                    id,
+                    password_hash
+                FROM
+                    users
+                WHERE LOWER(username) = $1;
             """, username.lower())
 
         if not user_data:
@@ -100,7 +121,11 @@ async def login():
         if hasher.check_needs_rehash(user_data["password_hash"]):
             async with app.db_pool.acquire() as con:
                 await con.execute("""
-                    UPDATE users SET password_hash=$1 WHERE username=$2;
+                    UPDATE
+                        users
+                    SET
+                        password_hash=$1
+                    WHERE username=$2;
                 """, hasher.hash(password), username)
 
         remember = form.get("remember", False)
@@ -135,6 +160,5 @@ async def webhooks():
             s["webhooks"] = await get_webhook_record(show_id=s["id"])
 
     ctx["shows"] = shows
-    print(ctx)
 
     return await render_template("webhooks.html", **ctx)

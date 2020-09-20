@@ -70,7 +70,12 @@ class Downloader:
 
         async with self.app.db_pool.acquire() as con:
             entry_id = await con.fetchval("""
-                INSERT INTO show_entry (show_id, episode, torrent_hash) VALUES ($1, $2, $3) RETURNING id;
+                INSERT INTO
+                    show_entry
+                    (show_id, episode, torrent_hash)
+                VALUES
+                    ($1, $2, $3)
+                RETURNING id;
             """, show_id, episode, torrent_hash)
         logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
 
@@ -98,7 +103,14 @@ class Downloader:
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT title, desired_folder, episode_offset, season FROM shows WHERE id=$1;
+                SELECT
+                    title,
+                    desired_folder,
+                    episode_offset,
+                    season
+                FROM
+                    shows
+                WHERE id=$1;
             """, entry.show_id)
 
         def formatting_re(match: re.Match):
@@ -162,7 +174,14 @@ class Downloader:
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
-                SELECT title, desired_format, season, episode_offset FROM shows WHERE id=$1;
+                SELECT
+                    title,
+                    desired_format,
+                    season,
+                    episode_offset
+                FROM
+                    shows
+                WHERE id=$1;
             """, entry.show_id)
 
         if show_info["desired_format"]:
@@ -267,7 +286,15 @@ class Downloader:
         """
         async with self.app.db_pool.acquire() as con:
             entries = await con.fetch("""
-                SELECT id, show_id, episode, torrent_hash, current_state, file_path FROM show_entry
+                SELECT
+                    id,
+                    show_id,
+                    episode,
+                    torrent_hash,
+                    current_state,
+                    file_path
+                FROM
+                    show_entry
                 WHERE current_state != 'completed';
             """)
 
