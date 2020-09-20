@@ -68,7 +68,7 @@ class Entry:
         that is updated.
         """
         async with self._app.db_pool.acquire() as con:
-            trigger = await con.fetchval("""
+            triggers = await con.fetch("""
                 SELECT
                     wh.id
                 FROM
@@ -78,10 +78,11 @@ class Entry:
                 WHERE wh.show_id = $1 AND t.trigger = $2;
             """, self.show_id, self.state)
 
-        if trigger:
-            await send(
-                trigger,
-                self.show_id,
-                self.episode,
-                self.state
-            )
+        if triggers:
+            for wh_id in triggers:
+                await send(
+                    wh_id["id"],
+                    self.show_id,
+                    self.episode,
+                    self.state
+                )
