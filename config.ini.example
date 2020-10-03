@@ -2,7 +2,7 @@
 host = localhost
 port = 6439
 parsers = [
-    "horriblesubs"
+    "erairaws"
     ]
 polling_interval = 900
 do_update_checks = true

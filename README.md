@@ -1,7 +1,7 @@
 # Tsundoku (積ん読)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
-Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for HorribleSubs installed.
+Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for Erai-raws installed.
 
 ## Requirements
 
