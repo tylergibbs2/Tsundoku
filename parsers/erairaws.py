@@ -50,7 +50,10 @@ class EraiRaws:
 
         title = parsed.get("anime_title")
         episode = parsed.get("episode_number")
-        if title is None or episode is None:
+        resolution = parsed.get("video_resolution")
+        if title is None or episode is None or resolution is None:
+            return False
+        elif resolution != "1080p":
             return False
 
 
