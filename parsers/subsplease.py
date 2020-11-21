@@ -3,14 +3,14 @@ import re
 import anitopy
 
 
-class EraiRaws:
+class SubsPlease:
     def __init__(self, app):
         """
         Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
         """
-        self.name = "Erai-raws"
-        self.url = "https://nyaa.si/?page=rss&u=Erai-raws"
+        self.name = "SubsPlease"
+        self.url = "https://subsplease.org/rss/?t&r=1080"
 
         self.app = app
 
@@ -36,26 +36,6 @@ class EraiRaws:
 
         return int(parsed["episode_number"])
 
-    def ignore_logic(self, item: dict) -> bool:
-        """
-        Optional
-
-        This is the first function a parser runs.
-
-        If this returns False, the item will instantly
-        be ignored by Tsundoku. Any other return value
-        will continue operation as normal.
-        """
-        parsed = anitopy.parse(item["title"])
-
-        title = parsed.get("anime_title")
-        episode = parsed.get("episode_number")
-        resolution = parsed.get("video_resolution")
-        if title is None or episode is None or resolution is None:
-            return False
-        elif resolution != "1080p":
-            return False
-
 
 def setup(app):
-    return EraiRaws(app)
+    return SubsPlease(app)
