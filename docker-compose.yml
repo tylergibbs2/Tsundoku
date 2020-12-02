@@ -1,0 +1,13 @@
+version: "2.1"
+services:
+  tsundoku:
+    container_name: tsundoku
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - <path to downloaded>:/downloaded
+      - <path to target location>:/target
+    ports:
+      - "6439:6439"
+    restart: unless-stopped
