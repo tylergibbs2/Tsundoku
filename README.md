@@ -42,6 +42,20 @@ python -m tsundoku --migrate
 python -m tsundoku
 ```
 
+## Installation (Docker)
+
+- Containerized PostgreSQL is required.
+
+1. Copy the `docker-compose.yml` file from the repository.
+2. Replace the file paths and replace the Postgres Docker service name.
+3. Run `docker-compose up`.
+
+I will not be providing an example on how to start the container using
+`docker run`.
+
+When pointing to directories within Tsundoku, make sure that you begin
+your target directory with `/target/...`.
+
 ## Configuration
 
 ```ini
