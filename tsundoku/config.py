@@ -7,7 +7,7 @@ from typing import Any
 config = configparser.ConfigParser()
 
 if os.environ.get("IS_DOCKER", False):
-    config.read("config/config.ini")
+    config.read("/config/config.ini")
 else:
     config.read("config.ini")
 
