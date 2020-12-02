@@ -7,4 +7,4 @@ feedparser==5.2.1
 fuzzywuzzy==0.18.0
 quart-auth==0.4.0
 quart==0.13.0
-yoyo-migrations==7.2.0
+yoyo-migrations==7.2.1
