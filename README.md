@@ -47,14 +47,52 @@ python -m tsundoku
 - Containerized PostgreSQL is required.
 
 1. Copy the `docker-compose.yml` file from the repository.
-2. Replace the file paths and replace the Postgres Docker service name.
-3. Run `docker-compose up`.
+2. Copy the `config.ini.example` file and rename it `config.ini`.
+3. [Configure](#Configuration) the configuration file.
+4. Replace the file paths and replace the Postgres Docker service name.
+5. Run `docker-compose up`.
 
 I will not be providing an example on how to start the container using
 `docker run`.
 
+You will then need to perform the following commands:
+```sh
+docker container exec -it tsundoku python -m tsundoku --migrate
+docker container exec -it tsundoku python -m tsundoku --create-user
+```
+
 When pointing to directories within Tsundoku, make sure that you begin
 your target directory with `/target/...`.
+
+For the sake of example, here is my personal entry for Tsundoku in `docker-compose.yml`:
+```yml
+version: "2.1"
+services:
+  tsundoku:
+    image: tylergibbs2/tsundoku
+    container_name: tsundoku
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /opt/appdata/tsundoku:/config
+      - /mediadrives/Downloaded:/downloaded
+      - /mediadrives/Anime:/target
+    ports:
+      - "6439:6439"
+    depends_on:
+      - postgres
+    restart: always
+```
+
+`/opt/appdata/tsundoku` is the absolute path where I allow Tsundoku to store config data. `config.ini` is in this folder.
+
+`/mediadrives/Downloaded` is the absolute path where Tsundoku will look for completed torrents.
+
+`/mediadrives/Anime` is the absolute path where Tsundoku will move completed torrents.
+
+
+And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like when adding a show using Docker.
 
 ## Configuration
 

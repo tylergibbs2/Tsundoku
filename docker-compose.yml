@@ -12,6 +12,6 @@ services:
       - <path to target location>:/target
     ports:
       - "6439:6439"
-    links:
+    depends_on:
       - <replace this with your postgres docker service name>
     restart: unless-stopped
