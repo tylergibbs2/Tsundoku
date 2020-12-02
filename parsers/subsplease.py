@@ -34,7 +34,10 @@ class SubsPlease:
         """
         parsed = anitopy.parse(file_name)
 
-        return int(parsed["episode_number"])
+        try:
+            return int(parsed["episode_number"])
+        except ValueError:
+            return 0
 
 
 def setup(app):
