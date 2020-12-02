@@ -65,14 +65,15 @@ class qBittorrentClient:
             The torrent's downloaded file path.
         """
         payload = {
-            "hash": torrent_id
+            "hashes": torrent_id
         }
 
-        data = await self.request("get", "torrents", "properties", params=payload)
-        if not data or not data.get("save_path"):
+        data = await self.request("get", "torrents", "info", params=payload)
+        if not data:
             return
+        data = data[0]
 
-        return Path(data["save_path"])
+        return Path(data["save_path"]) / Path(data["name"])
 
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
