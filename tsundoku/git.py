@@ -133,6 +133,10 @@ def check_for_updates():
 
     If commit is newer, prompt for an update.
     """
+    is_docker = os.environ.get("IS_DOCKER", False)
+    if is_docker:
+        return
+
     out, e = run("fetch")
     out, e = run("rev-list --format=oneline HEAD..origin/master")
     if not out or e:
