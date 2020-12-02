@@ -90,8 +90,7 @@ class qBittorrentClient:
             The torrent ID if success, None if torrent not added.
         """
         payload = {
-            "urls": magnet_url,
-            "category": "tsundoku"
+            "urls": magnet_url
         }
 
         await self.request("post", "torrents", "add", payload=payload)
