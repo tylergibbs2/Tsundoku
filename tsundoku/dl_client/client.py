@@ -42,7 +42,7 @@ class Manager:
 
     async def get_magnet(self, location: str) -> str:
         """
-        Will take a file location or an internet location for a torrent file.
+        Will take an internet location for a torrent file.
         The magnet URL for that torrent is then resolved and returned.
 
         If the location parameter is already detected to be a magnet URL,
@@ -60,12 +60,10 @@ class Manager:
         """
         if location.startswith("magnet:?"):
             return location
-        elif location.endswith(".torrent"):
+        else:
             async with self.session.get(location) as resp:
                 torrent_bytes = await resp.read()
                 metadata = bencodepy.decode(torrent_bytes)
-        else:
-            metadata = bencodepy.decode_from_file(location)
 
         subject = metadata[b'info']
 
