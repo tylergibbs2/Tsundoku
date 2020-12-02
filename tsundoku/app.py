@@ -154,6 +154,9 @@ async def setup_db():
     """
     Creates a database pool for PostgreSQL interaction.
     """
+    if os.environ.get("IS_DOCKER", False):
+        await git.migrate()
+
     host = get_config_value("PostgreSQL", "host")
     port = get_config_value("PostgreSQL", "port")
     user = get_config_value("PostgreSQL", "user")
@@ -270,8 +273,4 @@ port = get_config_value("Tsundoku", "port")
 
 def run():
     auth.init_app(app)
-
-    if os.environ.get("IS_DOCKER", False):
-        git.migrate()
-
     app.run(host=host, port=port, use_reloader=True)
