@@ -49,10 +49,11 @@ python -m tsundoku
 host = localhost         # IP that Tsundoku will be hosted at
 port = 6439              # Port to use for hosting
 parsers = [              # List of parsers in "parsers/"
-    "horriblesubs"
+    "horriblesubs",
+    "subsplease"
     ]
 polling_interval = 900   # How often, in seconds, Tsundoku should check parsers
-do_update_checks = true
+do_update_checks = true  # Will always be false regardless of setting if in Docker
 check_every_n_days = 1   # How often (in days) to perform update checks
 git_path = git           # Path to Git executable, only needed for update checks
 

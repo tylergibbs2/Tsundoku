@@ -3,6 +3,7 @@ import datetime
 import importlib
 import logging
 from logging.config import dictConfig
+import os
 import secrets
 
 from argon2 import PasswordHasher
@@ -119,8 +120,9 @@ async def update_check_needed():
     last update check. If it has been more
     than 1 day, check for an update.
     """
+    is_docker = os.environ.get("IS_DOCKER", False)
     should_we = get_config_value("Tsundoku", "do_update_checks")
-    if not should_we:
+    if is_docker or not should_we:
         return
 
     every = get_config_value("Tsundoku", "check_every_n_days")
