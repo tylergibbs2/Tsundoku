@@ -13,8 +13,6 @@ from hypercorn.asyncio import serve
 from hypercorn.config import Config
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
-from yoyo import get_backend
-from yoyo import read_migrations
 
 from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.blueprints.api import api_blueprint
@@ -272,4 +270,8 @@ port = get_config_value("Tsundoku", "port")
 
 def run():
     auth.init_app(app)
+
+    if os.environ.get("IS_DOCKER", False):
+        git.migrate()
+
     app.run(host=host, port=port, use_reloader=True)
