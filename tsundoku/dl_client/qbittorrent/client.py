@@ -2,13 +2,10 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-import sys
+import re
 from typing import Optional
 
 import aiohttp
-from aiohttp import ContentTypeError
-
-from tsundoku.config import get_config_value
 
 
 logger = logging.getLogger("tsundoku")
@@ -96,17 +93,11 @@ class qBittorrentClient:
 
         await self.request("post", "torrents", "add", payload=payload)
 
-        payload = {
-            "category": "tsundoku",
-            "sort": "added_on",
-            "limit": 1
-        }
+        match = re.match(r"\burn:btih:([a-f\d]+)\b", magnet_url)
+        if match is None:
+            return
 
-        t_list = await self.request("get", "torrents", "info", payload=payload)
-        try:
-            return t_list[0]["hash"]
-        except (IndexError, KeyError):
-            pass
+        return match.group(1).lower()
 
 
     async def login(self) -> bool:
