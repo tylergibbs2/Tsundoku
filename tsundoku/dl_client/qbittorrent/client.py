@@ -93,7 +93,7 @@ class qBittorrentClient:
 
         await self.request("post", "torrents", "add", payload=payload)
 
-        match = re.match(r"\burn:btih:([a-f\d]+)\b", magnet_url)
+        match = re.match(r"\burn:btih:([a-f\d]+)\b", magnet_url.lower())
         if match is None:
             return
 
