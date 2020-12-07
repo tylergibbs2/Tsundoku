@@ -2,6 +2,7 @@ import base64
 import hashlib
 import logging
 from pathlib import Path
+import re
 from typing import Optional
 
 import aiohttp
@@ -58,8 +59,16 @@ class Manager:
         str
             The magnet URL for the torrent at the given location.
         """
+        pattern = re.compile(r"\burn:btih:([A-z\d]+)\b")
+        def b32_to_sha1(match: re.Match):
+            hash_ = match.group(1)
+            if len(hash_) == 40:
+                return
+            elif len(hash_) == 32:
+                return base64.b32decode(hash_.upper()).hex()
+
         if location.startswith("magnet:?"):
-            return location
+            return re.sub(pattern, b32_to_sha1, location)
         else:
             async with self.session.get(location) as resp:
                 torrent_bytes = await resp.read()
@@ -68,11 +77,10 @@ class Manager:
         subject = metadata[b'info']
 
         hash_data = bencodepy.encode(subject)
-        digest = hashlib.sha1(hash_data).digest()
-        base32_hash = base64.b32encode(digest).decode()
+        digest = hashlib.sha1(hash_data).hexdigest()
 
         return "magnet:?"\
-            + f"xt=urn:btih:{base32_hash}"\
+            + f"xt=urn:btih:{digest}"\
             + f"&dn={metadata[b'info'][b'name'].decode()}"\
             + f"&tr={metadata[b'announce'].decode()}"
 
