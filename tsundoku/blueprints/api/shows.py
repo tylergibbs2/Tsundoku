@@ -189,6 +189,19 @@ class ShowsAPI(views.MethodView):
             if old_title != arguments["title"]:
                 await KitsuManager.fetch(show_id, arguments["title"])
 
+            old_kitsu = await con.fetchval("""
+                SELECT
+                    kitsu_id
+                FROM
+                    kitsu_info
+                WHERE
+                    show_id=$1;
+            """, show_id)
+
+            new_kitsu = int(arguments["kitsu_id"])
+            if old_kitsu != new_kitsu:
+                await KitsuManager.fetch_by_kitsu(show_id, new_kitsu)
+
             await con.execute("""
                 UPDATE
                     shows

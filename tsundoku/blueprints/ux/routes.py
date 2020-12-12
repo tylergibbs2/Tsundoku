@@ -77,6 +77,7 @@ async def index():
                 status = await manager.get_status()
                 if status:
                     s["status"] = status_html_map[status]
+                s["kitsu_id"] = manager.kitsu_id
                 s["webhooks"] = await get_webhook_record(show_id=s["id"])
                 s["image"] = await manager.get_poster_image()
                 s["link"] = manager.link

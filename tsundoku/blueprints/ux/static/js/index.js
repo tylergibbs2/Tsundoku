@@ -278,6 +278,9 @@ function openEditShowModal(show) {
     $("#entry-table-caption").html(show.title);
     $("#add-show-entry-form input[name='show_id']").val(show.id);
 
+    form.attr("method", "PUT");
+    form.attr("action", `/api/shows/${show.id}`);
+
     form.on("submit", submitAddOrEditShowForm);
 
     addEntryForm.on("submit", bufferShowEntryAddition);

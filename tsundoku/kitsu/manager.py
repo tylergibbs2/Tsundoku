@@ -81,6 +81,61 @@ class KitsuManager:
         return instance
 
     @classmethod
+    async def fetch_by_kitsu(cls, show_id: int, kitsu_id: int) -> Optional[KitsuManager]:
+        """
+        Attempts to retrieve Kitsu information
+        for a specified show ID from the Kitsu API.
+
+        Parameters
+        ----------
+        show_id: int
+            The show's ID.
+        kitsu_id: int
+            The name of the show.
+
+        Returns
+        -------
+        Optional[KitsuManager]
+            A KitsuManager for a show.
+        """
+        logger.info(f"Fetching Kitsu ID for Show #{show_id}")
+
+        async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
+            payload = {
+                "filter[id]": kitsu_id
+            }
+            async with sess.get(cls.API_URL, params=payload) as resp:
+                data = await resp.json()
+                try:
+                    result = data["data"][0]
+                except IndexError:
+                    return
+
+        if not result or not result.get("id"):
+            return
+
+        instance = cls()
+        instance.kitsu_id = int(result["id"])
+        instance.slug = result.get("slug")
+
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                DELETE FROM
+                    kitsu_info
+                WHERE
+                    show_id=$1;
+            """, show_id)
+            await con.execute("""
+                INSERT INTO
+                    kitsu_info
+                    (show_id, kitsu_id, slug)
+                VALUES
+                    ($1, $2, $3);
+            """, show_id, instance.kitsu_id, instance.slug)
+
+        return instance
+
+    @classmethod
     async def from_show_id(cls, show_id: int) -> Optional[KitsuManager]:
         """
         Retrieves Kitsu information from the database based
