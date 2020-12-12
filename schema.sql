@@ -1,25 +1,23 @@
 CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved', 'completed');
 CREATE TYPE webhook_service AS ENUM ('discord', 'slack', 'custom');
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id SMALLSERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS shows (
+CREATE TABLE shows (
     id SMALLSERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     desired_format TEXT,
     desired_folder TEXT,
     season SMALLINT NOT NULL,
-    episode_offset SMALLINT NOT NULL DEFAULT 0,
-    kitsu_id INT,
-    cached_poster_url TEXT
+    episode_offset SMALLINT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS show_entry (
+CREATE TABLE show_entry (
     id SMALLSERIAL PRIMARY KEY,
     show_id SMALLINT NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
     episode SMALLINT NOT NULL,
@@ -28,7 +26,16 @@ CREATE TABLE IF NOT EXISTS show_entry (
     file_path TEXT
 );
 
-CREATE TABLE IF NOT EXISTS webhook (
+CREATE TABLE kitsu_info (
+    show_id SMALLINT PRIMARY KEY REFERENCES shows(id) ON DELETE CASCADE,
+    kitsu_id INT,
+    cached_poster_url TEXT,
+    show_status TEXT,
+    slug TEXT,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE webhook (
     id SMALLSERIAL PRIMARY KEY,
     show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
     wh_service webhook_service,
@@ -36,7 +43,7 @@ CREATE TABLE IF NOT EXISTS webhook (
     content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]'
 );
 
-CREATE TABLE IF NOT EXISTS wh_trigger (
+CREATE TABLE wh_trigger (
     wh_id SMALLINT REFERENCES webhook(id) ON DELETE CASCADE,
     trigger show_state,
     PRIMARY KEY (wh_id, trigger)

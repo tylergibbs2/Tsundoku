@@ -6,7 +6,7 @@ from quart import abort, request, views
 from quart import current_app as app
 from quart_auth import current_user
 
-from tsundoku import kitsu
+from tsundoku.kitsu import KitsuManager
 
 
 logger = logging.getLogger("tsundoku")
@@ -108,18 +108,19 @@ class ShowsAPI(views.MethodView):
         season = int(arguments["season"])
         episode_offset = int(arguments["episode_offset"])
 
-        kitsu_id = await kitsu.get_id(arguments["title"])
-
         async with app.db_pool.acquire() as con:
-            await con.execute("""
+            new_id = await con.fetchval("""
                 INSERT INTO
                     shows
                     (title, desired_format, desired_folder,
-                    season, episode_offset, kitsu_id)
+                    season, episode_offset)
                 VALUES
-                    ($1, $2, $3, $4, $5, $6);
+                    ($1, $2, $3, $4, $5)
+                RETURNING id;
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset, kitsu_id)
+            episode_offset)
+
+        await KitsuManager.fetch(new_id, arguments["title"])
 
         logger.info("New Show Added - Preparing to Check for New Releases")
         for parser in app.rss_parsers:
@@ -177,27 +178,16 @@ class ShowsAPI(views.MethodView):
         episode_offset = int(arguments["episode_offset"])
 
         async with app.db_pool.acquire() as con:
-            og_data = await con.fetchrow("""
+            old_title = await con.fetchval("""
                 SELECT
-                    title,
-                    kitsu_id
+                    title
                 FROM
                     shows
                 WHERE id=$1;
             """, show_id)
-            if arguments["title"] != og_data["title"]:
-                kitsu_id = await kitsu.get_id(arguments["title"])
-            elif int(arguments["kitsu_id"]) != og_data["kitsu_id"]:
-                kitsu_id = int(arguments["kitsu_id"])
-                await con.execute("""
-                    UPDATE
-                        shows
-                    SET
-                        cached_poster_url=NULL
-                    WHERE id=$1;
-                """, show_id)
-            else:
-                kitsu_id = og_data["kitsu_id"]
+
+            if old_title != arguments["title"]:
+                await KitsuManager.fetch(show_id, arguments["title"])
 
             await con.execute("""
                 UPDATE
@@ -207,11 +197,10 @@ class ShowsAPI(views.MethodView):
                     desired_format=$2,
                     desired_folder=$3,
                     season=$4,
-                    episode_offset=$5,
-                    kitsu_id=$6
-                WHERE id=$7;
+                    episode_offset=$5
+                WHERE id=$6;
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset, kitsu_id, show_id)
+            episode_offset, show_id)
 
         logger.info("Existing Show Updated - Preparing to Check for New Releases")
         for parser in app.rss_parsers:

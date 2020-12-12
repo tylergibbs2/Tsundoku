@@ -7,7 +7,7 @@ from quart import current_app as app
 from quart import request
 from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
 
-from tsundoku import kitsu
+from tsundoku.kitsu import KitsuManager
 from tsundoku.blueprints.api.webhooks import get_webhook_record
 from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
@@ -21,6 +21,14 @@ ux_blueprint = Blueprint(
     static_url_path="/ux/static"
 )
 hasher = PasswordHasher()
+
+status_html_map = {
+    "current": "<span class='img-overlay-span tag is-success'>Airing</span>",
+    "finished": "<span class='img-overlay-span tag is-danger'>Finished</span>",
+    "tba": "<span class='img-overlay-span tag is-warning'>TBA</span>",
+    "unreleased": "<span class='img-overlay-span tag is-info'>Unreleased</span>",
+    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>"
+}
 
 
 @ux_blueprint.context_processor
@@ -40,8 +48,7 @@ async def index():
                 desired_format,
                 desired_folder,
                 season,
-                episode_offset,
-                kitsu_id
+                episode_offset
             FROM
                 shows
             ORDER BY title;
@@ -60,9 +67,15 @@ async def index():
                 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
-            s["webhooks"] = await get_webhook_record(show_id=s["id"])
-            s["image"] = await kitsu.get_poster_image(s["kitsu_id"])
-            s["link"] = kitsu.get_link(s["kitsu_id"])
+
+            manager = await KitsuManager.from_show_id(s["id"])
+            if manager:
+                status = await manager.get_status()
+                if status:
+                    s["status"] = status_html_map[status]
+                s["webhooks"] = await get_webhook_record(show_id=s["id"])
+                s["image"] = await manager.get_poster_image()
+                s["link"] = manager.link
 
     kwargs["shows"] = shows
     kwargs["seen_titles"] = list(app.seen_titles)

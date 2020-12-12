@@ -3,3 +3,14 @@
     border-radius: 20px;
     padding: 15px;
 }
+
+.card-image {
+    position: relative;
+}
+
+.img-overlay-span {
+    position: absolute;
+    z-index: 1;
+    top: 5px;
+    right: 5px;
+}

@@ -35,6 +35,9 @@
                 <div class="card">
                     {% if show.image is not none %}
                     <div class="card-image">
+                        {% if show.status %}
+                            {{ show.status|safe }}
+                        {% endif %}
                         <a href="{{ show.link }}">
                             <figure class="image is-3by4">
                                 <img src="{{ show.image }}">
