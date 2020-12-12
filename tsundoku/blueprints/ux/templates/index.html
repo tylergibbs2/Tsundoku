@@ -33,7 +33,7 @@
             {% for show in shows %}
             <div class="column is-one-fifth">
                 <div class="card">
-                    {% if show.image is not none %}
+                    {% if show.image %}
                     <div class="card-image">
                         {% if show.status %}
                             {{ show.status|safe }}
@@ -47,7 +47,7 @@
                     {% endif %}
                     <div class="card-content">
                         <p class="subtitle">
-                            {% if show.link is not none %}
+                            {% if show.link %}
                             <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
                             {% else %}
                             <b>{{ show.title }}</b>

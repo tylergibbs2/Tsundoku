@@ -198,9 +198,12 @@ class ShowsAPI(views.MethodView):
                     show_id=$1;
             """, show_id)
 
-            new_kitsu = int(arguments["kitsu_id"])
-            if old_kitsu != new_kitsu:
-                await KitsuManager.fetch_by_kitsu(show_id, new_kitsu)
+            try:
+                new_kitsu = int(arguments["kitsu_id"])
+                if old_kitsu != new_kitsu:
+                    await KitsuManager.fetch_by_kitsu(show_id, new_kitsu)
+            except ValueError:
+                pass
 
             await con.execute("""
                 UPDATE
