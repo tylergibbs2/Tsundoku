@@ -1,4 +1,5 @@
 import json
+import os
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -33,7 +34,10 @@ status_html_map = {
 
 @ux_blueprint.context_processor
 def update_context():
-    return {"updates": app.update_info}
+    return {
+        "updates": app.update_info,
+        "docker": os.environ.get("IS_DOCKER", False)
+    }
 
 
 @ux_blueprint.route("/", methods=["GET"])

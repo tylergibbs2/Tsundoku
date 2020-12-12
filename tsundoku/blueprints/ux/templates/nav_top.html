@@ -13,16 +13,18 @@
         </div>
         {% if current_user.is_authenticated %}
         <div class="navbar-end">
-            <div class="navbar-item has-dropdown is-hoverable">
+            <div class="navbar-item {% if not docker %}has-dropdown is-hoverable{% endif %}">
                 <a href="{{ url_for('ux.logout') }}" class="navbar-item">
                     Logout
                 </a>
 
+                {% if not docker %}
                 <div class="navbar-dropdown is-right">
                     <a href="{{ url_for('ux.update_') }}" class="navbar-item">
                         Check for Updates
                     </a>
                 </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}

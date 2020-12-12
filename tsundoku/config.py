@@ -6,10 +6,7 @@ from typing import Any
 
 config = configparser.ConfigParser()
 
-if os.environ.get("IS_DOCKER", False):
-    config.read("/config/config.ini")
-else:
-    config.read("config.ini")
+config.read("config.ini")
 
 
 def get_config_value(section: str, value: str) -> Any:

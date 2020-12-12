@@ -48,9 +48,10 @@ python -m tsundoku
 
 1. Copy the `docker-compose.yml` file from the repository.
 2. Copy the `config.ini.example` file and rename it `config.ini`.
-3. [Configure](#Configuration) the configuration file.
-4. Replace the file paths and replace the Postgres Docker service name.
-5. Run `docker-compose up`.
+3. Copy any parsers that you want and put them in a new folder.
+4. [Configure](#Configuration) the configuration file.
+5. Replace the file paths and replace the Postgres Docker service name.
+6. Run `docker-compose up -d`.
 
 I will not be providing an example on how to start the container using
 `docker run`.
@@ -66,7 +67,7 @@ your target directory with `/target/...`.
 
 For the sake of example, here is my personal entry for Tsundoku in `docker-compose.yml`:
 ```yml
-version: "2.1"
+version: "3.8"
 services:
   tsundoku:
     image: tylergibbs2/tsundoku
@@ -75,7 +76,8 @@ services:
       - PUID=1000
       - PGID=1000
     volumes:
-      - /opt/appdata/tsundoku:/config
+      - /opt/appdata/tsundoku/config.ini:/app/config.ini
+      - /opt/appdata/tsundoku/parsers:/app/parsers
       - /mediadrives/Downloaded:/downloaded
       - /mediadrives/Anime:/target
     ports:
@@ -85,7 +87,9 @@ services:
     restart: always
 ```
 
-`/opt/appdata/tsundoku` is the absolute path where I allow Tsundoku to store config data. `config.ini` is in this folder.
+`/opt/appdata/tsundoku/config.ini` is the absolute path where I put the `config.ini` file.
+
+`/opt/appdata/tsundoku/parsers` is the folder where I manually placed all the parsers I use.
 
 `/mediadrives/Downloaded` is the absolute path where Tsundoku will look for completed torrents.
 
