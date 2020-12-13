@@ -44,7 +44,8 @@ python -m tsundoku
 
 ## Installation (Docker)
 
-- Containerized PostgreSQL is required.
+- Containerized PostgreSQL is required. I recommend that your PostgreSQL container is setup to be persistent.
+  [Here's a link to a StackOverflow question](https://stackoverflow.com/questions/41637505/how-to-persist-data-in-a-dockerized-postgres-database-using-volumes) which will help you ensure your PostgreSQL data is persistent.
 
 1. Copy the `docker-compose.yml` file from the repository.
 2. Copy the `config.ini.example` file and rename it `config.ini`.
