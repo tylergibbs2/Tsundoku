@@ -159,6 +159,9 @@ function addRowToShowEntryTable(entry) {
     $(deleteBtn).on("click", function () {
         if (entry.current_state !== "buffered")
             bufferShowEntryDeletion(entry.show_id, entry.id);
+        entriesToAdd = entriesToAdd.filter( function(entryToAdd) {
+            return entryToAdd[1] != entry.episode;
+        });
         this.parentNode.parentNode.remove();
     })
 
