@@ -106,6 +106,25 @@ function bufferShowEntryAddition(event) {
     let episode = parseInt(data.get("episode"));
     let magnet = data.get("magnet");
 
+    let table = document.querySelector("#show-entry-table tbody");
+    let episodes = [];
+    for (const row of table.rows) {
+        let ep_cell = row.cells[0];
+        let ep = parseInt(ep_cell.innerHTML);
+        episodes.push(ep);
+    }
+    for (const entry of entriesToAdd)
+        episodes.push(entry[1]);
+
+    if (episodes.includes(episode)) {
+        $("#add-show-entry-form input[name='episode']").addClass("is-danger").effect("shake", {distance: 5}, 500);
+        $("#add-show-entry-form p").removeClass("is-hidden");
+        return;
+    }
+
+    $("#add-show-entry-form input[name='episode']").removeClass("is-danger");
+    $("#add-show-entry-form p").addClass("is-hidden");
+
     entriesToAdd.push([show_id, episode, magnet])
 
     let entry = {
@@ -327,6 +346,8 @@ function closeModals() {
         entriesToDelete = [];
         entriesToAdd = [];
         $(".modal").removeClass("is-active");
+        $("#add-show-entry-form input[name='episode']").removeClass("is-danger");
+        $("#add-show-entry-form p").addClass("is-hidden");
         $(document.documentElement).removeClass("is-clipped");
     }
 }
