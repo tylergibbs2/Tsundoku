@@ -307,6 +307,7 @@ function openDeleteShowModal(show) {
             }
         );
     });
+    $("#item-to-delete-name").text(show.title);
 
     $(document.documentElement).addClass("is-clipped");
     $("#delete-show-modal").addClass("is-active");
