@@ -8,6 +8,7 @@ from quart import current_app as app
 from quart import request
 from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
 
+from tsundoku import __version__ as version
 from tsundoku.kitsu import KitsuManager
 from tsundoku.blueprints.api.webhooks import get_webhook_record
 from tsundoku.git import update, check_for_updates
@@ -84,6 +85,7 @@ async def index():
 
     kwargs["shows"] = shows
     kwargs["seen_titles"] = list(app.seen_titles)
+    kwargs["version"] = version
 
     if not len(app.rss_parsers):
         await flash("No RSS parsers installed.")

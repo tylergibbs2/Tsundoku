@@ -360,7 +360,7 @@ $(document).ready(function () {
         })
     });
 
-    $("#fix-match-input").on("change", function () {
+    $("#fix-match-input").change(function () {
         $("input[name='kitsu_id']").val($(this).val());
     });
 
