@@ -31,7 +31,7 @@
     </div>
 
     <div id="show-card-container" class="container">
-        <div class="columns is-multiline is-vcentered">
+        <div class="columns is-multiline">
             {% set not_shown = namespace(value=0) %}
             {% for show in shows %}
             <div class="column is-one-fifth {% if loop.index > max_cards %}is-hidden{% endif %}">
@@ -77,7 +77,7 @@
             </div>
             {% endfor %}
         </div>
-        {% if not_shown %}
+        {% if not_shown.value %}
         <a id="all-shows-link">
             <p class="has-text-centered">
                 Click to see {{ not_shown.value}} more item{% if not_shown.value > 1 %}s{% endif %}...
