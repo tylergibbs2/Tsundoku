@@ -117,7 +117,7 @@ function bufferShowEntryAddition(event) {
         episodes.push(entry[1]);
 
     if (episodes.includes(episode)) {
-        $("#add-show-entry-form input[name='episode']").addClass("is-danger").effect("shake", {distance: 5}, 500);
+        $("#add-show-entry-form input[name='episode']").addClass("is-danger").effect("shake", {distance: 5, times: 2}, 400);
         $("#add-show-entry-form p").removeClass("is-hidden");
         return;
     }
