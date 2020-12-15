@@ -338,4 +338,14 @@ $(document).ready(function () {
     $("#fix-match-input").on("change", function () {
         $("input[name='kitsu_id']").val($(this).val());
     });
+
+    $("#all-shows-link").on("click", function () {
+        $(".column.is-hidden").removeClass("is-hidden");
+        $("#back-to-top-link").removeClass("is-hidden");
+        $(this).remove();
+    })
+
+    $("#back-to-top-link").on("click", function() {
+        $("html, body").animate({ scrollTop: 0 }, "slow");
+    });
 });

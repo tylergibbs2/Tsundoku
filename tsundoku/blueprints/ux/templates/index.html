@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% set max_cards = 10 %}
+
 {% block extralib %}
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.css">
@@ -30,13 +32,17 @@
 
     <div id="show-card-container" class="container">
         <div class="columns is-multiline is-vcentered">
+            {% set not_shown = namespace(value=0) %}
             {% for show in shows %}
-            <div class="column is-one-fifth">
+            <div class="column is-one-fifth {% if loop.index > max_cards %}is-hidden{% endif %}">
+                {% if loop.index > max_cards %}
+                {% set not_shown.value = not_shown.value + 1 %}
+                {% endif %}
                 <div class="card">
                     {% if show.image %}
                     <div class="card-image">
                         {% if show.status %}
-                            {{ show.status|safe }}
+                        {{ show.status|safe }}
                         {% endif %}
                         <a href="{{ show.link }}">
                             <figure class="image is-3by4">
@@ -71,6 +77,16 @@
             </div>
             {% endfor %}
         </div>
+        {% if not_shown %}
+        <a id="all-shows-link">
+            <p class="has-text-centered">
+                Click to see {{ not_shown.value}} more item{% if not_shown.value > 1 %}s{% endif %}...
+            </p>
+        </a>
+        <a id="back-to-top-link" class="is-hidden">
+            <p class="has-text-centered">Back to Top</p>
+        </a>
+        {% endif %}
     </div>
 
     <div class="container has-text-centered mt-3">
