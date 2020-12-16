@@ -8,6 +8,7 @@ from quart_auth import login_required
 from .shows import ShowsAPI
 from .entries import EntriesAPI
 from .webhooks import WebhooksAPI
+from .webhookbase import WebhookBaseAPI
 from tsundoku.kitsu import KitsuManager
 
 
@@ -118,6 +119,20 @@ def setup_views():
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/webhooks/<int:wh_id>",
         view_func=webhooks_view,
+        methods=["GET", "PUT", "DELETE"]
+    )
+
+    # Setup WebhookBaseAPI URL rules.
+    webhookbase_view = WebhookBaseAPI.as_view("webhookbase_api")
+
+    api_blueprint.add_url_rule(
+        "/webhooks",
+        view_func=webhookbase_view,
+        methods=["GET", "POST"]
+    )
+    api_blueprint.add_url_rule(
+        "/webhooks/<int:base_id>",
+        view_func=webhookbase_view,
         methods=["GET", "PUT", "DELETE"]
     )
 
