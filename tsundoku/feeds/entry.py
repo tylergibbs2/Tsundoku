@@ -2,7 +2,7 @@ from pathlib import Path
 
 from asyncpg import Record
 
-from tsundoku.webhooks import send
+from tsundoku.webhooks import Webhook
 
 
 class Entry:
@@ -67,22 +67,9 @@ class Entry:
         Uses the `self.state` attribute, so call this after
         that is updated.
         """
-        async with self._app.db_pool.acquire() as con:
-            triggers = await con.fetch("""
-                SELECT
-                    wh.id
-                FROM
-                    webhook wh
-                LEFT JOIN wh_trigger t
-                ON wh.id = t.wh_id
-                WHERE wh.show_id = $1 AND t.trigger = $2;
-            """, self.show_id, self.state)
+        webhooks = await Webhook.from_show_id(self.show_id)
 
-        if triggers:
-            for wh_id in triggers:
-                await send(
-                    wh_id["id"],
-                    self.show_id,
-                    self.episode,
-                    self.state
-                )
+        for wh in webhooks:
+            triggers = await wh.get_triggers()
+            if self.state in triggers:
+                await wh.send(self.episode, self.state)

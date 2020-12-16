@@ -4,76 +4,9 @@ from typing import List, Optional
 from quart import abort, Response, request, views
 from quart import current_app as app
 from quart_auth import current_user
+from tsundoku import webhooks
 
-
-async def get_webhook_record(wh_id: int=None, show_id: int=None) -> List[dict]:
-    """
-    Retrieve all webhooks or a specific webhook
-    for a specified show.
-
-    Only one of the parameters can be specified at a time.
-
-    Parameters
-    ----------
-    wh_id: Optional[int]
-        The ID of the webhook to retrieve.
-    show_id: Optional[int]
-        The ID of the show to retrieve
-        webhooks from.
-
-    Returns
-    -------
-    List[Optional[dict]]
-         A list of results.
-    """
-    if show_id is not None:
-        async with app.db_pool.acquire() as con:
-            webhooks = await con.fetch("""
-                SELECT
-                    id,
-                    wh_service,
-                    wh_url,
-                    content_fmt
-                FROM
-                    webhook
-                WHERE show_id=$1;
-            """, show_id)
-            webhooks = [dict(record) for record in webhooks]
-
-            for wh in webhooks:
-                triggers = await con.fetch("""
-                    SELECT
-                        trigger
-                    FROM
-                        wh_trigger
-                    WHERE wh_id=$1;
-                """, wh["id"])
-                wh["triggers"] = [t["trigger"] for t in triggers]
-
-        return webhooks
-    elif wh_id is not None:
-        async with app.db_pool.acquire() as con:
-            webhook = await con.fetchrow("""
-                SELECT
-                    wh_service,
-                    wh_url,
-                    content_fmt
-                FROM
-                    webhook
-                WHERE id=$1;
-            """, wh_id)
-            webhook = dict(webhook)
-            if webhook:
-                triggers = await con.fetch("""
-                    SELECT
-                        trigger
-                    FROM
-                        wh_trigger
-                    WHERE wh_id=$1;
-                """, webhook["id"])
-                webhook["triggers"] = [t["trigger"] for t in triggers]
-
-            return [webhook]
+from tsundoku.webhooks import Webhook, webhook
 
 
 class WebhooksAPI(views.MethodView):
@@ -98,9 +31,11 @@ class WebhooksAPI(views.MethodView):
             return abort(401, "You are not authorized to access this resource.")
 
         if wh_id is None:
-            return json.dumps(await get_webhook_record(show_id=show_id))
+            webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(show_id)]
+            return json.dumps(webhooks)
         else:
-            return json.dumps(await get_webhook_record(wh_id=wh_id))
+            webhook = await Webhook.from_wh_id(wh_id)
+            return json.dumps(webhook.to_dict())
 
 
     async def post(self, show_id: int, entry_id: int=None) -> dict:
@@ -153,23 +88,15 @@ class WebhooksAPI(views.MethodView):
                 response = {"error": "invalid show id"}
                 return Response(json.dumps(response), status=400)
 
-            wh_id = await con.fetchval("""
-                INSERT INTO
-                    webhook
-                    (show_id, wh_service, wh_url)
-                VALUES
-                    ($1, $2, $3);
-            """, show_id, service, url)
-
-        webhook = await get_webhook_record(wh_id=wh_id)
-
-        # We could technically avoid doing this
-        # and attempt to send the first result,
-        # but in case the item isn't created in the
-        # DB for some reason, don't error.
+        webhook = await Webhook.new(
+            show_id,
+            service,
+            url,
+            None
+        )
 
         if webhook:
-            return json.dumps(webhook[0])
+            return json.dumps(webhook.to_dict())
         else:
             return "{}"
 
@@ -206,7 +133,7 @@ class WebhooksAPI(views.MethodView):
         content_fmt = arguments.get("content_fmt")
 
         triggers = triggers.split(",")
-        wh = await get_webhook_record(wh_id=wh_id)
+        wh = await Webhook.from_wh_id(wh_id)
 
         if not wh:
             response = {"error": "invalid webhook"}
@@ -224,33 +151,21 @@ class WebhooksAPI(views.MethodView):
             response = {"error": "invalid content format"}
             return Response(json.dumps(response), status=400)
 
-        wh = wh[0]
-        async with app.db_pool.acquire() as con:
-            await con.execute("""
-                DELETE FROM
-                    wh_trigger
-                WHERE wh_id=$1;
-            """, wh_id)
-            for trigger in triggers:
-                await con.execute("""
-                    INSERT INTO
-                        wh_trigger
-                        (wh_id, trigger)
-                    VALUES
-                        ($1, $2);
-                """, wh_id, trigger)
+        wh.service = service
+        wh.url = url
+        wh.content_fmt = content_fmt
 
-            await con.execute("""
-                UPDATE
-                    webhook
-                SET
-                    wh_service=$1,
-                    wh_url=$2,
-                    content_fmt=$3
-                WHERE id=$4;
-            """, service, url, content_fmt, wh_id)
+        await wh.save()
 
-        return json.dumps(await get_webhook_record(wh_id=wh_id)[0])
+        all_triggers = await wh.get_triggers()
+        for trigger in all_triggers:
+            if trigger not in triggers:
+                await wh.remove_trigger(trigger)
+
+        for trigger in triggers:
+            await wh.add_trigger(trigger)
+
+        return json.dumps(wh.to_dict())
 
 
     async def delete(self, show_id: int, wh_id: int) -> Optional[dict]:
@@ -274,15 +189,10 @@ class WebhooksAPI(views.MethodView):
         if not await current_user.is_authenticated:
             return abort(401, "You are not authorized to access this resource.")
 
-        async with app.db_pool.acquire() as con:
-            deleted = await con.fetchval("""
-                DELETE FROM
-                    show_entry
-                WHERE id=$1
-                RETURNING id;
-            """, wh_id)
+        wh = await Webhook.from_wh_id(wh_id)
+        deleted = await wh.delete()
 
-            if deleted:
-                return json.dumps(await get_webhook_record(wh_id=deleted))
-            else:
-                return json.dumps([])
+        if deleted:
+            return json.dumps(wh.to_dict())
+        else:
+            return json.dumps([])
