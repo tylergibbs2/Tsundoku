@@ -35,15 +35,20 @@ CREATE TABLE kitsu_info (
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE webhook (
+CREATE TABLE webhook_base (
     id SMALLSERIAL PRIMARY KEY,
-    show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
-    wh_service webhook_service,
-    wh_url TEXT NOT NULL,
+    base_service webhook_service NOT NULL,
+    base_url TEXT NOT NULL,
     content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]'
 );
 
-CREATE TABLE wh_trigger (
+CREATE TABLE webhook (
+    id SMALLSERIAL PRIMARY KEY,
+    show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
+    base SMALLINT REFERENCES webhook_base(id) ON DELETE CASCADE
+);
+
+CREATE TABLE webhook_trigger (
     wh_id SMALLINT REFERENCES webhook(id) ON DELETE CASCADE,
     trigger show_state,
     PRIMARY KEY (wh_id, trigger)

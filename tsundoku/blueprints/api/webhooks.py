@@ -35,7 +35,7 @@ class WebhooksAPI(views.MethodView):
             return json.dumps(webhooks)
         else:
             webhook = await Webhook.from_wh_id(wh_id)
-            return json.dumps(webhook.to_dict())
+            return json.dumps([webhook.to_dict()])
 
 
     async def post(self, show_id: int, entry_id: int=None) -> dict:

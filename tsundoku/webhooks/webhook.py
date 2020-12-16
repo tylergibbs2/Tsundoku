@@ -16,16 +16,15 @@ VALID_SERVICES = ("discord", "slack", "custom")
 VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
 
 
-class Webhook:
-    wh_id: int
-    show_id: int
+class WebhookBase:
+    base_id: int
     service: str
     url: str
     content_fmt: str
 
     def to_dict(self) -> dict:
         """
-        Return the Webhook object as a dict.
+        Return the WebhookBase object as a dict.
 
         Returns
         -------
@@ -33,58 +32,94 @@ class Webhook:
             The dict.
         """
         return {
-            "wh_id": self.wh_id,
-            "show_id": self.show_id,
+            "base_id": self.base_id,
             "service": self.service,
             "url": self.url,
             "content_fmt": self.content_fmt
         }
 
     @classmethod
-    async def new(cls, show_id: int, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[Webhook]:
+    async def new(cls, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
         """
-        Adds a new Webhook to the database and
+        Adds a new WebhookBase to the database and
         returns an instance.
 
         Parameters
         ----------
-        show_id: int
-            The show's ID.
         service: str
-            The webhook service.
+            The service.
         url: str
-            The URL the webhook posts to.
+            The POST url.
         content_fmt: Optional[str]
             The content format string.
 
         Returns
         -------
-        Optional[Webhook]
-            The new Webhook.
+        Optional[WebhookBase]
+            The new WebhookBase.
         """
         if service not in VALID_SERVICES:
             return
 
         async with app.db_pool.acquire() as con:
-            new_wh = await con.fetchrow("""
+            new_base = await con.fetchrow("""
                 INSERT INTO
-                    webhook
-                    (show_id, wh_service, wh_url, content_fmt)
+                    webhook_base
+                    (base_service, base_url, content_fmt)
                 VALUES
-                    ($1, $2, $3, $4)
+                    ($1, $2, $3)
                 RETURNING id, content_fmt;
-            """, show_id, service, url, content_fmt)
+            """, service, url, content_fmt)
 
-        if not new_wh:
+        if not new_base:
             return
 
         instance = cls()
 
-        instance.wh_id = new_wh["id"]
-        instance.show_id = show_id
+        instance.base_id = new_base["id"]
         instance.service = service
         instance.url = url
-        instance.content_fmt = new_wh["content_fmt"]
+        instance.content_fmt = new_base["content_fmt"]
+
+        return instance
+
+    @classmethod
+    async def from_id(cls, base_id: int) -> Optional[WebhookBase]:
+        """
+        Returns a WebhookBase object from a webhook base ID.
+
+        Parameters
+        ----------
+        base_id: int
+            The WebhookBase's ID.
+
+        Returns
+        -------
+        Optional[WebhookBase]
+            The requested webhook base.
+        """
+        async with app.db_pool.acquire() as con:
+            base = await con.fetchrow("""
+                SELECT
+                    id,
+                    base_service,
+                    base_url,
+                    content_fmt
+                FROM
+                    webhook_base
+                WHERE
+                    id=$1;
+            """, base_id)
+
+        if not base:
+            return
+
+        instance = cls()
+
+        instance.base_id = base["id"]
+        instance.service = base["base_service"]
+        instance.url = base["base_url"]
+        instance.content_fmt = base["content_fmt"]
 
         return instance
 
@@ -100,20 +135,128 @@ class Webhook:
         """
         if self.service not in VALID_SERVICES:
             return False
+        elif not self.content_fmt:
+            return False
 
         async with app.db_pool.acquire() as con:
             updated = await con.fetchval("""
                 UPDATE
+                    webhook_base
+                SET
+                    base_service=$1,
+                    base_url=$2,
+                    content_fmt=$3
+                WHERE
+                    id=$4
+                RETURNING content_fmt;
+            """, self.service, self.url, self.content_fmt, self.base_id)
+
+        return bool(updated)
+
+    async def delete(self) -> bool:
+        """
+        Deletes a WebhookBase from the database.
+
+        Returns
+        -------
+        bool:
+            Whether the webhook base was deleted or not.
+        """
+        async with app.db_pool.acquire() as con:
+            deleted = await con.fetchval("""
+                DELETE FROM
+                    webhook_base
+                WHERE
+                    id=$1
+                RETURNING content_fmt;
+            """)
+
+        return bool(deleted)
+
+
+class Webhook:
+    wh_id: int
+    show_id: int
+    base: WebhookBase
+
+    def to_dict(self) -> dict:
+        """
+        Return the Webhook object as a dict.
+
+        Returns
+        -------
+        dict
+            The dict.
+        """
+        return {
+            "wh_id": self.wh_id,
+            "show_id": self.show_id,
+            "base": self.base.to_dict()
+        }
+
+    @classmethod
+    async def new(cls, show_id: int, base_id: int) -> Optional[Webhook]:
+        """
+        Adds a new Webhook to the database and
+        returns an instance.
+
+        Parameters
+        ----------
+        show_id: int
+            The show's ID.
+        base_id: int
+            The Webhook Base.
+
+        Returns
+        -------
+        Optional[Webhook]
+            The new Webhook.
+        """
+        base = await WebhookBase.from_id(base_id)
+        if not base:
+            return
+
+        async with app.db_pool.acquire() as con:
+            new_wh = await con.fetchrow("""
+                INSERT INTO
+                    webhook
+                    (show_id, base)
+                VALUES
+                    ($1, $2)
+                RETURNING show_id, base;
+            """, show_id, base.base_id)
+
+        if not new_wh:
+            return
+
+        instance = cls()
+
+        instance.wh_id = new_wh["id"]
+        instance.show_id = show_id
+        instance.base = base
+
+        return instance
+
+    async def save(self) -> bool:
+        """
+        Saves the attributes of the object
+        to the database.
+
+        Returns
+        -------
+        bool:
+            Whether it was saved or not.
+        """
+        async with app.db_pool.acquire() as con:
+            updated = await con.fetchrow("""
+                UPDATE
                     webhook
                 SET
-                    show_id=$1,
-                    wh_service=$2,
-                    wh_url=$3,
-                    content_fmt=$4
+                    show_id=$1
                 WHERE
-                    id=$5
-                RETURNING id;
-            """, self.show_id, self.service, self.url, self.content_fmt, self.wh_id)
+                    id=$2
+                RETURNING id, show_id;
+            """, self.show_id, self.wh_id)
 
         if not updated:
             return False
@@ -130,14 +273,17 @@ class Webhook:
             Whether the webhook was deleted or not.
         """
         async with app.db_pool.acquire() as con:
-            deleted = await con.fetchval("""
+            deleted = await con.fetchrow("""
                 DELETE FROM
                     webhook
                 WHERE wh_id=$1
-                RETURNING id;
+                RETURNING id, show_id;
             """, self.wh_id)
 
-        return bool(deleted)
+        if deleted:
+            return True
+
+        return False
 
     @classmethod
     async def from_wh_id(cls, wh_id: int) -> Optional[Webhook]:
@@ -157,7 +303,7 @@ class Webhook:
         async with app.db_pool.acquire() as con:
             wh = await con.fetchrow("""
                 SELECT
-                    show_id, wh_service, wh_url, content_fmt
+                    show_id, base
                 FROM
                     webhook
                 WHERE id=$1;
@@ -166,13 +312,15 @@ class Webhook:
         if not wh:
             return
 
+        base = await WebhookBase.from_id(wh["base"])
+        if not base:
+            return
+
         instance = cls()
 
         instance.wh_id = wh_id
         instance.show_id = wh["show_id"]
-        instance.service = wh["wh_service"]
-        instance.url = wh["wh_url"]
-        instance.content_fmt = wh["content_fmt"]
+        instance.base = base
 
         return instance
 
@@ -194,7 +342,7 @@ class Webhook:
         async with app.db_pool.acquire() as con:
             webhooks = await con.fetch("""
                 SELECT
-                    id, wh_service, wh_url, content_fmt
+                    id, base
                 FROM
                     webhook
                 WHERE show_id=$1;
@@ -203,13 +351,15 @@ class Webhook:
         instances = []
 
         for wh in webhooks:
+            base = await WebhookBase.from_id(wh["base"])
+            if not base:
+                continue
+
             instance = cls()
 
             instance.wh_id = wh["id"]
             instance.show_id = show_id
-            instance.service = wh["wh_service"]
-            instance.url = wh["wh_url"]
-            instance.content_fmt = wh["content_fmt"]
+            instance.base = base
 
             instances.append(instance)
 
@@ -229,7 +379,7 @@ class Webhook:
                 SELECT
                     trigger
                 FROM
-                    wh_trigger
+                    webhook_trigger
                 WHERE wh_id=$1;
             """, self.wh_id)
 
@@ -255,7 +405,7 @@ class Webhook:
                 SELECT
                     trigger
                 FROM
-                    wh_trigger
+                    webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
             """, self.wh_id, trigger)
 
@@ -264,7 +414,7 @@ class Webhook:
 
             await con.execute("""
                 INSERT INTO
-                    wh_trigger
+                    webhook_trigger
                     (wh_id, trigger)
                 VALUES
                     ($1, $2);
@@ -294,7 +444,7 @@ class Webhook:
                 SELECT
                     trigger
                 FROM
-                    wh_trigger
+                    webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
             """, self.wh_id, trigger)
 
@@ -303,7 +453,7 @@ class Webhook:
 
             await con.execute("""
                 DELETE FROM
-                    wh_trigger
+                    webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
             """, self.wh_id, trigger)
 
@@ -398,12 +548,12 @@ class Webhook:
             state=event
         )
 
-        content = self.content_fmt.format_map(expr)
+        content = self.base.content_fmt.format_map(expr)
 
-        if self.service == "discord":
+        if self.base.service == "discord":
             # Discord expects an array
             payload["embeds"] = [self.generate_discord_embed(content)]
-        elif self.service == "slack":
+        elif self.base.service == "slack":
             payload["blocks"] = self.generate_slack_blocks(content)
         else:
             payload["content"] = content
@@ -432,4 +582,4 @@ class Webhook:
         logger.debug(f"Webhooks - Payload generated for Webhook with ID {self.wh_id}")
 
         logger.debug(f"Webhooks - Webhook {self.wh_id} sending payload...")
-        await app.session.post(self.url, json=payload)
+        await app.session.post(self.base.url, json=payload)
