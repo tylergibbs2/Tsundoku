@@ -4,9 +4,8 @@ from typing import List, Optional
 from quart import abort, Response, request, views
 from quart import current_app as app
 from quart_auth import current_user
-from tsundoku import webhooks
 
-from tsundoku.webhooks import Webhook, webhook
+from tsundoku.webhooks import Webhook
 
 
 class WebhooksAPI(views.MethodView):

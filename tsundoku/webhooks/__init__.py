@@ -1,1 +1,1 @@
-from .webhook import Webhook
+from .webhook import Webhook, WebhookBase
