@@ -37,6 +37,7 @@ CREATE TABLE kitsu_info (
 
 CREATE TABLE webhook_base (
     id SMALLSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
     base_service webhook_service NOT NULL,
     base_url TEXT NOT NULL,
     content_fmt TEXT NOT NULL DEFAULT '[{name}], episode [{episode}] has been marked as [{state}]'

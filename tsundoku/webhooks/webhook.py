@@ -18,6 +18,7 @@ VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
 
 class WebhookBase:
     base_id: int
+    name: str
     service: str
     url: str
     content_fmt: str
@@ -33,19 +34,22 @@ class WebhookBase:
         """
         return {
             "base_id": self.base_id,
+            "name": self.name,
             "service": self.service,
             "url": self.url,
             "content_fmt": self.content_fmt
         }
 
     @classmethod
-    async def new(cls, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
+    async def new(cls, name: str, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
         returns an instance.
 
         Parameters
         ----------
+        name: str
+            The name of the WebhookBase.
         service: str
             The service.
         url: str
@@ -65,11 +69,11 @@ class WebhookBase:
             new_base = await con.fetchrow("""
                 INSERT INTO
                     webhook_base
-                    (base_service, base_url, content_fmt)
+                    (name, base_service, base_url, content_fmt)
                 VALUES
-                    ($1, $2, $3)
+                    ($1, $2, $3, $4)
                 RETURNING id, content_fmt;
-            """, service, url, content_fmt)
+            """, name, service, url, content_fmt)
 
         if not new_base:
             return
@@ -77,6 +81,7 @@ class WebhookBase:
         instance = cls()
 
         instance.base_id = new_base["id"]
+        instance.name = name
         instance.service = service
         instance.url = url
         instance.content_fmt = new_base["content_fmt"]
@@ -102,6 +107,7 @@ class WebhookBase:
             base = await con.fetchrow("""
                 SELECT
                     id,
+                    name,
                     base_service,
                     base_url,
                     content_fmt
@@ -117,6 +123,7 @@ class WebhookBase:
         instance = cls()
 
         instance.base_id = base["id"]
+        instance.name = base["name"]
         instance.service = base["base_service"]
         instance.url = base["base_url"]
         instance.content_fmt = base["content_fmt"]
@@ -168,13 +175,14 @@ class WebhookBase:
                 UPDATE
                     webhook_base
                 SET
-                    base_service=$1,
-                    base_url=$2,
-                    content_fmt=$3
+                    name=$1,
+                    base_service=$2,
+                    base_url=$3,
+                    content_fmt=$4
                 WHERE
-                    id=$4
+                    id=$5
                 RETURNING content_fmt;
-            """, self.service, self.url, self.content_fmt, self.base_id)
+            """, self.name, self.service, self.url, self.content_fmt, self.base_id)
 
         return bool(updated)
 

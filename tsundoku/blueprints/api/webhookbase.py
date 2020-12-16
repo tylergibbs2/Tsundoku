@@ -54,8 +54,10 @@ class WebhookBaseAPI(views.MethodView):
         await request.get_data()
         arguments = await request.form
 
+        name = arguments.get("name")
         service = arguments.get("service")
         url = arguments.get("url")
+        content_fmt = arguments.get("content_fmt")
 
         if service not in wh_services:
             response = {"error": "invalid webhook service"}
@@ -63,10 +65,17 @@ class WebhookBaseAPI(views.MethodView):
         elif not url:
             response = {"error": "invalid webhook url"}
             return Response(json.dumps(response), status=400)
+        elif not name:
+            response = {"error": "invalid webhook name"}
+            return Response(json.dumps(response), status=400)
+        elif content_fmt == "":
+            content_fmt = None
 
         base = await WebhookBase.new(
+            name,
             service,
-            url
+            url,
+            content_fmt
         )
 
         if base:
@@ -95,9 +104,10 @@ class WebhookBaseAPI(views.MethodView):
         await request.get_data()
         arguments = await request.form
 
+        name = arguments.get("name")
         service = arguments.get("service")
         url = arguments.get("url")
-        content_fmt = arguments.get("content_fmt")\
+        content_fmt = arguments.get("content_fmt")
 
         base = await WebhookBase.from_id(base_id)
 
@@ -113,7 +123,11 @@ class WebhookBaseAPI(views.MethodView):
         elif not content_fmt:
             response = {"error": "invalid content format"}
             return Response(json.dumps(response), status=400)
+        elif not name:
+            response = {"error": "invalid name"}
+            return Response(json.dumps(response), status=400)
 
+        base.name = name
         base.service = service
         base.url = url
         base.content_fmt = content_fmt
