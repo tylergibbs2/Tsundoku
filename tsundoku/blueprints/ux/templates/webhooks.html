@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block extralib %}
+<!-- CSS -->
+<link rel="stylesheet" href="{{ url_for('ux.static', filename='css/webhooks.css') }}">
+
+<!-- JS -->
+<script src="{{ url_for('ux.static', filename='js/webhooks.js') }}"></script>
+{% endblock %}
+
 {% block content %}
 
 {% include "messages.html" %}

@@ -1,4 +1,3 @@
-import json
 import os
 
 from argon2 import PasswordHasher
@@ -6,11 +5,11 @@ from argon2.exceptions import VerifyMismatchError
 from quart import abort, Blueprint, flash, render_template, redirect, url_for
 from quart import current_app as app
 from quart import request
-from quart_auth import AuthUser, current_user, login_user, logout_user, login_required
+from quart_auth import current_user, login_user, logout_user, login_required
 
 from tsundoku import __version__ as version
 from tsundoku.kitsu import KitsuManager
-from tsundoku.webhooks import Webhook
+from tsundoku.webhooks import Webhook, WebhookBase
 from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
 
@@ -44,7 +43,7 @@ def update_context():
 @ux_blueprint.route("/", methods=["GET"])
 @login_required
 async def index():
-    kwargs = {}
+    ctx = {}
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
             SELECT
@@ -83,16 +82,28 @@ async def index():
                 s["image"] = await manager.get_poster_image()
                 s["link"] = manager.link
 
-    kwargs["shows"] = shows
-    kwargs["seen_titles"] = list(app.seen_titles)
-    kwargs["version"] = version
+    ctx["shows"] = shows
+    ctx["seen_titles"] = list(app.seen_titles)
+    ctx["version"] = version
 
     if not len(app.rss_parsers):
         await flash("No RSS parsers installed.")
     elif not len(app.seen_titles):
         await flash("No shows found, is there an error with your parsers?")
 
-    return await render_template("index.html", **kwargs)
+    return await render_template("index.html", **ctx)
+
+
+@ux_blueprint.route("/webhooks", methods=["GET"])
+@login_required
+async def webhooks():
+    ctx = {}
+
+    all_bases = await WebhookBase.all()
+    all_bases = [b.to_dict() for b in all_bases]
+    ctx["bases"] = all_bases
+
+    return await render_template("webhooks.html", **ctx)
 
 
 @ux_blueprint.route("/update", methods=["GET", "POST"])
