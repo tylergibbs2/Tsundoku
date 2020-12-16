@@ -10,7 +10,7 @@ from quart_auth import AuthUser, current_user, login_user, logout_user, login_re
 
 from tsundoku import __version__ as version
 from tsundoku.kitsu import KitsuManager
-from tsundoku.blueprints.api.webhooks import get_webhook_record
+from tsundoku.webhooks import Webhook
 from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
 
@@ -72,6 +72,7 @@ async def index():
                 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
+            s["webhooks"] = [wh.to_dict() for wh in await Webhook.from_show_id(s["id"])]
 
             manager = await KitsuManager.from_show_id(s["id"])
             if manager:
@@ -79,7 +80,6 @@ async def index():
                 if status:
                     s["status"] = status_html_map[status]
                 s["kitsu_id"] = manager.kitsu_id
-                s["webhooks"] = await get_webhook_record(show_id=s["id"])
                 s["image"] = await manager.get_poster_image()
                 s["link"] = manager.link
 
