@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from quart import current_app as app
 
@@ -123,6 +123,31 @@ class WebhookBase:
 
         return instance
 
+    @classmethod
+    async def all(cls) -> List[WebhookBase]:
+        """
+        Returns all WebhookBase rows from
+        the database.
+
+        Returns
+        -------
+        List[WebhookBase]
+            All rows.
+        """
+        async with app.db_pool.acquire() as con:
+            ids = await con.fetch("""
+                SELECT
+                    id
+                FROM
+                    webhook_base;
+            """)
+
+        instances = []
+        for id_ in ids:
+            instances.append(await WebhookBase.from_id(id_["id"]))
+
+        return instances
+
     async def save(self) -> bool:
         """
         Saves the attributes of the object
@@ -195,7 +220,7 @@ class Webhook:
         }
 
     @classmethod
-    async def new(cls, show_id: int, base_id: int) -> Optional[Webhook]:
+    async def new(cls, show_id: int, base: Union[int, WebhookBase]) -> Optional[Webhook]:
         """
         Adds a new Webhook to the database and
         returns an instance.
@@ -204,15 +229,17 @@ class Webhook:
         ----------
         show_id: int
             The show's ID.
-        base_id: int
-            The Webhook Base.
+        base: Union[int, WebhookBase]
+            The Webhook Base or the base's ID.
 
         Returns
         -------
         Optional[Webhook]
             The new Webhook.
         """
-        base = await WebhookBase.from_id(base_id)
+        if isinstance(base, int):
+            base = await WebhookBase.from_id(base)
+
         if not base:
             return
 
@@ -252,11 +279,12 @@ class Webhook:
                 UPDATE
                     webhook
                 SET
-                    show_id=$1
+                    show_id=$1,
+                    base=$2
                 WHERE
-                    id=$2
+                    id=$3
                 RETURNING id, show_id;
-            """, self.show_id, self.wh_id)
+            """, self.show_id, self.base.id, self.wh_id)
 
         if not updated:
             return False

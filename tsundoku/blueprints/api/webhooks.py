@@ -5,7 +5,7 @@ from quart import abort, Response, request, views
 from quart import current_app as app
 from quart_auth import current_user
 
-from tsundoku.webhooks import Webhook
+from tsundoku.webhooks import Webhook, WebhookBase
 
 
 class WebhooksAPI(views.MethodView):
@@ -37,7 +37,7 @@ class WebhooksAPI(views.MethodView):
             return json.dumps([webhook.to_dict()])
 
 
-    async def post(self, show_id: int, entry_id: int=None) -> dict:
+    async def post(self, show_id: int) -> dict:
         """
         Adds a new webhook.
 
@@ -46,12 +46,8 @@ class WebhooksAPI(views.MethodView):
 
         Parameters
         ----------
-        wh_service: str
-            The service the webhook posts to.
-        wh_url: str
-            The URL the webhook posts to.
-        content_fmt: str
-            The text data that the webhook sends.
+        show_id: int
+            The ID of the show.
 
         Returns
         -------
@@ -61,18 +57,14 @@ class WebhooksAPI(views.MethodView):
         if not await current_user.is_authenticated:
             return abort(401, "You are not authorized to access this resource.")
 
-        wh_services = ("discord", "slack", "custom")
         await request.get_data()
         arguments = await request.form
 
-        service = arguments.get("service")
-        url = arguments.get("url")
+        base_id = int(arguments.get("base"))
+        base = await WebhookBase.from_id(base_id)
 
-        if service not in wh_services:
-            response = {"error": "invalid webhook service"}
-            return Response(json.dumps(response), status=400)
-        elif not url:
-            response = {"error": "invalid webhook url"}
+        if not base:
+            response = {"error": "invalid webhook base"}
             return Response(json.dumps(response), status=400)
 
         async with app.db_pool.acquire() as con:
@@ -87,12 +79,7 @@ class WebhooksAPI(views.MethodView):
                 response = {"error": "invalid show id"}
                 return Response(json.dumps(response), status=400)
 
-        webhook = await Webhook.new(
-            show_id,
-            service,
-            url,
-            None
-        )
+        webhook = await Webhook.new(show_id, base)
 
         if webhook:
             return json.dumps(webhook.to_dict())
@@ -121,39 +108,28 @@ class WebhooksAPI(views.MethodView):
         if not await current_user.is_authenticated:
             return abort(401, "You are not authorized to access this resource.")
 
-        wh_services = ("discord", "slack", "custom")
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
         await request.get_data()
         arguments = await request.form
 
-        service = arguments.get("service")
-        url = arguments.get("url")
         triggers = arguments.getlist("triggers")
-        content_fmt = arguments.get("content_fmt")
+        base_id = int(arguments.get("base"))
 
         triggers = triggers.split(",")
         wh = await Webhook.from_wh_id(wh_id)
+        base = await WebhookBase.from_id(base_id)
 
         if not wh:
             response = {"error": "invalid webhook"}
             return Response(json.dumps(response), status=400)
-        elif service not in wh_services:
-            response = {"error": "invalid webhook service"}
-            return Response(json.dumps(response), status=400)
-        elif not url:
-            response = {"error": "invalid webhook url"}
-            return Response(json.dumps(response), status=400)
         elif not all(t in valid_triggers for t in triggers):
             response = {"error": "invalid triggers"}
             return Response(json.dumps(response), status=400)
-        elif not content_fmt:
-            response = {"error": "invalid content format"}
+        elif not base:
+            response = {"error": "invalid webhook base"}
             return Response(json.dumps(response), status=400)
 
-        wh.service = service
-        wh.url = url
-        wh.content_fmt = content_fmt
-
+        wh.base = base
         await wh.save()
 
         all_triggers = await wh.get_triggers()
@@ -194,4 +170,4 @@ class WebhooksAPI(views.MethodView):
         if deleted:
             return json.dumps(wh.to_dict())
         else:
-            return json.dumps([])
+            return "{}"
