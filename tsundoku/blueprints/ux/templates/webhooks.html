@@ -10,7 +10,68 @@
 
 {% block content %}
 
+{% include "modals/webhooks/add_modal.html" %}
+
+{% include "modals/webhooks/edit_modal.html" %}
+
+{% include "modals/webhooks/delete_modal.html" %}
+
 {% include "messages.html" %}
 
+<section class="section">
+    <div class="container mb-3">
+        <h1 class="title">Webhooks</h1>
+        <h2 class="subtitle">Usable by your tracked shows</h2>
+    </div>
+
+    <div id="webhook-card-container" class="container">
+        <div class="columns is-multiline">
+            {% for webhook in bases %}
+            <div class="column is-one-fifth">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            {{ webhook.name }}
+                        </p>
+                        <a class="card-header-icon">
+                            <span class="icon">
+                                <figure class="image is-16x16">
+                                    {% if webhook.service == "discord" %}
+                                    <img src="{{ url_for('ux.static', filename='img/discord.png') }}">
+                                    {% elif webhook.service == "slack" %}
+                                    <img src="{{ url_for('ux.static', filename='img/slack.png') }}">
+                                    {% endif %}
+                                </figure>
+                            </span>
+                        </a>
+                    </header>
+                    <div class="card-content">
+                        <p class="subtitle">
+                            <b>{{ webhook.name }}</b>
+                        </p>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="card-footer-item">
+                            <a onclick="openEditWebhookModal( {{ webhook }} );">Edit</a>
+                        </p>
+                        <p class="card-footer-item">
+                            <a onclick="openDeleteWebhookModal( {{ webhook }} );">Delete</a>
+                        </p>
+                    </footer>
+                </div>
+            </div>
+            {% else %}
+            <div class="container has-text-centered my-6">
+                <h3 class="title is-3">Nothing to see here!</h3>
+                <h4 class="subtitle is-5">Begin by adding a webhook below.</h4>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="container has-text-centered mt-3">
+        <button class="button is-medium is-success" onclick="openAddWebhookModal();">Add webhook</button>
+    </div>
+</section>
 
 {% endblock %}

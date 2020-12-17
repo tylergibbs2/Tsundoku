@@ -65,15 +65,29 @@ class WebhookBase:
         if service not in VALID_SERVICES:
             return
 
-        async with app.db_pool.acquire() as con:
-            new_base = await con.fetchrow("""
+        args = (name, service, url)
+        if content_fmt:
+            query = """
                 INSERT INTO
                     webhook_base
                     (name, base_service, base_url, content_fmt)
                 VALUES
                     ($1, $2, $3, $4)
                 RETURNING id, content_fmt;
-            """, name, service, url, content_fmt)
+            """
+            args += (content_fmt,)
+        else:
+            query = """
+                INSERT INTO
+                    webhook_base
+                    (name, base_service, base_url)
+                VALUES
+                    ($1, $2, $3)
+                RETURNING id, content_fmt;
+            """
+
+        async with app.db_pool.acquire() as con:
+            new_base = await con.fetchrow(query, *args)
 
         if not new_base:
             return
@@ -202,7 +216,7 @@ class WebhookBase:
                 WHERE
                     id=$1
                 RETURNING content_fmt;
-            """)
+            """, self.base_id)
 
         return bool(deleted)
 

@@ -1,0 +1,63 @@
+<div id="add-webhook-modal" class="modal modal-fx-fadeInScale">
+    <div class="modal-background" onclick="closeModals();"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Add Webhook</p>
+            <button class="delete" onclick="closeModals();" aria-label="close"></button>
+        </header>
+
+        <section class="modal-card-body">
+            <form id="add-webhook-form" submit>
+                <div class="field">
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="Name of the webhook, only for display purposes.">Name</span>
+                    </label>
+                    <div class="control">
+                        <input name="name" class="input" type="text" placeholder="My Webhook" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="The service that the webhook posts to.">Service</span>
+                    </label>
+                    <div class="select">
+                        <select name="service">
+                            <option value="discord">Discord</option>
+                            <option value="slack">Slack</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="URL that the webhook posts to.">URL</span>
+                    </label>
+                    <div class="control">
+                        <input name="url" class="input" pattern="https://.*" type="url" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">
+                        <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip="The format that the content will be sent in.">Content Format</span>
+                    </label>
+                    <div class="control">
+                        <input name="content_fmt" class="input" type="text" placeholder="{name}, episode {episode}, has been marked as {state}">
+                    </div>
+                </div>
+
+            </form>
+        </section>
+
+        <footer class="modal-card-foot is-size-7">
+            <input class="button is-success" type="submit" form="add-webhook-form"
+                value="Add webhook"></button>
+            <button class="button closes-modals" onclick="closeModals();">Cancel</button>
+        </footer>
+    </div>
+</div>

@@ -1,7 +1,3 @@
-:root {
-    --light-grey:hsl(0, 0%, 93%);
-}
-
 #show-card-container {
     background-color: var(--light-grey);
     border-radius: 20px;
