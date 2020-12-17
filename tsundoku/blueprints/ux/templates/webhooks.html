@@ -27,7 +27,7 @@
     <div id="webhook-card-container" class="container">
         <div class="columns is-multiline">
             {% for webhook in bases %}
-            <div class="column is-one-fifth">
+            <div class="column is-one-quarter">
                 <div class="card">
                     <header class="card-header">
                         <p class="card-header-title">
@@ -46,16 +46,16 @@
                         </a>
                     </header>
                     <div class="card-content">
-                        <p class="subtitle">
-                            <b>{{ webhook.name }}</b>
+                        <p class="is-size-6 has-text-centered py-4">
+                            <b>{% if webhook.valid %}🟢 Connected{% else %}🔴 Connection Error{% endif %}</b>
                         </p>
                     </div>
                     <footer class="card-footer">
                         <p class="card-footer-item">
-                            <a onclick="openEditWebhookModal( {{ webhook }} );">Edit</a>
+                            <a onclick='openEditWebhookModal( {{ webhook|tojson }} );'>Edit</a>
                         </p>
                         <p class="card-footer-item">
-                            <a onclick="openDeleteWebhookModal( {{ webhook }} );">Delete</a>
+                            <a onclick='openDeleteWebhookModal( {{ webhook|tojson }} );'>Delete</a>
                         </p>
                     </footer>
                 </div>

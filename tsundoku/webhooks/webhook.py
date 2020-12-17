@@ -23,6 +23,8 @@ class WebhookBase:
     url: str
     content_fmt: str
 
+    valid: bool
+
     def to_dict(self) -> dict:
         """
         Return the WebhookBase object as a dict.
@@ -37,7 +39,8 @@ class WebhookBase:
             "name": self.name,
             "service": self.service,
             "url": self.url,
-            "content_fmt": self.content_fmt
+            "content_fmt": self.content_fmt,
+            "valid": self.valid
         }
 
     @classmethod
@@ -99,6 +102,7 @@ class WebhookBase:
         instance.service = service
         instance.url = url
         instance.content_fmt = new_base["content_fmt"]
+        instance.valid = await instance.is_valid()
 
         return instance
 
@@ -141,6 +145,7 @@ class WebhookBase:
         instance.service = base["base_service"]
         instance.url = base["base_url"]
         instance.content_fmt = base["content_fmt"]
+        instance.valid = await instance.is_valid()
 
         return instance
 
@@ -160,7 +165,9 @@ class WebhookBase:
                 SELECT
                     id
                 FROM
-                    webhook_base;
+                    webhook_base
+                ORDER BY
+                    id ASC;
             """)
 
         instances = []
@@ -219,6 +226,24 @@ class WebhookBase:
             """, self.base_id)
 
         return bool(deleted)
+
+    async def is_valid(self) -> bool:
+        """
+        Checks if the webhook URL is valid.
+        """
+        if self.service == "slack":
+            try:
+                resp = await app.session.post(self.url, json={"text": ""})
+            except Exception as e:
+                return False
+            text = await resp.text()
+            return text == "no_text"
+        else:
+            try:
+                resp = await app.session.head(self.url)
+            except Exception as e:
+                return False
+            return resp.status == 200
 
 
 class Webhook:
@@ -395,7 +420,10 @@ class Webhook:
                     id, base
                 FROM
                     webhook
-                WHERE show_id=$1;
+                WHERE
+                    show_id=$1
+                ORDER BY
+                    id ASC;
             """, show_id)
 
         instances = []
@@ -632,4 +660,8 @@ class Webhook:
         logger.debug(f"Webhooks - Payload generated for Webhook with ID {self.wh_id}")
 
         logger.debug(f"Webhooks - Webhook {self.wh_id} sending payload...")
-        await app.session.post(self.base.url, json=payload)
+
+        try:
+            await app.session.post(self.base.url, json=payload)
+        except Exception as e:
+            pass
