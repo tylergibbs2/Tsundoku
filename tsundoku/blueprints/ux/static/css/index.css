@@ -13,6 +13,19 @@ img {
     border-top-right-radius: 7.5px;
 }
 
+div.card-content {
+    height: 6em;
+}
+
+div.card-content span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* number of lines to show */
+    -webkit-box-orient: vertical;
+    vertical-align: middle;
+}
+
 .card-image {
     position: relative;
 }

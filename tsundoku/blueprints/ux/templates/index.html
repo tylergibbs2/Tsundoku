@@ -54,12 +54,15 @@
                     </div>
                     {% endif %}
                     <div class="card-content">
-                        <p class="subtitle">
-                            {% if show.link %}
-                            <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
-                            {% else %}
-                            <b>{{ show.title }}</b>
-                            {% endif %}
+                        <p class="subtitle has-tooltip-arrow has-tooltip-multiline has-tooltip-up"
+                            data-tooltip="{{ show.title }}">
+                            <span>
+                                {% if show.link %}
+                                <a href="{{ show.link }}"><b>{{ show.title }}</b></a>
+                                {% else %}
+                                <b>{{ show.title }}</b>
+                                {% endif %}
+                            </span>
                         </p>
                     </div>
                     <footer class="card-footer">
@@ -100,8 +103,13 @@
 <footer class="footer">
     <div class="columns">
         <div class="column has-text-centered">
-            <p>Currently tracking <b>{{ total_entries.value }}</b> release{% if total_entries.value > 1 or total_entries.value == 0 %}s{% endif %} across <b>{{ shows|length }}</b> show{% if shows|length > 1 or shows|length == 0 %}s{% endif %}</p>
-            <p>There {% if seen_titles|length > 1 or seen_titles|length == 0 %}are{% else %}is{% endif %} currently <b>{{ seen_titles|length }}</b> unique title{% if seen_titles|length > 1 or seen_titles|length == 0 %}s{% endif %} in your RSS feeds</p>
+            <p>Currently tracking <b>{{ total_entries.value }}</b> release{% if total_entries.value > 1 or
+                total_entries.value == 0 %}s{% endif %} across <b>{{ shows|length }}</b> show{% if shows|length > 1 or
+                shows|length == 0 %}s{% endif %}</p>
+            <p>There {% if seen_titles|length > 1 or seen_titles|length == 0 %}are{% else %}is{% endif %} currently
+                <b>{{ seen_titles|length }}</b> unique title{% if seen_titles|length > 1 or seen_titles|length == 0
+                %}s{% endif %} in your RSS feeds
+            </p>
         </div>
         <div class="column has-text-centered">
             Tsundoku v{{ version }} {% if docker %}🐋{% endif %}
