@@ -95,6 +95,15 @@ class WebhookBase:
         if not new_base:
             return
 
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                INSERT INTO
+                    webhook
+                    (show_id, base)
+                VALUES
+                    ((SELECT id FROM shows), $1);
+            """, new_base["id"])
+
         instance = cls()
 
         instance.base_id = new_base["id"]
@@ -137,6 +146,15 @@ class WebhookBase:
 
         if not base:
             return
+
+        async with app.db_pool.acquire() as con:
+            await con.execute("""
+                INSERT INTO
+                    webhook
+                    (show_id, base)
+                SELECT id, ($1) FROM shows
+                ON CONFLICT DO NOTHING;
+            """, base_id)
 
         instance = cls()
 
@@ -267,100 +285,6 @@ class Webhook:
         }
 
     @classmethod
-    async def new(cls, show_id: int, base: Union[int, WebhookBase]) -> Optional[Webhook]:
-        """
-        Adds a new Webhook to the database and
-        returns an instance.
-
-        Parameters
-        ----------
-        show_id: int
-            The show's ID.
-        base: Union[int, WebhookBase]
-            The Webhook Base or the base's ID.
-
-        Returns
-        -------
-        Optional[Webhook]
-            The new Webhook.
-        """
-        if isinstance(base, int):
-            base = await WebhookBase.from_id(base)
-
-        if not base:
-            return
-
-        async with app.db_pool.acquire() as con:
-            new_wh = await con.fetchrow("""
-                INSERT INTO
-                    webhook
-                    (show_id, base)
-                VALUES
-                    ($1, $2)
-                RETURNING show_id, base;
-            """, show_id, base.base_id)
-
-        if not new_wh:
-            return
-
-        instance = cls()
-
-        instance.wh_id = new_wh["id"]
-        instance.show_id = show_id
-        instance.base = base
-
-        return instance
-
-    async def save(self) -> bool:
-        """
-        Saves the attributes of the object
-        to the database.
-
-        Returns
-        -------
-        bool:
-            Whether it was saved or not.
-        """
-        async with app.db_pool.acquire() as con:
-            updated = await con.fetchrow("""
-                UPDATE
-                    webhook
-                SET
-                    show_id=$1,
-                    base=$2
-                WHERE
-                    id=$3
-                RETURNING id, show_id;
-            """, self.show_id, self.base.id, self.wh_id)
-
-        if not updated:
-            return False
-
-        return True
-
-    async def delete(self) -> bool:
-        """
-        Deletes a Webhook from the database.
-
-        Returns
-        -------
-        bool:
-            Whether the webhook was deleted or not.
-        """
-        async with app.db_pool.acquire() as con:
-            deleted = await con.fetchrow("""
-                DELETE FROM
-                    webhook
-                WHERE wh_id=$1
-                RETURNING id, show_id;
-            """, self.wh_id)
-
-        if deleted:
-            return True
-
-        return False
-
-    @classmethod
     async def from_wh_id(cls, wh_id: int) -> Optional[Webhook]:
         """
         Returns a Webhook object from a webhook ID.
@@ -460,6 +384,8 @@ class Webhook:
                     webhook_trigger
                 WHERE wh_id=$1;
             """, self.wh_id)
+
+        return [r["trigger"] for r in triggers]
 
     async def add_trigger(self, trigger: str) -> bool:
         """
@@ -650,6 +576,9 @@ class Webhook:
         event: str
             The event that occurred, can be any `show_state`.
         """
+        if not self.base.valid:
+            return
+
         logger.debug(f"Webhooks - Generating payload for Webhook with ID {self.wh_id}")
         payload = await self.generate_payload(episode, event)
 

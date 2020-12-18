@@ -46,7 +46,8 @@ CREATE TABLE webhook_base (
 CREATE TABLE webhook (
     id SMALLSERIAL PRIMARY KEY,
     show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
-    base SMALLINT REFERENCES webhook_base(id) ON DELETE CASCADE
+    base SMALLINT REFERENCES webhook_base(id) ON DELETE CASCADE,
+    UNIQUE (show_id, base)
 );
 
 CREATE TABLE webhook_trigger (

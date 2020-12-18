@@ -4,7 +4,7 @@
         <header class="modal-card-head">
             <p class="modal-card-title">Edit Show</p>
             <div class="buttons">
-                <button id="del-cache-btn" class="button is-warning">Clear Cache</button>
+                <button id="del-cache-btn" class="button is-warning has-text-white">Clear Cache</button>
                 <div id="fix-match-dropdown" class="dropdown is-right">
                     <div class="dropdown-trigger">
                         <button class="button is-link" onclick="toggleFixMatchDropdown();">
@@ -36,7 +36,6 @@
 
             <div id="entry-tab-display" class="container is-hidden">
                 <table id="show-entry-table" class="table is-fullwidth is-hoverable">
-                    <caption id="entry-table-caption">Show Title</caption>
                     <thead>
                         <tr>
                             <th>Episode</th>
@@ -68,7 +67,45 @@
             </div>
 
             <div id="webhook-tab-display" class="container is-hidden">
-                
+                <table id="show-webhook-table" class="table is-fullwidth is-hoverable">
+                    <thead>
+                        <tr class="has-text-centered">
+                            <th>Webhook</th>
+                            <td>
+                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip="Downloading">
+                                    <i class="fas fa-download"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip="Downloaded">
+                                    <i class="fas fa-save"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip="Renamed">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip="Moved">
+                                    <i class="fas fa-file-export"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip="Completed">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                            </td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
             </div>
 
             <form id="edit-show-form" submit>

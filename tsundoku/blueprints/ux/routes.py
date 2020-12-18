@@ -71,7 +71,13 @@ async def index():
                 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
-            s["webhooks"] = [wh.to_dict() for wh in await Webhook.from_show_id(s["id"])]
+            s["webhooks"] = []
+            webhooks = await Webhook.from_show_id(s["id"])
+            for webhook in webhooks:
+                triggers = await webhook.get_triggers()
+                webhook = webhook.to_dict()
+                webhook["triggers"] = triggers
+                s["webhooks"].append(webhook)
 
             manager = await KitsuManager.from_show_id(s["id"])
             if manager:
@@ -83,6 +89,7 @@ async def index():
                 s["link"] = manager.link
 
     ctx["shows"] = shows
+    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all()]
     ctx["seen_titles"] = list(app.seen_titles)
     ctx["version"] = version
 

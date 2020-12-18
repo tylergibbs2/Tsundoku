@@ -114,12 +114,12 @@ def setup_views():
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/webhooks",
         view_func=webhooks_view,
-        methods=["GET", "POST"]
+        methods=["GET"]
     )
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/webhooks/<int:wh_id>",
         view_func=webhooks_view,
-        methods=["GET", "PUT", "DELETE"]
+        methods=["GET", "PUT"]
     )
 
     # Setup WebhookBaseAPI URL rules.

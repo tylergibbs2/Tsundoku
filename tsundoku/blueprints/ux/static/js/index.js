@@ -1,6 +1,8 @@
-var None = null;
 var entriesToDelete = [];
 var entriesToAdd = [];
+
+var all_triggers = ["downloading", "downloaded", "renamed", "moved", "completed"];
+
 var modalsCanBeClosed = true;
 
 
@@ -78,6 +80,7 @@ function submitAddOrEditShowForm(event) {
         */
        addShowEntry(entry[0], entry[1], entry[2]);
     }
+    updateWebhooks();
 
     $.ajax(
         {
@@ -93,6 +96,39 @@ function submitAddOrEditShowForm(event) {
             }
         }
     );
+}
+
+
+function updateWebhooks() {
+    let table = document.getElementById("show-webhook-table");
+    if (!table)
+        return;
+
+    $("#show-webhook-table tbody tr").each(function() {
+        let wh = $(this).data("webhook");
+        let show = $(this).data("show");
+        let triggers = [];
+        $(this).find("input").each(function() {
+            if ($(this).prop("checked"))
+                triggers.push($(this).attr("name"));
+        });
+
+        let url = `/api/shows/${show}/webhooks/${wh}`;
+        let method = "PUT";
+        let data = { "triggers": triggers.join() };
+
+        $.ajax(
+            {
+                url: url,
+                type: method,
+                data: data,
+                error: function (jqXHR, status, error) {
+                    console.error(`${status}: ${error}`);
+                }
+            }
+        );
+    });
+
 }
 
 
@@ -188,6 +224,41 @@ function addRowToShowEntryTable(entry) {
 }
 
 
+function addRowToShowWebhookTable(webhook) {
+    let table = document.querySelector("#show-webhook-table tbody");
+
+    let row = table.insertRow(-1);
+    $(row).addClass("has-text-centered");
+    $(row).data("webhook", webhook.wh_id);
+    $(row).data("show", webhook.show_id);
+
+    let cell_basewh = row.insertCell(0);
+    let cell_t_downloading = row.insertCell(1);
+    let cell_t_downloaded = row.insertCell(2);
+    let cell_t_renamed = row.insertCell(3);
+    let cell_t_moved = row.insertCell(4);
+    let cell_t_completed = row.insertCell(5);
+
+    let cells = [cell_t_downloading, cell_t_downloaded, cell_t_renamed, cell_t_moved, cell_t_completed];
+    for (const cell of cells) {
+        $(cell).addClass("is-vcentered");
+        let checkbox = document.createElement("input");
+        $(checkbox).attr("type", "checkbox").appendTo( $(cell) );
+    }
+
+    for (const trigger of all_triggers) {
+        let input = $(eval(`cell_t_${trigger}`)).find("input");
+        $(input).attr("name", trigger);
+        if (webhook.triggers.includes(trigger))
+            input.prop("checked", true);
+    }
+
+    let p = document.createElement("p");
+    $(p).html(webhook.base.name);
+    $(p).appendTo( $(cell_basewh) );
+}
+
+
 function bufferShowEntryDeletion(show_id, entry_id) {
     entriesToDelete.push([show_id, entry_id]);
 }
@@ -215,7 +286,6 @@ function addShowEntry(show_id, episode, magnet_url) {
         async: false
     });
 }
-
 
 function deleteShowCache(show_id) {
     let url = `/api/shows/${show_id}/cache`;
@@ -280,6 +350,7 @@ function openEditShowModal(show) {
     let addEntryForm = $("#add-show-entry-form");
 
     let table = $("#show-entry-table tbody");
+    let webhookTable = $("#show-webhook-table tbody");
 
     displayShowInfo();
     form.trigger("reset");
@@ -292,12 +363,16 @@ function openEditShowModal(show) {
     $("#fix-match-input").val(show.kitsu_id);
 
     table.empty();
+    webhookTable.empty();
 
     for (const entry of show.entries) {
         addRowToShowEntryTable(entry);
     }
 
-    $("#entry-table-caption").html(show.title);
+    for (const webhook of show.webhooks) {
+        addRowToShowWebhookTable(webhook);
+    }
+
     $("#add-show-entry-form input[name='show_id']").val(show.id);
 
     form.attr("method", "PUT");
