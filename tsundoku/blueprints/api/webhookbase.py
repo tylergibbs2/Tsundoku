@@ -27,7 +27,7 @@ class WebhookBaseAPI(views.MethodView):
             return abort(401, "You are not authorized to access this resource.")
 
         if not base_id:
-            return json.dumps([base.to_dict() for base in await WebhookBase.all()])
+            return json.dumps([base.to_dict() for base in await WebhookBase.all(app)])
         else:
             base = await WebhookBase.from_id(base_id)
             if not base:
@@ -72,6 +72,7 @@ class WebhookBaseAPI(views.MethodView):
             content_fmt = None
 
         base = await WebhookBase.new(
+            app,
             name,
             service,
             url,
@@ -109,7 +110,7 @@ class WebhookBaseAPI(views.MethodView):
         url = arguments.get("url")
         content_fmt = arguments.get("content_fmt")
 
-        base = await WebhookBase.from_id(base_id)
+        base = await WebhookBase.from_id(app, base_id)
 
         if not base:
             response = {"error": "invalid webhook base"}
@@ -155,7 +156,7 @@ class WebhookBaseAPI(views.MethodView):
         if not await current_user.is_authenticated:
             return abort(401, "You are not authorized to access this resource.")
 
-        base = await WebhookBase.from_id(base_id)
+        base = await WebhookBase.from_id(app, base_id)
         deleted = await base.delete()
 
         if deleted:

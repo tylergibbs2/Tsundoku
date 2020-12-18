@@ -72,7 +72,7 @@ async def index():
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
             s["webhooks"] = []
-            webhooks = await Webhook.from_show_id(s["id"])
+            webhooks = await Webhook.from_show_id(app, s["id"])
             for webhook in webhooks:
                 triggers = await webhook.get_triggers()
                 webhook = webhook.to_dict()
@@ -89,7 +89,7 @@ async def index():
                 s["link"] = manager.link
 
     ctx["shows"] = shows
-    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all()]
+    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app)]
     ctx["seen_titles"] = list(app.seen_titles)
     ctx["version"] = version
 
@@ -106,7 +106,7 @@ async def index():
 async def webhooks():
     ctx = {}
 
-    all_bases = await WebhookBase.all()
+    all_bases = await WebhookBase.all(app)
     all_bases = [b.to_dict() for b in all_bases]
     ctx["bases"] = all_bases
 

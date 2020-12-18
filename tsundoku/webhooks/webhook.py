@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from typing import List, Optional, Union
 
-from quart import current_app as app
+import quart
 
 
 logger = logging.getLogger("tsundoku")
@@ -17,6 +17,8 @@ VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
 
 
 class WebhookBase:
+    _app: quart.Quart
+
     base_id: int
     name: str
     service: str
@@ -44,13 +46,15 @@ class WebhookBase:
         }
 
     @classmethod
-    async def new(cls, name: str, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
+    async def new(cls, app: quart.Quart, name: str, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
         returns an instance.
 
         Parameters
         ----------
+        app: quart.Quart:
+            The app.
         name: str
             The name of the WebhookBase.
         service: str
@@ -106,6 +110,8 @@ class WebhookBase:
 
         instance = cls()
 
+        instance._app = app
+
         instance.base_id = new_base["id"]
         instance.name = name
         instance.service = service
@@ -116,12 +122,14 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, base_id: int) -> Optional[WebhookBase]:
+    async def from_id(cls, app: quart.Quart, base_id: int) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
         Parameters
         ----------
+        app: quart.Quart
+            The app.
         base_id: int
             The WebhookBase's ID.
 
@@ -158,6 +166,8 @@ class WebhookBase:
 
         instance = cls()
 
+        instance._app = app
+
         instance.base_id = base["id"]
         instance.name = base["name"]
         instance.service = base["base_service"]
@@ -168,10 +178,15 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls) -> List[WebhookBase]:
+    async def all(cls, app: quart.Quart) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
         the database.
+
+        Parameters
+        ----------
+        app: quart.Quart
+            The app.
 
         Returns
         -------
@@ -190,7 +205,7 @@ class WebhookBase:
 
         instances = []
         for id_ in ids:
-            instances.append(await WebhookBase.from_id(id_["id"]))
+            instances.append(await WebhookBase.from_id(app, id_["id"]))
 
         return instances
 
@@ -209,7 +224,7 @@ class WebhookBase:
         elif not self.content_fmt:
             return False
 
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             updated = await con.fetchval("""
                 UPDATE
                     webhook_base
@@ -234,7 +249,7 @@ class WebhookBase:
         bool:
             Whether the webhook base was deleted or not.
         """
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             deleted = await con.fetchval("""
                 DELETE FROM
                     webhook_base
@@ -251,20 +266,22 @@ class WebhookBase:
         """
         if self.service == "slack":
             try:
-                resp = await app.session.post(self.url, json={"text": ""})
+                resp = await self._app.session.post(self.url, json={"text": ""})
             except Exception as e:
                 return False
             text = await resp.text()
             return text == "no_text"
         else:
             try:
-                resp = await app.session.head(self.url)
+                resp = await self._app.session.head(self.url)
             except Exception as e:
                 return False
             return resp.status == 200
 
 
 class Webhook:
+    _app: quart.Quart
+
     wh_id: int
     show_id: int
     base: WebhookBase
@@ -285,12 +302,14 @@ class Webhook:
         }
 
     @classmethod
-    async def from_wh_id(cls, wh_id: int) -> Optional[Webhook]:
+    async def from_wh_id(cls, app: quart.Quart, wh_id: int) -> Optional[Webhook]:
         """
         Returns a Webhook object from a webhook ID.
 
         Parameters
         ----------
+        app: quart.Quart
+            The app.
         wh_id: int
             The Webhook's ID.
 
@@ -311,11 +330,13 @@ class Webhook:
         if not wh:
             return
 
-        base = await WebhookBase.from_id(wh["base"])
+        base = await WebhookBase.from_id(app, wh["base"])
         if not base:
             return
 
         instance = cls()
+
+        instance._app = app
 
         instance.wh_id = wh_id
         instance.show_id = wh["show_id"]
@@ -324,12 +345,14 @@ class Webhook:
         return instance
 
     @classmethod
-    async def from_show_id(cls, show_id: int) -> List[Webhook]:
+    async def from_show_id(cls, app: quart.Quart, show_id: int) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
         Parameters
         ----------
+        app: quart.Quart
+            The app.
         show_id: int
             The show's ID.
 
@@ -353,11 +376,13 @@ class Webhook:
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_id(wh["base"])
+            base = await WebhookBase.from_id(app, wh["base"])
             if not base:
                 continue
 
             instance = cls()
+
+            instance._app = app
 
             instance.wh_id = wh["id"]
             instance.show_id = show_id
@@ -376,7 +401,7 @@ class Webhook:
         List[str]
             All valid triggers.
         """
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             triggers = await con.fetch("""
                 SELECT
                     trigger
@@ -404,7 +429,7 @@ class Webhook:
         if trigger not in VALID_TRIGGERS:
             return False
 
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             exists = await con.fetchval("""
                 SELECT
                     trigger
@@ -443,7 +468,7 @@ class Webhook:
         if trigger not in VALID_TRIGGERS:
             return False
 
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             exists = await con.fetchval("""
                 SELECT
                     trigger
@@ -532,7 +557,7 @@ class Webhook:
         dict:
             The generated payload.
         """
-        async with app.db_pool.acquire() as con:
+        async with self._app.db_pool.acquire() as con:
             show_name = await con.fetchval("""
                 SELECT
                     title
@@ -591,6 +616,6 @@ class Webhook:
         logger.debug(f"Webhooks - Webhook {self.wh_id} sending payload...")
 
         try:
-            await app.session.post(self.base.url, json=payload)
+            await self._app.session.post(self.base.url, json=payload)
         except Exception as e:
             pass

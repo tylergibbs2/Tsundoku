@@ -69,17 +69,21 @@ class Downloader:
             return
 
         async with self.app.db_pool.acquire() as con:
-            entry_id = await con.fetchval("""
+            entry = await con.fetchrow("""
                 INSERT INTO
                     show_entry
                     (show_id, episode, torrent_hash)
                 VALUES
                     ($1, $2, $3)
-                RETURNING id;
+                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
             """, show_id, episode, torrent_hash)
+
+        entry = Entry(self.app, entry)
+        await entry.set_state("downloading")
+
         logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
 
-        return entry_id
+        return entry.id
 
 
     async def handle_move(self, entry: Entry) -> Optional[Path]:
@@ -241,7 +245,7 @@ class Downloader:
                 logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
                 return
             elif not path.parent.is_dir():
-                logger.error(f"'{file_location}' could not be read")
+                logger.error(f"'{path}' could not be read")
                 return
         else:
             path = entry.file_path

@@ -67,7 +67,7 @@ class Entry:
         Uses the `self.state` attribute, so call this after
         that is updated.
         """
-        webhooks = await Webhook.from_show_id(self.show_id)
+        webhooks = await Webhook.from_show_id(self._app, self.show_id)
 
         for wh in webhooks:
             triggers = await wh.get_triggers()

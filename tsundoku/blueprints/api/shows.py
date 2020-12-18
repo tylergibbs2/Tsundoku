@@ -120,6 +120,14 @@ class ShowsAPI(views.MethodView):
             """, arguments["title"], desired_format, desired_folder, season,
             episode_offset)
 
+            await con.execute("""
+                INSERT INTO
+                    webhook
+                    (show_id, base)
+                SELECT ($1), id FROM webhook_base
+                ON CONFLICT DO NOTHING;
+            """, new_id)
+
         await KitsuManager.fetch(new_id, arguments["title"])
 
         logger.info("New Show Added - Preparing to Check for New Releases")

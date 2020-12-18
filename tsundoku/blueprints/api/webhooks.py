@@ -30,10 +30,10 @@ class WebhooksAPI(views.MethodView):
             return abort(401, "You are not authorized to access this resource.")
 
         if wh_id is None:
-            webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(show_id)]
+            webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
             return json.dumps(webhooks)
         else:
-            webhook = await Webhook.from_wh_id(wh_id)
+            webhook = await Webhook.from_wh_id(app, wh_id)
             return json.dumps([webhook.to_dict()])
 
     async def put(self, show_id: int, wh_id: int) -> dict:
@@ -67,7 +67,7 @@ class WebhooksAPI(views.MethodView):
         if len(triggers) == 1 and not triggers[0]:
             triggers = []
 
-        wh = await Webhook.from_wh_id(wh_id)
+        wh = await Webhook.from_wh_id(app, wh_id)
 
         if not wh:
             response = {"error": "invalid webhook"}
