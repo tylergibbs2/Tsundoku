@@ -100,8 +100,8 @@ class WebhookBase:
                 INSERT INTO
                     webhook
                     (show_id, base)
-                VALUES
-                    ((SELECT id FROM shows), $1);
+                SELECT id, ($1) FROM shows
+                ON CONFLICT DO NOTHING;
             """, new_base["id"])
 
         instance = cls()
