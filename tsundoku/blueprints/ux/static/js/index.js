@@ -67,6 +67,8 @@ function submitAddOrEditShowForm(event) {
     let method = $(this).closest("form").attr("method");
     let data = $(this).closest("form").serialize();
 
+    updateWebhooks();
+
     // delete all buffered deletions
     for (const entry of entriesToDelete) {
         // entry[0] is show_id, entry[1] is entry_id
@@ -80,7 +82,6 @@ function submitAddOrEditShowForm(event) {
         */
        addShowEntry(entry[0], entry[1], entry[2]);
     }
-    updateWebhooks();
 
     $.ajax(
         {
