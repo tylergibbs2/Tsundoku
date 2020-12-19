@@ -36,7 +36,7 @@ class SubsPlease:
 
         try:
             return int(parsed["episode_number"])
-        except ValueError:
+        except (ValueError, TypeError):
             return 0
 
 

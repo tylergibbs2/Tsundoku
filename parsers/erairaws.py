@@ -36,7 +36,7 @@ class EraiRaws:
 
         try:
             return int(parsed["episode_number"])
-        except ValueError:
+        except (ValueError, TypeError):
             return 0
 
     def ignore_logic(self, item: dict) -> bool:
