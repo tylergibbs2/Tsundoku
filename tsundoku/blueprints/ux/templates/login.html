@@ -1,34 +1,61 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
+<head>
+    <!-- Page Meta -->
+    <meta charset="UTF-8">
+    <title>積ん読 ANIME</title>
+    <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
 
-<div class="columns is-centered mt-6">
-    <div class="column is-half">
-        <form action="{{ url_for('ux.login') }}" method="POST">
-            <div class="field">
-                <label class="label">Username</label>
-                <input class="input" type="text" name="username" placeholder="Username" required>
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.0/css/bulma.min.css"
+        integrity="sha512-ADrqa2PY1TZtb/MoLZIZu/Z/LlPaWQeDMBV73EMwjGam43/JJ5fqW38Rq8LJOVGCDfrJeOMS3Q/wRUVzW5DkjQ=="
+        crossorigin="anonymous" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tooltip@1.0.2/dist/bulma-tooltip.min.css"
+        integrity="sha384-EBGMr0LJD7tRVfxRKCHIGWo0kMW1fseE7eFCIZFyF/nzdZMxZ1/u6DBSuyrXdBCP" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://unpkg.com/bulma-modal-fx/dist/css/modal-fx.min.css"
+        integrity="sha384-2EzQg7I8N+khgGamQGW3EG0Dzz5Kx6mPuxN7er0BRJ2iKZZHQCfi9g1LjrmOfvHV" crossorigin="anonymous" />
+
+    <!-- JS -->
+    <script type="text/javascript" src="{{ url_for('ux.static', filename='js/login.js') }}"></script>
+</head>
+
+<body>
+
+    {% include 'modals/login/help.html' %}
+
+    <div class="container">
+        <h1 class="title is-1 has-text-centered mt-6">Tsundoku</h1>
+        <div class="columns is-centered mt-1">
+            <div class="column is-one-quarter">
+                <form action="{{ url_for('ux.login') }}" method="POST">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <input class="input" type="text" name="username" placeholder="Username" required>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Password</label>
+                        <input class="input" type="password" name="password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox">
+                            <input name="remember" type="checkbox">
+                            Remember me
+                        </label>
+                    </div>
+
+                    <div class="field has-text-centered">
+                        <div class="control">
+                            <button type="submit" class="button is-link">Login</button>
+                            <a onclick="launchModal();" class="button is-warning is-hidden">Help</a>
+                        </div>
+                </form>
             </div>
-
-            <div class="field">
-                <label class="label">Password</label>
-                <input class="input" type="password" name="password" placeholder="••••••••" required>
-            </div>
-
-            <div class="field">
-                <label class="checkbox">
-                    <input name="remember" type="checkbox">
-                    Remember me
-                </label>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <button type="submit" class="button is-link">Login</button>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+</body>
 
-{% endblock %}
+</html>
