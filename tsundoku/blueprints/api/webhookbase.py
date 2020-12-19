@@ -1,9 +1,8 @@
 import json
 from typing import List, Optional
 
-from quart import abort, Response, request, views
+from quart import Response, request, views
 from quart import current_app as app
-from quart_auth import current_user
 
 from tsundoku.webhooks import WebhookBase
 
@@ -23,9 +22,6 @@ class WebhookBaseAPI(views.MethodView):
         List[dict]
             A list of results.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         if not base_id:
             return json.dumps([base.to_dict() for base in await WebhookBase.all(app)])
         else:
@@ -47,9 +43,6 @@ class WebhookBaseAPI(views.MethodView):
         dict
             The new webhook.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         wh_services = ("discord", "slack", "custom")
         await request.get_data()
         arguments = await request.form
@@ -98,9 +91,6 @@ class WebhookBaseAPI(views.MethodView):
         -------
         The updated webhook base.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         wh_services = ("discord", "slack", "custom")
         await request.get_data()
         arguments = await request.form
@@ -153,9 +143,6 @@ class WebhookBaseAPI(views.MethodView):
             If the item was deleted, returns
             the item.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         base = await WebhookBase.from_id(app, base_id)
         deleted = await base.delete()
 

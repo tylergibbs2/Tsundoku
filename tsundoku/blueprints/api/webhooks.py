@@ -1,11 +1,10 @@
 import json
-from typing import List, Optional
+from typing import List
 
-from quart import abort, Response, request, views
+from quart import Response, request, views
 from quart import current_app as app
-from quart_auth import current_user
 
-from tsundoku.webhooks import Webhook, WebhookBase
+from tsundoku.webhooks import Webhook
 
 
 class WebhooksAPI(views.MethodView):
@@ -26,9 +25,6 @@ class WebhooksAPI(views.MethodView):
         List[dict]
             A list of results.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         if wh_id is None:
             webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
             return json.dumps(webhooks)
@@ -54,9 +50,6 @@ class WebhooksAPI(views.MethodView):
         -------
         The updated webhook.
         """
-        if not await current_user.is_authenticated:
-            return abort(401, "You are not authorized to access this resource.")
-
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
         await request.get_data()
         arguments = await request.form

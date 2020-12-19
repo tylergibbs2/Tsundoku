@@ -2,8 +2,8 @@ import json
 import logging
 
 from quart import Blueprint
-from quart import current_app as app
-from quart_auth import login_required
+from quart import abort, current_app as app
+from quart_auth import current_user
 
 from .shows import ShowsAPI
 from .entries import EntriesAPI
@@ -16,8 +16,13 @@ api_blueprint = Blueprint('api', __name__, url_prefix="/api")
 logger = logging.getLogger("tsundoku")
 
 
+@api_blueprint.before_request
+async def ensure_auth():
+    if not await current_user.is_authenticated:
+        return abort(401, "You are not authorized to access this resource.")
+
+
 @api_blueprint.route("/shows/seen", methods=["GET"])
-@login_required
 async def get_seen_shows():
     """
     Returns a list of shows that the program
@@ -31,7 +36,6 @@ async def get_seen_shows():
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
-@login_required
 async def check_for_releases():
     """
     Forces Tsundoku to check for new releases.
@@ -45,7 +49,6 @@ async def check_for_releases():
 
     found_items = []
     for parser in app.rss_parsers:
-        current_parser = parser
         feed = await app.poller.get_feed_from_parser(parser)
 
         logger.info(f"{parser.name} - Checking for New Releases...")
@@ -56,7 +59,6 @@ async def check_for_releases():
 
 
 @api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
-@login_required
 async def delete_show_cache(show_id: int):
     """
     Force Tsundoku to delete the cache for a show.
