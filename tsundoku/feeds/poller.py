@@ -199,18 +199,25 @@ class Poller:
         item: dict
             The item to check for matches.
         """
-        if hasattr(self.current_parser, "ignore_logic"):
-            if self.current_parser.ignore_logic(item) == False:
-                logger.debug(f"{self.current_parser.name} - Release Ignored")
-                return
+        # In case there are any errors with the user-defined parsing
+        # functions, this try-except block will prevent the whole
+        # poller task from crashing.
+        try:
+            if hasattr(self.current_parser, "ignore_logic"):
+                if self.current_parser.ignore_logic(item) == False:
+                    logger.debug(f"{self.current_parser.name} - Release Ignored")
+                    return
 
-        if hasattr(self.current_parser, "get_file_name"):
-            torrent_name = self.current_parser.get_file_name(item)
-        else:
-            torrent_name = item["title"]
+            if hasattr(self.current_parser, "get_file_name"):
+                torrent_name = self.current_parser.get_file_name(item)
+            else:
+                torrent_name = item["title"]
 
-        show_name = self.current_parser.get_show_name(torrent_name)
-        show_episode = self.current_parser.get_episode_number(torrent_name)
+            show_name = self.current_parser.get_show_name(torrent_name)
+            show_episode = self.current_parser.get_episode_number(torrent_name)
+        except Exception as e:
+            logger.error(f"Parsing Error - {e}")
+            return
 
         if show_episode is None:
             return
