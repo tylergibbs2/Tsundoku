@@ -212,6 +212,9 @@ class Poller:
         show_name = self.current_parser.get_show_name(torrent_name)
         show_episode = self.current_parser.get_episode_number(torrent_name)
 
+        if show_episode is None:
+            return
+
         self.app.seen_titles.add(show_name)
 
         match = await self.check_item_for_match(show_name, show_episode)

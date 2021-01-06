@@ -31,13 +31,24 @@ class SubsPlease:
         the file name in order to get the episode of the release.
 
         Failure to do so will result in incorrect matching.
+
+        Returning `None` will stop the matching.
         """
         parsed = anitopy.parse(file_name)
 
+        extra_info = parsed.get("release_information", "")
+        if "batch" in extra_info.lower():
+            return
+
         try:
-            return int(parsed["episode_number"])
+            episode = parsed["episode_number"]
+        except KeyError:
+            return
+
+        try:
+            return int(episode)
         except (ValueError, TypeError):
-            return 0
+            return
 
 
 def setup(app):
