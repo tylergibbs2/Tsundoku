@@ -34,13 +34,11 @@
     <div id="show-card-container" class="container">
         <div class="columns is-multiline">
             {% set not_shown = namespace(value=0) %}
-            {% set total_entries = namespace(value=0) %}
             {% for show in shows %}
             <div class="column is-one-fifth {% if loop.index > max_cards %}is-hidden{% endif %}">
                 {% if loop.index > max_cards %}
                 {% set not_shown.value = not_shown.value + 1 %}
                 {% endif %}
-                {% set total_entries.value = total_entries.value + show.entries|length %}
                 <div class="card">
                     {% if show.image %}
                     <div class="card-image">
@@ -100,26 +98,5 @@
     </div>
 
 </section>
-
-<footer class="footer">
-    <div class="columns">
-        <div class="column has-text-centered">
-            <p>Currently tracking <b>{{ total_entries.value }}</b> release{% if total_entries.value > 1 or
-                total_entries.value == 0 %}s{% endif %} across <b>{{ shows|length }}</b> show{% if shows|length > 1 or
-                shows|length == 0 %}s{% endif %}</p>
-            <p>There {% if seen_titles|length > 1 or seen_titles|length == 0 %}are{% else %}is{% endif %} currently
-                <b>{{ seen_titles|length }}</b> unique title{% if seen_titles|length > 1 or seen_titles|length == 0
-                %}s{% endif %} in your RSS feeds
-            </p>
-        </div>
-        <div class="column has-text-centered">
-            Tsundoku v{{ version }} {% if docker %}🐋{% endif %}
-        </div>
-        <div class="column has-text-centered">
-            <p><b>Tsundoku</b> is an <a href="https://github.com/tylergibbs2/Tsundoku">open-source project.</a></p>
-            <p>Copyright (c) 2020-2021 Tyler Gibbs</p>
-        </div>
-    </div>
-</footer>
 
 {% endblock %}

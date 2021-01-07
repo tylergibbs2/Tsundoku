@@ -1,3 +1,13 @@
 :root {
-    --light-grey:hsl(0, 0%, 93%);
+    --light-grey: hsl(0, 0%, 93%);
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+#wrapper {
+    flex: 1;
 }

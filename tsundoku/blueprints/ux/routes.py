@@ -33,8 +33,31 @@ status_html_map = {
 
 
 @ux_blueprint.context_processor
-def update_context():
+async def update_context():
+
+    async with app.db_pool.acquire() as con:
+        shows = await con.fetchval("""
+            SELECT
+                COUNT(*)
+            FROM
+                shows;
+        """)
+        entries = await con.fetchval("""
+            SELECT
+                COUNT(*)
+            FROM
+                show_entry;
+        """)
+
+    stats = {
+        "shows": shows,
+        "entries": entries,
+        "seen": len(app.seen_titles),
+        "version": version
+    }
+
     return {
+        "stats": stats,
         "updates": app.update_info,
         "docker": os.environ.get("IS_DOCKER", False)
     }
@@ -91,7 +114,6 @@ async def index():
     ctx["shows"] = shows
     ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app)]
     ctx["seen_titles"] = list(app.seen_titles)
-    ctx["version"] = version
 
     if not len(app.rss_parsers):
         await flash("No RSS parsers installed.")
