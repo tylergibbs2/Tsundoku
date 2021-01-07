@@ -1,0 +1,2 @@
+-r requirements.txt
+tusker==0.2.2
