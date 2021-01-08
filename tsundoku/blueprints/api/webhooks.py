@@ -1,9 +1,9 @@
-import json
 from typing import List
 
-from quart import Response, request, views
+from quart import request, views
 from quart import current_app as app
 
+from .response import APIResponse
 from tsundoku.webhooks import Webhook
 
 
@@ -27,10 +27,14 @@ class WebhooksAPI(views.MethodView):
         """
         if wh_id is None:
             webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
-            return json.dumps(webhooks)
+            return APIResponse(
+                result=webhooks
+            )
         else:
             webhook = await Webhook.from_wh_id(app, wh_id)
-            return json.dumps([webhook.to_dict()])
+            return APIResponse(
+                result=webhook.to_dict()
+            )
 
     async def put(self, show_id: int, wh_id: int) -> dict:
         """
@@ -63,11 +67,9 @@ class WebhooksAPI(views.MethodView):
         wh = await Webhook.from_wh_id(app, wh_id)
 
         if not wh:
-            response = {"error": "invalid webhook"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=404, error="Webhook with specified ID does not exist.")
         elif not all(t in valid_triggers for t in triggers):
-            response = {"error": "invalid triggers"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook triggers.")
 
         all_triggers = await wh.get_triggers()
         for trigger in all_triggers:
@@ -77,4 +79,6 @@ class WebhooksAPI(views.MethodView):
         for trigger in triggers:
             await wh.add_trigger(trigger)
 
-        return json.dumps(wh.to_dict())
+        return APIResponse(
+            result=wh.to_dict()
+        )

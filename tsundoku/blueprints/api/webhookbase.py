@@ -1,9 +1,9 @@
-import json
 from typing import List, Optional
 
-from quart import Response, request, views
+from quart import request, views
 from quart import current_app as app
 
+from .response import APIResponse
 from tsundoku.webhooks import WebhookBase
 
 
@@ -23,12 +23,20 @@ class WebhookBaseAPI(views.MethodView):
             A list of results.
         """
         if not base_id:
-            return json.dumps([base.to_dict() for base in await WebhookBase.all(app)])
+            return APIResponse(
+                result=[base.to_dict() for base in await WebhookBase.all(app)]
+            )
         else:
             base = await WebhookBase.from_id(base_id)
-            if not base:
-                return "[]"
-            return json.dumps([base.to_dict()])
+            if base:
+                return APIResponse(
+                    result=[base.to_dict()]
+                )
+            else:
+                return APIResponse(
+                    status=404,
+                    error="BaseWebhook with specified ID does not exist."
+                )
 
 
     async def post(self) -> dict:
@@ -53,14 +61,11 @@ class WebhookBaseAPI(views.MethodView):
         content_fmt = arguments.get("content_fmt")
 
         if service not in wh_services:
-            response = {"error": "invalid webhook service"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook service.")
         elif not url:
-            response = {"error": "invalid webhook url"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook URL.")
         elif not name:
-            response = {"error": "invalid webhook name"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook name.")
         elif content_fmt == "":
             content_fmt = None
 
@@ -73,9 +78,14 @@ class WebhookBaseAPI(views.MethodView):
         )
 
         if base:
-            return json.dumps(base.to_dict())
+            return APIResponse(
+                result=base.to_dict()
+            )
         else:
-            return "{}"
+            return APIResponse(
+                status=500,
+                error="The server failed to create the new WebhookBase."
+            )
 
 
     async def put(self, base_id: int) -> dict:
@@ -103,20 +113,15 @@ class WebhookBaseAPI(views.MethodView):
         base = await WebhookBase.from_id(app, base_id)
 
         if not base:
-            response = {"error": "invalid webhook base"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
         elif service not in wh_services:
-            response = {"error": "invalid webhook service"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook service.")
         elif not url:
-            response = {"error": "invalid webhook url"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid webhook URL.")
         elif not content_fmt:
-            response = {"error": "invalid content format"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid content format.")
         elif not name:
-            response = {"error": "invalid name"}
-            return Response(json.dumps(response), status=400)
+            return APIResponse(status=400, error="Invalid name.")
 
         base.name = name
         base.service = service
@@ -125,7 +130,9 @@ class WebhookBaseAPI(views.MethodView):
 
         await base.save()
 
-        return json.dumps(base.to_dict())
+        return APIResponse(
+            result=base.to_dict()
+        )
 
 
     async def delete(self, base_id: int) -> Optional[dict]:
@@ -144,9 +151,20 @@ class WebhookBaseAPI(views.MethodView):
             the item.
         """
         base = await WebhookBase.from_id(app, base_id)
+        if not base:
+            return APIResponse(
+                status=404,
+                error="WebhookBase with specified ID does not exist."
+            )
+
         deleted = await base.delete()
 
         if deleted:
-            return json.dumps(base.to_dict())
+            return APIResponse(
+                result=base.to_dict()
+            )
         else:
-            return "{}"
+            return APIResponse(
+                status=500,
+                error="The server encountered an error deleting the specified WebhookBase."
+            )

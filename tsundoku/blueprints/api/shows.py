@@ -1,10 +1,10 @@
-import json
 import logging
 from typing import List, Union
 
 from quart import request, views
 from quart import current_app as app
 
+from .response import APIResponse
 from tsundoku.kitsu import KitsuManager
 
 
@@ -38,7 +38,9 @@ class ShowsAPI(views.MethodView):
                         shows;
                 """)
 
-                return json.dumps([dict(record) for record in shows])
+                return APIResponse(
+                    result=[dict(record) for record in shows]
+                )
         else:
             async with app.db_pool.acquire() as con:
                 show = await con.fetchrow("""
@@ -55,9 +57,14 @@ class ShowsAPI(views.MethodView):
                 """, show_id)
 
             if not show:
-                show = {}
+                return APIResponse(
+                    status=404,
+                    error="Show with specified ID does not exist."
+                )
 
-            return json.dumps(dict(show))
+            return APIResponse(
+                result=dict(show)
+            )
 
 
     async def post(self, show_id: int=None) -> dict:
@@ -123,14 +130,35 @@ class ShowsAPI(views.MethodView):
 
         logger.info("New Show Added - Preparing to Check for New Releases")
         for parser in app.rss_parsers:
-            current_parser = parser
             feed = await app.poller.get_feed_from_parser(parser)
 
             logger.info(f"{parser.name} - Checking for New Releases...")
             await app.poller.check_feed(feed)
             logger.info(f"{parser.name} - Checked for New Releases")
 
-        return json.dumps({"success": True})
+        async with app.db_pool.acquire() as con:
+            new_show = await con.fetchrow("""
+                SELECT
+                    id,
+                    title,
+                    desired_format,
+                    desired_folder,
+                    season,
+                    episode_offset
+                FROM
+                    shows
+                WHERE id=$1;
+            """, new_id)
+
+        if new_show:
+            return APIResponse(
+                result=dict(new_show)
+            )
+        else:
+            return APIResponse(
+                status=500,
+                error="The server failed to add the new Show."
+            )
 
 
     async def put(self, show_id: int) -> dict:
@@ -216,14 +244,35 @@ class ShowsAPI(views.MethodView):
 
         logger.info("Existing Show Updated - Preparing to Check for New Releases")
         for parser in app.rss_parsers:
-            current_parser = parser
             feed = await app.poller.get_feed_from_parser(parser)
 
             logger.info(f"{parser.name} - Checking for New Releases...")
             await app.poller.check_feed(feed)
             logger.info(f"{parser.name} - Checked for New Releases")
 
-        return json.dumps({"success": True})
+        async with app.db_pool.acquire() as con:
+            new_show = await con.fetchrow("""
+                SELECT
+                    id,
+                    title,
+                    desired_format,
+                    desired_folder,
+                    season,
+                    episode_offset
+                FROM
+                    shows
+                WHERE id=$1;
+            """, show_id)
+
+        if new_show:
+            return APIResponse(
+                result=dict(new_show)
+            )
+        else:
+            return APIResponse(
+                status=500,
+                error="The server failed to update the existing Show."
+            )
 
 
     async def delete(self, show_id: int) -> dict:
@@ -240,10 +289,19 @@ class ShowsAPI(views.MethodView):
             False otherwise.
         """
         async with app.db_pool.acquire() as con:
-            await con.execute("""
+            deleted = await con.fetchval("""
                 DELETE FROM
                     shows
-                WHERE id=$1;
+                WHERE id=$1
+                RETURNING id;
             """, show_id)
 
-        return json.dumps({"success": True})
+        if deleted:
+            return APIResponse(
+                result=True
+            )
+        else:
+            return APIResponse(
+                status=404,
+                error="Show with specified ID does not exist."
+            )

@@ -1,9 +1,9 @@
-import json
 from typing import List, Union
 
-from quart import Response, request, views
+from quart import request, views
 from quart import current_app as app
 
+from .response import APIResponse
 from tsundoku.feeds.entry import Entry
 
 
@@ -32,7 +32,9 @@ class EntriesAPI(views.MethodView):
                     WHERE show_id=$1;
                 """, show_id)
 
-            return json.dumps([dict(record) for record in entries])
+            return APIResponse(
+                result=[dict(record) for record in entries]
+            )
         else:
             async with app.db_pool.acquire() as con:
                 entry = await con.fetchrow("""
@@ -47,9 +49,14 @@ class EntriesAPI(views.MethodView):
                 """, show_id, entry_id)
 
             if entry is None:
-                entry = {}
+                return APIResponse(
+                    status=404,
+                    error="Entry with specified ID does not exist."
+                )
 
-            return json.dumps(dict(entry))
+            return APIResponse(
+                result=dict[entry]
+            )
 
 
     async def post(self, show_id: int, entry_id: int=None):
@@ -79,17 +86,20 @@ class EntriesAPI(views.MethodView):
         required_arguments = {"episode", "magnet"}
         await request.get_data()
         arguments = await request.form
-        response = {"success": False}
 
         if set(arguments.keys()) != required_arguments:
-            response["error"] = "too many arguments or missing required argument"
-            return Response(json.dumps(response), status=400)
+            return APIResponse(
+                status=400,
+                error="Too many arguments or missing required argument."
+            )
 
         try:
             episode = int(arguments["episode"])
         except ValueError:
-            response["error"] = "episode argument must be int"
-            return Response(json.dumps(response), status=400)
+            return APIResponse(
+                status=400,
+                error="Episode argument must be an integer."
+            )
 
         if arguments["magnet"]:
             entry_id = await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
@@ -120,10 +130,9 @@ class EntriesAPI(views.MethodView):
         entry = Entry(app, new_entry)
         await entry._handle_webhooks()
 
-        response["success"] = True
-        response["entry"] = dict(new_entry)
-
-        return json.dumps(response)
+        return APIResponse(
+            result=dict(new_entry)
+        )
 
 
     async def delete(self, show_id: int, entry_id: int):
@@ -137,10 +146,19 @@ class EntriesAPI(views.MethodView):
             False otherwise.
         """
         async with app.db_pool.acquire() as con:
-            await con.execute("""
+            deleted = await con.fetchvel("""
                 DELETE FROM
                     show_entry
-                WHERE id=$1;
+                WHERE id=$1
+                RETURNING id;
             """, entry_id)
 
-        return json.dumps({"success": True})
+        if deleted:
+            return APIResponse(
+                result=True
+            )
+        else:
+            return APIResponse(
+                status=404,
+                error="Entry with specified ID does not exist."
+            )
