@@ -33,8 +33,7 @@ class ShowsAPI(views.MethodView):
                         desired_format,
                         desired_folder,
                         season,
-                        episode_offset,
-                        show_image
+                        episode_offset
                     FROM
                         shows;
                 """)
@@ -49,8 +48,7 @@ class ShowsAPI(views.MethodView):
                         desired_format,
                         desired_folder,
                         season,
-                        episode_offset,
-                        show_image
+                        episode_offset
                     FROM
                         shows
                     WHERE id=$1;
