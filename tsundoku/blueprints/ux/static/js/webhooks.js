@@ -17,7 +17,7 @@ function submitAddWebhookForm(event) {
 }
 function openAddWebhookModal() {
     var form = $("#add-webhook-form");
-    form.attr("action", "/api/webhooks");
+    form.attr("action", "/api/v1/webhooks");
     form.attr("method", "POST");
     form.on("submit", submitAddWebhookForm);
     $(document.documentElement).addClass("is-clipped");
@@ -32,7 +32,7 @@ function openEditWebhookModal(webhook) {
         $(elem).val(webhook.name);
     });
     form.attr("method", "PUT");
-    form.attr("action", "/api/webhooks/" + webhook.base_id);
+    form.attr("action", "/api/v1/webhooks/" + webhook.base_id);
     form.on("submit", submitAddWebhookForm);
     $(document.documentElement).addClass("is-clipped");
     $("#edit-webhook-modal").addClass("is-active");
@@ -41,7 +41,7 @@ function openDeleteWebhookModal(webhook) {
     $("#delete-webhook-button").on("click", function (e) {
         e.preventDefault();
         $.ajax({
-            url: "/api/webhooks/" + webhook.base_id,
+            url: "/api/v1/webhooks/" + webhook.base_id,
             type: "DELETE",
             success: function () {
                 location.reload();

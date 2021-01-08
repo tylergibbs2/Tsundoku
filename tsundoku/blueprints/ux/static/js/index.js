@@ -86,7 +86,7 @@ function updateWebhooks() {
             if ($(this).prop("checked"))
                 triggers.push($(this).attr("name"));
         });
-        var url = "/api/shows/" + show + "/webhooks/" + wh;
+        var url = "/api/v1/shows/" + show + "/webhooks/" + wh;
         var method = "PUT";
         var data = { "triggers": triggers.join() };
         $.ajax({
@@ -208,14 +208,14 @@ function bufferShowEntryDeletion(show_id, entry_id) {
     entriesToDelete.push([show_id, entry_id]);
 }
 function deleteShowEntry(show_id, entry_id) {
-    var url = "/api/shows/" + show_id + "/entries/" + entry_id;
+    var url = "/api/v1/shows/" + show_id + "/entries/" + entry_id;
     $.ajax({
         url: url,
         type: "DELETE"
     });
 }
 function addShowEntry(show_id, episode, magnet_url) {
-    var url = "/api/shows/" + show_id + "/entries";
+    var url = "/api/v1/shows/" + show_id + "/entries";
     var payload = {
         episode: episode,
         magnet: magnet_url
@@ -228,7 +228,7 @@ function addShowEntry(show_id, episode, magnet_url) {
     });
 }
 function deleteShowCache(show_id) {
-    var url = "/api/shows/" + show_id + "/cache";
+    var url = "/api/v1/shows/" + show_id + "/cache";
     $.ajax({
         url: url,
         type: "DELETE",
@@ -261,7 +261,7 @@ function displayShowWebhooks() {
 function openAddShowModal() {
     var form = $("#add-show-form");
     form.trigger("reset");
-    form.attr("action", "/api/shows");
+    form.attr("action", "/api/v1/shows");
     form.attr("method", "POST");
     form.on("submit", submitAddOrEditShowForm);
     $(document.documentElement).addClass("is-clipped");
@@ -291,7 +291,7 @@ function openEditShowModal(show) {
     }
     $("#add-show-entry-form input[name='show_id']").val(show.id);
     form.attr("method", "PUT");
-    form.attr("action", "/api/shows/" + show.id);
+    form.attr("action", "/api/v1/shows/" + show.id);
     form.on("submit", submitAddOrEditShowForm);
     addEntryForm.on("submit", bufferShowEntryAddition);
     $("#del-cache-btn").on("click", function () {
@@ -304,7 +304,7 @@ function openDeleteShowModal(show) {
     $("#delete-show-button").on("click", function (e) {
         e.preventDefault();
         $.ajax({
-            url: "/api/shows/" + show.id,
+            url: "/api/v1/shows/" + show.id,
             type: "DELETE",
             success: function () {
                 location.reload();

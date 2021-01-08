@@ -12,7 +12,7 @@ from .webhookbase import WebhookBaseAPI
 from tsundoku.kitsu import KitsuManager
 
 
-api_blueprint = Blueprint('api', __name__, url_prefix="/api")
+api_blueprint = Blueprint('api', __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
 
 

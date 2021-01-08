@@ -23,7 +23,7 @@ function submitAddWebhookForm(event: Event) {
 function openAddWebhookModal() {
     let form: JQuery = $("#add-webhook-form");
 
-    form.attr("action", "/api/webhooks");
+    form.attr("action", "/api/v1/webhooks");
     form.attr("method", "POST");
     form.on("submit", submitAddWebhookForm);
 
@@ -42,7 +42,7 @@ function openEditWebhookModal(webhook: WebhookBase) {
     });
 
     form.attr("method", "PUT");
-    form.attr("action", `/api/webhooks/${webhook.base_id}`);
+    form.attr("action", `/api/v1/webhooks/${webhook.base_id}`);
 
     form.on("submit", submitAddWebhookForm);
 
@@ -56,7 +56,7 @@ function openDeleteWebhookModal(webhook: WebhookBase) {
         e.preventDefault();
         $.ajax(
             {
-                url: `/api/webhooks/${webhook.base_id}`,
+                url: `/api/v1/webhooks/${webhook.base_id}`,
                 type: "DELETE",
                 success: function () {
                     location.reload();

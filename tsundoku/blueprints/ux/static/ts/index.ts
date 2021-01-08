@@ -114,7 +114,7 @@ function updateWebhooks() {
                 triggers.push($(this).attr("name"));
         });
 
-        let url: string = `/api/shows/${show}/webhooks/${wh}`;
+        let url: string = `/api/v1/shows/${show}/webhooks/${wh}`;
         let method: string = "PUT";
         let data: object = { "triggers": triggers.join() };
 
@@ -268,7 +268,7 @@ function bufferShowEntryDeletion(show_id: number, entry_id: number) {
 
 
 function deleteShowEntry(show_id: number, entry_id: number) {
-    let url: string = `/api/shows/${show_id}/entries/${entry_id}`;
+    let url: string = `/api/v1/shows/${show_id}/entries/${entry_id}`;
     $.ajax({
         url: url,
         type: "DELETE"
@@ -277,7 +277,7 @@ function deleteShowEntry(show_id: number, entry_id: number) {
 
 
 function addShowEntry(show_id: number, episode: number, magnet_url: string) {
-    let url: string = `/api/shows/${show_id}/entries`;
+    let url: string = `/api/v1/shows/${show_id}/entries`;
     let payload: object = {
         episode: episode,
         magnet: magnet_url
@@ -291,7 +291,7 @@ function addShowEntry(show_id: number, episode: number, magnet_url: string) {
 }
 
 function deleteShowCache(show_id: number) {
-    let url = `/api/shows/${show_id}/cache`;
+    let url = `/api/v1/shows/${show_id}/cache`;
     $.ajax(
         {
             url: url,
@@ -339,7 +339,7 @@ function openAddShowModal() {
 
     form.trigger("reset");
 
-    form.attr("action", "/api/shows");
+    form.attr("action", "/api/v1/shows");
     form.attr("method", "POST");
     form.on("submit", submitAddOrEditShowForm);
 
@@ -379,7 +379,7 @@ function openEditShowModal(show: Show) {
     $("#add-show-entry-form input[name='show_id']").val(show.id);
 
     form.attr("method", "PUT");
-    form.attr("action", `/api/shows/${show.id}`);
+    form.attr("action", `/api/v1/shows/${show.id}`);
 
     form.on("submit", submitAddOrEditShowForm);
 
@@ -399,7 +399,7 @@ function openDeleteShowModal(show: Show) {
         e.preventDefault();
         $.ajax(
             {
-                url: `/api/shows/${show.id}`,
+                url: `/api/v1/shows/${show.id}`,
                 type: "DELETE",
                 success: function () {
                     location.reload();
