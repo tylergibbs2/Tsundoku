@@ -36,6 +36,9 @@ class SubsPlease:
         """
         parsed = anitopy.parse(file_name)
 
+        if "anime_type" in parsed.keys():
+            return
+
         extra_info = parsed.get("release_information", "")
         if "batch" in extra_info.lower():
             return

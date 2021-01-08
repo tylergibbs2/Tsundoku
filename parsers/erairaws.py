@@ -34,10 +34,22 @@ class EraiRaws:
         """
         parsed = anitopy.parse(file_name)
 
+        if "anime_type" in parsed.keys():
+            return
+
+        extra_info = parsed.get("release_information", "")
+        if "batch" in extra_info.lower():
+            return
+
         try:
-            return int(parsed["episode_number"])
+            episode = parsed["episode_number"]
+        except KeyError:
+            return
+
+        try:
+            return int(episode)
         except (ValueError, TypeError):
-            return 0
+            return
 
     def ignore_logic(self, item: dict) -> bool:
         """
