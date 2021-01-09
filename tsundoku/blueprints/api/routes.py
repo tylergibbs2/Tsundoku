@@ -1,7 +1,7 @@
 import logging
 
 from quart import Blueprint
-from quart import abort, current_app as app
+from quart import current_app as app
 from quart_auth import current_user
 
 from .response import APIResponse
@@ -19,7 +19,10 @@ logger = logging.getLogger("tsundoku")
 @api_blueprint.before_request
 async def ensure_auth():
     if not await current_user.is_authenticated:
-        return abort(401, "You are not authorized to access this resource.")
+        return APIResponse(
+            status=401,
+            result="You are not authorized to access this resource."
+        )
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
