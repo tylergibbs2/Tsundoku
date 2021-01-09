@@ -1,2 +1,5 @@
 -r requirements.txt
+sphinx==3.4.3
+sphinx-rtd-theme==0.5.1
+git+https://github.com/tylergibbs2/httpdomain
 tusker==0.2.2

@@ -267,9 +267,9 @@ async def cleanup():
     await app.session.close()
 
 
-host = get_config_value("Tsundoku", "host")
-port = get_config_value("Tsundoku", "port")
-
 def run():
+    host = get_config_value("Tsundoku", "host")
+    port = get_config_value("Tsundoku", "port")
+
     auth.init_app(app)
     app.run(host=host, port=port, use_reloader=True)

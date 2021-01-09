@@ -8,6 +8,29 @@ from tsundoku.webhooks import Webhook
 
 
 class WebhooksAPI(views.MethodView):
+    def _doc_get_0(self):
+        """
+        Retrieve all show webhooks.
+
+        .. :quickref: Show Webhooks; Retrieve all show webhooks.
+
+        :status 200: found show webhooks
+
+        :returns: List[:class:`dict`]
+        """
+
+    def _doc_get_1(self):
+        """
+        Retrieve a single show webhook based on a supplied ID.
+
+        .. :quickref: Show Webhooks; Retrieve a show webhook.
+
+        :status 200: found show webhook
+        :status 404: show webhook with passed id not found
+
+        :returns: :class:`dict`
+        """
+
     async def get(self, show_id: int, wh_id: int=None) -> List[dict]:
         """
         Retrieve all webhooks or a specific webhook
@@ -32,9 +55,15 @@ class WebhooksAPI(views.MethodView):
             )
         else:
             webhook = await Webhook.from_wh_id(app, wh_id)
-            return APIResponse(
-                result=webhook.to_dict()
-            )
+            if webhook:
+                return APIResponse(
+                    result=webhook.to_dict()
+                )
+            else:
+                return APIResponse(
+                    status=404,
+                    error="Show webhook with passed ID not found."
+                )
 
     async def put(self, show_id: int, wh_id: int) -> dict:
         """
@@ -42,17 +71,18 @@ class WebhooksAPI(views.MethodView):
 
         Also for adding triggers.
 
-        Parameters
-        ----------
-        show_id: int
-            The ID of the show.
-            Not necessary for this operation.
-        wh_id: int
-            The ID of the webhook.
+        .. note::
+            Valid triggers are: downloading, downloaded, renamed, moved, completed
 
-        Returns
-        -------
-        The updated webhook.
+        .. :quickref: Show Webhooks; Update a show webhook
+
+        :status 200: show webhook updated successfully
+        :status 400: invalid parameters
+        :status 404: show webhook with passed id not found
+
+        :form string[,] triggers: A comma-separated list of webhook triggers.
+
+        :returns: :class:`dict`
         """
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
         await request.get_data()

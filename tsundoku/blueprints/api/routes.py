@@ -1,10 +1,10 @@
-import json
 import logging
 
 from quart import Blueprint
 from quart import abort, current_app as app
 from quart_auth import current_user
 
+from .response import APIResponse
 from .shows import ShowsAPI
 from .entries import EntriesAPI
 from .webhooks import WebhooksAPI
@@ -25,25 +25,27 @@ async def ensure_auth():
 @api_blueprint.route("/shows/seen", methods=["GET"])
 async def get_seen_shows():
     """
-    Returns a list of shows that the program
-    has seen while scraping RSS feeds.
+    Returns a list of distinct titles that the Tsundoku
+    poller task has seen while parsing the enabled RSS feeds.
 
-    Returns
-    -------
-    List[str]
+    .. :quickref: Shows; Retrieves seen shows.
+
+    :returns: List[:class:`str`]
     """
-    return json.dumps(list(app.seen_titles))
+    return APIResponse(
+        result=list(app.seen_titles)
+    )
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
 async def check_for_releases():
     """
-    Forces Tsundoku to check for new releases.
+    Forces Tsundoku to check all enabled RSS feeds for new
+    title releases.
 
-    Returns
-    -------
-    List[Tuple(int, int)]
-        A list of show IDs
+    .. :quickref: Shows; Checks for new releases.
+
+    :returns: List[Tuple(:class:`int`, :class:`int`)]
     """
     logger.info("API - Force New Releases Check")
 
@@ -55,24 +57,26 @@ async def check_for_releases():
         found_items += await app.poller.check_feed(feed)
         logger.info(f"{parser.name} - Checked for New Releases")
 
-    return json.dumps(found_items)
+    return APIResponse(
+        result=found_items
+    )
 
 
 @api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
 async def delete_show_cache(show_id: int):
     """
-    Force Tsundoku to delete the cache for a show.
+    Force Tsundoku to delete the metadata cache for a show.
 
-    Returns
-    -------
-    None
+    .. :quickref: Shows; Deletes show metadata.
     """
     logger.info(f"API - Deleting cache for Show {show_id}")
 
     manager = await KitsuManager.from_show_id(show_id)
     await manager.clear_cache()
 
-    return json.dumps([])
+    return APIResponse(
+        result=True
+    )
 
 
 def setup_views():

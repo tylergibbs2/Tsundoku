@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from quart import request, views
 from quart import current_app as app
@@ -8,7 +8,30 @@ from tsundoku.feeds.entry import Entry
 
 
 class EntriesAPI(views.MethodView):
-    async def get(self, show_id: int, entry_id: int=None) -> Union[dict, List[dict]]:
+    def _doc_get_0(self):
+        """
+        Retrieves all entries for a specified show.
+
+        .. :quickref: Entries; Retrieve all entries.
+
+        :status 200: entries found
+
+        :returns: List[:class:`dict`]
+        """
+
+    def _doc_get_1(self):
+        """
+        Retrieves a single entry based on its ID.
+
+        .. :quickref: Entries; Retrieve an entry.
+
+        :status 200: entry found
+        :status 404: entry with passed id not found
+
+        :returns: :class:`dict`
+        """
+
+    async def get(self, show_id: int, entry_id: Optional[int]) -> Union[dict, List[dict]]:
         """
         Retrieve all entries or a single entry
         for a specified show.
@@ -59,29 +82,23 @@ class EntriesAPI(views.MethodView):
             )
 
 
-    async def post(self, show_id: int, entry_id: int=None):
+    async def post(self, show_id: int):
         """
-        Manually begins handling of an entry for
-        a specified show. Handling involves downloading,
-        moving, and renaming.
+        Manually begins handling of an entry for a specified show.
+        Handling involves downloading, moving, and renaming.
 
-        If an empty string is passed for a magnet URL,
-        nothing will be downloaded and the entry will
-        be marked as complete.
+        If an empty string is passed for a magnet URL, nothing will
+        be downloaded and the entry will be marked as complete.
 
-        Parameters
-        ----------
-        episode: int
-            The episode to handle.
-        magnet: str
-            The magnet URL for the entry's
-            torrent.
+        .. :quickref: Entries; Add an entry.
 
-        Returns
-        -------
-        dict
-            Single key: `success`. Value is True if success,
-            False otherwise.
+        :status 200: entry added successfully
+        :status 400: invalid arguments
+
+        :form integer episode: the entry's episode
+        :form string magnet: the entry's magnet url
+
+        :returns: :class:`dict`
         """
         required_arguments = {"episode", "magnet"}
         await request.get_data()
@@ -139,11 +156,12 @@ class EntriesAPI(views.MethodView):
         """
         Deletes a single entry from a show.
 
-        Returns
-        -------
-        dict
-            Single key: `success`. Value is True if success,
-            False otherwise.
+        .. :quickref: Entries; Delete an entry.
+
+        :status 200: entry successfully deleted
+        :status 404: entry with passed id not found
+
+        :returns: :class:`bool`
         """
         async with app.db_pool.acquire() as con:
             deleted = await con.fetchvel("""

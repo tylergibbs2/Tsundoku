@@ -36,12 +36,12 @@ def get_config_value(section: str, value: str) -> Any:
     try:
         section = config[section]
     except KeyError:
-        raise KeyError("The specified section does not exist.")
+        raise KeyError(f"The specified section does not exist: {section}")
 
     try:
         value = section[value]
     except KeyError:
-        raise KeyError("The specified value does not exist.")
+        raise KeyError(f"The specified value does not exist: {value}")
 
     try:
         return json.loads(value)

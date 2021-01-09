@@ -219,6 +219,7 @@ _Pvt_Extensions
 # Python Cache Files
 *.pyc
 
+docs/_build
 \.vscode/
 .venv
 config.ini

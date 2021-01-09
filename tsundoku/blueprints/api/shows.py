@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 
 from quart import request, views
 from quart import current_app as app
@@ -12,17 +12,33 @@ logger = logging.getLogger("tsundoku")
 
 
 class ShowsAPI(views.MethodView):
-    async def get(self, show_id: int=None) -> Union[dict, List[dict]]:
+    def _doc_get_0(self):
         """
-        Can retrieve either a list of all rows in
-        the shows table, or a single row given a show
-        ID.
+        Retrieves a list of all shows stored in the database.
 
-        Returns
-        -------
-        Union[dict, List[dict]]
-            A dict or a list of dict containing
-            the requested show information.
+        .. :quickref: Shows; Retrieve all shows.
+
+        :status 200: shows found
+
+        :returns: List[:class:`dict`]
+        """
+
+    def _doc_get_1(self):
+        """
+        Retrieves a single show based on its ID.
+
+        .. :quickref: Shows; Retrieve a show.
+
+        :status 200: the show found
+        :status 404: show with passed id not found
+
+        :returns: :class:`dict`
+        """
+
+    async def get(self, show_id: Optional[int]) -> Union[dict, List[dict]]:
+        """
+        get_0: without the `show_id` argument.
+        get_1: with the `show_id` argument.
         """
         if show_id is None:
             async with app.db_pool.acquire() as con:
@@ -67,28 +83,22 @@ class ShowsAPI(views.MethodView):
             )
 
 
-    async def post(self, show_id: int=None) -> dict:
+    async def post(self) -> dict:
         """
-        Creates a show row in the shows table.
+        Adds a new show to the database.
 
-        Parameters
-        ----------
-        title: str
-            The title.
-        desired_format: str
-            The file format.
-        desired_folder: str
-            The final move location.
-        season: int
-            The season.
-        episode_offset: int
-            The episode offset.
+        .. :quickref: Shows; Add a new show.
 
-        Returns
-        -------
-        dict
-            Single key: `success`. Value is True if success,
-            False otherwise.
+        :status 200: show added successfully
+        :status 500: unexpected server error
+
+        :form string title: the new show's title
+        :form string desired_format: the new show's desired file format
+        :form string desired_folder: the new show's target folder for moving
+        :form integer season: the season to use when naming the show
+        :form integer episode_offset: the episode offset to use when renaming (default :code:`0`)
+
+        :returns: :class:`dict`
         """
         await request.get_data()
         arguments = await request.form
@@ -163,27 +173,20 @@ class ShowsAPI(views.MethodView):
 
     async def put(self, show_id: int) -> dict:
         """
-        Updates a specified show in the shows table
-        using the given parameters.
+        Updates a specified show using the given parameters.
 
-        Parameters
-        ----------
-        title: str
-            The updated title.
-        desired_format: str
-            The updated file format.
-        desired_folder: str
-            The updated final move location.
-        season: int
-            The updated season.
-        episode_offset: int
-            The updated episode offset.
+        .. :quickref: Shows; Update an existing show.
 
-        Returns
-        -------
-        dict
-            Single key: `success`. Value is True if success,
-            False otherwise.
+        :status 200: show updated successfully
+        :status 500: unexpected server error
+
+        :form string title: the new title
+        :form string desired_format: the new desired format
+        :form string desired_folder: the new desired folder
+        :form integer season: the new season
+        :form integer episode_offset: the new episode offset
+
+        :returns: :class:`dict`
         """
         await request.get_data()
         arguments = await request.form
@@ -277,16 +280,16 @@ class ShowsAPI(views.MethodView):
 
     async def delete(self, show_id: int) -> dict:
         """
-        Deletes a show with specified ID from the
-        shows table.
+        Deletes a show with the specified ID.
 
         This will delete all entries of that show as well.
 
-        Returns
-        -------
-        dict
-            Single key: `success`. Value is True if success,
-            False otherwise.
+        .. :quickref: Shows; Delete a show.
+
+        :status 200: show deleted successfully
+        :status 404: show with id not found
+
+        :returns: :class:`bool`
         """
         async with app.db_pool.acquire() as con:
             deleted = await con.fetchval("""
