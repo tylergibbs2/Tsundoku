@@ -46,6 +46,10 @@ async def check_for_releases():
     Forces Tsundoku to check all enabled RSS feeds for new
     title releases.
 
+    .. note::
+        The first int in the tuple is the show ID
+        and the second int is the ID of the new entry.
+
     .. :quickref: Shows; Checks for new releases.
 
     :returns: List[Tuple(:class:`int`, :class:`int`)]
