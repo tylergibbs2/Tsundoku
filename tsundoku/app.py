@@ -9,8 +9,6 @@ import secrets
 from argon2 import PasswordHasher
 import aiohttp
 import asyncpg
-from hypercorn.asyncio import serve
-from hypercorn.config import Config
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
 
@@ -30,9 +28,6 @@ auth = AuthManager()
 auth.user_class = User
 
 app = Quart("Tsundoku", static_folder=None)
-
-app.register_blueprint(api_blueprint)
-app.register_blueprint(ux_blueprint)
 
 app.seen_titles = set()
 logger = logging.getLogger("tsundoku")
@@ -267,9 +262,14 @@ async def cleanup():
     await app.session.close()
 
 
-def run():
+def run(with_ui: bool=True):
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
+
+    app.register_blueprint(api_blueprint)
+
+    if with_ui:
+        app.register_blueprint(ux_blueprint)
 
     auth.init_app(app)
     app.run(host=host, port=port, use_reloader=True)

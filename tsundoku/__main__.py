@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import getpass
-import time
 
 from tsundoku import app, git
 
@@ -10,6 +9,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tsundoku Command Line")
     parser.add_argument("--migrate", action="store_true")
     parser.add_argument("--create-user", action="store_true")
+    parser.add_argument("--no-ui", action="store_true")
     args = parser.parse_args()
 
     if args.migrate:
@@ -30,5 +30,7 @@ if __name__ == "__main__":
         print("Creating user...")
         loop.run_until_complete(app.insert_user(username, password))
         print("User created.")
+    elif args.no_ui:
+        app.run(with_ui=False)
     else:
         app.run()
