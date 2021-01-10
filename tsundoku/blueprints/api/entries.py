@@ -164,7 +164,7 @@ class EntriesAPI(views.MethodView):
         :returns: :class:`bool`
         """
         async with app.db_pool.acquire() as con:
-            deleted = await con.fetchvel("""
+            deleted = await con.fetchval("""
                 DELETE FROM
                     show_entry
                 WHERE id=$1
