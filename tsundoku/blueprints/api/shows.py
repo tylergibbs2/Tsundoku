@@ -83,7 +83,7 @@ class ShowsAPI(views.MethodView):
             )
 
 
-    async def post(self) -> dict:
+    async def post(self, show_id: None) -> dict:
         """
         Adds a new show to the database.
 
@@ -100,6 +100,10 @@ class ShowsAPI(views.MethodView):
 
         :returns: :class:`dict`
         """
+        # show_id here will always be None. Having it as a parameter
+        # is required due to how the defaults are handled with GET
+        # and POST methods on the routing table.
+
         await request.get_data()
         arguments = await request.form
 
