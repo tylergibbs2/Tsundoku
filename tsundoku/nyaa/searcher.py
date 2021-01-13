@@ -36,7 +36,11 @@ class NyaaSearcher:
         """
         Checks if a release is desired.
         """
-        if "batch" not in parsed.get("release_information", "").lower():
+        info = parsed.get("release_information", "")
+        if isinstance(info, list):
+            if "batch" not in [item.lower() for item in info]:
+                return False
+        elif "batch" not in info.lower():
             return False
         elif parsed.get("video_resolution") and parsed["video_resolution"] != "1080p":
             return False
