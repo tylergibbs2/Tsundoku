@@ -37,10 +37,8 @@ class NyaaSearcher:
         Checks if a release is desired.
         """
         info = parsed.get("release_information", "")
-        if isinstance(info, list):
-            if "batch" not in [item.lower() for item in info]:
-                return False
-        elif "batch" not in info.lower():
+        info_list = info if isinstance(info, list) else [info]
+        if "batch" not in [item.lower() for item in info_list]:
             return False
         elif parsed.get("video_resolution") and parsed["video_resolution"] != "1080p":
             return False
@@ -58,7 +56,11 @@ class NyaaSearcher:
         files = await self._app.dl_client.get_file_structure(link)
         episodes = []
         for file in files:
-            parsed = anitopy.parse(file)
+            try:
+                parsed = anitopy.parse(file)
+            except Exception as e:
+                logger.warn(f"anitopy - Could not Parse '{file}', skipping")
+                continue
 
             if "anime_type" in parsed.keys():
                 continue
@@ -95,7 +97,12 @@ class NyaaSearcher:
         feed = await self._loop.run_in_executor(None, feedparser.parse, self.url)
         found = None
         for item in feed["entries"]:
-            parsed = anitopy.parse(item["title"])
+            try:
+                parsed = anitopy.parse(item["title"])
+            except Exception as e:
+                logger.warn(f"anitopy - Could not Parse '{item['title']}', skipping")
+                continue
+
             if not self.check_release(parsed):
                 continue
 

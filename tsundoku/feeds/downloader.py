@@ -249,7 +249,12 @@ class Downloader:
 
         path.resolve()
         for subpath in path.rglob("*"):
-            parsed = anitopy.parse(subpath.name)
+            try:
+                parsed = anitopy.parse(subpath.name)
+            except Exception as e:
+                logger.warn(f"anitopy - Could not Parse '{subpath.name}', skipping")
+                continue
+
             try:
                 found = int(parsed["episode_number"])
             except (KeyError, ValueError, TypeError):
