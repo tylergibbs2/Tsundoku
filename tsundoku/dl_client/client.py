@@ -3,7 +3,7 @@ import hashlib
 import logging
 from pathlib import Path
 import re
-from typing import Optional
+from typing import Optional, List
 
 import aiohttp
 import bencodepy
@@ -83,6 +83,35 @@ class Manager:
             + f"xt=urn:btih:{digest}"\
             + f"&dn={metadata[b'info'][b'name'].decode()}"\
             + f"&tr={metadata[b'announce'].decode()}"
+
+
+    async def get_file_structure(self, location: str) -> List[str]:
+        """
+        Given a URL to a .torrent file, it will then return a list
+        of the file names inside.
+
+        Parameters
+        ----------
+        location: str
+            A URL to a .torrent file.
+
+        Returns
+        -------
+        List[str]
+            List of file names.
+        """
+        async with self.session.get(location) as resp:
+            torrent_bytes = await resp.read()
+            metadata = bencodepy.decode(torrent_bytes)
+
+        file_names = []
+        for item in metadata[b"info"][b"files"]:
+            try:
+                file_names.append(item[b"path"][0].decode("utf-8"))
+            except IndexError:
+                pass
+
+        return file_names
 
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:

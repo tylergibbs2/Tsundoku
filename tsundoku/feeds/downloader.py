@@ -6,7 +6,7 @@ import re
 import shutil
 from typing import Optional
 
-from asyncpg import Record
+import anitopy
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry
@@ -225,6 +225,38 @@ class Downloader:
         else:
             return new_path
 
+    def resolve_file(self, path: Path, episode: int) -> Optional[Path]:
+        """
+        Searches a directory tree for a specific episode
+        file.
+
+        If the passed path is a file, return it.
+
+        Parameters
+        ----------
+        path: Path
+            The directory.
+        episode: int
+            The episode to search for.
+
+        Returns
+        -------
+        Optional[Path]
+            The found Path. It is a file.
+        """
+        if path.is_file():
+            return path
+
+        path.resolve()
+        for subpath in path.rglob("*"):
+            parsed = anitopy.parse(subpath.name)
+            try:
+                found = int(parsed["episode_number"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if found == episode:
+                return subpath
+
     async def check_show_entry(self, entry: Entry) -> None:
         """
         Checks a specific show entry for download completion.
@@ -250,7 +282,11 @@ class Downloader:
         else:
             path = entry.file_path
 
-        if path is None or not path.is_file():
+        if path is None:
+            return
+
+        path = self.resolve_file(path, entry.episode)
+        if path is None:
             return
 
         logger.info(f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")

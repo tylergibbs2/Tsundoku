@@ -1,13 +1,14 @@
 import asyncio
 from dataclasses import dataclass
 import logging
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import feedparser
 from fuzzywuzzy import process
 from quart.ctx import AppContext
 
 from tsundoku.config import get_config_value
+from tsundoku.nyaa import NyaaSearcher
 
 
 logger = logging.getLogger("tsundoku")
@@ -51,6 +52,7 @@ class Poller:
         self.loop = asyncio.get_running_loop()
 
         self.current_parser = None  # keeps track of the current RSS feed parser.
+        self.nyaa = NyaaSearcher(self.app)
 
         interval = get_config_value("Tsundoku", "polling_interval")
         try:
@@ -62,12 +64,6 @@ class Poller:
 
     async def start(self) -> None:
         """
-        Iterates through every installed RSS parser
-        and will check for new items to download.
-
-        The order of the parsers used is determined
-        by how they are listed in the configuration.
-
         The program will poll every n seconds, as specified
         in the configuration file.
         """
@@ -76,29 +72,74 @@ class Poller:
             return
 
         while True:
-            logger.info("Checking for New Releases...")
-
-            self.app.seen_titles = set()
-
-            for parser in self.app.rss_parsers:
-                self.current_parser = parser
-                feed = await self.get_feed_from_parser()
-
-                logger.info(f"{parser.name} - Checking for New Releases...")
-                await self.check_feed(feed)
-                logger.info(f"{parser.name} - Checked for New Releases")
-
-            self.current_parser = None
-            logger.info("Checked for New Releases")
+            await self.poll()
 
             await asyncio.sleep(self.interval)
 
 
-    async def check_feed(self, feed: dict) -> None:
+    async def poll(self) -> List[Tuple[int, int]]:
+        """
+        Iterates through every installed RSS parser
+        and will check for new items to download.
+
+        The order of the parsers used is determined
+        by how they are listed in the configuration.
+
+        Returns a list of releases found in the format
+        (show_id, episode).
+        """
+        logger.info("Checking for New Releases...")
+
+        self.app.seen_titles = set()
+
+        found = []
+
+        for parser in self.app.rss_parsers:
+            self.current_parser = parser
+            feed = await self.get_feed_from_parser()
+
+            logger.info(f"{parser.name} - Checking for New Releases...")
+            found += await self.check_feed(feed)
+            logger.info(f"{parser.name} - Checked for New Releases")
+
+        self.current_parser = None
+
+        logger.info("Searching nyaa.si for New Releases")
+        found += await self.check_nyaa()
+        logger.info("Searched nyaa.si for New Releases")
+
+        logger.info("Checked for New Releases")
+
+        return found
+
+
+    async def check_nyaa(self) -> List[Tuple[int, int]]:
+        """
+        Automatically searches nyaa.si for desired shows
+        and will return a list of tuples in the format of
+        (show_id, episode).
+        """
+        async with self.app.db_pool.acquire() as con:
+            desired_shows = await con.fetch("""
+                SELECT
+                    id
+                FROM
+                    shows;
+            """)
+
+        found = []
+        for show in desired_shows:
+            found += await self.nyaa.search(show["id"])
+
+        return found
+
+
+    async def check_feed(self, feed: dict) -> List[Tuple[int, int]]:
         """
         Iterates through the list of items in an
         RSS feed and will individually check each
-        item.
+        item. Returns a list of tuples in the format
+        (show_id, episode).
 
         Parameters
         ----------
@@ -188,7 +229,7 @@ class Poller:
         )
 
 
-    async def check_item(self, item: dict) -> None:
+    async def check_item(self, item: dict) -> Optional[Tuple[int, int]]:
         """
         Checks an item to see if it is from a
         desired show entry, and will then begin

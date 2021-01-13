@@ -56,13 +56,7 @@ async def check_for_releases():
     """
     logger.info("API - Force New Releases Check")
 
-    found_items = []
-    for parser in app.rss_parsers:
-        feed = await app.poller.get_feed_from_parser(parser)
-
-        logger.info(f"{parser.name} - Checking for New Releases...")
-        found_items += await app.poller.check_feed(feed)
-        logger.info(f"{parser.name} - Checked for New Releases")
+    found_items = await app.poller.poll()
 
     return APIResponse(
         result=found_items
