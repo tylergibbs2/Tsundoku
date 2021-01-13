@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import quart
 
@@ -25,7 +25,7 @@ class WebhookBase:
     url: str
     content_fmt: str
 
-    valid: bool
+    valid: Optional[bool]
 
     def to_dict(self) -> dict:
         """
@@ -122,7 +122,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: quart.Quart, base_id: int) -> Optional[WebhookBase]:
+    async def from_id(cls, app: quart.Quart, base_id: int, with_validity: bool=True) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -132,6 +132,8 @@ class WebhookBase:
             The app.
         base_id: int
             The WebhookBase's ID.
+        with_validity: bool
+            Whether or not to grab the WebhookBase valid state.
 
         Returns
         -------
@@ -173,7 +175,11 @@ class WebhookBase:
         instance.service = base["base_service"]
         instance.url = base["base_url"]
         instance.content_fmt = base["content_fmt"]
-        instance.valid = await instance.is_valid()
+
+        if with_validity:
+            instance.valid = await instance.is_valid()
+        else:
+            instance.valid = None
 
         return instance
 
@@ -376,7 +382,7 @@ class Webhook:
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_id(app, wh["base"])
+            base = await WebhookBase.from_id(app, wh["base"], with_validity=False)
             if not base:
                 continue
 
