@@ -5,6 +5,7 @@ from urllib.parse import quote_plus
 
 import anitopy
 import feedparser
+from fuzzywuzzy import fuzz
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry
@@ -32,15 +33,29 @@ class NyaaSearcher:
         """
         self.url = self._base_url + quote_plus(query)
 
-    def check_release(self, parsed: dict) -> bool:
+    def check_release(self, parsed: dict, title: str) -> bool:
         """
         Checks if a release is desired.
+
+        Parameters
+        ----------
+        parsed: dict
+            The anitopy parsed release info.
+        title: str
+            The title of the desired show.
+
+        Returns
+        -------
+        bool:
+            Is desired.
         """
         info = parsed.get("release_information", "")
         info_list = info if isinstance(info, list) else [info]
         if "batch" not in [item.lower() for item in info_list]:
             return False
         elif parsed.get("video_resolution") and parsed["video_resolution"] != "1080p":
+            return False
+        elif fuzz.ratio(parsed["anime_title"], title) < 95:
             return False
 
         return True
@@ -50,6 +65,11 @@ class NyaaSearcher:
         """
         Returns a list of episodes that are contained
         within the torrent.
+
+        Parameters
+        ----------
+        link: str
+            Link to a .torrent file.
 
         The return tuple is (episode, file_name)
         """
@@ -103,7 +123,7 @@ class NyaaSearcher:
                 logger.warn(f"anitopy - Could not Parse '{item['title']}', skipping")
                 continue
 
-            if not self.check_release(parsed):
+            if not self.check_release(parsed, title):
                 continue
 
             found = item
@@ -142,7 +162,7 @@ class NyaaSearcher:
                     show_entry
                     (show_id, episode, torrent_hash)
                 VALUES
-                    ($1, $2, $3, $4)
+                    ($1, $2, $3)
                 RETURNING id, show_id, episode, current_state, torrent_hash;
                 """, show_id, episode, torrent_hash)
 
