@@ -227,6 +227,8 @@ def _load_parsers():
             logger.error(f"Parser '{parser}' Failed: {e}")
             raise exceptions.ParserFailed(parser, e) from e
 
+        logger.info("Loaded Parser {0.name} v{0.version}".format(parser_object))
+
 
 @app.before_serving
 async def load_parsers():
