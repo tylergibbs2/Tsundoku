@@ -163,7 +163,7 @@ class NyaaSearcher:
                     (show_id, episode, torrent_hash)
                 VALUES
                     ($1, $2, $3)
-                RETURNING id, show_id, episode, current_state, torrent_hash;
+                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
                 """, show_id, episode, torrent_hash)
 
             entry = Entry(self._app, entry)
