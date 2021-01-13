@@ -11,6 +11,7 @@ class EraiRaws:
         """
         self.name = "Erai-raws"
         self.url = "https://nyaa.si/?page=rss&u=Erai-raws"
+        self.version = "1.0.0"
 
         self.app = app
 

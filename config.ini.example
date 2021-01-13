@@ -2,8 +2,8 @@
 host = localhost
 port = 6439
 parsers = [
-    "subsplease",
-    "erairaws"
+    "parsers.subsplease",
+    "parsers.erairaws"
     ]
 polling_interval = 900
 do_update_checks = true

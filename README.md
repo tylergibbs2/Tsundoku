@@ -108,8 +108,8 @@ And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like 
 host = localhost         # IP that Tsundoku will be hosted at
 port = 6439              # Port to use for hosting
 parsers = [              # List of parsers in "parsers/"
-    "horriblesubs",
-    "subsplease"
+    "parsers.subsplease",
+    "parsers.erairaws"
     ]
 polling_interval = 900   # How often, in seconds, Tsundoku should check parsers
 do_update_checks = true  # Will always be false regardless of setting if in Docker

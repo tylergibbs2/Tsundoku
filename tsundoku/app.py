@@ -180,21 +180,23 @@ async def setup_db():
         logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
-@app.before_serving
-async def load_parsers():
+def _load_parsers():
     """
     Load all of the custom RSS parsers into the app.
     """
-    parsers = [f"parsers.{p}" for p in get_config_value("Tsundoku", "parsers")]
     app.rss_parsers = []
 
-    required_functions = [
+    required_attrs = (
+        "name",
+        "url",
+        "version",
         "get_show_name",
         "get_episode_number"
-    ]
+    )
 
-    for parser in parsers:
+    for parser in get_config_value("Tsundoku", "parsers"):
         spec = importlib.util.find_spec(parser)
+
         if spec is None:
             logger.error(f"Parser '{parser}' Not Found")
             raise exceptions.ParserNotFound(parser)
@@ -216,14 +218,22 @@ async def load_parsers():
         try:
             new_context = app.app_context()
             parser_object = setup(new_context.app)
-            for func in required_functions:
+            for func in required_attrs:
                 if not hasattr(parser_object, func):
-                    logger.error(f"Parser '{parser}' Missing {func}")
-                    raise exceptions.ParserMissingRequiredFunction(f"{parser}: missing {func}")
+                    logger.error(f"Parser '{parser}' missing attr/function '{func}'")
+                    raise exceptions.ParserMissingRequiredFunction(f"{parser}: missing attr/function '{func}'")
             app.rss_parsers.append(parser_object)
         except Exception as e:
             logger.error(f"Parser '{parser}' Failed: {e}")
             raise exceptions.ParserFailed(parser, e) from e
+
+
+@app.before_serving
+async def load_parsers():
+    """
+    Load all of the custom RSS parsers into the app.
+    """
+    _load_parsers()
 
 
 @app.before_serving

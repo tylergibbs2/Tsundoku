@@ -1,5 +1,3 @@
-import re
-
 import anitopy
 
 
@@ -11,6 +9,7 @@ class SubsPlease:
         """
         self.name = "SubsPlease"
         self.url = "https://subsplease.org/rss/?t&r=1080"
+        self.version = "1.0.0"
 
         self.app = app
 
