@@ -104,9 +104,9 @@ class Poller:
 
         self.current_parser = None
 
-        logger.info("Searching nyaa.si for New Releases")
-        found += await self.check_nyaa()
-        logger.info("Searched nyaa.si for New Releases")
+        # logger.info("Searching nyaa.si for New Releases")
+        # found += await self.check_nyaa()
+        # logger.info("Searched nyaa.si for New Releases")
 
         logger.info("Checked for New Releases")
 
