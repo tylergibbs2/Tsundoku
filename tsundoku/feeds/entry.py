@@ -1,12 +1,13 @@
 from pathlib import Path
 
 from asyncpg import Record
+from quart.ctx import AppContext
 
 from tsundoku.webhooks import Webhook
 
 
 class Entry:
-    def __init__(self, app, record: Record):
+    def __init__(self, app: AppContext, record: Record):
         self.id = record["id"]
         self.show_id = record["show_id"]
         self.episode = record["episode"]
