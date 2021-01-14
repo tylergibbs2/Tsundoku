@@ -104,32 +104,7 @@ class Poller:
 
         self.current_parser = None
 
-        # logger.info("Searching nyaa.si for New Releases")
-        # found += await self.check_nyaa()
-        # logger.info("Searched nyaa.si for New Releases")
-
         logger.info("Checked for New Releases")
-
-        return found
-
-
-    async def check_nyaa(self) -> List[Tuple[int, int]]:
-        """
-        Automatically searches nyaa.si for desired shows
-        and will return a list of tuples in the format of
-        (show_id, episode).
-        """
-        async with self.app.db_pool.acquire() as con:
-            desired_shows = await con.fetch("""
-                SELECT
-                    id
-                FROM
-                    shows;
-            """)
-
-        found = []
-        for show in desired_shows:
-            found += await self.nyaa.search(show["id"])
 
         return found
 

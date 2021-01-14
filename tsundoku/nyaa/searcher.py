@@ -1,17 +1,124 @@
 import asyncio
+import datetime
 import logging
-from typing import List, Tuple
+from typing import List
 from urllib.parse import quote_plus
 
 import anitopy
 import feedparser
-from fuzzywuzzy import fuzz
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry
 
 
 logger = logging.getLogger("tsundoku")
+
+
+class SearchResult:
+    show_id: int
+
+    title: str
+
+    published: datetime.datetime
+    torrent_link: str
+    post_link: str
+    size: str
+
+    seeders: int
+    leechers: int
+
+    def __init__(self, app: AppContext, feed_item: dict):
+        self._app = app
+
+        self.title = feed_item.pop("title")
+
+        unparsed_date = feed_item.pop("published")
+
+        self.published = datetime.datetime.strptime(unparsed_date, "%a, %d %b %Y %H:%M:%S %z")
+        self.torrent_link = feed_item.pop("link")
+        self.post_link = feed_item.pop("id")
+        self.size = feed_item.pop("nyaa_size")
+
+        self.seeders = int(feed_item.pop("nyaa_seeders"))
+        self.leechers = int(feed_item.pop("nyaa_leechers"))
+
+        self.show_id = None
+
+    async def get_episodes(self) -> List[int]:
+        """
+        Returns a list of episodes that are contained
+        within the torrent.
+        """
+        files = await self._app.dl_client.get_file_structure(self.torrent_link)
+        episodes = []
+        for file in files:
+            try:
+                parsed = anitopy.parse(file)
+            except Exception as e:
+                logger.warn(f"anitopy - Could not Parse '{file}', skipping")
+                continue
+
+            if "anime_type" in parsed.keys():
+                continue
+
+            try:
+                episodes.append(int(parsed["episode_number"]))
+            except (KeyError, ValueError, TypeError):
+                pass
+
+        return episodes
+
+    async def process(self) -> List[Entry]:
+        """
+        Processes a search result for downloading.
+
+        Returns
+        -------
+        List[Entry]:
+            Returns a list of added entries.
+        """
+        added = []
+
+        if self.show_id is None:
+            logger.error("nyaa - Unable to process result without show_id set.")
+            return added
+
+        magnet = await self._app.dl_client.get_magnet(self.torrent_link)
+        torrent_hash = await self._app.dl_client.add_torrent(magnet)
+
+        if torrent_hash is None:
+            logger.warn(f"Failed to add Magnet URL {magnet} to download client")
+            return added
+
+        for episode in await self.get_episodes():
+            async with self._app.db_pool.acquire() as con:
+                exists = await con.fetchval("""
+                    SELECT
+                        episode
+                    FROM
+                        show_entry
+                    WHERE
+                        show_id=$1
+                    AND
+                        episode=$2;
+                """, self.show_id, episode)
+                if exists:
+                    continue
+
+                entry = await con.fetchrow("""
+                INSERT INTO
+                    show_entry
+                    (show_id, episode, torrent_hash)
+                VALUES
+                    ($1, $2, $3)
+                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
+                """, self.show_id, episode, torrent_hash)
+
+            entry = Entry(self._app, entry)
+            await entry.set_state("downloading")
+            added.append(Entry)
+
+        return added
 
 
 class NyaaSearcher:
@@ -33,89 +140,20 @@ class NyaaSearcher:
         """
         self.url = self._base_url + quote_plus(query)
 
-    def check_release(self, parsed: dict, title: str) -> bool:
-        """
-        Checks if a release is desired.
 
-        Parameters
-        ----------
-        parsed: dict
-            The anitopy parsed release info.
-        title: str
-            The title of the desired show.
-
-        Returns
-        -------
-        bool:
-            Is desired.
-        """
-        info = parsed.get("release_information", "")
-        info_list = info if isinstance(info, list) else [info]
-        if "batch" not in [item.lower() for item in info_list]:
-            return False
-        elif parsed.get("video_resolution") and parsed["video_resolution"] != "1080p":
-            return False
-        elif fuzz.ratio(parsed["anime_title"], title) < 95:
-            return False
-
-        return True
-
-
-    async def get_episodes(self, link: str) -> List[int]:
-        """
-        Returns a list of episodes that are contained
-        within the torrent.
-
-        Parameters
-        ----------
-        link: str
-            Link to a .torrent file.
-
-        The return tuple is (episode, file_name)
-        """
-        files = await self._app.dl_client.get_file_structure(link)
-        episodes = []
-        for file in files:
-            try:
-                parsed = anitopy.parse(file)
-            except Exception as e:
-                logger.warn(f"anitopy - Could not Parse '{file}', skipping")
-                continue
-
-            if "anime_type" in parsed.keys():
-                continue
-
-            try:
-                episodes.append(int(parsed["episode_number"]))
-            except (KeyError, ValueError, TypeError):
-                pass
-
-        return episodes
-
-
-    async def search(self, show_id: int) -> List[Tuple[int, int]]:
+    async def search(self, query: str) -> List[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
         Parameters
         ----------
-        show_id: int
-            The show to search for.
+        query: str
+            The search query.
         """
-        async with self._app.db_pool.acquire() as con:
-            title = await con.fetchval("""
-                SELECT
-                    title
-                FROM
-                    shows
-                WHERE
-                id=$1;
-            """, show_id)
-
-        self._set_query(title)
+        self._set_query(query)
 
         feed = await self._loop.run_in_executor(None, feedparser.parse, self.url)
-        found = None
+        found = []
         for item in feed["entries"]:
             try:
                 parsed = anitopy.parse(item["title"])
@@ -123,51 +161,6 @@ class NyaaSearcher:
                 logger.warn(f"anitopy - Could not Parse '{item['title']}', skipping")
                 continue
 
-            if not self.check_release(parsed, title):
-                continue
+            found.append(SearchResult(self._app, item))
 
-            found = item
-            found["episodes"] = await self.get_episodes(item["link"])
-            break
-
-        if not found or not found["episodes"]:
-            return []
-
-        magnet = await self._app.dl_client.get_magnet(found["link"])
-        torrent_hash = await self._app.dl_client.add_torrent(magnet)
-
-        added = []
-
-        if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet} to download client")
-            return added
-
-        for episode in found["episodes"]:
-            async with self._app.db_pool.acquire() as con:
-                exists = await con.fetchval("""
-                    SELECT
-                        episode
-                    FROM
-                        show_entry
-                    WHERE
-                        show_id=$1
-                    AND
-                        episode=$2;
-                """, show_id, episode)
-                if exists:
-                    continue
-
-                entry = await con.fetchrow("""
-                INSERT INTO
-                    show_entry
-                    (show_id, episode, torrent_hash)
-                VALUES
-                    ($1, $2, $3)
-                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
-                """, show_id, episode, torrent_hash)
-
-            entry = Entry(self._app, entry)
-            await entry.set_state("downloading")
-            added.append((show_id, entry.episode))
-
-        return added
+        return found
