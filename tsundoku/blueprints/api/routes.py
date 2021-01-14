@@ -1,12 +1,14 @@
 import logging
+from tsundoku.blueprints.api.nyaa import NyaaAPI
 
 from quart import Blueprint
 from quart import current_app as app
 from quart_auth import current_user
 
+from .entries import EntriesAPI
+from .nyaa import NyaaAPI
 from .response import APIResponse
 from .shows import ShowsAPI
-from .entries import EntriesAPI
 from .webhooks import WebhooksAPI
 from .webhookbase import WebhookBaseAPI
 from tsundoku.kitsu import KitsuManager
@@ -141,6 +143,15 @@ def setup_views():
         "/webhooks/<int:base_id>",
         view_func=webhookbase_view,
         methods=["GET", "PUT", "DELETE"]
+    )
+
+    # Setup NyaaAPI URL rules.
+    nyaa_view = NyaaAPI.as_view("nyaa_api")
+
+    api_blueprint.add_url_rule(
+        "/nyaa",
+        view_func=nyaa_view,
+        methods=["GET", "POST"]
     )
 
 setup_views()

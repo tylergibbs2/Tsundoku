@@ -1,1 +1,1 @@
-from .searcher import NyaaSearcher
+from .searcher import NyaaSearcher, SearchResult

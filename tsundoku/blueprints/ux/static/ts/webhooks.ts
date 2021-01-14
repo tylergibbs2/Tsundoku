@@ -1,3 +1,19 @@
+interface WebhookBase {
+    name: string;
+    base_id: number;
+    service: string;
+    url: string;
+    content_fmt: string;
+    valid: boolean;
+}
+
+interface Webhook {
+    wh_id: number;
+    show_id: number;
+    triggers: string[];
+    base: WebhookBase;
+}
+
 function submitAddWebhookForm(event: Event) {
     event.preventDefault();
     let url: string = $(this).closest("form").attr("action");

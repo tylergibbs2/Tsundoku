@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import datetime
 import logging
@@ -27,27 +28,90 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: AppContext, feed_item: dict):
+    def __init__(self, app: AppContext):
         self._app = app
 
-        self.title = feed_item.pop("title")
 
-        unparsed_date = feed_item.pop("published")
+    @classmethod
+    def from_dict(cls, app: AppContext, _from: dict) -> SearchResult:
+        """
+        Returns a valid SearchResult object from a data dict.
 
-        self.published = datetime.datetime.strptime(unparsed_date, "%a, %d %b %Y %H:%M:%S %z")
-        self.torrent_link = feed_item.pop("link")
-        self.post_link = feed_item.pop("id")
-        self.size = feed_item.pop("nyaa_size")
+        Parameters
+        ----------
+        app: AppContext
+            The Quart app.
+        from: dict
+            The data dict.
 
-        self.seeders = int(feed_item.pop("nyaa_seeders"))
-        self.leechers = int(feed_item.pop("nyaa_leechers"))
+        Returns
+        -------
+        SearchResult:
+            Result.
+        """
+        instance = cls(app)
 
-        self.show_id = None
+        instance.title = _from.pop("title")
+
+        unparsed_date = _from.pop("published")
+
+        instance.published = datetime.datetime.strptime(unparsed_date, "%a, %d %b %Y %H:%M:%S %z")
+        instance.torrent_link = _from.pop("link")
+        instance.post_link = _from.pop("id")
+        instance.size = _from.pop("nyaa_size")
+
+        instance.seeders = int(_from.pop("nyaa_seeders"))
+        instance.leechers = int(_from.pop("nyaa_leechers"))
+
+        instance.show_id = None
+
+        return instance
+
+
+    @classmethod
+    def from_necessary(cls, app: AppContext, show_id: int, torrent_link: str) -> SearchResult:
+        """
+        Returns a SearchResult object that is capable of
+        running the `process` method, and has no other attributes.
+
+        Parameters
+        ----------
+        app: AppContext
+            The Quart app.
+        show_id: int
+            The ID of the show to be added to.
+        torrent_link: str
+            The link to the .torrent file.
+
+        Returns
+        -------
+        SearchResult:
+            Result for processing.
+        """
+
+
+    def to_dict(self) -> dict:
+        return {
+            "show_id": self.show_id,
+            "title": self.title,
+            "published": self.published.strftime("%d %b %Y"),
+            "torrent_link": self.torrent_link,
+            "post_link": self.post_link,
+            "size": self.size,
+            "seeders": self.seeders,
+            "leechers": self.leechers
+        }
+
 
     async def get_episodes(self) -> List[int]:
         """
         Returns a list of episodes that are contained
         within the torrent.
+
+        Returns
+        -------
+        List[int]:
+            List of episodes.
         """
         files = await self._app.dl_client.get_file_structure(self.torrent_link)
         episodes = []
@@ -70,7 +134,7 @@ class SearchResult:
 
     async def process(self) -> List[Entry]:
         """
-        Processes a search result for downloading.
+        Processes a SearchResult for downloading.
 
         Returns
         -------
@@ -80,7 +144,7 @@ class SearchResult:
         added = []
 
         if self.show_id is None:
-            logger.error("nyaa - Unable to process result without show_id set.")
+            logger.error("Nyaa - Unable to process result without `show_id` set.")
             return added
 
         magnet = await self._app.dl_client.get_magnet(self.torrent_link)
@@ -122,14 +186,8 @@ class SearchResult:
 
 
 class NyaaSearcher:
-    def __init__(self, app: AppContext):
-        self._base_url = "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q="
-        self.url = self._base_url
-
-        self._app = app
-        self._loop = asyncio.get_running_loop()
-
-    def _set_query(self, query: str) -> None:
+    @staticmethod
+    def _get_query_url(query: str) -> None:
         """
         Sets the query for searching nyaa.si.
 
@@ -138,10 +196,10 @@ class NyaaSearcher:
         query: str
             The search query.
         """
-        self.url = self._base_url + quote_plus(query)
+        return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
 
-
-    async def search(self, query: str) -> List[SearchResult]:
+    @staticmethod
+    async def search(app: AppContext, query: str) -> List[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
@@ -150,17 +208,18 @@ class NyaaSearcher:
         query: str
             The search query.
         """
-        self._set_query(query)
+        url = NyaaSearcher._get_query_url(query)
+        loop = asyncio.get_running_loop()
 
-        feed = await self._loop.run_in_executor(None, feedparser.parse, self.url)
+        feed = await loop.run_in_executor(None, feedparser.parse, url)
         found = []
         for item in feed["entries"]:
             try:
-                parsed = anitopy.parse(item["title"])
+                anitopy.parse(item["title"])
             except Exception as e:
-                logger.warn(f"anitopy - Could not Parse '{item['title']}', skipping")
+                logger.warn(f"Anitopy - Could not Parse '{item['title']}', skipping")
                 continue
 
-            found.append(SearchResult(self._app, item))
+            found.append(SearchResult.from_dict(app, item))
 
         return found

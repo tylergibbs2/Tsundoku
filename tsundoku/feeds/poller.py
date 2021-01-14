@@ -8,7 +8,6 @@ from fuzzywuzzy import process
 from quart.ctx import AppContext
 
 from tsundoku.config import get_config_value
-from tsundoku.nyaa import NyaaSearcher
 
 
 logger = logging.getLogger("tsundoku")
@@ -52,7 +51,6 @@ class Poller:
         self.loop = asyncio.get_running_loop()
 
         self.current_parser = None  # keeps track of the current RSS feed parser.
-        self.nyaa = NyaaSearcher(self.app)
 
         interval = get_config_value("Tsundoku", "polling_interval")
         try:

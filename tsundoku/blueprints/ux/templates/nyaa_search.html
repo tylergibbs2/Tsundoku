@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block extralib %}
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.css">
+<link rel="stylesheet" href="{{ url_for('ux.static', filename='css/nyaa_search.css') }}">
+
+<!-- JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.4/awesomplete.min.js"></script>
+<script src="https://kit.fontawesome.com/3934b533e3.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('ux.static', filename='js/nyaa_search.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+{% include "modals/nyaa_search/upsert.html" %}
+
+{% include "messages.html" %}
+
+<section class="section">
+    <div class="columns is-vcentered">
+        <div class="column is-4">
+            <div class="container">
+                <h1 class="title">Nyaa Search</h1>
+                <h2 class="subtitle">Search for anime releases</h2>
+            </div>
+        </div>
+        <div class="column is-4 is-offset-4">
+            <div id="search-box-div" class="control has-icons-left">
+                <input class="input" type="text" placeholder="Attack on Titan">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="search-container" class="container">
+        <div id="space-holder" class="container has-text-centered my-6">
+            <h3 class="title is-3">Nothing to see here!</h3>
+            <h4 class="subtitle is-5">Start searching to see some results.</h4>
+        </div>
+        <div id="search-result-table" class="container is-hidden">
+            <table class="table is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Date</th>
+                        <th title="Seeders"><span class="icon"><i class="fas fa-arrow-up"></i></span></th>
+                        <th title="Leechers"><span class="icon"><i class="fas fa-arrow-down"></i></span></th>
+                        <th title="Link to Post"><span class="icon"><i class="fas fa-link"></i></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}

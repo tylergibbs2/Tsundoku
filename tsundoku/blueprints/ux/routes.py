@@ -123,6 +123,27 @@ async def index():
     return await render_template("index.html", **ctx)
 
 
+@ux_blueprint.route("/nyaa", methods=["GET"])
+@login_required
+async def nyaa_search():
+    ctx = {}
+
+    async with app.db_pool.acquire() as con:
+        shows = await con.fetch("""
+            SELECT
+                id,
+                title
+            FROM
+                shows
+            ORDER BY title;
+        """)
+        ctx["shows"] = [dict(s) for s in shows]
+
+    ctx["seen_titles"] = list(app.seen_titles)
+
+    return await render_template("nyaa_search.html", **ctx)
+
+
 @ux_blueprint.route("/webhooks", methods=["GET"])
 @login_required
 async def webhooks():
