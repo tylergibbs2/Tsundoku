@@ -73,6 +73,9 @@ dictConfig({
 })
 
 
+app.register_blueprint(api_blueprint)
+
+
 async def insert_user(username: str, password: str):
     host = get_config_value("PostgreSQL", "host")
     port = get_config_value("PostgreSQL", "port")
@@ -277,8 +280,6 @@ async def cleanup():
 def run(with_ui: bool=True):
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
-
-    app.register_blueprint(api_blueprint)
 
     if with_ui:
         app.register_blueprint(ux_blueprint)
