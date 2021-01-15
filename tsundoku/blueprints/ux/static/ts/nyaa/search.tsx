@@ -1,40 +1,16 @@
-import { Fragment, hydrate } from "preact";
+import { Fragment } from "preact";
 import { useState, StateUpdater } from "preact/hooks";
 
-import { NyaaSearchResult, NyaaIndividualResult } from "./interfaces";
+import { NyaaSearchResult, NyaaIndividualResult } from "../interfaces";
+
 
 const NyaaSearchURL = "/api/v1/nyaa";
-
-
-const NyaaSearchApp = () => {
-    const [results, setResults] = useState<NyaaIndividualResult[]>([]);
-
-    return (
-        <div>
-            <div class="columns is-vcentered">
-                <div class="column is-4">
-                    <div class="container">
-                        <h1 class="title">Nyaa Search</h1>
-                        <h2 class="subtitle">Search for anime releases</h2>
-                    </div>
-                </div>
-                <div class="column is-4 is-offset-4">
-                    <SearchBox setResults={setResults} />
-                </div>
-            </div>
-
-            <div class="container">
-                {results.length ? <SearchTable results={results} /> : <SpaceHolder />}
-            </div>
-        </div>
-    )
-}
 
 interface SearchBoxParams {
     setResults: StateUpdater<NyaaIndividualResult[]>;
 }
 
-const SearchBox = ({setResults}: SearchBoxParams) => {
+export const SearchBox = ({setResults}: SearchBoxParams) => {
     const [isSearching, setSearchingState] = useState<boolean>(false);
 
     const waitInterval: number = 2250;
@@ -72,7 +48,7 @@ const SearchBox = ({setResults}: SearchBoxParams) => {
     )
 }
 
-const SpaceHolder = () => {
+export const SpaceHolder = () => {
     return (
         <div class="container has-text-centered my-6">
             <h3 class="title is-3">Nothing to see here!</h3>
@@ -85,7 +61,7 @@ interface SearchTableParams {
     results: NyaaIndividualResult[];
 }
 
-const SearchTable = ({results}: SearchTableParams) => {
+export const SearchTable = ({results}: SearchTableParams) => {
     return (
         <div class="container">
             <table class="table is-hoverable is-fullwidth">
@@ -119,5 +95,3 @@ const SearchTable = ({results}: SearchTableParams) => {
         </div>
     )
 }
-
-hydrate(<NyaaSearchApp />, document.getElementById("nyaa-main"));

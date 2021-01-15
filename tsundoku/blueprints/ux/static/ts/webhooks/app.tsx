@@ -1,5 +1,5 @@
-import {} from "./patch";
-import { WebhookBase } from "./interfaces";
+import {} from "../patch";
+import { WebhookBase } from "../interfaces";
 
 function submitAddWebhookForm(event: Event) {
     event.preventDefault();

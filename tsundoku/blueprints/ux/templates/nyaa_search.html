@@ -11,12 +11,10 @@
 {% endblock %}
 
 {% block webpack %}
-<script src="{{ url_for('ux.static', filename='js/nyaa_search.js') }}"></script>
+<script src="{{ url_for('ux.static', filename='js/nyaa.js') }}"></script>
 {% endblock %}
 
 {% block content %}
-
-{% include "modals/nyaa_search/upsert.html" %}
 
 {% include "messages.html" %}
 

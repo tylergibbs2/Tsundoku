@@ -1,4 +1,4 @@
-import {} from "./patch";
+import {} from "../patch";
 
 function launchModal() {
     let modal: HTMLElement = document.getElementById("help-modal");

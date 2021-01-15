@@ -1,6 +1,6 @@
-import {} from "./patch";
+import {} from "../patch";
 
-import { Show, PartialEntry, Webhook } from "./interfaces";
+import { Show, PartialEntry, Webhook } from "../interfaces";
 
 
 var entriesToDelete: number[][] = [];
