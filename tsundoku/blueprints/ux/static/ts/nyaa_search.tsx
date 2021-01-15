@@ -41,7 +41,9 @@ const SearchBox = ({setResults}) => {
     const updateResults = () => {
         setSearchingState(true);
 
-        fetch(`${NyaaSearchURL}?query=${query}`)
+        fetch(`${NyaaSearchURL}?` + new URLSearchParams({
+            query: query
+        }))
             .then(res => res.json())
             .then(data => setResults(data.result || []))
             .then(() => setSearchingState(false));
@@ -98,7 +100,7 @@ const SearchTable = ({results}) => {
                         results.map(show => (
                             <Fragment key={show.torrent_link}>
                                 <tr>
-                                    <td style="width: 60%;">{show.title}</td>
+                                    <td style={{width: "60%"}}>{show.title}</td>
                                     <td>{show.size}</td>
                                     <td>{show.published}</td>
                                     <td class="has-text-success">{show.seeders}</td>
