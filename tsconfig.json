@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+        "module": "commonjs",
+        "lib": ["ES2016", "DOM"]
+    },
+    "include": [
+        "tsundoku/blueprints/ux/static/ts/*.tsx",
+        "tsundoku/blueprints/ux/static/ts/*.ts"
+    ]
+}

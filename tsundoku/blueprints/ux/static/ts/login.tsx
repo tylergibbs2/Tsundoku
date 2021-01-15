@@ -1,3 +1,5 @@
+import {} from "./patch";
+
 function launchModal() {
     let modal: HTMLElement = document.getElementById("help-modal");
 
@@ -11,3 +13,7 @@ function closeModal() {
     modal.classList.remove("is-active");
     document.documentElement.classList.remove("is-clipped");
 }
+
+// PATCHES
+window.launchModal = launchModal;
+window.closeModal = closeModal;

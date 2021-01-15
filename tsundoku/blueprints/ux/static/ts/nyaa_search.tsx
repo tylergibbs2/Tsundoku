@@ -1,18 +1,6 @@
-interface NyaaIndividualResult {
-    show_id?: number;
-    title: string;
-    post_link: string;
-    torrent_link: string;
-    size: string;
-    published: string;
-    seeders: number;
-    leechers: number;
-}
+import {} from "./patch";
 
-interface NyaaSearchResult {
-    status: number;
-    result: NyaaIndividualResult[];
-}
+import { NyaaSearchResult } from "./interfaces";
 
 var modalsCanBeClosed: boolean = true;
 
@@ -63,7 +51,7 @@ function watchSearchBox() {
 
     $("#search-box-div input").on("keyup", function() {
         clearTimeout(timer);
-        timer = setTimeout(searchForResults, waitInterval);
+        timer = window.setTimeout(searchForResults, waitInterval);
     });
 
     $("#search-box-div input").on("keydown", function() {
@@ -96,6 +84,10 @@ function searchForResults() {
         }
     });
 }
+
+// PATCHES
+window.closeSearchModal = closeSearchModal;
+window.openResultUpsertModal = openResultUpsertModal;
 
 $(function() {
     watchSearchBox();

@@ -1,38 +1,7 @@
-interface WebhookBase {
-    name: string;
-    base_id: number;
-    service: string;
-    url: string;
-    content_fmt: string;
-    valid: boolean;
-}
+import {} from "./patch";
 
-interface PartialEntry {
-    id: number;
-    show_id: number;
-    current_state: string;
-    episode: number;
-}
-
-interface Webhook {
-    wh_id: number;
-    show_id: number;
-    triggers: string[];
-    base: WebhookBase;
-}
-
-
-interface Show {
-    id: number;
-    title: string;
-    desired_format: string;
-    desired_folder: string;
-    season: number;
-    episode_offset: number;
-    kitsu_id: number;
-    entries: PartialEntry[];
-    webhooks: Webhook[];
-}
+import { render, Component } from "preact";
+import { Show, PartialEntry, Webhook } from "./interfaces";
 
 
 var entriesToDelete: number[][] = [];
@@ -117,7 +86,7 @@ function submitAddOrEditShowForm(event: Event) {
         entry[1] is episode
         entry[2] is magnet
         */
-       addShowEntry(entry[0], entry[1], entry[2]);
+        addShowEntry(entry[0], entry[1], entry[2]);
     }
 
     $.ajax(
@@ -142,11 +111,11 @@ function updateWebhooks() {
     if (!table)
         return;
 
-    $("#show-webhook-table tbody tr").each(function() {
+    $("#show-webhook-table tbody tr").each(function () {
         let wh: string = $(this).data("webhook");
         let show: string = $(this).data("show");
         let triggers: string[] = [];
-        $(this).find("input").each(function() {
+        $(this).find("input").each(function () {
             if ($(this).prop("checked"))
                 triggers.push($(this).attr("name"));
         });
@@ -191,7 +160,7 @@ function bufferShowEntryAddition(event: Event) {
         episodes.push(entry[1]);
 
     if (episodes.includes(episode)) {
-        $("#add-show-entry-form input[name='episode']").addClass("is-danger").effect("shake", {distance: 5, times: 2}, 400);
+        $("#add-show-entry-form input[name='episode']").addClass("is-danger").effect("shake", { distance: 5, times: 2 }, 400);
         $("#add-show-entry-form p").removeClass("is-hidden");
         return;
     }
@@ -253,7 +222,7 @@ function addRowToShowEntryTable(entry: PartialEntry) {
     $(deleteBtn).on("click", function () {
         if (entry.current_state !== "buffered")
             bufferShowEntryDeletion(entry.show_id, entry.id);
-        entriesToAdd = entriesToAdd.filter( function(entryToAdd) {
+        entriesToAdd = entriesToAdd.filter(function (entryToAdd) {
             return entryToAdd[1] != entry.episode;
         });
 
@@ -283,7 +252,7 @@ function addRowToShowWebhookTable(webhook: Webhook) {
     for (const cell of cells) {
         $(cell).addClass("is-vcentered");
         let checkbox = document.createElement("input");
-        $(checkbox).attr("type", "checkbox").appendTo( $(cell) );
+        $(checkbox).attr("type", "checkbox").appendTo($(cell));
     }
 
     for (const trigger of all_triggers) {
@@ -295,7 +264,7 @@ function addRowToShowWebhookTable(webhook: Webhook) {
 
     let p: HTMLParagraphElement = document.createElement("p");
     $(p).html(webhook.base.name);
-    $(p).appendTo( $(cell_basewh) );
+    $(p).appendTo($(cell_basewh));
 }
 
 
@@ -485,7 +454,17 @@ $(function () {
         $(this).remove();
     })
 
-    $("#back-to-top-link").on("click", function() {
+    $("#back-to-top-link").on("click", function () {
         $("html, body").animate({ scrollTop: 0 }, "slow");
     });
 });
+
+// PATCHES
+window.displayShowInfo = displayShowInfo;
+window.openAddShowModal = openAddShowModal;
+window.openEditShowModal = openEditShowModal;
+window.openDeleteShowModal = openDeleteShowModal;
+window.closeModals = closeModals;
+window.toggleFixMatchDropdown = toggleFixMatchDropdown;
+window.displayShowEntries = displayShowEntries;
+window.displayShowWebhooks = displayShowWebhooks;

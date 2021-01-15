@@ -1,18 +1,5 @@
-interface WebhookBase {
-    name: string;
-    base_id: number;
-    service: string;
-    url: string;
-    content_fmt: string;
-    valid: boolean;
-}
-
-interface Webhook {
-    wh_id: number;
-    show_id: number;
-    triggers: string[];
-    base: WebhookBase;
-}
+import {} from "./patch";
+import { WebhookBase } from "./interfaces";
 
 function submitAddWebhookForm(event: Event) {
     event.preventDefault();
@@ -100,3 +87,9 @@ $(function () {
         })
     });
 });
+
+// PATCHES
+window.openAddWebhookModal = openAddWebhookModal;
+window.openEditWebhookModal = openEditWebhookModal;
+window.openDeleteWebhookModal = openDeleteWebhookModal;
+window.closeWebhookModals = closeWebhookModals;
