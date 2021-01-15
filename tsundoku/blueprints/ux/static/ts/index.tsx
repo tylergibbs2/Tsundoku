@@ -1,6 +1,5 @@
 import {} from "./patch";
 
-import { render, Component } from "preact";
 import { Show, PartialEntry, Webhook } from "./interfaces";
 
 

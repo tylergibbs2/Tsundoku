@@ -26,6 +26,8 @@ class NyaaAPI(views.MethodView):
         :returns: List[:class:`dict`]
         """
         query = request.args.get("query")
+        if not query:
+            return APIResponse(result=[])
 
         try:
             results = await NyaaSearcher.search(app, query)

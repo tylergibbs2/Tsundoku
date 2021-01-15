@@ -1,94 +1,117 @@
-import {} from "./patch";
+import { Fragment, hydrate } from "preact";
+import { useState } from "preact/hooks";
 
 import { NyaaSearchResult } from "./interfaces";
 
-var modalsCanBeClosed: boolean = true;
+const NyaaSearchURL = "/api/v1/nyaa";
 
 
-function closeSearchModal() {
-    if (modalsCanBeClosed) {
-        $(".modal").removeClass("is-active");
-        $(document.documentElement).removeClass("is-clipped");
-    }
+const NyaaSearchApp = () => {
+    const [results, setResults] = useState([]);
+
+    return (
+        <div>
+            <div class="columns is-vcentered">
+                <div class="column is-4">
+                    <div class="container">
+                        <h1 class="title">Nyaa Search</h1>
+                        <h2 class="subtitle">Search for anime releases</h2>
+                    </div>
+                </div>
+                <div class="column is-4 is-offset-4">
+                    <SearchBox setResults={setResults} />
+                </div>
+            </div>
+
+            <div id="search-container" class="container">
+                {results.length ? <SearchTable results={results} /> : <SpaceHolder />}
+            </div>
+        </div>
+    )
 }
 
-function openResultUpsertModal(torrent_link: string) {
-    $(".modal").addClass("is-active");
-    $(document.documentElement).addClass("is-clipped");
-}
+const SearchBox = ({setResults}) => {
+    const [isSearching, setSearchingState] = useState(false);
 
-function populateSearchResultTable(data: NyaaSearchResult) {
-    if (data.result.length === 0) {
-        $("#space-holder").removeClass("is-hidden");
-        $("#search-result-table").addClass("is-hidden");
-        return;
-    } else {
-        $("#space-holder").addClass("is-hidden");
-        $("#search-result-table").removeClass("is-hidden");
-    }
+    const waitInterval: number = 2250;
 
-    $("#search-result-table table tbody").empty();
+    let query: string = "";
+    let queryTimer: number = 0;
 
-    for (const row of data.result) {
-        $("#search-result-table table tbody").append(
-            `
-            <tr onclick="openResultUpsertModal(${row.torrent_link});">
-                <td style="width: 60%;">${row.title}</td>
-                <td>${row.size}</td>
-                <td>${row.published}</td>
-                <td class="has-text-success">${row.seeders}</td>
-                <td class="has-text-danger">${row.leechers}</td>
-                <td><a href="${row.post_link}">Link</a></td>
-            </tr>
-            `
-        );
-    }
-}
+    const updateResults = () => {
+        setSearchingState(true);
 
-function watchSearchBox() {
-    let timer: number;
-    let waitInterval: number = 2250;
+        fetch(`${NyaaSearchURL}?query=${query}`)
+            .then(res => res.json())
+            .then(data => setResults(data.result || []))
+            .then(() => setSearchingState(false));
 
-    $("#search-box-div input").on("keyup", function() {
-        clearTimeout(timer);
-        timer = window.setTimeout(searchForResults, waitInterval);
-    });
+    };
 
-    $("#search-box-div input").on("keydown", function() {
-        clearTimeout(timer);
-    })
-}
+    const updateQuery = (e: any) => {
+        query = e.target.value;
 
-function searchForResults() {
-    let searchQuery: string = $("#search-box-div input").val() as string;
-
-    if (!searchQuery) {
-        $("#space-holder").removeClass("is-hidden");
-        $("#search-result-table").addClass("is-hidden");
-        return;
+        setSearchingState(false);
+        window.clearTimeout(queryTimer);
+        queryTimer = window.setTimeout(updateResults, waitInterval);
     }
 
-    $("#search-box-div").addClass("is-loading");
-
-    $.ajax({
-        url: "/api/v1/nyaa",
-        type: "GET",
-        data: {
-            query: searchQuery
-        },
-        success: function(data: NyaaSearchResult) {
-            populateSearchResultTable(data);
-        },
-        complete: function() {
-            $("#search-box-div").removeClass("is-loading");
-        }
-    });
+    return (
+        <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
+            <input class="input" type="text" placeholder="Attack on Titan" onInput={updateQuery}></input>
+            <span class="icon is-small is-left">
+                <i class="fas fa-search"></i>
+            </span>
+        </div>
+    )
 }
 
-// PATCHES
-window.closeSearchModal = closeSearchModal;
-window.openResultUpsertModal = openResultUpsertModal;
+const SpaceHolder = () => {
+    return (
+        <div class="container has-text-centered my-6">
+            <h3 class="title is-3">Nothing to see here!</h3>
+            <h4 class="subtitle is-5">Start searching to see some results.</h4>
+        </div>
+    )
+}
 
-$(function() {
-    watchSearchBox();
-});
+interface SearchTable {
+    results: [];
+}
+
+const SearchTable = ({results}) => {
+    return (
+        <div class="container">
+            <table class="table is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Date</th>
+                        <th title="Seeders"><span class="icon"><i class="fas fa-arrow-up"></i></span></th>
+                        <th title="Leechers"><span class="icon"><i class="fas fa-arrow-down"></i></span></th>
+                        <th title="Link to Post"><span class="icon"><i class="fas fa-link"></i></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        results.map(show => (
+                            <Fragment key={show.torrent_link}>
+                                <tr>
+                                    <td style="width: 60%;">{show.title}</td>
+                                    <td>{show.size}</td>
+                                    <td>{show.published}</td>
+                                    <td class="has-text-success">{show.seeders}</td>
+                                    <td class="has-text-danger">{show.leechers}</td>
+                                    <td><a href={show.post_link}>Link</a></td>
+                                </tr>
+                            </Fragment>
+                        ))
+                    }
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+hydrate(<NyaaSearchApp />, document.getElementById("nyaa-main"));
