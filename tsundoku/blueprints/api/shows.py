@@ -6,9 +6,19 @@ from quart import current_app as app
 
 from .response import APIResponse
 from tsundoku.kitsu import KitsuManager
+from tsundoku.webhooks import Webhook
 
 
 logger = logging.getLogger("tsundoku")
+
+
+status_html_map = {
+    "current": "<span class='img-overlay-span tag is-success'>Airing</span>",
+    "finished": "<span class='img-overlay-span tag is-danger'>Finished</span>",
+    "tba": "<span class='img-overlay-span tag is-warning'>TBA</span>",
+    "unreleased": "<span class='img-overlay-span tag is-info'>Unreleased</span>",
+    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>"
+}
 
 
 class ShowsAPI(views.MethodView):
@@ -53,13 +63,43 @@ class ShowsAPI(views.MethodView):
                     FROM
                         shows;
                 """)
+                shows = [dict(s) for s in shows]
+                for s in shows:
+                    entries = await con.fetch("""
+                        SELECT
+                            id,
+                            show_id,
+                            episode,
+                            current_state
+                        FROM
+                            show_entry
+                        WHERE show_id=$1
+                        ORDER BY episode ASC;
+                    """, s["id"])
+                    s["entries"] = [dict(e) for e in entries]
+                    s["webhooks"] = []
+                    webhooks = await Webhook.from_show_id(app, s["id"])
+                    for webhook in webhooks:
+                        triggers = await webhook.get_triggers()
+                        webhook = webhook.to_dict()
+                        webhook["triggers"] = triggers
+                        s["webhooks"].append(webhook)
+
+                    manager = await KitsuManager.from_show_id(s["id"])
+                    if manager:
+                        status = await manager.get_status()
+                        if status:
+                            s["status"] = status_html_map[status]
+                        s["kitsu_id"] = manager.kitsu_id
+                        s["image"] = await manager.get_poster_image()
+                        s["link"] = manager.link
 
                 return APIResponse(
                     result=[dict(record) for record in shows]
                 )
         else:
             async with app.db_pool.acquire() as con:
-                show = await con.fetchrow("""
+                s = await con.fetchrow("""
                     SELECT
                         id,
                         title,
@@ -72,14 +112,44 @@ class ShowsAPI(views.MethodView):
                     WHERE id=$1;
                 """, show_id)
 
-            if not show:
-                return APIResponse(
-                    status=404,
-                    error="Show with specified ID does not exist."
-                )
+                if not s:
+                    return APIResponse(
+                        status=404,
+                        error="Show with specified ID does not exist."
+                    )
+
+                s = dict(s)
+                entries = await con.fetch("""
+                    SELECT
+                        id,
+                        show_id,
+                        episode,
+                        current_state
+                    FROM
+                        show_entry
+                    WHERE show_id=$1
+                    ORDER BY episode ASC;
+                """, s["id"])
+                s["entries"] = [dict(e) for e in entries]
+                s["webhooks"] = []
+                webhooks = await Webhook.from_show_id(app, s["id"])
+                for webhook in webhooks:
+                    triggers = await webhook.get_triggers()
+                    webhook = webhook.to_dict()
+                    webhook["triggers"] = triggers
+                    s["webhooks"].append(webhook)
+
+                manager = await KitsuManager.from_show_id(s["id"])
+                if manager:
+                    status = await manager.get_status()
+                    if status:
+                        s["status"] = status_html_map[status]
+                    s["kitsu_id"] = manager.kitsu_id
+                    s["image"] = await manager.get_poster_image()
+                    s["link"] = manager.link
 
             return APIResponse(
-                result=dict(show)
+                result=dict(s)
             )
 
 
