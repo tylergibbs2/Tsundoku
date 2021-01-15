@@ -82,7 +82,7 @@ class EntriesAPI(views.MethodView):
             )
 
 
-    async def post(self, show_id: int):
+    async def post(self, show_id: int, entry_id: int=None):
         """
         Manually begins handling of an entry for a specified show.
         Handling involves downloading, moving, and renaming.
