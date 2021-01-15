@@ -1,13 +1,13 @@
 import { Fragment, hydrate } from "preact";
-import { useState } from "preact/hooks";
+import { useState, StateUpdater } from "preact/hooks";
 
-import { NyaaSearchResult } from "./interfaces";
+import { NyaaSearchResult, NyaaIndividualResult } from "./interfaces";
 
 const NyaaSearchURL = "/api/v1/nyaa";
 
 
 const NyaaSearchApp = () => {
-    const [results, setResults] = useState([]);
+    const [results, setResults] = useState<NyaaIndividualResult[]>([]);
 
     return (
         <div>
@@ -23,15 +23,19 @@ const NyaaSearchApp = () => {
                 </div>
             </div>
 
-            <div id="search-container" class="container">
+            <div class="container">
                 {results.length ? <SearchTable results={results} /> : <SpaceHolder />}
             </div>
         </div>
     )
 }
 
-const SearchBox = ({setResults}) => {
-    const [isSearching, setSearchingState] = useState(false);
+interface SearchBoxParams {
+    setResults: StateUpdater<NyaaIndividualResult[]>;
+}
+
+const SearchBox = ({setResults}: SearchBoxParams) => {
+    const [isSearching, setSearchingState] = useState<boolean>(false);
 
     const waitInterval: number = 2250;
 
@@ -45,13 +49,13 @@ const SearchBox = ({setResults}) => {
             query: query
         }))
             .then(res => res.json())
-            .then(data => setResults(data.result || []))
+            .then((data: NyaaSearchResult) => setResults(data.result || []))
             .then(() => setSearchingState(false));
 
     };
 
-    const updateQuery = (e: any) => {
-        query = e.target.value;
+    const updateQuery = (e: Event) => {
+        query = (e.target as HTMLInputElement).value;
 
         setSearchingState(false);
         window.clearTimeout(queryTimer);
@@ -60,7 +64,7 @@ const SearchBox = ({setResults}) => {
 
     return (
         <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
-            <input class="input" type="text" placeholder="Attack on Titan" onInput={updateQuery}></input>
+            <input class="input" type="text" placeholder="Attack on Titan" onInput={updateQuery} disabled={isSearching}></input>
             <span class="icon is-small is-left">
                 <i class="fas fa-search"></i>
             </span>
@@ -77,11 +81,11 @@ const SpaceHolder = () => {
     )
 }
 
-interface SearchTable {
-    results: [];
+interface SearchTableParams {
+    results: NyaaIndividualResult[];
 }
 
-const SearchTable = ({results}) => {
+const SearchTable = ({results}: SearchTableParams) => {
     return (
         <div class="container">
             <table class="table is-hoverable is-fullwidth">
@@ -97,7 +101,7 @@ const SearchTable = ({results}) => {
                 </thead>
                 <tbody>
                     {
-                        results.map(show => (
+                        results.map((show: NyaaIndividualResult) => (
                             <Fragment key={show.torrent_link}>
                                 <tr>
                                     <td style={{width: "60%"}}>{show.title}</td>
