@@ -145,8 +145,10 @@ class Downloader:
             Path(expressive_folder).mkdir(parents=True, exist_ok=True)
             desired_folder = Path(expressive_folder)
 
+        name = entry.file_path.name
+
         try:
-            shutil.move(str(entry.file_path), str(desired_folder))
+            shutil.move(str(entry.file_path), str(desired_folder / name))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
         except Exception as e:
