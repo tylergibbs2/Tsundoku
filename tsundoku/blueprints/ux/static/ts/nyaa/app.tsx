@@ -1,15 +1,18 @@
-import { hydrate } from "preact";
-import { useState } from "preact/hooks";
+import { Fragment, hydrate } from "preact";
+import { useState, useEffect } from "preact/hooks";
 
 import { NyaaIndividualResult } from "../interfaces";
+import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
 
 
 const NyaaSearchApp = () => {
     const [results, setResults] = useState<NyaaIndividualResult[]>([]);
+    const [choice, setChoice] = useState<NyaaIndividualResult>(null);
 
     return (
-        <div>
+        <div class={choice ? "is-clipped" : ""}>
+            <NyaaShowModal setChoice={setChoice} choice={choice}/>
             <div class="columns is-vcentered">
                 <div class="column is-4">
                     <div class="container">
@@ -23,18 +26,10 @@ const NyaaSearchApp = () => {
             </div>
 
             <div id="search-container" class="container">
-                {results.length ? <SearchTable results={results} /> : <SpaceHolder />}
+                {results.length ? <SearchTable setChoice={setChoice} results={results} /> : <SpaceHolder />}
             </div>
         </div>
     )
-}
-
-interface NyaaSearchModalParams {
-    isShowing: boolean;
-}
-
-const NyaaShowModal = ({isShowing}: NyaaSearchModalParams) => {
-
 }
 
 hydrate(<NyaaSearchApp />, document.getElementById("nyaa-main"));

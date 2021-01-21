@@ -54,8 +54,7 @@ class NyaaAPI(views.MethodView):
 
         :returns: :class:`dict`
         """
-        await request.get_data()
-        arguments = await request.form
+        arguments = await request.get_json()
 
         show_id = arguments.get("show_id")
         torrent_link = arguments.get("torrent_link")
@@ -74,13 +73,13 @@ class NyaaAPI(views.MethodView):
                 error="Show ID passed is not an integer."
             )
 
-        async with app.dp_pool.acquire() as con:
+        async with app.db_pool.acquire() as con:
             show_id = await con.fetchval("""
                 SELECT
-                    show_id
+                    id
                 FROM
                     shows
-                WHERE show_id=$1;
+                WHERE id=$1;
             """, show_id)
 
         if not show_id:
@@ -89,8 +88,13 @@ class NyaaAPI(views.MethodView):
                 error="Show ID does not exist in the database."
             )
 
-        await SearchResult.from_necessary(
+        search_result = SearchResult.from_necessary(
             app,
             show_id,
             torrent_link
-        ).process()
+        )
+        entries = await search_result.process()
+
+        return APIResponse(
+            result=[e.to_dict() for e in entries]
+        )

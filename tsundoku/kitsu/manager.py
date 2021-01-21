@@ -53,7 +53,7 @@ class KitsuManager:
                 data = await resp.json()
                 try:
                     result = data["data"][0]
-                except IndexError:
+                except (IndexError, KeyError):
                     return
 
         if not result or not result.get("id"):

@@ -88,6 +88,12 @@ class SearchResult:
         SearchResult:
             Result for processing.
         """
+        instance = cls(app)
+
+        instance.show_id = show_id
+        instance.torrent_link = torrent_link
+
+        return instance
 
 
     def to_dict(self) -> dict:
@@ -180,7 +186,7 @@ class SearchResult:
 
             entry = Entry(self._app, entry)
             await entry.set_state("downloading")
-            added.append(Entry)
+            added.append(entry)
 
         return added
 

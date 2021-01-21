@@ -20,6 +20,19 @@ class Entry:
         self._app = app
         self._record = record
 
+    def to_dict(self) -> dict:
+        """
+        Returns the Entry object as a dictionary.
+        """
+        return {
+            "id": self.id,
+            "show_id": self.show_id,
+            "episode": self.episode,
+            "state": self.state,
+            "torrent_hash": self.torrent_hash,
+            "file_path": str(self.file_path)
+        }
+
     async def set_state(self, new_state: str) -> None:
         """
         Updates the database and local object's state.

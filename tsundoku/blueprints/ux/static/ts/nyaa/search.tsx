@@ -1,4 +1,3 @@
-import { Fragment } from "preact";
 import { useState, StateUpdater } from "preact/hooks";
 
 import { NyaaSearchResult, NyaaIndividualResult } from "../interfaces";
@@ -10,7 +9,7 @@ interface SearchBoxParams {
     setResults: StateUpdater<NyaaIndividualResult[]>;
 }
 
-export const SearchBox = ({setResults}: SearchBoxParams) => {
+export const SearchBox = ({ setResults }: SearchBoxParams) => {
     const [isSearching, setSearchingState] = useState<boolean>(false);
 
     const waitInterval: number = 2250;
@@ -58,10 +57,11 @@ export const SpaceHolder = () => {
 }
 
 interface SearchTableParams {
+    setChoice: StateUpdater<NyaaIndividualResult>;
     results: NyaaIndividualResult[];
 }
 
-export const SearchTable = ({results}: SearchTableParams) => {
+export const SearchTable = ({ setChoice, results }: SearchTableParams) => {
     return (
         <div class="container">
             <table class="table is-hoverable is-fullwidth">
@@ -78,20 +78,37 @@ export const SearchTable = ({results}: SearchTableParams) => {
                 <tbody>
                     {
                         results.map((show: NyaaIndividualResult) => (
-                            <Fragment key={show.torrent_link}>
-                                <tr>
-                                    <td style={{width: "60%"}}>{show.title}</td>
-                                    <td>{show.size}</td>
-                                    <td>{show.published}</td>
-                                    <td class="has-text-success">{show.seeders}</td>
-                                    <td class="has-text-danger">{show.leechers}</td>
-                                    <td><a href={show.post_link}>Link</a></td>
-                                </tr>
-                            </Fragment>
+                            <SearchTableRow
+                            setChoice={setChoice}
+                            show={show}
+                            />
                         ))
                     }
                 </tbody>
             </table>
         </div>
+    )
+}
+
+
+interface SearchTableRowParams {
+    setChoice: StateUpdater<NyaaIndividualResult>;
+    show: NyaaIndividualResult;
+}
+
+const SearchTableRow = ({ setChoice, show }: SearchTableRowParams) => {
+    const updateChoice = () => {
+        setChoice(show);
+    }
+
+    return (
+        <tr onClick={updateChoice} style={{"cursor": "pointer"}}>
+            <td style={{ width: "60%" }}>{show.title}</td>
+            <td>{show.size}</td>
+            <td>{show.published}</td>
+            <td class="has-text-success">{show.seeders}</td>
+            <td class="has-text-danger">{show.leechers}</td>
+            <td><a href={show.post_link}>Link</a></td>
+        </tr>
     )
 }

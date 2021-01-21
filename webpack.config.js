@@ -18,6 +18,10 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      'react': 'preact/compat',
+      'react-dom': 'preact/compat'
+    }
   },
   output: {
     filename: '[name].js',

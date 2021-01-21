@@ -160,6 +160,7 @@ class ShowsAPI(views.MethodView):
         .. :quickref: Shows; Add a new show.
 
         :status 200: show added successfully
+        :status 400: bad or missing arguments
         :status 500: unexpected server error
 
         :form string title: the new show's title
@@ -173,22 +174,37 @@ class ShowsAPI(views.MethodView):
         # show_id here will always be None. Having it as a parameter
         # is required due to how the defaults are handled with GET
         # and POST methods on the routing table.
+        arguments = await request.get_json()
 
-        await request.get_data()
-        arguments = await request.form
+        desired_format = arguments.get("desired_format")
+        desired_folder = arguments.get("desired_folder")
 
-        if not arguments["desired_format"]:
-            desired_format = None
+        season = arguments.get("season")
+        if season is None:
+            return APIResponse(
+                status=400,
+                error="Missing season argument."
+            )
+
+        try:
+            season = int(season)
+        except ValueError:
+            return APIResponse(
+                status=400,
+                error="Season is not an integer."
+            )
+
+        episode_offset = arguments.get("episode_offset")
+        if episode_offset is None:
+            episode_offset = 0
         else:
-            desired_format = arguments["desired_format"]
-
-        if not arguments["desired_folder"]:
-            desired_folder = None
-        else:
-            desired_folder = arguments["desired_folder"]
-
-        season = int(arguments["season"])
-        episode_offset = int(arguments["episode_offset"])
+            try:
+                episode_offset = int(episode_offset)
+            except ValueError:
+                return APIResponse(
+                    status=400,
+                    error="Episode offset is not an integer."
+                )
 
         async with app.db_pool.acquire() as con:
             new_id = await con.fetchval("""
