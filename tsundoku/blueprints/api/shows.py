@@ -176,6 +176,11 @@ class ShowsAPI(views.MethodView):
         # and POST methods on the routing table.
         arguments = await request.get_json()
 
+        # patch for ajax call
+        if not arguments:
+            await request.get_data()
+            arguments = await request.form
+
         desired_format = arguments.get("desired_format")
         desired_folder = arguments.get("desired_folder")
 
