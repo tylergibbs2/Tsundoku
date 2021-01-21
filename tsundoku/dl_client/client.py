@@ -104,12 +104,18 @@ class Manager:
             torrent_bytes = await resp.read()
             metadata = bencodepy.decode(torrent_bytes)
 
+        is_folder = b"files" in metadata[b"info"]
+
         file_names = []
-        for item in metadata[b"info"][b"files"]:
-            try:
-                file_names.append(item[b"path"][0].decode("utf-8"))
-            except IndexError:
-                pass
+
+        if is_folder:
+            for item in metadata[b"info"][b"files"]:
+                try:
+                    file_names.append(item[b"path"][0].decode("utf-8"))
+                except IndexError:
+                    pass
+        else:
+            file_names.append(metadata[b"info"][b"name"].decode("utf-8"))
 
         return file_names
 
