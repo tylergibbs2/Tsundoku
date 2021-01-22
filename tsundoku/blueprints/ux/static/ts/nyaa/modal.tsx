@@ -1,16 +1,18 @@
-import { NyaaIndividualResult } from "../interfaces";
+import { NyaaIndividualResult, Show } from "../interfaces";
 
 import { toast } from "bulma-toast";
 import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 
 interface NyaaShowModalParams {
+    shows: Show[];
     setChoice: StateUpdater<NyaaIndividualResult>;
     choice?: NyaaIndividualResult;
 }
 
-export const NyaaShowModal = ({ setChoice, choice }: NyaaShowModalParams) => {
+export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams) => {
     const [submitting, setSubmitting] = useState<boolean>(false);
+    const [addingToExisting, setAddingToExisting] = useState<boolean>(true);
     const [showId, setShowId] = useState<number>(null);
 
     useEffect(() => {
@@ -22,7 +24,7 @@ export const NyaaShowModal = ({ setChoice, choice }: NyaaShowModalParams) => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({"show_id": showId, "torrent_link": choice.torrent_link})
+            body: JSON.stringify({ "show_id": showId, "torrent_link": choice.torrent_link })
         }
 
         fetch("/api/v1/nyaa", request)
@@ -36,6 +38,7 @@ export const NyaaShowModal = ({ setChoice, choice }: NyaaShowModalParams) => {
                 let addedCount: number = res.result.length;
                 setSubmitting(false);
                 setChoice(null);
+                setAddingToExisting(true);
                 toast({
                     message: `Successfully added release! Processing ${addedCount} new entr${addedCount === 1 ? "y" : "ies"}.`,
                     duration: 5000,
@@ -62,13 +65,19 @@ export const NyaaShowModal = ({ setChoice, choice }: NyaaShowModalParams) => {
                 </header>
 
                 <section class="modal-card-body">
-                    <AddShowForm setSubmitting={setSubmitting} returnCallback={setShowId}/>
+                    <div class="tabs is-centered is-toggle is-toggle-rounded">
+                        <ul>
+                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {setAddingToExisting(false);}}>New Show</a></li>
+                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {setAddingToExisting(true);}}>Add to Existing</a></li>
+                        </ul>
+                    </div>
+                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
                 </section>
 
                 <footer class="modal-card-foot is-size-7">
                     <progress class={"progress is-primary is-small mt-2 " + (submitting ? "" : "is-hidden")} max="100"></progress>
                     <div class={submitting ? "is-hidden" : ""}>
-                        <input class="button is-success" type="submit" form="add-show-form" value="Add show"></input>
+                        <input class="button is-success" type="submit" form="nyaa-result-form" value="Add release"></input>
                         <button onClick={submitting ? null : closeModal} class="button">Cancel</button>
                     </div>
                 </footer>
@@ -78,19 +87,75 @@ export const NyaaShowModal = ({ setChoice, choice }: NyaaShowModalParams) => {
 }
 
 
-interface AddToExistingShowFormParams {
+interface ModalFormParams {
+    addingToExisting: boolean;
+    shows: Show[];
     setSubmitting: StateUpdater<boolean>;
     returnCallback?: StateUpdater<number>;
 }
 
 
-const AddToExistingShowForm = ({setSubmitting, returnCallback}: AddToExistingShowFormParams) => {
-    const { register, handleSubmit } = useForm({
-        defaultValues: {
-            "season": "1",
-            "episode_offset": 0
-        }
-    });
+const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback }: ModalFormParams) => {
+    if (addingToExisting)
+        return (<AddToExistingShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />);
+    else
+        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} />);
+}
+
+
+interface ExistingShowSelectInputs {
+    register: any;
+    name: string;
+    shows: Show[];
+}
+
+
+const ExistingShowSelect = ({ register, name, shows }: ExistingShowSelectInputs) => {
+    return (
+        <select ref={register} name={name} required>
+            {shows.map(show => (
+                <option value={show.id}>{show.title}</option>
+            ))}
+        </select>
+    )
+}
+
+
+interface AddToExistingShowFormParams {
+    shows: Show[];
+    setSubmitting: StateUpdater<boolean>;
+    returnCallback?: StateUpdater<number>;
+}
+
+
+interface AddToExistingShowFormInputs {
+    existingShow: number;
+}
+
+
+
+const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToExistingShowFormParams) => {
+    const { register, handleSubmit } = useForm();
+
+    const submitHandler = (data: AddToExistingShowFormInputs) => {
+        setSubmitting(true);
+
+        returnCallback(data.existingShow);
+    }
+
+    return (
+        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
+            <div class="field">
+                <label class="label">
+                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                        data-tooltip="Existing show you want to add this release to.">Show</span>
+                </label>
+                <div class="select">
+                    <ExistingShowSelect register={register} name="existingShow" shows={shows} />
+                </div>
+            </div>
+        </form>
+    )
 }
 
 
@@ -107,7 +172,7 @@ interface AddShowFormParams {
     returnCallback?: StateUpdater<number>;
 }
 
-const AddShowForm = ({setSubmitting, returnCallback}: AddShowFormParams) => {
+const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     const { register, handleSubmit } = useForm({
         defaultValues: {
             "season": "1",
@@ -143,7 +208,7 @@ const AddShowForm = ({setSubmitting, returnCallback}: AddShowFormParams) => {
     }
 
     return (
-        <form onSubmit={handleSubmit(submitHandler)} id="add-show-form">
+        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"

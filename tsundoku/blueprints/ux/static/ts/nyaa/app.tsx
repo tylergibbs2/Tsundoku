@@ -1,18 +1,38 @@
-import { Fragment, hydrate } from "preact";
+import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
-import { NyaaIndividualResult } from "../interfaces";
+import { NyaaIndividualResult, Show } from "../interfaces";
 import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
 
 
 const NyaaSearchApp = () => {
+    const [userShows, setUserShows] = useState<Show[]>([]);
     const [results, setResults] = useState<NyaaIndividualResult[]>([]);
     const [choice, setChoice] = useState<NyaaIndividualResult>(null);
 
+    useEffect(() => {
+        let request = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        fetch("/api/v1/shows", request)
+            .then((res) => {
+                if (res.ok)
+                    return res.json();
+                else {}
+            })
+            .then((res: any) => {
+                setUserShows(res.result);
+            })
+    }, [])
+
     return (
         <div class={choice ? "is-clipped" : ""}>
-            <NyaaShowModal setChoice={setChoice} choice={choice}/>
+            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows}/>
             <div class="columns is-vcentered">
                 <div class="column is-4">
                     <div class="container">
