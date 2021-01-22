@@ -153,15 +153,9 @@ class SearchResult:
             logger.error("Nyaa - Unable to process result without `show_id` set.")
             return added
 
-        magnet = await self._app.dl_client.get_magnet(self.torrent_link)
-        torrent_hash = await self._app.dl_client.add_torrent(magnet)
-
-        if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet} to download client")
-            return added
-
-        for episode in await self.get_episodes():
-            async with self._app.db_pool.acquire() as con:
+        episodes_to_process = []
+        async with self._app.db_pool.acquire() as con:
+            for episode in await self.get_episodes():
                 exists = await con.fetchval("""
                     SELECT
                         episode
@@ -175,18 +169,32 @@ class SearchResult:
                 if exists:
                     continue
 
+                episodes_to_process.append(episode)
+
+        if not episodes_to_process:
+            return added
+
+        magnet = await self._app.dl_client.get_magnet(self.torrent_link)
+        torrent_hash = await self._app.dl_client.add_torrent(magnet)
+
+        if torrent_hash is None:
+            logger.warn(f"Failed to add Magnet URL {magnet} to download client")
+            return added
+
+        async with self._app.db_pool.acquire() as con:
+            for episode in episodes_to_process:
                 entry = await con.fetchrow("""
-                INSERT INTO
-                    show_entry
-                    (show_id, episode, torrent_hash)
-                VALUES
-                    ($1, $2, $3)
-                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
+                    INSERT INTO
+                        show_entry
+                        (show_id, episode, torrent_hash)
+                    VALUES
+                        ($1, $2, $3)
+                    RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
                 """, self.show_id, episode, torrent_hash)
 
-            entry = Entry(self._app, entry)
-            await entry.set_state("downloading")
-            added.append(entry)
+                entry = Entry(self._app, entry)
+                await entry.set_state("downloading")
+                added.append(entry)
 
         return added
 
