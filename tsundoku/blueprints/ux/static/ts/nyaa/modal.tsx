@@ -15,6 +15,14 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
     const [addingToExisting, setAddingToExisting] = useState<boolean>(true);
     const [showId, setShowId] = useState<number>(null);
 
+    const addToExisting = () => {
+        setAddingToExisting(true);
+    }
+
+    const addNewShow = () => {
+        setAddingToExisting(false);
+    }
+
     useEffect(() => {
         if (showId === null)
             return;
@@ -39,6 +47,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 setSubmitting(false);
                 setChoice(null);
                 setAddingToExisting(true);
+                setShowId(null);
                 toast({
                     message: `Successfully added release! Processing ${addedCount} new entr${addedCount === 1 ? "y" : "ies"}.`,
                     duration: 5000,
@@ -67,8 +76,8 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 <section class="modal-card-body">
                     <div class="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
-                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {setAddingToExisting(false);}}>New Show</a></li>
-                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {setAddingToExisting(true);}}>Add to Existing</a></li>
+                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {addNewShow}}>New Show</a></li>
+                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {addToExisting}}>Add to Existing</a></li>
                         </ul>
                     </div>
                     <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
