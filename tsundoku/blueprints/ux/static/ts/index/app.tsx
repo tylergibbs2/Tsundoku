@@ -3,6 +3,8 @@ import {} from "../patch";
 import { Show, PartialEntry, Webhook } from "../interfaces";
 
 
+import "bulma-dashboard/dist/bulma-dashboard.min.css";
+
 var entriesToDelete: number[][] = [];
 var entriesToAdd: any[] = [];
 

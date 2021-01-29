@@ -5,6 +5,7 @@ import { NyaaIndividualResult, Show } from "../interfaces";
 import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
 
+import "bulma-dashboard/dist/bulma-dashboard.min.css";
 
 const NyaaSearchApp = () => {
     const [userShows, setUserShows] = useState<Show[]>([]);

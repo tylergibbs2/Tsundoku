@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block nav_index %}is-active{% endblock %}
+
 {% set max_cards = 10 %}
 
 {% block extralib %}
@@ -95,7 +97,7 @@
         {% endif %}
     </div>
 
-    <div class="container has-text-centered mt-3">
+    <div class="has-text-centered mt-3">
         <button class="button is-medium is-success" onclick="openAddShowModal();">Add show</button>
     </div>
 

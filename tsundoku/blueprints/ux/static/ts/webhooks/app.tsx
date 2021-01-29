@@ -1,6 +1,8 @@
 import {} from "../patch";
 import { WebhookBase } from "../interfaces";
 
+import "bulma-dashboard/dist/bulma-dashboard.min.css";
+
 function submitAddWebhookForm(event: Event) {
     event.preventDefault();
     let url: string = $(this).closest("form").attr("action");

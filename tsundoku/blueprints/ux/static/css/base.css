@@ -2,12 +2,15 @@
     --light-grey: hsl(0, 0%, 93%);
 }
 
-body {
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
-  }
+html {
+    overflow: hidden;
+}
 
-#wrapper {
-    flex: 1;
+.menu-panel-footer {
+    position: absolute;
+    bottom: 3%;
+}
+
+.menu-panel-footer p {
+    position: relative;
 }

@@ -35,19 +35,47 @@
 </head>
 
 <body>
+    <div class="dashboard is-full-height">
+        <div class="dashboard-panel is-small has-background-grey-light">
+            <header class="dashboard-panel-header">
+                <div class="has-text-centered">
+                    <img src="{{ url_for('ux.static', filename='img/logo.png') }}" width="112" height="28">
+                </div>
+            </header>
 
-    {% include "nav_top.html" %}
+            <div class="dashboard-panel-content">
+                <aside class="menu has-text-white">
+                    <p class="menu-label">
+                        General
+                    </p>
+                    <ul class="menu-list">
+                        <li><a href="{{ url_for('ux.index') }}" class="{% block nav_index %}{% endblock %}">Shows</a></li>
+                        <li><a href="{{ url_for('ux.nyaa_search') }}" class="{% block nav_nyaa %}{% endblock %}">Nyaa Search</a></li>
+                    </ul>
+                    <p class="menu-label">
+                        Settings
+                    </p>
+                    <ul class="menu-list">
+                        <li><a>Integrations</a></li>
+                        <li><a href="{{ url_for('ux.webhooks') }}" class="{% block nav_webhooks %}{% endblock %}">Webhooks</a></li>
+                        <li><a>Config</a></li>
+                    </ul>
+                </aside>
+            </div>
 
-    <div id="wrapper">
-        <div class="container">
+            <div class="menu-panel-footer has-text-centered is-size-7">
+                <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small">Logout</a>
+                <p class="mt-4">Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}</p>
+                <p><b>Tsundoku</b> is an <a href="https://github.com/tylergibbs2/Tsundoku">open-source project.</a></p>
+                <p>Copyright (c) 2020-2021 Tyler Gibbs</p>
+            </div>
+        </div>
+
+        <div class="dashboard-main is-scrollable">
             {% block content %}
-
             {% endblock %}
         </div>
     </div>
-
-    {% include 'footer.html' %}
-
 </body>
 
 {% block webpack %}
