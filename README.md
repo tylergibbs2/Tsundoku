@@ -4,25 +4,36 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
-Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for Erai-raws and SubsPlease installed.
+Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for SubsPlease installed.
+
+## Key Features
+
+* Parse various RSS feeds for the latest anime
+* Rename and move downloaded files automatically
+* Search Nyaa for existing releases and batches
+* Import third-party RSS parsers to search other feeds
+* Send updates to Discord or Slack with webhooks
+* View airing status of shows
+* Forward completion status to Sonarr/Radarr (in-dev)
+* Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.readthedocs.io/en/latest/))
 
 ## Requirements
 
-- Python 3.7+
-- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi) OR [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
-- PostgreSQL 9+
+* Python 3.7+
+* [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi) OR [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
+* PostgreSQL 9+
 
 ## Installation
 
 ```sh
-git clone https://github.com/tylergibbs2/Tsundoku
-cd Tsundoku
-python -m venv .venv
+$ git clone https://github.com/tylergibbs2/Tsundoku
+$ cd Tsundoku
+$ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
-pip install -r requirements.txt
-python -m tsundoku --migrate       # Loads the database schema into PSQL, must be done after PSQL config
-python -m tsundoku --create-user   # Creates a user for logging in, must be done after PSQL config
+$ pip install -r requirements.txt
+$ python -m tsundoku --migrate       # Loads the database schema into PSQL, must be done after PSQL config
+$ python -m tsundoku --create-user   # Creates a user for logging in, must be done after PSQL config
 ```
 
 Copy `config.ini.example` to `config.ini` and then [configure](#Configuration).
@@ -30,11 +41,11 @@ Copy `config.ini.example` to `config.ini` and then [configure](#Configuration).
 ## Updating
 
 ```sh
-git pull
+$ git pull
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
-pip install -r requirements.txt
-python -m tsundoku --migrate
+$ pip install -r requirements.txt
+$ python -m tsundoku --migrate
 ```
 
 ## Usage
@@ -42,7 +53,7 @@ python -m tsundoku --migrate
 ```sh
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
-python -m tsundoku
+$ python -m tsundoku
 ```
 
 ## Installation (Docker)
@@ -109,8 +120,7 @@ And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like 
 host = localhost         # IP that Tsundoku will be hosted at
 port = 6439              # Port to use for hosting
 parsers = [              # List of parsers in "parsers/"
-    "parsers.subsplease",
-    "parsers.erairaws"
+    "parsers.subsplease"
     ]
 polling_interval = 900   # How often, in seconds, Tsundoku should check parsers
 do_update_checks = true  # Will always be false regardless of setting if in Docker
