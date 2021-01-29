@@ -2,6 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/tsundoku/badge/?version=latest)](https://tsundoku.readthedocs.io/en/latest/?badge=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftylergibbs2%2FTsundoku.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftylergibbs2%2FTsundoku?ref=badge_shield)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
 Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for Erai-raws and SubsPlease installed.
@@ -136,3 +137,6 @@ secure = false           # Use HTTPS
 ## Parsers
 
 Please see the [example parser](https://github.com/tylergibbs2/Tsundoku/blob/master/parsers/_example.py) for writing custom parsers.
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftylergibbs2%2FTsundoku.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftylergibbs2%2FTsundoku?ref=badge_large)
