@@ -4,9 +4,9 @@ import logging
 from typing import Optional, List, Tuple
 
 import feedparser
-from fuzzywuzzy import process
 from quart.ctx import AppContext
 
+from .fuzzy import extract_one
 from tsundoku.config import get_config_value
 
 
@@ -193,7 +193,7 @@ class Poller:
         if not show_list:
             return
 
-        match = process.extractOne(show_name, show_list.keys())
+        match = extract_one(show_name, show_list.keys())
 
         return EntryMatch(
             show_name,

@@ -4,8 +4,6 @@ aiohttp==3.6.2
 asyncpg==0.20.1
 bencodepy==0.9.5
 feedparser==5.2.1
-fuzzywuzzy==0.18.0
-psycopg2==2.8.6
 quart-auth==0.4.0
 quart==0.13.0
 yoyo-migrations==7.2.1
