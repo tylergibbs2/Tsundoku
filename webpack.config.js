@@ -2,7 +2,6 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    login: './tsundoku/blueprints/ux/static/ts/login/app.tsx',
     index: './tsundoku/blueprints/ux/static/ts/index/app.tsx',
     nyaa: './tsundoku/blueprints/ux/static/ts/nyaa/app.tsx',
     webhooks: './tsundoku/blueprints/ux/static/ts/webhooks/app.tsx'
