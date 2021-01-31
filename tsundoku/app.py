@@ -5,6 +5,7 @@ import logging
 from logging.config import dictConfig
 import os
 import secrets
+from socket import gaierror
 
 from argon2 import PasswordHasher
 import aiohttp
@@ -30,6 +31,7 @@ auth.user_class = User
 app = Quart("Tsundoku", static_folder=None)
 
 app.seen_titles = set()
+app._tasks = []
 logger = logging.getLogger("tsundoku")
 
 
@@ -162,25 +164,30 @@ async def setup_db():
 
     loop = asyncio.get_event_loop()
 
-    app.db_pool = await asyncpg.create_pool(
-        host=host,
-        port=port,
-        user=user,
-        password=password,
-        database=database,
-        loop=loop
-    )
+    try:
+        app.db_pool = await asyncpg.create_pool(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
+            loop=loop
+        )
+    except (OSError, gaierror):
+        logger.error("Failed to connect to the database. Is your configuration correct?")
+        await app.shutdown()
 
-    async with app.db_pool.acquire() as con:
-        users = await con.fetchval("""
-            SELECT
-                COUNT(*)
-            FROM
-                users;
-        """)
+    if hasattr(app, "db_pool"):
+        async with app.db_pool.acquire() as con:
+            users = await con.fetchval("""
+                SELECT
+                    COUNT(*)
+                FROM
+                    users;
+            """)
 
-    if not users:
-        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
+        if not users:
+            logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
 def _load_parsers():
@@ -238,6 +245,9 @@ async def load_parsers():
     """
     Load all of the custom RSS parsers into the app.
     """
+    if not hasattr(app, "db_pool"):
+        return
+
     _load_parsers()
 
 
@@ -247,11 +257,14 @@ async def setup_poller():
     Creates in instance of the polling manager
     and starts it.
     """
+    if not hasattr(app, "db_pool"):
+        return
+
     async def bg_task():
         app.poller = Poller(app.app_context())
         await app.poller.start()
 
-    asyncio.create_task(bg_task())
+    app._tasks.append(asyncio.create_task(bg_task()))
 
 
 @app.before_serving
@@ -260,11 +273,14 @@ async def setup_downloader():
     Creates an instance of the downloader manager
     and starts it.
     """
+    if not hasattr(app, "db_pool"):
+        return
+
     async def bg_task():
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
-    asyncio.create_task(bg_task())
+    app._tasks.append(asyncio.create_task(bg_task()))
 
 
 @app.after_serving
@@ -273,8 +289,17 @@ async def cleanup():
     Closes the database pool and the
     aiohttp ClientSession on script closure.
     """
-    await app.db_pool.close()
-    await app.session.close()
+    for task in app._tasks:
+        try:
+            task.cancel()
+        except Exception:
+            pass
+
+    try:
+        await app.session.close()
+        await app.db_pool.close()
+    except Exception:
+        pass
 
 
 def run(with_ui: bool=True):
