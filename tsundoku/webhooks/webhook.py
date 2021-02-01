@@ -163,7 +163,7 @@ class WebhookBase:
                     webhook
                     (show_id, base)
                 SELECT id, ($1) FROM shows
-                ON CONFLICT DO NOTHING;
+                ON CONFLICT (show_id, base) DO NOTHING;
             """, base_id)
 
         instance = cls()
