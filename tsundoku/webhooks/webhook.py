@@ -163,7 +163,7 @@ class WebhookBase:
                     webhook
                     (show_id, base)
                 SELECT id, ($1) FROM shows
-                ON CONFLICT (show_id, base) DO NOTHING;
+                ON CONFLICT DO NOTHING;
             """, base_id)
 
         instance = cls()
@@ -288,7 +288,6 @@ class WebhookBase:
 class Webhook:
     _app: quart.Quart
 
-    wh_id: int
     show_id: int
     base: WebhookBase
 
@@ -302,53 +301,9 @@ class Webhook:
             The dict.
         """
         return {
-            "wh_id": self.wh_id,
             "show_id": self.show_id,
             "base": self.base.to_dict()
         }
-
-    @classmethod
-    async def from_wh_id(cls, app: quart.Quart, wh_id: int) -> Optional[Webhook]:
-        """
-        Returns a Webhook object from a webhook ID.
-
-        Parameters
-        ----------
-        app: quart.Quart
-            The app.
-        wh_id: int
-            The Webhook's ID.
-
-        Returns
-        -------
-        Optional[Webhook]
-            The requested webhook.
-        """
-        async with app.db_pool.acquire() as con:
-            wh = await con.fetchrow("""
-                SELECT
-                    show_id, base
-                FROM
-                    webhook
-                WHERE id=$1;
-            """, wh_id)
-
-        if not wh:
-            return
-
-        base = await WebhookBase.from_id(app, wh["base"])
-        if not base:
-            return
-
-        instance = cls()
-
-        instance._app = app
-
-        instance.wh_id = wh_id
-        instance.show_id = wh["show_id"]
-        instance.base = base
-
-        return instance
 
     @classmethod
     async def from_show_id(cls, app: quart.Quart, show_id: int) -> List[Webhook]:
@@ -397,6 +352,49 @@ class Webhook:
             instances.append(instance)
 
         return instances
+
+    @classmethod
+    async def from_composite(cls, app: quart.Quart, show_id: int, base_id: int) -> Optional[Webhook]:
+        """
+        Returns a webhook from its composite key.
+
+        Parameters
+        ----------
+        app: quart.Quart
+            The app.
+        show_id: int
+            The show's ID.
+        base_id: int
+            The webhook's base's ID.
+
+        Returns
+        -------
+        Optional[Webhook]
+            The found webhook.
+        """
+        async with app.db_pool.acquire() as con:
+            webhook = await con.fetchrow("""
+                SELECT
+                    id, base
+                FROM
+                    webhook
+                WHERE
+                    show_id=$1 AND base=$2;
+            """, show_id, base_id)
+
+        base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
+        if not base:
+            return
+
+        instance = cls()
+
+        instance._app = app
+
+        instance.wh_id = webhook["id"]
+        instance.show_id = show_id
+        instance.base = base
+
+        return instance
 
     async def get_triggers(self) -> List[str]:
         """

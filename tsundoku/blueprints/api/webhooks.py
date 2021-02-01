@@ -31,10 +31,9 @@ class WebhooksAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, show_id: int, wh_id: int=None) -> List[dict]:
+    async def get(self, show_id: int) -> List[dict]:
         """
-        Retrieve all webhooks or a specific webhook
-        for a specified show.
+        Retrieve all webhooks.
 
         Parameters
         ----------
@@ -48,24 +47,13 @@ class WebhooksAPI(views.MethodView):
         List[dict]
             A list of results.
         """
-        if wh_id is None:
-            webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
-            return APIResponse(
-                result=webhooks
-            )
-        else:
-            webhook = await Webhook.from_wh_id(app, wh_id)
-            if webhook:
-                return APIResponse(
-                    result=webhook.to_dict()
-                )
-            else:
-                return APIResponse(
-                    status=404,
-                    error="Show webhook with passed ID not found."
-                )
+        webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
+        return APIResponse(
+            result=webhooks
+        )
 
-    async def put(self, show_id: int, wh_id: int) -> dict:
+
+    async def put(self, show_id: int, base_id: int) -> dict:
         """
         Updates a specific webhook.
 
@@ -78,7 +66,7 @@ class WebhooksAPI(views.MethodView):
 
         :status 200: show webhook updated successfully
         :status 400: invalid parameters
-        :status 404: show webhook with passed id not found
+        :status 404: show webhook with passed base id not found, or show not found
 
         :form string[,] triggers: A comma-separated list of webhook triggers.
 
@@ -94,7 +82,9 @@ class WebhooksAPI(views.MethodView):
         if len(triggers) == 1 and not triggers[0]:
             triggers = []
 
-        wh = await Webhook.from_wh_id(app, wh_id)
+        wh = await Webhook.from_composite(app, show_id, base_id)
+
+        print(wh)
 
         if not wh:
             return APIResponse(status=404, error="Webhook with specified ID does not exist.")

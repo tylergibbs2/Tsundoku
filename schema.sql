@@ -2,14 +2,14 @@ CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved',
 CREATE TYPE webhook_service AS ENUM ('discord', 'slack', 'custom');
 
 CREATE TABLE users (
-    id SMALLSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE shows (
-    id SMALLSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     desired_format TEXT,
     desired_folder TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE shows (
 );
 
 CREATE TABLE show_entry (
-    id SMALLSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     show_id SMALLINT NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
     episode SMALLINT NOT NULL,
     current_state show_state NOT NULL DEFAULT 'downloading',
@@ -36,7 +36,7 @@ CREATE TABLE kitsu_info (
 );
 
 CREATE TABLE webhook_base (
-    id SMALLSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     base_service webhook_service NOT NULL,
     base_url TEXT NOT NULL,
@@ -44,10 +44,9 @@ CREATE TABLE webhook_base (
 );
 
 CREATE TABLE webhook (
-    id SMALLSERIAL PRIMARY KEY,
     show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
     base SMALLINT REFERENCES webhook_base(id) ON DELETE CASCADE,
-    UNIQUE (show_id, base)
+    PRIMARY KEY (show_id, base)
 );
 
 CREATE TABLE webhook_trigger (

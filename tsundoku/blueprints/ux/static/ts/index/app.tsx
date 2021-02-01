@@ -239,7 +239,7 @@ function addRowToShowWebhookTable(webhook: Webhook) {
 
     let row = table.insertRow(-1);
     $(row).addClass("has-text-centered");
-    $(row).data("webhook", webhook.wh_id);
+    $(row).data("webhook", webhook.base.base_id);
     $(row).data("show", webhook.show_id);
 
     let cell_basewh: HTMLTableCellElement = row.insertCell(0);
