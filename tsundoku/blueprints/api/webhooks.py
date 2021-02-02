@@ -84,8 +84,6 @@ class WebhooksAPI(views.MethodView):
 
         wh = await Webhook.from_composite(app, show_id, base_id)
 
-        print(wh)
-
         if not wh:
             return APIResponse(status=404, error="Webhook with specified ID does not exist.")
         elif not all(t in valid_triggers for t in triggers):
