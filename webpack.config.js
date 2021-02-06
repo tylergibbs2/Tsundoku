@@ -1,4 +1,5 @@
 const path = require('path');
+const WebpackFluentPlugin = require('./l10n/WebpackFluentPlugin.js');
 
 module.exports = {
   entry: {
@@ -16,6 +17,11 @@ module.exports = {
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.js/,
+        include: /@fluent[\\/](bundle|langneg|syntax)[\\/]/,
+        type: "javascript/auto",
       }
     ],
   },
@@ -27,6 +33,7 @@ module.exports = {
       '~': path.resolve('./node_modules')
     }
   },
+  plugins: [new WebpackFluentPlugin()],
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'tsundoku/blueprints/ux/static/js/'),
