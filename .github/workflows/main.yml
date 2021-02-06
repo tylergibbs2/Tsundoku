@@ -1,5 +1,10 @@
 name: main
-on: push
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
 
 jobs:
   build:
@@ -7,6 +12,8 @@ jobs:
     name: Build
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Setup Node & Install Yarn
         uses: actions/setup-node@v2
@@ -22,10 +29,15 @@ jobs:
       - name: Install packages
         run: yarn install
 
+      - run: echo !tsundoku/blueprints/ux/static/js/*.js >> .gitignore
+
       - name: Build JS
         run: yarn build
 
-      - uses: stefanzweifel/git-auto-commit-action@v4
-          with:
-            commit_message: Apply built JavaScript
-            file_pattern: *.js
+      - name: Add, commit, and push changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add tsundoku/blueprints/ux/static/js/*.js
+          git commit -m 'JS Autobuild'
+          git push --force
