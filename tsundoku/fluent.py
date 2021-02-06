@@ -1,16 +1,14 @@
-from pathlib import Path
 from typing import List
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 
 def get_injector(locale: str, resources: List[str]):
-    locale_dir = Path.cwd() / "l10n/{locale}"
-    loader = FluentResourceLoader(str(locale_dir))
+    loader = FluentResourceLoader("l10n/{locale}")
 
     resources = [f"{r}.ftl" for r in resources]
 
-    fluent = FluentLocalization([locale], resources, loader)
+    fluent = FluentLocalization([locale, "en"], resources, loader)
     fluent._ = fluent.format_value
 
     return fluent
