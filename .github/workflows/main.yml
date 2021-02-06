@@ -24,3 +24,8 @@ jobs:
 
       - name: Build JS
         run: yarn build
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+          with:
+            commit_message: Apply built JavaScript
+            file_pattern: *.js

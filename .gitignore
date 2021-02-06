@@ -19,3 +19,6 @@ tsundoku.log
 # Node modules
 node_modules
 act
+
+# Ignore built JS
+tsundoku/blueprints/ux/static/js/*.js
