@@ -28,6 +28,7 @@ existing-show-field = Show
 
 name-tt = Name of the title as it appears in the RSS feed.
 name-field = Name
+name-placeholder = Show title
 
 desired-format-tt = Desired name of the file after it is renamed.
 desired-format-field = Desired Format

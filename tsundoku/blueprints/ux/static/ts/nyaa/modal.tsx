@@ -85,8 +85,8 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 <section class="modal-card-body">
                     <div class="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
-                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {addNewShow}}>{_("modal-tab-new")}</a></li>
-                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {addToExisting}}>{_("modal-tab-existing")}</a></li>
+                            <li class={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>{_("modal-tab-new")}</a></li>
+                            <li class={addingToExisting ? "is-active" : ""}><a onClick={addToExisting}>{_("modal-tab-existing")}</a></li>
                         </ul>
                     </div>
                     <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
@@ -232,6 +232,10 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                         data-tooltip={_("name-tt")}>{_("name-field")}</span>
                 </label>
+                <div class="control">
+                    <input name="title" ref={register({ required: true })} class="input" type="text"
+                        placeholder={_("name-placeholder")} />
+                </div>
             </div>
 
             <div class="field">
