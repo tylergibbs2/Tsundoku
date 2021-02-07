@@ -199,7 +199,8 @@ async def login():
         return redirect(url_for("ux.index"))
 
     if request.method == "GET":
-        return await render_template("login.html")
+        fluent = get_injector(["login"])
+        return await render_template("login.html", {"_": fluent.format_value})
     else:
         resources = [
             "login"
