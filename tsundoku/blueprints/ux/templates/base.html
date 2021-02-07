@@ -4,7 +4,7 @@
 <head>
     <!-- Page Meta -->
     <meta charset="UTF-8">
-    <title>積ん読 ANIME</title>
+    <title>{{ _("page-title") }}</title>
     <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
 
     <!-- CSS -->
@@ -18,6 +18,10 @@
     <link rel="stylesheet" href="https://unpkg.com/bulma-modal-fx/dist/css/modal-fx.min.css"
         integrity="sha384-2EzQg7I8N+khgGamQGW3EG0Dzz5Kx6mPuxN7er0BRJ2iKZZHQCfi9g1LjrmOfvHV" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    <script>
+        window["LOCALE"] = "{{LOCALE}}";
+    </script>
 
     <!-- JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"
@@ -46,25 +50,25 @@
             <div class="dashboard-panel-content">
                 <aside class="menu has-text-white">
                     <p class="menu-label">
-                        General
+                        {{ _("category-general") }}
                     </p>
                     <ul class="menu-list">
-                        <li><a href="{{ url_for('ux.index') }}" class="{% block nav_index %}{% endblock %}">Shows</a></li>
-                        <li><a href="{{ url_for('ux.nyaa_search') }}" class="{% block nav_nyaa %}{% endblock %}">Nyaa Search</a></li>
+                        <li><a href="{{ url_for('ux.index') }}" class="{% block nav_index %}{% endblock %}">{{ _("page-shows") }}</a></li>
+                        <li><a href="{{ url_for('ux.nyaa_search') }}" class="{% block nav_nyaa %}{% endblock %}">{{ _("page-nyaa") }}</a></li>
                     </ul>
                     <p class="menu-label">
-                        Settings
+                        {{ _("category-settings") }}
                     </p>
                     <ul class="menu-list">
-                        <li><a>Integrations</a></li>
-                        <li><a href="{{ url_for('ux.webhooks') }}" class="{% block nav_webhooks %}{% endblock %}">Webhooks</a></li>
-                        <li><a>Config</a></li>
+                        <li><a>{{ _("page-integrations") }}</a></li>
+                        <li><a href="{{ url_for('ux.webhooks') }}" class="{% block nav_webhooks %}{% endblock %}">{{ _("page-webhooks") }}</a></li>
+                        <li><a>{{ _("page-config") }}</a></li>
                     </ul>
                 </aside>
             </div>
 
             <div class="menu-panel-footer has-text-centered is-size-7">
-                <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small">Logout</a>
+                <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small">{{ _("logout-button") }}</a>
                 <p class="mt-4">Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}</p>
                 <p><b>Tsundoku</b> is an <a href="https://github.com/tylergibbs2/Tsundoku">open-source project.</a></p>
                 <p>Copyright (c) 2020-2021 Tyler Gibbs</p>

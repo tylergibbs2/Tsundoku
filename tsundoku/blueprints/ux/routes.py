@@ -2,12 +2,12 @@ import os
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import abort, Blueprint, flash, render_template, redirect, url_for
+from quart import abort, Blueprint, flash, render_template, redirect, request, url_for
 from quart import current_app as app
-from quart import request
 from quart_auth import current_user, login_user, logout_user, login_required
 
 from tsundoku import __version__ as version
+from tsundoku.fluent import get_injector
 from tsundoku.kitsu import KitsuManager
 from tsundoku.webhooks import Webhook, WebhookBase
 from tsundoku.git import update, check_for_updates
@@ -23,18 +23,9 @@ ux_blueprint = Blueprint(
 )
 hasher = PasswordHasher()
 
-status_html_map = {
-    "current": "<span class='img-overlay-span tag is-success'>Airing</span>",
-    "finished": "<span class='img-overlay-span tag is-danger'>Finished</span>",
-    "tba": "<span class='img-overlay-span tag is-warning'>TBA</span>",
-    "unreleased": "<span class='img-overlay-span tag is-info'>Unreleased</span>",
-    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>"
-}
-
 
 @ux_blueprint.context_processor
 async def update_context():
-
     async with app.db_pool.acquire() as con:
         shows = await con.fetchval("""
             SELECT
@@ -67,6 +58,23 @@ async def update_context():
 @login_required
 async def index():
     ctx = {}
+
+    resources = [
+        "base",
+        "index"
+    ]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
+
+    status_html_map = {
+        "current": f"<span class='img-overlay-span tag is-success'>{fluent._('status-airing')}</span>",
+        "finished": f"<span class='img-overlay-span tag is-danger'>{fluent._('status-finished')}</span>",
+        "tba": f"<span class='img-overlay-span tag is-warning'>{fluent._('status-tba')}</span>",
+        "unreleased": f"<span class='img-overlay-span tag is-info'>{fluent._('status-unreleased')}</span>",
+        "upcoming": f"<span class='img-overlay-span tag is-primary'>{fluent._('status-upcoming')}</span>"
+    }
+
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
             SELECT
@@ -94,6 +102,9 @@ async def index():
                 ORDER BY episode ASC;
             """, s["id"])
             s["entries"] = [dict(e) for e in entries]
+            for e in s["entries"]:
+                e["current_state"] = fluent.format_value(f"entry-status-{e['current_state']}")
+
             s["webhooks"] = []
             webhooks = await Webhook.from_show_id(app, s["id"])
             for webhook in webhooks:
@@ -116,9 +127,9 @@ async def index():
     ctx["seen_titles"] = list(app.seen_titles)
 
     if not len(app.rss_parsers):
-        await flash("No RSS parsers installed.")
+        await flash(fluent._("no-rss-parsers"))
     elif not len(app.seen_titles):
-        await flash("No shows found, is there an error with your parsers?")
+        await flash(fluent._("no-shows-found"))
 
     return await render_template("index.html", **ctx)
 
@@ -127,6 +138,13 @@ async def index():
 @login_required
 async def nyaa_search():
     ctx = {}
+
+    resources = [
+        "base"
+    ]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
 
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
@@ -148,6 +166,14 @@ async def nyaa_search():
 @login_required
 async def webhooks():
     ctx = {}
+
+    resources = [
+        "base",
+        "webhooks"
+    ]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
 
     all_bases = await WebhookBase.all(app)
     all_bases = [b.to_dict() for b in all_bases]
@@ -175,12 +201,17 @@ async def login():
     if request.method == "GET":
         return await render_template("login.html")
     else:
+        resources = [
+            "login"
+        ]
+        fluent = get_injector(resources)
+
         form = await request.form
 
         username = form.get("username")
         password = form.get("password")
         if username is None or password is None:
-            return abort(400, "Login Form missing required data.")
+            return abort(400, fluent._("form-missing-data"))
 
         async with app.db_pool.acquire() as con:
             user_data = await con.fetchrow("""
@@ -193,12 +224,12 @@ async def login():
             """, username.lower())
 
         if not user_data:
-            return abort(401, "Invalid username and password combination.")
+            return abort(401, fluent._("invalid-credentials"))
 
         try:
             hasher.verify(user_data["password_hash"], password)
         except VerifyMismatchError:
-            return abort(401, "Invalid username and password combination.")
+            return abort(401, fluent._("invalid-credentials"))
 
         if hasher.check_needs_rehash(user_data["password_hash"]):
             async with app.db_pool.acquire() as con:

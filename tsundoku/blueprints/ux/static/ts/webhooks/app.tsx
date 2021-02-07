@@ -1,7 +1,15 @@
 import {} from "../patch";
 import { WebhookBase } from "../interfaces";
+import { getInjector } from "../fluent";
+
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
+
+let resources = [
+    "webhooks"
+];
+
+const _ = getInjector(resources);
 
 function submitAddWebhookForm(event: Event) {
     event.preventDefault();
@@ -69,7 +77,7 @@ function openDeleteWebhookModal(webhook: WebhookBase) {
             }
         );
     });
-    $("#item-to-delete-name").text(webhook.name);
+    $("#delete-confirm-text").html(_("delete-confirm-text", {"name": webhook.name}));
 
     $(document.documentElement).addClass("is-clipped");
     $("#delete-webhook-modal").addClass("is-active");

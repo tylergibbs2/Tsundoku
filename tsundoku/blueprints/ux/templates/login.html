@@ -7,6 +7,10 @@
     <title>積ん読 ANIME</title>
     <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
 
+    <script>
+        window["LOCALE"] = "{{LOCALE}}";
+    </script>
+
     <!-- CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.0/css/bulma.min.css"
         integrity="sha512-ADrqa2PY1TZtb/MoLZIZu/Z/LlPaWQeDMBV73EMwjGam43/JJ5fqW38Rq8LJOVGCDfrJeOMS3Q/wRUVzW5DkjQ=="
@@ -20,25 +24,25 @@
             <div class="column is-one-quarter">
                 <form action="{{ url_for('ux.login') }}" method="POST">
                     <div class="field">
-                        <label class="label">Username</label>
-                        <input class="input" type="text" name="username" placeholder="Username" required>
+                        <label class="label">{{ _("username") }}</label>
+                        <input class="input" type="text" name="username" placeholder="{{ _('username') }}" required>
                     </div>
 
                     <div class="field">
-                        <label class="label">Password</label>
+                        <label class="label">{{ _("password") }}</label>
                         <input class="input" type="password" name="password" placeholder="••••••••" required>
                     </div>
 
                     <div class="field">
                         <label class="checkbox">
                             <input name="remember" type="checkbox">
-                            Remember me
+                            {{ _("remember-me") }}
                         </label>
                     </div>
 
                     <div class="field has-text-centered">
                         <div class="control">
-                            <button type="submit" class="button is-link">Login</button>
+                            <button type="submit" class="button is-link">{{ _("login-button") }}</button>
                         </div>
                 </form>
             </div>

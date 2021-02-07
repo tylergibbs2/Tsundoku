@@ -2,7 +2,7 @@
     <div class="modal-background" onclick="closeWebhookModals();"></div>
     <div class="modal-card">
         <header class="modal-card-head">
-            <p class="modal-card-title">Add Webhook</p>
+            <p class="modal-card-title">{{_("add-modal-header")}}</p>
             <button class="delete" onclick="closeWebhookModals();" aria-label="close"></button>
         </header>
 
@@ -11,17 +11,17 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Name of the webhook, only for display purposes.">Name</span>
+                            data-tooltip="{{_('add-form-name-tt')}}">{{_("add-form-name-field")}}</span>
                     </label>
                     <div class="control">
-                        <input name="name" class="input" type="text" placeholder="My Webhook" required>
+                        <input name="name" class="input" type="text" placeholder="{{_('add-form-name-placeholder')}}" required>
                     </div>
                 </div>
 
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="The service that the webhook posts to.">Service</span>
+                            data-tooltip="{{_('add-form-service-tt')}}">{{_("add-form-service-field")}}</span>
                     </label>
                     <div class="select">
                         <select name="service">
@@ -34,7 +34,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="URL that the webhook posts to.">URL</span>
+                            data-tooltip="{{_('add-form-url-tt')}}">{{_("add-form-url-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="url" class="input" pattern="https://.*" type="url" required>
@@ -44,7 +44,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="The format that the content will be sent in.">Content Format</span>
+                            data-tooltip="{{_('add-form-content-tt')}}">{{_("add-form-content-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="content_fmt" class="input" type="text" placeholder="{name}, episode {episode}, has been marked as {state}">
@@ -56,8 +56,8 @@
 
         <footer class="modal-card-foot is-size-7">
             <input class="button is-success" type="submit" form="add-webhook-form"
-                value="Add webhook"></button>
-            <button class="button closes-modals" onclick="closeWebhookModals();">Cancel</button>
+                value="{{_('add-form-add-button')}}"></button>
+            <button class="button closes-modals" onclick="closeWebhookModals();">{{_('add-form-cancel-button')}}</button>
         </footer>
     </div>
 </div>

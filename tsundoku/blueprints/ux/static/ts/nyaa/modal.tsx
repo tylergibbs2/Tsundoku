@@ -3,6 +3,15 @@ import { NyaaIndividualResult, Show } from "../interfaces";
 import { toast } from "bulma-toast";
 import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
+import { getInjector } from "../fluent";
+
+
+let resources = [
+    "nyaa_search"
+];
+
+const _ = getInjector(resources);
+
 
 interface NyaaShowModalParams {
     shows: Show[];
@@ -49,7 +58,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 setAddingToExisting(true);
                 setShowId(null);
                 toast({
-                    message: `Successfully added release! Processing ${addedCount} new entr${addedCount === 1 ? "y" : "ies"}.`,
+                    message: _("entry-add-success", {"count": addedCount}),
                     duration: 5000,
                     position: "bottom-right",
                     type: "is-success",
@@ -69,15 +78,15 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
             <div class="modal-background" onClick={submitting ? null : closeModal}></div>
             <div class="modal-card">
                 <header class="modal-card-head">
-                    <p class="modal-card-title">Add Search Result</p>
+                    <p class="modal-card-title">{_("modal-title")}</p>
                     <button onClick={submitting ? null : closeModal} class="delete" aria-label="close"></button>
                 </header>
 
                 <section class="modal-card-body">
                     <div class="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
-                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {addNewShow}}>New Show</a></li>
-                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {addToExisting}}>Add to Existing</a></li>
+                            <li class={addingToExisting ? "" : "is-active"}><a onClick={() => {addNewShow}}>{_("modal-tab-new")}</a></li>
+                            <li class={addingToExisting ? "is-active" : ""}><a onClick={() => {addToExisting}}>{_("modal-tab-existing")}</a></li>
                         </ul>
                     </div>
                     <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
@@ -86,8 +95,8 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 <footer class="modal-card-foot is-size-7">
                     <progress class={"progress is-primary is-small mt-2 " + (submitting ? "" : "is-hidden")} max="100"></progress>
                     <div class={submitting ? "is-hidden" : ""}>
-                        <input class="button is-success" type="submit" form="nyaa-result-form" value="Add release"></input>
-                        <button onClick={submitting ? null : closeModal} class="button">Cancel</button>
+                        <input class="button is-success" type="submit" form="nyaa-result-form" value={_("add-button")}></input>
+                        <button onClick={submitting ? null : closeModal} class="button">{_("cancel-button")}</button>
                     </div>
                 </footer>
             </div>
@@ -157,7 +166,7 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Existing show you want to add this release to.">Show</span>
+                        data-tooltip={_("existing-show-tt")}>{_("existing-show-field")}</span>
                 </label>
                 <div class="select">
                     <ExistingShowSelect register={register} name="existingShow" shows={shows} />
@@ -221,21 +230,14 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Name of the title as it appears in the RSS feed.">Name</span>
+                        data-tooltip={_("name-tt")}>{_("name-field")}</span>
                 </label>
-                <div class="control">
-                    <input name="title" ref={register({ required: true })} class="input awesomplete" list="titles-datalist" type="text"
-                        placeholder="Show title" />
-                    <datalist id="titles-datalist">
-                        <option></option>
-                    </datalist>
-                </div>
             </div>
 
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Desired name of the file after it is renamed.">Desired Format</span>
+                        data-tooltip={_("desired-format-tt")}>{_("desired-format-field")}</span>
                 </label>
                 <div class="control">
                     <input name="desired_format" ref={register} class="input" type="text" placeholder="{n} - {s00e00}" />
@@ -245,7 +247,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Folder which to place the completed file.">Desired Folder</span>
+                        data-tooltip={_("desired-folder-tt")}>{_("desired-folder-field")}</span>
                 </label>
                 <div class="control">
                     <input name="desired_folder" ref={register} class="input" type="text" />
@@ -255,7 +257,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Value to use for the season of the series when renaming.">Season</span>
+                        data-tooltip={_("season-tt")}>{_("season-field")}</span>
                 </label>
                 <div class="control">
                     <input name="season" ref={register({ required: true })} class="input" type="number" />
@@ -265,8 +267,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip="Positive or negative value by which to modify the episode number as it appears in the RSS feed.">Episode
-            Offset</span>
+                        data-tooltip={_("episode-offset-tt")}>{_("episode-offset-field")}</span>
                 </label>
                 <div class="control">
                     <input name="episode_offset" ref={register({ required: true })} class="input" type="number" />

@@ -1,9 +1,16 @@
 import { useState, StateUpdater } from "preact/hooks";
 
 import { NyaaSearchResult, NyaaIndividualResult } from "../interfaces";
+import { getInjector } from "../fluent";
 
 
 const NyaaSearchURL = "/api/v1/nyaa";
+
+let resources = [
+    "nyaa_search"
+];
+
+const _ = getInjector(resources);
 
 interface SearchBoxParams {
     setResults: StateUpdater<NyaaIndividualResult[]>;
@@ -39,7 +46,7 @@ export const SearchBox = ({ setResults }: SearchBoxParams) => {
 
     return (
         <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
-            <input class="input" type="text" placeholder="Attack on Titan" onInput={updateQuery} disabled={isSearching}></input>
+            <input class="input" type="text" placeholder={_("search-placeholder")} onInput={updateQuery} disabled={isSearching}></input>
             <span class="icon is-small is-left">
                 <i class="fas fa-search"></i>
             </span>
@@ -50,8 +57,8 @@ export const SearchBox = ({ setResults }: SearchBoxParams) => {
 export const SpaceHolder = () => {
     return (
         <div class="container has-text-centered my-6">
-            <h3 class="title is-3">Nothing to see here!</h3>
-            <h4 class="subtitle is-5">Start searching to see some results.</h4>
+            <h3 class="title is-3">{_("search-empty-results")}</h3>
+            <h4 class="subtitle is-5">{_("search-start-searching")}</h4>
         </div>
     )
 }
@@ -67,12 +74,12 @@ export const SearchTable = ({ setChoice, results }: SearchTableParams) => {
             <table class="table is-hoverable is-fullwidth">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Date</th>
-                        <th title="Seeders"><span class="icon"><i class="fas fa-arrow-up"></i></span></th>
-                        <th title="Leechers"><span class="icon"><i class="fas fa-arrow-down"></i></span></th>
-                        <th title="Link to Post"><span class="icon"><i class="fas fa-link"></i></span></th>
+                        <th>{_("search-th-name")}</th>
+                        <th>{_("search-th-size")}</th>
+                        <th>{_("search-th-date")}</th>
+                        <th title={_("search-th-seeders")}><span class="icon"><i class="fas fa-arrow-up"></i></span></th>
+                        <th title={_("search-th-leechers")}><span class="icon"><i class="fas fa-arrow-down"></i></span></th>
+                        <th title={_("search-th-link")}><span class="icon"><i class="fas fa-link"></i></span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,7 +115,7 @@ const SearchTableRow = ({ setChoice, show }: SearchTableRowParams) => {
             <td>{show.published}</td>
             <td class="has-text-success">{show.seeders}</td>
             <td class="has-text-danger">{show.leechers}</td>
-            <td><a href={show.post_link}>Link</a></td>
+            <td><a href={show.post_link}>{_("search-item-link")}</a></td>
         </tr>
     )
 }

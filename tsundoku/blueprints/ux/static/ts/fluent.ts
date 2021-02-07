@@ -2,7 +2,9 @@ import "intl-pluralrules";
 import { FluentBundle, FluentResource } from "@fluent/bundle";
 
 
-export const getInjector = (locale: string, resources: string[]) => {
+export const getInjector = (resources: string[]) => {
+    let locale: string = window["LOCALE"];
+
     let bundle = new FluentBundle(locale);
     let fallbackBundle = new FluentBundle("en");
 

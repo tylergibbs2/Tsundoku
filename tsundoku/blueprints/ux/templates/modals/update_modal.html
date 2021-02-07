@@ -3,22 +3,20 @@
     <div class="modal-background" onclick="closeModals();"></div>
     <div class="modal-card">
         <header class="modal-card-head">
-            <p class="modal-card-title">Tsundoku Update Detected</p>
+            <p class="modal-card-title">{{ _("update-detected") }}</p>
             <button class="delete" onclick="closeModals();" aria-label="close"></button>
         </header>
 
         <section class="modal-card-body">
-            <p class="has-text-centered">You are currently <b>{{ updates|length }}</b> commit{% if updates|length > 1 %}s{% endif %} behind!</p>
+            <p class="has-text-centered">{{ _("update-commits-behind", {'count': updates|length}) }}</p>
             <hr>
-            <p>Would you like to update? The most recent
-                {% if updates|length > 10 %}10{% else %}{{ updates|length }}{% endif %} commit{% if updates|length > 1 %}s{% endif %} are
-                displayed below, most recent at the top.</p>
+            <p>{{ _("update-prompt", {'count': updates|length}) }}</p>
             <div class="table-container">
                 <table class="table is-fullwidth">
                     <thead>
                         <tr>
-                            <th>Commit #</th>
-                            <th>Message</th>
+                            <th>{{ _("update-th-commit") }}</th>
+                            <th>{{ _("update-th-message") }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,8 +43,8 @@
 
         <footer class="modal-card-foot">
             <progress id="updating-pg-bar" class="progress is-large is-primary is-hidden" max="100"></progress>
-            <button id="update-button" class="button is-primary" onclick="updateTsundoku();">Update</button>
-            <button id="close-update-modal-button" class="button" onclick="closeModals();">No, not now</button>
+            <button id="update-button" class="button is-primary" onclick="updateTsundoku();">{{ _("update-button" )}}</button>
+            <button id="close-update-modal-button" class="button" onclick="closeModals();">{{ _("update-close-button") }}</button>
         </footer>
     </div>
 </div>

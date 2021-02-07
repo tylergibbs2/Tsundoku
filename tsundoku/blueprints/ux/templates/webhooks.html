@@ -23,8 +23,8 @@
 
 <section class="section">
     <div class="container mb-3">
-        <h1 class="title">Webhooks</h1>
-        <h2 class="subtitle">Usable by your tracked shows</h2>
+        <h1 class="title">{{_("webhooks-page-title")}}</h1>
+        <h2 class="subtitle">{{_("webhooks-page-subtitle")}}</h2>
     </div>
 
     <div id="webhook-card-container" class="container">
@@ -50,30 +50,30 @@
                     </header>
                     <div class="card-content">
                         <p class="is-size-6 has-text-centered py-4">
-                            <b>{% if webhook.valid %}🟢 Connected{% else %}🔴 Connection Error{% endif %}</b>
+                            <b>{% if webhook.valid %}{{_("webhook-status-valid")}}{% else %}{{_("webhook-status-invalid")}}{% endif %}</b>
                         </p>
                     </div>
                     <footer class="card-footer">
                         <p class="card-footer-item">
-                            <a onclick='openEditWebhookModal( {{ webhook|tojson }} );'>Edit</a>
+                            <a onclick='openEditWebhookModal( {{ webhook|tojson }} );'>{{_("webhook-edit-link")}}</a>
                         </p>
                         <p class="card-footer-item">
-                            <a onclick='openDeleteWebhookModal( {{ webhook|tojson }} );'>Delete</a>
+                            <a onclick='openDeleteWebhookModal( {{ webhook|tojson }} );'>{{_("webhook-delete-link")}}</a>
                         </p>
                     </footer>
                 </div>
             </div>
             {% else %}
             <div class="container has-text-centered my-6">
-                <h3 class="title is-3">Nothing to see here!</h3>
-                <h4 class="subtitle is-5">Begin by adding a webhook below.</h4>
+                <h3 class="title is-3">{{_("webhook-page-empty")}}</h3>
+                <h4 class="subtitle is-5">{{_("webhook-page-empty-subtitle")}}</h4>
             </div>
             {% endfor %}
         </div>
     </div>
 
     <div class="container has-text-centered mt-3">
-        <button class="button is-medium is-success" onclick="openAddWebhookModal();">Add webhook</button>
+        <button class="button is-medium is-success" onclick="openAddWebhookModal();">{{_("webhook-add-button")}}</button>
     </div>
 </section>
 

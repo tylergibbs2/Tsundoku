@@ -2,7 +2,7 @@
     <div class="modal-background" onclick="closeModals();"></div>
     <div class="modal-card">
         <header class="modal-card-head">
-            <p class="modal-card-title">Add Show</p>
+            <p class="modal-card-title">{{_("add-modal-header")}}</p>
             <button class="delete" onclick="closeModals();" aria-label="close"></button>
         </header>
 
@@ -11,7 +11,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Name of the title as it appears in the RSS feed.">Name</span>
+                            data-tooltip="{{_('add-form-name-tt')}}">{{_("add-form-name-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="title" class="input awesomplete" list="titles-datalist" type="text"
@@ -27,7 +27,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Desired name of the file after it is renamed.">Desired Format</span>
+                            data-tooltip="{{_('add-form-desired-format-tt')}}">{{_("add-form-desired-format-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="desired_format" class="input" type="text" placeholder="{n} - {s00e00}">
@@ -37,7 +37,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Folder which to place the completed file.">Desired Folder</span>
+                            data-tooltip="{{_('add-form-desired-folder-tt')}}">{{_("add-form-desired-folder-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="desired_folder" class="input" type="text">
@@ -47,7 +47,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Value to use for the season of the series when renaming.">Season</span>
+                            data-tooltip="{{_('add-form-season-tt')}}">{{_("add-form-season-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="season" class="input" type="number" value="1" required>
@@ -57,8 +57,7 @@
                 <div class="field">
                     <label class="label">
                         <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                            data-tooltip="Positive or negative value by which to modify the episode number as it appears in the RSS feed.">Episode
-                            Offset</span>
+                            data-tooltip="{{_('add-form-episode-offset-tt')}}">{{_("add-form-episode-offset-field")}}</span>
                     </label>
                     <div class="control">
                         <input name="episode_offset" class="input" type="number" value="0" required>
@@ -69,8 +68,8 @@
 
         <footer class="modal-card-foot is-size-7">
             <progress class="progress is-primary is-hidden is-small mt-2" max="100"></progress>
-            <input class="button is-success submits-modals" type="submit" form="add-show-form" value="Add show">
-            <button class="button closes-modals" onclick="closeModals();">Cancel</button>
+            <input class="button is-success submits-modals" type="submit" form="add-show-form" value="{{_('add-form-add-button')}}">
+            <button class="button closes-modals" onclick="closeModals();">{{_("add-form-cancel-button")}}</button>
         </footer>
     </div>
 </div>

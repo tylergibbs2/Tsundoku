@@ -4,8 +4,15 @@ import { useState, useEffect } from "preact/hooks";
 import { NyaaIndividualResult, Show } from "../interfaces";
 import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
+import { getInjector } from "../fluent";
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
+
+let resources = [
+    "nyaa_search"
+];
+
+const _ = getInjector(resources);
 
 const NyaaSearchApp = () => {
     const [userShows, setUserShows] = useState<Show[]>([]);
@@ -24,7 +31,7 @@ const NyaaSearchApp = () => {
             .then((res) => {
                 if (res.ok)
                     return res.json();
-                else {}
+                else { }
             })
             .then((res: any) => {
                 setUserShows(res.result);
@@ -33,12 +40,12 @@ const NyaaSearchApp = () => {
 
     return (
         <div class={choice ? "is-clipped" : ""}>
-            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows}/>
+            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows} />
             <div class="columns is-vcentered">
                 <div class="column is-4">
                     <div class="container">
-                        <h1 class="title">Nyaa Search</h1>
-                        <h2 class="subtitle">Search for anime releases</h2>
+                        <h1 class="title">{_("nyaa-page-title")}</h1>
+                        <h2 class="subtitle">{_("nyaa-page-subtitle")}</h2>
                     </div>
                 </div>
                 <div class="column is-4 is-offset-4">

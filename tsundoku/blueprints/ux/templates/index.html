@@ -31,8 +31,8 @@
 
 <section class="section">
     <div class="container mb-3">
-        <h1 class="title">Shows</h1>
-        <h2 class="subtitle">Tracked shows in RSS</h2>
+        <h1 class="title">{{ _("shows-page-title") }}</h1>
+        <h2 class="subtitle">{{ _("shows-page-subtitle") }}</h2>
     </div>
 
     <div id="show-card-container" class="container">
@@ -70,35 +70,35 @@
                     </div>
                     <footer class="card-footer">
                         <p class="card-footer-item">
-                            <a onclick='openEditShowModal( {{ show|tojson }} );'>Edit</a>
+                            <a onclick='openEditShowModal( {{ show|tojson }} );'>{{ _("show-edit-link") }}</a>
                         </p>
                         <p class="card-footer-item">
-                            <a onclick='openDeleteShowModal( {{ show|tojson }} );'>Delete</a>
+                            <a onclick='openDeleteShowModal( {{ show|tojson }} );'>{{ _("show-delete-link") }}</a>
                         </p>
                     </footer>
                 </div>
             </div>
             {% else %}
             <div class="container has-text-centered my-6">
-                <h3 class="title is-3">Nothing to see here!</h3>
-                <h4 class="subtitle is-5">Begin by adding a show below.</h4>
+                <h3 class="title is-3">{{ _("empty-show-container") }}</h3>
+                <h4 class="subtitle is-5">{{ _("empty-show-container-help") }}</h4>
             </div>
             {% endfor %}
         </div>
         {% if not_shown.value %}
         <a id="all-shows-link">
             <p class="has-text-centered">
-                Click to see {{ not_shown.value}} more item{% if not_shown.value > 1 %}s{% endif %}...
+                {{ _("click-for-more-shows", {'not_shown': not_shown.value}) }}
             </p>
         </a>
         <a id="back-to-top-link" class="is-hidden">
-            <p class="has-text-centered">Back to Top</p>
+            <p class="has-text-centered">{{ _("back-to-top-link") }}</p>
         </a>
         {% endif %}
     </div>
 
     <div class="has-text-centered mt-3">
-        <button class="button is-medium is-success" onclick="openAddShowModal();">Add show</button>
+        <button class="button is-medium is-success" onclick="openAddShowModal();">{{ _("add-show-button") }}</button>
     </div>
 
 </section>

@@ -302,6 +302,16 @@ async def cleanup():
         pass
 
 
+@ux_blueprint.context_processor
+async def insert_locale():
+    try:
+        locale = get_config_value("Tsundoku", "locale")
+    except KeyError:
+        locale = "en"
+
+    return {"LOCALE": locale}
+
+
 def run(with_ui: bool=True):
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")

@@ -2,17 +2,17 @@
     <div class="modal-background" onclick="closeWebhookModals();"></div>
     <div class="modal-card">
         <header class="modal-card-head">
-            <p class="modal-card-title">Delete Webhook</p>
+            <p class="modal-card-title">{{_("delete-modal-header")}}</p>
             <button class="delete" onclick="closeWebhookModals();" aria-label="close"></button>
         </header>
 
         <section class="modal-card-body">
-            <p>Are you sure you want to delete <b><span id="item-to-delete-name"></span></b>?</p>
+            <p id="delete-confirm-text"></p>
         </section>
 
         <footer class="modal-card-foot">
-            <button id="delete-webhook-button" class="button is-danger">Delete</button>
-            <button class="button" onclick="closeWebhookModals();">No, take me back</button>
+            <button id="delete-webhook-button" class="button is-danger">{{_("delete-confirm-button")}}</button>
+            <button class="button" onclick="closeWebhookModals();">{{_("delete-cancel")}}</button>
         </footer>
     </div>
 </div>

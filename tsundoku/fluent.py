@@ -2,8 +2,15 @@ from typing import List
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
+from tsundoku.config import get_config_value
 
-def get_injector(locale: str, resources: List[str]):
+
+def get_injector(resources: List[str]):
+    try:
+        locale = get_config_value("Tsundoku", "locale")
+    except KeyError:
+        locale = "en"
+
     loader = FluentResourceLoader("l10n/{locale}")
 
     resources = [f"{r}.ftl" for r in resources]

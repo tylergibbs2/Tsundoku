@@ -1,6 +1,7 @@
 import {} from "../patch";
 
 import { Show, PartialEntry, Webhook } from "../interfaces";
+import { getInjector } from "../fluent";
 
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
@@ -11,6 +12,14 @@ var entriesToAdd: any[] = [];
 var all_triggers: string[] = ["downloading", "downloaded", "renamed", "moved", "completed"];
 
 var modalsCanBeClosed: boolean = true;
+
+
+let resources = [
+    "base",
+    "index"
+];
+
+const _ = getInjector(resources);
 
 
 function showAddorEditProgressBars() {
@@ -174,7 +183,7 @@ function bufferShowEntryAddition(event: Event) {
     let entry = {
         "id": 0,
         "show_id": show_id,
-        "current_state": "buffered",
+        "current_state": _("entry-status-buffered"),
         "episode": episode
     }
     addRowToShowEntryTable(entry);
@@ -221,7 +230,7 @@ function addRowToShowEntryTable(entry: PartialEntry) {
     $(deleteBtn).addClass("delete");
 
     $(deleteBtn).on("click", function () {
-        if (entry.current_state !== "buffered")
+        if (entry.current_state !== _("entry-status-buffered"))
             bufferShowEntryDeletion(entry.show_id, entry.id);
         entriesToAdd = entriesToAdd.filter(function (entryToAdd) {
             return entryToAdd[1] != entry.episode;
@@ -414,7 +423,7 @@ function openDeleteShowModal(show: Show) {
             }
         );
     });
-    $("#item-to-delete-name").text(show.title);
+    $("#confirm-delete-text").html(_("delete-confirm-text", {"name": show.title}));
 
     $(document.documentElement).addClass("is-clipped");
     $("#delete-show-modal").addClass("is-active");
