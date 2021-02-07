@@ -20,14 +20,16 @@ export const getInjector = (resources: string[]) => {
 
     let injector = (key: string, ctx: any= {}) => {
         let msg = bundle.getMessage(key);
-        if (msg.value)
+        if (typeof msg !== "undefined" && msg.value)
             return bundle.formatPattern(msg.value, ctx)
         else
             msg = fallbackBundle.getMessage(key);
-            if (msg.value)
+            if (typeof msg !== "undefined" && msg.value)
                 return fallbackBundle.formatPattern(msg.value, ctx);
-            else
-                return key;
+
+        if (typeof msg === "undefined")
+            console.error(`Key ${key} missing completely from desired and fallback locales.`);
+            return key;
     }
 
     return injector;
