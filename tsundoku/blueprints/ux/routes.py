@@ -200,7 +200,7 @@ async def login():
 
     if request.method == "GET":
         fluent = get_injector(["login"])
-        return await render_template("login.html", {"_": fluent.format_value})
+        return await render_template("login.html", **{"_": fluent.format_value})
     else:
         resources = [
             "login"
