@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 import re
+import shutil
 from typing import Optional
 
 import anitopy
@@ -147,13 +148,19 @@ class Downloader:
         name = entry.file_path.name
 
         try:
-            os.link(str(entry.file_path), str(desired_folder / name))
+            shutil.move(str(entry.file_path), str(desired_folder / name))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
         except Exception as e:
             logger.error(f"Error Moving Release - {e}")
         else:
-            return desired_folder / entry.file_path.name
+            moved_file = desired_folder / name
+            try:
+                entry.file_path.symlink_to(moved_file)
+            except Exception as e:
+                logger.warn(f"Failed to Create Trailing Symlink - {e}")
+
+            return moved_file
 
 
     async def handle_rename(self, entry: Entry) -> Optional[Path]:
