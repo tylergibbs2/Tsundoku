@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 import re
-import shutil
 from typing import Optional
 
 import anitopy
@@ -148,7 +147,7 @@ class Downloader:
         name = entry.file_path.name
 
         try:
-            shutil.move(str(entry.file_path), str(desired_folder / name))
+            os.link(str(entry.file_path), str(desired_folder / name))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
         except Exception as e:
