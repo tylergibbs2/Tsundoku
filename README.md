@@ -1,7 +1,7 @@
 # Tsundoku (積ん読)
 
 [![Documentation Status](https://readthedocs.org/projects/tsundoku/badge/?version=latest)](https://tsundoku.readthedocs.io/en/latest/?badge=latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
 Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for SubsPlease installed.
