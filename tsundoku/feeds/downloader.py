@@ -155,10 +155,13 @@ class Downloader:
             logger.error(f"Error Moving Release - {e}")
         else:
             moved_file = desired_folder / name
-            try:
-                entry.file_path.symlink_to(moved_file)
-            except Exception as e:
-                logger.warn(f"Failed to Create Trailing Symlink - {e}")
+
+            is_docker = os.environ.get("IS_DOCKER", False)
+            if not is_docker:
+                try:
+                    entry.file_path.symlink_to(moved_file)
+                except Exception as e:
+                    logger.warn(f"Failed to Create Trailing Symlink - {e}")
 
             return moved_file
 
