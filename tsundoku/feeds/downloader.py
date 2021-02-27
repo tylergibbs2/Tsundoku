@@ -162,6 +162,8 @@ class Downloader:
                     entry.file_path.symlink_to(moved_file)
                 except Exception as e:
                     logger.warn(f"Failed to Create Trailing Symlink - {e}")
+            else:
+                logger.debug("Not creating trailing symlink, Docker environment")
 
             return moved_file
 
