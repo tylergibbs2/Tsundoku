@@ -306,7 +306,7 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(cls, app: quart.Quart, show_id: int) -> List[Webhook]:
+    async def from_show_id(cls, app: quart.Quart, show_id: int, with_validity: bool=False) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -316,6 +316,8 @@ class Webhook:
             The app.
         show_id: int
             The show's ID.
+        with_validity: bool
+            Whether to also retrieve the base webhook's validity.
 
         Returns
         -------
@@ -337,7 +339,7 @@ class Webhook:
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_id(app, wh["base"], with_validity=False)
+            base = await WebhookBase.from_id(app, wh["base"], with_validity=with_validity)
             if not base:
                 continue
 
@@ -606,6 +608,7 @@ class Webhook:
             The event that occurred, can be any `show_state`.
         """
         if not self.base.valid:
+            logger.warn("Webhooks - Attempted to send webhook, but the base webhook was invalid")
             return
 
         logger.debug(f"Webhooks - Generating payload for Webhook with ID {self.wh_id}")
@@ -621,5 +624,6 @@ class Webhook:
 
         try:
             await self._app.session.post(self.base.url, json=payload)
+            logger.debug(f"Webhooks - Webhook {self.wh_id} payload sent")
         except Exception as e:
             pass
