@@ -12,7 +12,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class NyaaAPI(views.MethodView):
-    async def get(self) -> List[dict]:
+    async def get(self) -> APIResponse:
         """
         Search Nyaa with a specified query.
 
@@ -39,7 +39,7 @@ class NyaaAPI(views.MethodView):
             result=[sr.to_dict() for sr in results]
         )
 
-    async def post(self) -> dict:
+    async def post(self) -> APIResponse:
         """
         Adds a search result to Tsundoku.
 

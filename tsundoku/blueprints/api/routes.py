@@ -19,7 +19,7 @@ logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.before_request
-async def ensure_auth():
+async def ensure_auth() -> APIResponse:
     if not await current_user.is_authenticated:
         return APIResponse(
             status=401,
@@ -28,7 +28,7 @@ async def ensure_auth():
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
-async def get_seen_shows():
+async def get_seen_shows() -> APIResponse:
     """
     Returns a list of distinct titles that the Tsundoku
     poller task has seen while parsing the enabled RSS feeds.
@@ -43,7 +43,7 @@ async def get_seen_shows():
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
-async def check_for_releases():
+async def check_for_releases() -> APIResponse:
     """
     Forces Tsundoku to check all enabled RSS feeds for new
     title releases.
@@ -66,7 +66,7 @@ async def check_for_releases():
 
 
 @api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
-async def delete_show_cache(show_id: int):
+async def delete_show_cache(show_id: int) -> APIResponse:
     """
     Force Tsundoku to delete the metadata cache for a show.
 
@@ -82,7 +82,7 @@ async def delete_show_cache(show_id: int):
     )
 
 
-def setup_views():
+def setup_views() -> None:
     # Setup ShowsAPI URL rules.
     shows_view = ShowsAPI.as_view("shows_api")
 

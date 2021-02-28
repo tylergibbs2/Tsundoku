@@ -40,7 +40,7 @@ class Downloader:
     Finally, the item will be marked as complete in the
     `show_entry` table.
     """
-    def __init__(self, app_context: AppContext):
+    def __init__(self, app_context: AppContext) -> None:
         self.app = app_context.app
 
 

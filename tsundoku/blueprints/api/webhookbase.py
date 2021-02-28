@@ -8,7 +8,7 @@ from tsundoku.webhooks import WebhookBase
 
 
 class WebhookBaseAPI(views.MethodView):
-    def _doc_get_0(self):
+    def _doc_get_0(self) -> None:
         """
         Retrieves all webhooks.
 
@@ -19,7 +19,7 @@ class WebhookBaseAPI(views.MethodView):
         :returns: List[:class:`dict`]
         """
 
-    def _doc_get_1(self):
+    def _doc_get_1(self) -> None:
         """
         Retrieves a single webhook based on a passed ID.
 
@@ -31,7 +31,7 @@ class WebhookBaseAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, base_id: Optional[int]=None) -> List[dict]:
+    async def get(self, base_id: Optional[int]=None) -> APIResponse:
         """
         Retrieve all WebhookBases.
 
@@ -49,20 +49,20 @@ class WebhookBaseAPI(views.MethodView):
             return APIResponse(
                 result=[base.to_dict() for base in await WebhookBase.all(app)]
             )
-        else:
-            base = await WebhookBase.from_id(base_id)
-            if base:
-                return APIResponse(
-                    result=[base.to_dict()]
-                )
-            else:
-                return APIResponse(
-                    status=404,
-                    error="BaseWebhook with specified ID does not exist."
-                )
+
+        base = await WebhookBase.from_id(base_id)
+        if base:
+            return APIResponse(
+                result=[base.to_dict()]
+            )
+
+        return APIResponse(
+            status=404,
+            error="BaseWebhook with specified ID does not exist."
+        )
 
 
-    async def post(self) -> dict:
+    async def post(self) -> APIResponse:
         """
         Adds a new base webhook.
 
@@ -115,7 +115,7 @@ class WebhookBaseAPI(views.MethodView):
             )
 
 
-    async def put(self, base_id: int) -> dict:
+    async def put(self, base_id: int) -> APIResponse:
         """
         Updates the webhook with the supplied ID.
 

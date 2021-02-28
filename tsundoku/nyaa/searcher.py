@@ -28,7 +28,7 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: AppContext):
+    def __init__(self, app: AppContext) -> None:
         self._app = app
 
 

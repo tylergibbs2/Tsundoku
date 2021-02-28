@@ -1,7 +1,7 @@
 class Example:
     def __init__(self, app):
         """
-        Change 'self.url' and 'self.name' to be the URL 
+        Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
         """
         self.name = "Example - this is entirely aesthetic"

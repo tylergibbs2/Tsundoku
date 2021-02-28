@@ -16,7 +16,7 @@ from tsundoku.fluent import get_injector
 fluent = get_injector(["cmdline"])
 
 
-def compare_locales(from_lang: str, to_lang: str):
+def compare_locales(from_lang: str, to_lang: str) -> None:
     """
     Compares two whole languages in the Tsundoku
     translation files. Will point out any missing

@@ -1,11 +1,9 @@
-import asyncio
-from contextlib import suppress
 from hypercorn.utils import restart
 import logging
 import os
 import subprocess
 import sys
-import traceback
+from typing import Tuple
 
 import asyncpg
 from yoyo import get_backend, read_migrations
@@ -20,7 +18,7 @@ from tsundoku.config import get_config_value
 logger = logging.getLogger("tsundoku")
 
 
-def run(args: str):
+def run(args: str) -> Tuple[str, str]:
     git_loc = get_config_value("Tsundoku", "git_path")
     cmd = f"{git_loc} {args}"
 
@@ -49,7 +47,7 @@ def run(args: str):
     return output, err
 
 
-async def migrate():
+async def migrate() -> None:
     host = get_config_value("PostgreSQL", "host")
     port = get_config_value("PostgreSQL", "port")
     user = get_config_value("PostgreSQL", "user")
@@ -96,7 +94,7 @@ async def migrate():
     logger.info("Database migrations applied.")
 
 
-async def update():
+async def update() -> None:
     """
     Performs a "git pull" to update the local
     Tsundoku to the latest GitHub version.
@@ -127,7 +125,7 @@ async def update():
     app.update_info = []
 
 
-def check_for_updates():
+def check_for_updates() -> None:
     """
     Checks for updates from GitHub.
 

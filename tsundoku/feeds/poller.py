@@ -46,7 +46,7 @@ class Poller:
     be then passed onto the download manager for downloading,
     renaming, and moving.
     """
-    def __init__(self, app_context: AppContext):
+    def __init__(self, app_context: AppContext) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 

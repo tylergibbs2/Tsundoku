@@ -12,6 +12,7 @@ from tsundoku.kitsu import KitsuManager
 from tsundoku.webhooks import Webhook, WebhookBase
 from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
+from typing import Any
 
 
 ux_blueprint = Blueprint(
@@ -25,7 +26,7 @@ hasher = PasswordHasher()
 
 
 @ux_blueprint.context_processor
-async def update_context():
+async def update_context() -> dict:
     async with app.db_pool.acquire() as con:
         shows = await con.fetchval("""
             SELECT
@@ -56,7 +57,7 @@ async def update_context():
 
 @ux_blueprint.route("/", methods=["GET"])
 @login_required
-async def index():
+async def index() -> str:
     ctx = {}
 
     resources = [
@@ -136,7 +137,7 @@ async def index():
 
 @ux_blueprint.route("/nyaa", methods=["GET"])
 @login_required
-async def nyaa_search():
+async def nyaa_search() -> str:
     ctx = {}
 
     resources = [
@@ -164,7 +165,7 @@ async def nyaa_search():
 
 @ux_blueprint.route("/webhooks", methods=["GET"])
 @login_required
-async def webhooks():
+async def webhooks() -> str:
     ctx = {}
 
     resources = [
@@ -184,7 +185,7 @@ async def webhooks():
 
 @ux_blueprint.route("/update", methods=["GET", "POST"])
 @login_required
-async def update_():
+async def update_() -> Any:
     if request.method == "GET":
         check_for_updates()
     else:
@@ -194,7 +195,7 @@ async def update_():
 
 
 @ux_blueprint.route("/login", methods=["GET", "POST"])
-async def login():
+async def login() -> Any:
     if await current_user.is_authenticated:
         return redirect(url_for("ux.index"))
 
@@ -251,6 +252,6 @@ async def login():
 
 @ux_blueprint.route("/logout", methods=["GET"])
 @login_required
-async def logout():
+async def logout() -> Any:
     logout_user()
     return redirect(url_for("ux.index"))

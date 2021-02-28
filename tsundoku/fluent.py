@@ -1,11 +1,11 @@
-from typing import List
+from typing import Callable, List
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 from tsundoku.config import get_config_value
 
 
-def get_injector(resources: List[str]):
+def get_injector(resources: List[str]) -> Callable:
     try:
         locale = get_config_value("Tsundoku", "locale")
     except KeyError:

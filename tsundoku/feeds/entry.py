@@ -21,7 +21,7 @@ class EntryState(str, Enum):
 
 
 class Entry:
-    def __init__(self, app: AppContext, record: Record):
+    def __init__(self, app: AppContext, record: Record) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]

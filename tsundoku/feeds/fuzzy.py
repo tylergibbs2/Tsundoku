@@ -8,19 +8,24 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # help with: http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
 
-import re
-import heapq
 from difflib import SequenceMatcher
+import heapq
+import re
+from typing import Callable, Collection, Generator, List, Sequence, Tuple, Union, Optional
 
-def ratio(a, b):
+
+SortableCollection = Union[Collection[str], Sequence[str]]
+
+
+def ratio(a: str, b: str) -> int:
     m = SequenceMatcher(None, a, b)
     return int(round(100 * m.ratio()))
 
-def quick_ratio(a, b):
+def quick_ratio(a: str, b: str) -> int:
     m = SequenceMatcher(None, a, b)
     return int(round(100 * m.quick_ratio()))
 
-def partial_ratio(a, b):
+def partial_ratio(a: str, b: str) -> int:
     short, long = (a, b) if len(a) <= len(b) else (b, a)
     m = SequenceMatcher(None, short, long)
 
@@ -41,26 +46,26 @@ def partial_ratio(a, b):
 
 _word_regex = re.compile(r'\W', re.IGNORECASE)
 
-def _sort_tokens(a):
+def _sort_tokens(a: str) -> str:
     a = _word_regex.sub(' ', a).lower().strip()
     return ' '.join(sorted(a.split()))
 
-def token_sort_ratio(a, b):
+def token_sort_ratio(a: str, b: str) -> int:
     a = _sort_tokens(a)
     b = _sort_tokens(b)
     return ratio(a, b)
 
-def quick_token_sort_ratio(a, b):
+def quick_token_sort_ratio(a: str, b: str) -> int:
     a = _sort_tokens(a)
     b = _sort_tokens(b)
     return quick_ratio(a, b)
 
-def partial_token_sort_ratio(a, b):
+def partial_token_sort_ratio(a: str, b: str) -> int:
     a = _sort_tokens(a)
     b = _sort_tokens(b)
     return partial_ratio(a, b)
 
-def _extraction_generator(query, choices, scorer=quick_ratio, score_cutoff=0):
+def _extraction_generator(query: str, choices: SortableCollection, scorer: Callable=quick_ratio, score_cutoff: int=0) -> Generator:
     try:
         for key, value in choices.items():
             score = scorer(query, key)
@@ -72,14 +77,14 @@ def _extraction_generator(query, choices, scorer=quick_ratio, score_cutoff=0):
             if score >= score_cutoff:
                 yield (choice, score)
 
-def extract(query, choices, *, scorer=quick_ratio, score_cutoff=0, limit=10):
+def extract(query: str, choices: SortableCollection, *, scorer: Callable=quick_ratio, score_cutoff: int=0, limit: int=10) -> List:
     it = _extraction_generator(query, choices, scorer, score_cutoff)
     key = lambda t: t[1]
     if limit is not None:
         return heapq.nlargest(limit, it, key=key)
     return sorted(it, key=key, reverse=True)
 
-def extract_one(query, choices, *, scorer=quick_ratio, score_cutoff=0):
+def extract_one(query: str, choices: SortableCollection, *, scorer: Callable=quick_ratio, score_cutoff: int=0) -> Optional[int]:
     it = _extraction_generator(query, choices, scorer, score_cutoff)
     key = lambda t: t[1]
     try:
@@ -88,7 +93,7 @@ def extract_one(query, choices, *, scorer=quick_ratio, score_cutoff=0):
         # iterator could return nothing
         return None
 
-def extract_or_exact(query, choices, *, limit=None, scorer=quick_ratio, score_cutoff=0):
+def extract_or_exact(query: str, choices: SortableCollection, *, limit: int=None, scorer=quick_ratio, score_cutoff=0) -> List[int]:
     matches = extract(query, choices, scorer=scorer, score_cutoff=score_cutoff, limit=limit)
     if len(matches) == 0:
         return []
@@ -105,7 +110,7 @@ def extract_or_exact(query, choices, *, limit=None, scorer=quick_ratio, score_cu
 
     return matches
 
-def extract_matches(query, choices, *, scorer=quick_ratio, score_cutoff=0):
+def extract_matches(query: str, choices: SortableCollection, *, scorer: Callable=quick_ratio, score_cutoff: int=0) -> List[int]:
     matches = extract(query, choices, scorer=scorer, score_cutoff=score_cutoff, limit=None)
     if len(matches) == 0:
         return []
@@ -125,9 +130,10 @@ def extract_matches(query, choices, *, scorer=quick_ratio, score_cutoff=0):
             break
 
         to_return.append(match)
+
     return to_return
 
-def finder(text, collection, *, key=None, lazy=True):
+def finder(text: str, collection: Collection[str], *, key: Optional[Callable]=None, lazy: bool=True) -> Union[Generator[str], List[str]]:
     suggestions = []
     text = str(text)
     pat = '.*?'.join(map(re.escape, text))
@@ -138,7 +144,7 @@ def finder(text, collection, *, key=None, lazy=True):
         if r:
             suggestions.append((len(r.group()), r.start(), item))
 
-    def sort_key(tup):
+    def sort_key(tup: Tuple[str]) -> Tuple:
         if key:
             return tup[0], tup[1], key(tup[2])
         return tup
@@ -148,7 +154,7 @@ def finder(text, collection, *, key=None, lazy=True):
     else:
         return [z for _, _, z in sorted(suggestions, key=sort_key)]
 
-def find(text, collection, *, key=None):
+def find(text: str, collection: Collection[str], *, key: Optional[Callable]=None) -> Optional[List[str]]:
     try:
         return finder(text, collection, key=key, lazy=False)[0]
     except IndexError:

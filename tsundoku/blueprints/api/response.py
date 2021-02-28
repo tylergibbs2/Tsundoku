@@ -5,13 +5,13 @@ from quart import Response
 
 
 class APIResponse(Response):
-    def __init__(self, status: int=200, result: Any=None, error: str=None, *args, **kwargs):
+    def __init__(self, status: int=200, result: Any=None, error: str=None, *args, **kwargs) -> None:
         kwargs["content_type"] = "application/json"
         kwargs["response"] = self._generate(status, result, error)
         kwargs["status"] = status
         super().__init__(*args, **kwargs)
 
-    def _generate(self, status: int, result: Optional[Any], error: Optional[str]):
+    def _generate(self, status: int, result: Optional[Any], error: Optional[str]) -> str:
         if result is None and error is None:
             status = 500
             return json.dumps({

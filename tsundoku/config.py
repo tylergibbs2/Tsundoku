@@ -49,7 +49,7 @@ def get_config_value(section: str, value: str) -> Any:
         return value
 
 
-def set_config_value(section: str, value: str, data: Any):
+def set_config_value(section: str, value: str, data: Any) -> None:
     """
     Set a specified value to the config.ini file.
 

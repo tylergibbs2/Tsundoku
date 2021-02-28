@@ -78,7 +78,7 @@ dictConfig({
 app.register_blueprint(api_blueprint)
 
 
-async def insert_user(username: str, password: str):
+async def insert_user(username: str, password: str) -> None:
     host = get_config_value("PostgreSQL", "host")
     port = get_config_value("PostgreSQL", "port")
     user = get_config_value("PostgreSQL", "user")
@@ -107,12 +107,12 @@ async def insert_user(username: str, password: str):
 
 
 @app.errorhandler(Unauthorized)
-async def redirect_to_login(*_):
+async def redirect_to_login(*_) -> None:
     return redirect(url_for("ux.login"))
 
 
 @app.before_request
-async def update_check_needed():
+async def update_check_needed() -> None:
     """
     Compares the time between now and the
     last update check. If it has been more
@@ -132,7 +132,7 @@ async def update_check_needed():
 
 
 @app.before_serving
-async def setup_session():
+async def setup_session() -> None:
     """
     Creates an aiohttp ClientSession on startup using Quart's event loop.
     """
@@ -149,7 +149,7 @@ async def setup_session():
 
 
 @app.before_serving
-async def setup_db():
+async def setup_db() -> None:
     """
     Creates a database pool for PostgreSQL interaction.
     """
@@ -190,7 +190,7 @@ async def setup_db():
             logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
-def _load_parsers():
+def _load_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
@@ -241,7 +241,7 @@ def _load_parsers():
 
 
 @app.before_serving
-async def load_parsers():
+async def load_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
@@ -255,7 +255,7 @@ async def load_parsers():
 
 
 @app.before_serving
-async def setup_poller():
+async def setup_poller() -> None:
     """
     Creates in instance of the polling manager
     and starts it.
@@ -263,7 +263,7 @@ async def setup_poller():
     if not hasattr(app, "db_pool"):
         return
 
-    async def bg_task():
+    async def bg_task() -> None:
         app.poller = Poller(app.app_context())
         await app.poller.start()
 
@@ -271,7 +271,7 @@ async def setup_poller():
 
 
 @app.before_serving
-async def setup_downloader():
+async def setup_downloader() -> None:
     """
     Creates an instance of the downloader manager
     and starts it.
@@ -279,7 +279,7 @@ async def setup_downloader():
     if not hasattr(app, "db_pool"):
         return
 
-    async def bg_task():
+    async def bg_task() -> None:
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
@@ -287,7 +287,7 @@ async def setup_downloader():
 
 
 @app.after_serving
-async def cleanup():
+async def cleanup() -> None:
     """
     Closes the database pool and the
     aiohttp ClientSession on script closure.
@@ -308,7 +308,7 @@ async def cleanup():
 
 
 @ux_blueprint.context_processor
-async def insert_locale():
+async def insert_locale() -> dict:
     # Inserts the user's locale into jinja2 variables.
     try:
         locale = get_config_value("Tsundoku", "locale")
@@ -318,7 +318,7 @@ async def insert_locale():
     return {"LOCALE": locale}
 
 
-def run(with_ui: bool=True):
+def run(with_ui: bool=True) -> None:
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
 

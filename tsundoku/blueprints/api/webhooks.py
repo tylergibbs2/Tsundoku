@@ -8,7 +8,7 @@ from tsundoku.webhooks import Webhook
 
 
 class WebhooksAPI(views.MethodView):
-    def _doc_get_0(self):
+    def _doc_get_0(self) -> None:
         """
         Retrieve all show webhooks.
 
@@ -19,7 +19,7 @@ class WebhooksAPI(views.MethodView):
         :returns: List[:class:`dict`]
         """
 
-    def _doc_get_1(self):
+    def _doc_get_1(self) -> None:
         """
         Retrieve a single show webhook based on a supplied ID.
 
@@ -31,7 +31,7 @@ class WebhooksAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, show_id: int) -> List[dict]:
+    async def get(self, show_id: int) -> APIResponse:
         """
         Retrieve all webhooks.
 
@@ -53,7 +53,7 @@ class WebhooksAPI(views.MethodView):
         )
 
 
-    async def put(self, show_id: int, base_id: int) -> dict:
+    async def put(self, show_id: int, base_id: int) -> APIResponse:
         """
         Updates a specific webhook.
 
@@ -86,7 +86,7 @@ class WebhooksAPI(views.MethodView):
 
         if not wh:
             return APIResponse(status=404, error="Webhook with specified ID does not exist.")
-        elif not all(t in valid_triggers for t in triggers):
+        elif any(t in valid_triggers for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
 
         all_triggers = await wh.get_triggers()

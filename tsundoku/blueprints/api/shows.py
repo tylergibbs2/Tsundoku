@@ -22,7 +22,7 @@ status_html_map = {
 
 
 class ShowsAPI(views.MethodView):
-    def _doc_get_0(self):
+    def _doc_get_0(self) -> None:
         """
         Retrieves a list of all shows stored in the database.
 
@@ -33,7 +33,7 @@ class ShowsAPI(views.MethodView):
         :returns: List[:class:`dict`]
         """
 
-    def _doc_get_1(self):
+    def _doc_get_1(self) -> None:
         """
         Retrieves a single show based on its ID.
 
@@ -45,7 +45,7 @@ class ShowsAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, show_id: Optional[int]) -> Union[dict, List[dict]]:
+    async def get(self, show_id: Optional[int]) -> APIResponse:
         """
         get_0: without the `show_id` argument.
         get_1: with the `show_id` argument.
@@ -153,7 +153,7 @@ class ShowsAPI(views.MethodView):
             )
 
 
-    async def post(self, show_id: None) -> dict:
+    async def post(self, show_id: None) -> APIResponse:
         """
         Adds a new show to the database.
 
@@ -266,7 +266,7 @@ class ShowsAPI(views.MethodView):
             )
 
 
-    async def put(self, show_id: int) -> dict:
+    async def put(self, show_id: int) -> APIResponse:
         """
         Updates a specified show using the given parameters.
 
@@ -286,15 +286,13 @@ class ShowsAPI(views.MethodView):
         await request.get_data()
         arguments = await request.form
 
-        if not arguments["desired_format"]:
+        desired_format = arguments["desired_format"]:
+        if not desired_format:
             desired_format = None
-        else:
-            desired_format = arguments["desired_format"]
 
-        if not arguments["desired_folder"]:
+        desired_folder = arguments["desired_folder"]:
+        if not desired_folder:
             desired_folder = None
-        else:
-            desired_folder = arguments["desired_folder"]
 
         season = int(arguments["season"])
         episode_offset = int(arguments["episode_offset"])
@@ -373,7 +371,7 @@ class ShowsAPI(views.MethodView):
             )
 
 
-    async def delete(self, show_id: int) -> dict:
+    async def delete(self, show_id: int) -> APIResponse:
         """
         Deletes a show with the specified ID.
 

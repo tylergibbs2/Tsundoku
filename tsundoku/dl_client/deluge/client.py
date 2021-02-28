@@ -1,8 +1,6 @@
 import asyncio
-import json
 import logging
 from pathlib import Path
-import sys
 from typing import List, Optional
 
 import aiohttp
@@ -14,7 +12,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class DelugeClient:
-    def __init__(self, session: aiohttp.ClientSession, **kwargs):
+    def __init__(self, session: aiohttp.ClientSession, **kwargs) -> None:
         self._request_counter = 0  # counts the number of requests made to Deluge.
 
         self.session = session
@@ -96,7 +94,7 @@ class DelugeClient:
         return data.get("result")
 
 
-    async def ensure_authorization(self):
+    async def ensure_authorization(self) -> Optional[str]:
         """
         Authorizes with the Deluge WebAPI.
 

@@ -9,7 +9,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class ExprDict(dict):
-    def __missing__(self, value):
+    def __missing__(self, value) -> str:
         return value
 
 VALID_SERVICES = ("discord", "slack", "custom")
@@ -594,7 +594,7 @@ class Webhook:
 
         return payload
 
-    async def send(self, episode: int, event: str):
+    async def send(self, episode: int, event: str) -> None:
         """
         Posts an event with data to a webhook.
 

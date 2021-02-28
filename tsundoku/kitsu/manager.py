@@ -17,7 +17,7 @@ class KitsuManager:
         "Content-Type": "application/vnd.api+json"
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.SHOW_BASE = "https://kitsu.io/anime/{}"
         self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
 

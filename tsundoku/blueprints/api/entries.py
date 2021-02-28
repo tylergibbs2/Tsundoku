@@ -8,7 +8,7 @@ from tsundoku.feeds.entry import Entry
 
 
 class EntriesAPI(views.MethodView):
-    def _doc_get_0(self):
+    def _doc_get_0(self) -> None:
         """
         Retrieves all entries for a specified show.
 
@@ -19,7 +19,7 @@ class EntriesAPI(views.MethodView):
         :returns: List[:class:`dict`]
         """
 
-    def _doc_get_1(self):
+    def _doc_get_1(self) -> None:
         """
         Retrieves a single entry based on its ID.
 
@@ -31,7 +31,7 @@ class EntriesAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, show_id: int, entry_id: Optional[int]) -> Union[dict, List[dict]]:
+    async def get(self, show_id: int, entry_id: Optional[int]) -> APIResponse:
         """
         Retrieve all entries or a single entry
         for a specified show.
@@ -78,11 +78,11 @@ class EntriesAPI(views.MethodView):
                 )
 
             return APIResponse(
-                result=dict[entry]
+                result=dict(entry)
             )
 
 
-    async def post(self, show_id: int, entry_id: int=None):
+    async def post(self, show_id: int, entry_id: int=None) -> APIResponse:
         """
         Manually begins handling of an entry for a specified show.
         Handling involves downloading, moving, and renaming.
@@ -152,7 +152,7 @@ class EntriesAPI(views.MethodView):
         )
 
 
-    async def delete(self, show_id: int, entry_id: int):
+    async def delete(self, show_id: int, entry_id: int) -> APIResponse:
         """
         Deletes a single entry from a show.
 

@@ -17,7 +17,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class Manager:
-    def __init__(self, session: aiohttp.ClientSession):
+    def __init__(self, session: aiohttp.ClientSession) -> None:
         client = get_config_value("TorrentClient", "client")
 
         host = get_config_value("TorrentClient", "host")
@@ -60,7 +60,7 @@ class Manager:
             The magnet URL for the torrent at the given location.
         """
         pattern = re.compile(r"\burn:btih:([A-z\d]+)\b")
-        def b32_to_sha1(match: re.Match):
+        def b32_to_sha1(match: re.Match) -> str:
             hash_ = match.group(1)
             if len(hash_) == 40:
                 return
