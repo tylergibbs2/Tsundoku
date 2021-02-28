@@ -1,3 +1,8 @@
+import sys
+if sys.version_info < (3, 7):
+    print("Please update Python to use version 3.7+")
+    exit(1)
+
 import argparse
 import asyncio
 import getpass
