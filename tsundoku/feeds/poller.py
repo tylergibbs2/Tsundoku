@@ -71,7 +71,6 @@ class Poller:
 
         while True:
             await self.poll()
-
             await asyncio.sleep(self.interval)
 
 
@@ -158,21 +157,18 @@ class Poller:
         return bool(show_entry)
 
 
-    async def check_item_for_match(self, show_name: str, episode: int) -> Optional[EntryMatch]:
+    async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
 
         An item should be downloaded only if it is in the
-        `shows` table and the episode is not already in the
-        `show_entry` table.
+        `shows` table.
 
         Parameters
         ----------
         show_name: str
             The name of the show from RSS.
-        episode: int
-            The episode of the entry from RSS.
 
         Returns
         -------
@@ -193,6 +189,7 @@ class Poller:
         if not show_list:
             return
 
+        # Returns a tuple of (matched_str, percent_match)
         match = extract_one(show_name, show_list.keys())
 
         return EntryMatch(
@@ -217,11 +214,13 @@ class Poller:
         # functions, this try-except block will prevent the whole
         # poller task from crashing.
         try:
-            if hasattr(self.current_parser, "ignore_logic"):
-                if self.current_parser.ignore_logic(item) == False:
-                    logger.debug(f"{self.current_parser.name} - Release Ignored")
-                    return
+            if self.current_parser.ignore_logic(item) == False:
+                logger.debug(f"{self.current_parser.name} - Release Ignored")
+                return
+        except AttributeError:
+            pass  # The parser doesn't have an ignore_logic method.
 
+        try:
             if hasattr(self.current_parser, "get_file_name"):
                 torrent_name = self.current_parser.get_file_name(item)
             else:
@@ -230,7 +229,7 @@ class Poller:
             show_name = self.current_parser.get_show_name(torrent_name)
             show_episode = self.current_parser.get_episode_number(torrent_name)
         except Exception as e:
-            logger.error(f"Parsing Error - {e}")
+            logger.error(f"Parsing Error - {self.current_parser.name}@{self.current_parser.version}: {e}")
             return
 
         if show_episode is None:
@@ -238,11 +237,9 @@ class Poller:
 
         self.app.seen_titles.add(show_name)
 
-        match = await self.check_item_for_match(show_name, show_episode)
+        match = await self.check_item_for_match(show_name)
 
-        if match is None:
-            return
-        elif match.match_percent < 90:
+        if match is None or match.match_percent < 90:
             return
 
         entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)
@@ -271,8 +268,7 @@ class Poller:
         dict
             The parsed RSS feed.
         """
-        if self.current_parser is None:
-            self.current_parser = parser
+        self.current_parser = parser or self.current_parser
 
         return await self.loop.run_in_executor(None, feedparser.parse, self.current_parser.url)
 

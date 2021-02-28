@@ -507,13 +507,11 @@ class Webhook:
         -------
         A embed that can be sent to Discord.
         """
-        embed = {}
-
-        embed["title"] = "Tsundoku Progress Event"
-        embed["color"] = 370725
-        embed["description"] = content
-
-        return embed
+        return {
+            "title": "Tsundoku Progress Event",
+            "color": 370725,
+            "description": content
+        }
 
     def generate_slack_blocks(self, content: str) -> List[dict]:
         """

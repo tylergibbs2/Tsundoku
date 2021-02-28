@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 
 from asyncpg import Record
@@ -6,19 +7,32 @@ from quart.ctx import AppContext
 from tsundoku.webhooks import Webhook
 
 
+class EntryState(str, Enum):
+    """
+    Represents the state of an Entry.
+
+    Matches exactly with the Postgres enum.
+    """
+    downloading = "downloading"
+    downloaded = "downloaded"
+    renamed = "renamed"
+    moved = "moved"
+    completed = "completed"
+
+
 class Entry:
     def __init__(self, app: AppContext, record: Record):
-        self.id = record["id"]
-        self.show_id = record["show_id"]
-        self.episode = record["episode"]
-        self.state = record["current_state"]
-        self.torrent_hash = record["torrent_hash"]
+        self.id: int = record["id"]
+        self.show_id: int = record["show_id"]
+        self.episode: int = record["episode"]
+        self.state: EntryState = EntryState[record["current_state"]]
+        self.torrent_hash: str = record["torrent_hash"]
 
         fp = record["file_path"]
-        self.file_path = Path(fp) if fp is not None else None
+        self.file_path: Path = Path(fp) if fp is not None else None
 
-        self._app = app
-        self._record = record
+        self._app: AppContext = app
+        self._record: Record = record
 
     def to_dict(self) -> dict:
         """
@@ -28,18 +42,18 @@ class Entry:
             "id": self.id,
             "show_id": self.show_id,
             "episode": self.episode,
-            "state": self.state,
+            "state": self.state.value,
             "torrent_hash": self.torrent_hash,
             "file_path": str(self.file_path)
         }
 
-    async def set_state(self, new_state: str) -> None:
+    async def set_state(self, new_state: EntryState) -> None:
         """
         Updates the database and local object's state.
 
         Parameters
         ----------
-        new_state: str
+        new_state: EntryState
             The new state to update to.
         """
         self.state = new_state
@@ -48,7 +62,7 @@ class Entry:
                 UPDATE show_entry SET
                     current_state = $1
                 WHERE id=$2;
-            """, new_state, self.id)
+            """, new_state.value, self.id)
 
         await self._handle_webhooks()
 
@@ -85,5 +99,5 @@ class Entry:
 
         for wh in webhooks:
             triggers = await wh.get_triggers()
-            if self.state in triggers:
+            if self.state.value in triggers:
                 await wh.send(self.episode, self.state)

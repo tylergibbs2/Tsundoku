@@ -9,10 +9,20 @@ from typing import Optional
 import anitopy
 from quart.ctx import AppContext
 
-from tsundoku.feeds.entry import Entry
+from tsundoku.feeds.entry import Entry, EntryState
 
 
 logger = logging.getLogger("tsundoku")
+
+
+class ExprDict(dict):
+    """
+    A basic wrapping around a dict that,
+    when a missing key is requested, will
+    simply return the requested key.
+    """
+    def __missing__(self, value: str) -> str:
+        return value
 
 
 class Downloader:
@@ -38,6 +48,41 @@ class Downloader:
         while True:
             await self.check_show_entries()
             await asyncio.sleep(15)
+
+
+    def get_expression_mapping(self, title: str, season: int, episode: int, **kwargs) -> ExprDict:
+        """
+        Creates an ExprDict of specific expressions to use
+        when formatting strings.
+
+        Parameters
+        ----------
+        title: str
+            The title of the show.
+        season: int
+            The season of the show.
+        episode: int
+            The episode of the release.
+        kwargs:
+            Any additional expressions to be
+            added to the ExprDict.
+
+        Returns
+        -------
+        ExprDict
+            The expression dict.
+        """
+        return ExprDict(
+            n=title,
+            s=season,
+            e=episode,
+            s00=season.zfill(2),
+            e00=episode.zfill(2),
+            s00e00=f"s{season.zfill(2)}e{episode.zfill(2)}",
+            S00E00=f"S{season.zfill(2)}E{episode.zfill(2)}",
+            sxe=f"{season}x{episode.zfill(2)}",
+            **kwargs
+        )
 
 
     async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> int:
@@ -68,6 +113,7 @@ class Downloader:
             logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")
             return
 
+        # TODO: handle entry insertion in the Entry class
         async with self.app.db_pool.acquire() as con:
             entry = await con.fetchrow("""
                 INSERT INTO
@@ -79,7 +125,7 @@ class Downloader:
             """, show_id, episode, torrent_hash)
 
         entry = Entry(self.app, entry)
-        await entry.set_state("downloading")
+        await entry.set_state(EntryState.downloading)
 
         logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
 
@@ -117,30 +163,16 @@ class Downloader:
                 WHERE id=$1;
             """, entry.show_id)
 
-        def formatting_re(match: re.Match):
-            expression = match.group(1)
+        season = str(show_info["season"])
+        episode = str(entry.episode + show_info["episode_offset"])
 
-            season = str(show_info["season"])
-            episode = str(entry.episode + show_info["episode_offset"])
-
-            format_exprs = {
-                "n": show_info["title"],
-                "s": season,
-                "e": episode,
-                "s00": season.zfill(2),
-                "e00": episode.zfill(2),
-                "s00e00": f"s{season.zfill(2)}e{episode.zfill(2)}",
-                "S00E00": f"S{season.zfill(2)}E{episode.zfill(2)}",
-                "sxe": f"{season}x{episode.zfill(2)}"
-            }
-
-            return format_exprs.get(expression, expression)
+        expressions = self.get_expression_mapping(show_info["title"], season, episode)
 
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
             desired_folder = entry.file_path.parent
         else:
-            expressive_folder = re.sub(r"{(\w+)}", formatting_re, desired_folder)
+            expressive_folder = desired_folder.format_map(expressions)
 
             Path(expressive_folder).mkdir(parents=True, exist_ok=True)
             desired_folder = Path(expressive_folder)
@@ -156,6 +188,10 @@ class Downloader:
         else:
             moved_file = desired_folder / name
 
+            # For now, we simply ignore the creation of trailing symlinks
+            # if we're in a Docker environment. This is due to the fact that
+            # symlinks are relative and the symlink can be valid or invalid
+            # depending on which filesystem it's being checked from.
             is_docker = os.environ.get("IS_DOCKER", False)
             if not is_docker:
                 try:
@@ -184,10 +220,10 @@ class Downloader:
             The new path of the renamed file.
         """
         if entry.file_path is None:
+            # This can't really happen but it's probably best to check
+            # just in case the download client returns an incorrect fp.
             logger.error("entry.file_path is None?")
             return
-
-        suffix = entry.file_path.suffix
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
@@ -206,26 +242,15 @@ class Downloader:
         else:
             file_fmt = "{n} - {s00e00}"
 
-        def formatting_re(match: re.Match):
-            expression = match.group(1)
+        suffix = entry.file_path.suffix
 
-            season = str(show_info["season"])
-            episode = str(entry.episode + show_info["episode_offset"])
-
-            format_exprs = {
-                "n": show_info["title"],
-                "s": season,
-                "e": episode,
-                "s00": season.zfill(2),
-                "e00": episode.zfill(2),
-                "s00e00": f"s{season.zfill(2)}e{episode.zfill(2)}",
-                "S00E00": f"S{season.zfill(2)}E{episode.zfill(2)}",
-                "sxe": f"{season}x{episode.zfill(2)}"
-            }
-
-            return format_exprs.get(expression, expression)
-
-        name = re.sub(r"{(\w+)}", formatting_re, file_fmt)
+        expressions = self.get_expression_mapping(
+            show_info["title"],
+            entry.season,
+            entry.episode,
+            ext=suffix
+        )
+        name = file_fmt.format_map(expressions)
 
         new_path = entry.file_path.with_name(name + suffix)
 
@@ -238,7 +263,7 @@ class Downloader:
         else:
             return new_path
 
-    def resolve_file(self, path: Path, episode: int) -> Optional[Path]:
+    def resolve_file(self, root: Path, episode: int) -> Optional[Path]:
         """
         Searches a directory tree for a specific episode
         file.
@@ -257,15 +282,15 @@ class Downloader:
         Optional[Path]
             The found Path. It is a file.
         """
-        if path.is_file():
-            return path
+        if root.is_file():
+            return root
 
-        path.resolve()
-        for subpath in path.rglob("*"):
+        root.resolve()
+        for subpath in root.rglob("*"):
             try:
                 parsed = anitopy.parse(subpath.name)
             except Exception as e:
-                logger.warn(f"anitopy - Could not Parse '{subpath.name}', skipping")
+                logger.debug(f"anitopy - Could not parse '{subpath.name}', skipping")
                 continue
 
             try:
@@ -287,7 +312,9 @@ class Downloader:
         """
         logger.info(f"Checking Release Status - {entry.show_id, entry.episode}")
 
-        if entry.state == "downloading":
+        # Initial downloading check. This conditional branch is essentially
+        # waiting for the downloaded file to appear in the file system.
+        if entry.state == EntryState.downloading:
             path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
             if not path:
                 show_id = entry.show_id
@@ -303,36 +330,44 @@ class Downloader:
         if path is None:
             return
 
+        # This ensures that the path is an actual file rather than
+        # a directory. Sometimes with torrents the files can be in
+        # folders. Batch releases are typically always in folders.
         path = self.resolve_file(path, entry.episode)
         if path is None:
             return
 
         logger.info(f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")
 
-        if entry.state == "downloading":
-            await entry.set_state("downloaded")
+        # These aren't elifs due to the fact that processing can
+        # stop at any time and the ifs are actually used to continue
+        # where processing left off when process resumes. There were
+        # some other reasons that they aren't elifs that I discovered
+        # while testing.
+        if entry.state == EntryState.downloading:
+            await entry.set_state(EntryState.downloaded)
             await entry.set_path(path)
             logger.info(f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
 
-        if entry.state == "downloaded":
+        if entry.state == EntryState.downloaded:
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
                 return
 
-            await entry.set_state("renamed")
+            await entry.set_state(EntryState.renamed)
             await entry.set_path(renamed_path)
             logger.info(f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
 
-        if entry.state == "renamed":
+        if entry.state == EntryState.renamed:
             moved_path = await self.handle_move(entry)
             if moved_path is None:
                 return
 
-            await entry.set_state("moved")
+            await entry.set_state(EntryState.moved)
             await entry.set_path(moved_path)
             logger.info(f"Release Marked as Moved - {entry.show_id}, {entry.episode}")
 
-        await entry.set_state("completed")
+        await entry.set_state(EntryState.completed)
         logger.info(f"Release Marked as Completed - {entry.show_id}, {entry.episode}")
 
 

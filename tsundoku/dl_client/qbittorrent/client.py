@@ -121,14 +121,11 @@ class qBittorrentClient:
         request_url = f"{self.url}/api/v2/auth/login"
 
         async with self.session.get(request_url, headers=headers, params=params) as resp:
-            if resp.status == 200:
+            status = resp.status
+            if status == 200:
                 logger.info("qBittorrent - Successfully Authenticated")
-                status = resp.status
             else:
-                status = resp.status
-
-        if status != 200:
-            logger.warn(f"qBittorrent - Failed to Authenticate, status {status}")
+                logger.warn(f"qBittorrent - Failed to Authenticate, status {status}")
 
         return status == 200
 

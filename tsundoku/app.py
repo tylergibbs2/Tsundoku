@@ -248,6 +248,9 @@ async def load_parsers():
     if not hasattr(app, "db_pool"):
         return
 
+    # It's okay if we're blocking at this point.
+    # The webserver isn't intended to be serving
+    # at this point in time.
     _load_parsers()
 
 
@@ -288,6 +291,8 @@ async def cleanup():
     """
     Closes the database pool and the
     aiohttp ClientSession on script closure.
+
+    Also tries to cancel running tasks (downloader and poller).
     """
     for task in app._tasks:
         try:
@@ -304,6 +309,7 @@ async def cleanup():
 
 @ux_blueprint.context_processor
 async def insert_locale():
+    # Inserts the user's locale into jinja2 variables.
     try:
         locale = get_config_value("Tsundoku", "locale")
     except KeyError:

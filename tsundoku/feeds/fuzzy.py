@@ -33,7 +33,7 @@ def partial_ratio(a, b):
         o = SequenceMatcher(None, short, long[start:end])
         r = o.ratio()
 
-        if 100 * r > 99:
+        if r > 99 / 100:
             return 100
         scores.append(r)
 

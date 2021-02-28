@@ -9,7 +9,7 @@ import anitopy
 import feedparser
 from quart.ctx import AppContext
 
-from tsundoku.feeds.entry import Entry
+from tsundoku.feeds.entry import Entry, EntryState
 
 
 logger = logging.getLogger("tsundoku")
@@ -193,7 +193,7 @@ class SearchResult:
                 """, self.show_id, episode, torrent_hash)
 
                 entry = Entry(self._app, entry)
-                await entry.set_state("downloading")
+                await entry.set_state(EntryState.downloading)
                 added.append(entry)
 
         return added
