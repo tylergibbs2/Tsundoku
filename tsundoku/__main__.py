@@ -6,7 +6,7 @@ if sys.version_info < (3, 7):
 import argparse
 import asyncio
 import getpass
-import pathlib
+from pathlib import Path
 
 from fluent.runtime import FluentBundle, FluentResource
 from tsundoku import app, git
@@ -30,8 +30,8 @@ def compare_locales(from_lang: str, to_lang: str):
     to_lang: str
         Destination locale.
     """
-    from_path = pathlib.Path(f"l10n/{from_lang}")
-    to_path = pathlib.Path(f"l10n/{to_lang}")
+    from_path = Path(f"l10n/{from_lang}")
+    to_path = Path(f"l10n/{to_lang}")
 
     if not from_path.exists():
         print(fluent._("compare-missing-lang", {"missing": from_lang}))
@@ -42,13 +42,8 @@ def compare_locales(from_lang: str, to_lang: str):
 
     conflicts = 0
 
-    from_files = set()
-    for fp in from_path.rglob("*"):
-        from_files.add(pathlib.Path(*fp.parts[2:]))
-
-    to_files = set()
-    for fp in to_path.rglob("*"):
-        to_files.add(pathlib.Path(*fp.parts[2:]))
+    from_files = {Path(*fp.parts[2:]) for fp in from_path.rglob("*")}
+    to_files = {Path(*fp.parts[2:]) for fp in to_path.rglob("*")}
 
     for fp in from_files.difference(to_files):
         conflicts += 1
