@@ -46,11 +46,12 @@ class Poller:
     be then passed onto the download manager for downloading,
     renaming, and moving.
     """
+
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 
-        self.current_parser = None  # keeps track of the current RSS feed parser.
+        self.current_parser = None  # keeps track of the current parser
 
         interval = get_config_value("Tsundoku", "polling_interval")
         try:
@@ -58,7 +59,6 @@ class Poller:
         except ValueError:
             logger.error(f"'{interval}' is an invalid polling interval.")
             raise Exception(f"'{interval}' is an invalid polling interval.")
-
 
     async def start(self) -> None:
         """
@@ -72,7 +72,6 @@ class Poller:
         while True:
             await self.poll()
             await asyncio.sleep(self.interval)
-
 
     async def poll(self) -> List[Tuple[int, int]]:
         """
@@ -105,7 +104,6 @@ class Poller:
 
         return found
 
-
     async def check_feed(self, feed: dict) -> List[Tuple[int, int]]:
         """
         Iterates through the list of items in an
@@ -126,7 +124,6 @@ class Poller:
                 found_items.append(found)
 
         return found_items
-
 
     async def is_parsed(self, show_id: int, episode: int) -> bool:
         """
@@ -155,7 +152,6 @@ class Poller:
             """, show_id, episode)
 
         return bool(show_entry)
-
 
     async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
         """
@@ -198,7 +194,6 @@ class Poller:
             match[1]
         )
 
-
     async def check_item(self, item: dict) -> Optional[Tuple[int, int]]:
         """
         Checks an item to see if it is from a
@@ -214,7 +209,7 @@ class Poller:
         # functions, this try-except block will prevent the whole
         # poller task from crashing.
         try:
-            if self.current_parser.ignore_logic(item) == False:
+            if self.current_parser.ignore_logic(item) is False:
                 logger.debug(f"{self.current_parser.name} - Release Ignored")
                 return
         except AttributeError:
@@ -229,7 +224,8 @@ class Poller:
             show_name = self.current_parser.get_show_name(torrent_name)
             show_episode = self.current_parser.get_episode_number(torrent_name)
         except Exception as e:
-            logger.error(f"Parsing Error - {self.current_parser.name}@{self.current_parser.version}: {e}")
+            logger.error(
+                f"Parsing Error - {self.current_parser.name}@{self.current_parser.version}: {e}")
             return
 
         if show_episode is None:
@@ -246,7 +242,8 @@ class Poller:
         if entry_is_parsed:
             return
 
-        logger.info(f"{self.current_parser.name} - Release Found - {show_name}, {show_episode}")
+        logger.info(
+            f"{self.current_parser.name} - Release Found - {show_name}, {show_episode}")
 
         magnet_url = await self.get_torrent_link(item)
         await self.app.downloader.begin_handling(
@@ -256,7 +253,6 @@ class Poller:
         )
 
         return (match.matched_id, show_episode)
-
 
     async def get_feed_from_parser(self, parser=None) -> dict:
         """
@@ -270,8 +266,11 @@ class Poller:
         """
         self.current_parser = parser or self.current_parser
 
-        return await self.loop.run_in_executor(None, feedparser.parse, self.current_parser.url)
-
+        return await self.loop.run_in_executor(
+            None,
+            feedparser.parse,
+            self.current_parser.url
+        )
 
     async def get_torrent_link(self, item: dict) -> str:
         """

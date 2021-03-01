@@ -21,6 +21,7 @@ class ExprDict(dict):
     when a missing key is requested, will
     simply return the requested key.
     """
+
     def __missing__(self, value: str) -> str:
         return value
 
@@ -40,15 +41,14 @@ class Downloader:
     Finally, the item will be marked as complete in the
     `show_entry` table.
     """
+
     def __init__(self, app_context: AppContext) -> None:
         self.app = app_context.app
-
 
     async def start(self) -> None:
         while True:
             await self.check_show_entries()
             await asyncio.sleep(15)
-
 
     def get_expression_mapping(self, title: str, season: int, episode: int, **kwargs) -> ExprDict:
         """
@@ -84,7 +84,6 @@ class Downloader:
             **kwargs
         )
 
-
     async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> int:
         """
         Begins downloading an episode of a show
@@ -110,7 +109,8 @@ class Downloader:
         torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
 
         if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")
+            logger.warn(
+                f"Failed to add Magnet URL {magnet_url} to download client")
             return
 
         # TODO: handle entry insertion in the Entry class
@@ -130,7 +130,6 @@ class Downloader:
         logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
 
         return entry.id
-
 
     async def handle_move(self, entry: Entry) -> Optional[Path]:
         """
@@ -166,7 +165,8 @@ class Downloader:
         season = str(show_info["season"])
         episode = str(entry.episode + show_info["episode_offset"])
 
-        expressions = self.get_expression_mapping(show_info["title"], season, episode)
+        expressions = self.get_expression_mapping(
+            show_info["title"], season, episode)
 
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
@@ -199,10 +199,10 @@ class Downloader:
                 except Exception as e:
                     logger.warn(f"Failed to Create Trailing Symlink - {e}")
             else:
-                logger.debug("Not creating trailing symlink, Docker environment")
+                logger.debug(
+                    "Not creating trailing symlink, Docker environment")
 
             return moved_file
-
 
     async def handle_rename(self, entry: Entry) -> Optional[Path]:
         """
@@ -290,7 +290,8 @@ class Downloader:
             try:
                 parsed = anitopy.parse(subpath.name)
             except Exception as e:
-                logger.debug(f"anitopy - Could not parse '{subpath.name}', skipping")
+                logger.debug(
+                    f"anitopy - Could not parse '{subpath.name}', skipping")
                 continue
 
             try:
@@ -310,7 +311,8 @@ class Downloader:
         entry: Entry
             The object of the entry in the database.
         """
-        logger.info(f"Checking Release Status - {entry.show_id, entry.episode}")
+        logger.info(
+            f"Checking Release Status - {entry.show_id, entry.episode}")
 
         # Initial downloading check. This conditional branch is essentially
         # waiting for the downloaded file to appear in the file system.
@@ -319,7 +321,8 @@ class Downloader:
             if not path:
                 show_id = entry.show_id
                 episode = entry.episode
-                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
+                logger.error(
+                    f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
                 return
             elif not path.parent.is_dir():
                 logger.error(f"'{path}' could not be read")
@@ -337,7 +340,8 @@ class Downloader:
         if path is None:
             return
 
-        logger.info(f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")
+        logger.info(
+            f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")
 
         # These aren't elifs due to the fact that processing can
         # stop at any time and the ifs are actually used to continue
@@ -347,7 +351,8 @@ class Downloader:
         if entry.state == EntryState.downloading:
             await entry.set_state(EntryState.downloaded)
             await entry.set_path(path)
-            logger.info(f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
+            logger.info(
+                f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
 
         if entry.state == EntryState.downloaded:
             renamed_path = await self.handle_rename(entry)
@@ -356,7 +361,8 @@ class Downloader:
 
             await entry.set_state(EntryState.renamed)
             await entry.set_path(renamed_path)
-            logger.info(f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
+            logger.info(
+                f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
 
         if entry.state == EntryState.renamed:
             moved_path = await self.handle_move(entry)
@@ -365,11 +371,12 @@ class Downloader:
 
             await entry.set_state(EntryState.moved)
             await entry.set_path(moved_path)
-            logger.info(f"Release Marked as Moved - {entry.show_id}, {entry.episode}")
+            logger.info(
+                f"Release Marked as Moved - {entry.show_id}, {entry.episode}")
 
         await entry.set_state(EntryState.completed)
-        logger.info(f"Release Marked as Completed - {entry.show_id}, {entry.episode}")
-
+        logger.info(
+            f"Release Marked as Completed - {entry.show_id}, {entry.episode}")
 
     async def check_show_entries(self) -> None:
         """
