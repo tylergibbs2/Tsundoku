@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-import re
 import shutil
 from typing import Optional
 
@@ -289,7 +288,7 @@ class Downloader:
         for subpath in root.rglob("*"):
             try:
                 parsed = anitopy.parse(subpath.name)
-            except Exception as e:
+            except Exception:
                 logger.debug(
                     f"anitopy - Could not parse '{subpath.name}', skipping")
                 continue
