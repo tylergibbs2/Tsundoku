@@ -5,7 +5,7 @@ from quart import Response
 
 
 class APIResponse(Response):
-    def __init__(self, status: int=200, result: Any=None, error: str=None, *args, **kwargs) -> None:
+    def __init__(self, status: int = 200, result: Any = None, error: str = None, *args, **kwargs) -> None:
         kwargs["content_type"] = "application/json"
         kwargs["response"] = self._generate(status, result, error)
         kwargs["status"] = status

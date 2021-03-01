@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union, Optional
+from typing import Optional
 
 from quart import request, views
 from quart import current_app as app
@@ -152,7 +152,6 @@ class ShowsAPI(views.MethodView):
                 result=dict(s)
             )
 
-
     async def post(self, show_id: None) -> APIResponse:
         """
         Adds a new show to the database.
@@ -221,7 +220,7 @@ class ShowsAPI(views.MethodView):
                     ($1, $2, $3, $4, $5)
                 RETURNING id;
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset)
+                episode_offset)
 
             await con.execute("""
                 INSERT INTO
@@ -265,7 +264,6 @@ class ShowsAPI(views.MethodView):
                 error="The server failed to add the new Show."
             )
 
-
     async def put(self, show_id: int) -> APIResponse:
         """
         Updates a specified show using the given parameters.
@@ -286,11 +284,11 @@ class ShowsAPI(views.MethodView):
         await request.get_data()
         arguments = await request.form
 
-        desired_format = arguments["desired_format"]:
+        desired_format = arguments["desired_format"]
         if not desired_format:
             desired_format = None
 
-        desired_folder = arguments["desired_folder"]:
+        desired_folder = arguments["desired_folder"]
         if not desired_folder:
             desired_folder = None
 
@@ -336,7 +334,7 @@ class ShowsAPI(views.MethodView):
                     episode_offset=$5
                 WHERE id=$6;
             """, arguments["title"], desired_format, desired_folder, season,
-            episode_offset, show_id)
+                episode_offset, show_id)
 
         logger.info("Existing Show Updated - Preparing to Check for New Releases")
         for parser in app.rss_parsers:
@@ -369,7 +367,6 @@ class ShowsAPI(views.MethodView):
                 status=500,
                 error="The server failed to update the existing Show."
             )
-
 
     async def delete(self, show_id: int) -> APIResponse:
         """

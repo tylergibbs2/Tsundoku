@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from quart import request, views
 from quart import current_app as app
@@ -81,8 +81,7 @@ class EntriesAPI(views.MethodView):
                 result=dict(entry)
             )
 
-
-    async def post(self, show_id: int, entry_id: int=None) -> APIResponse:
+    async def post(self, show_id: int, entry_id: int = None) -> APIResponse:
         """
         Manually begins handling of an entry for a specified show.
         Handling involves downloading, moving, and renaming.
@@ -150,7 +149,6 @@ class EntriesAPI(views.MethodView):
         return APIResponse(
             result=dict(new_entry)
         )
-
 
     async def delete(self, show_id: int, entry_id: int) -> APIResponse:
         """

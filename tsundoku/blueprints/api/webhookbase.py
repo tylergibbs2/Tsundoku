@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from quart import request, views
 from quart import current_app as app
@@ -31,7 +31,7 @@ class WebhookBaseAPI(views.MethodView):
         :returns: :class:`dict`
         """
 
-    async def get(self, base_id: Optional[int]=None) -> APIResponse:
+    async def get(self, base_id: Optional[int] = None) -> APIResponse:
         """
         Retrieve all WebhookBases.
 
@@ -60,7 +60,6 @@ class WebhookBaseAPI(views.MethodView):
             status=404,
             error="BaseWebhook with specified ID does not exist."
         )
-
 
     async def post(self) -> APIResponse:
         """
@@ -114,7 +113,6 @@ class WebhookBaseAPI(views.MethodView):
                 error="The server failed to create the new WebhookBase."
             )
 
-
     async def put(self, base_id: int) -> APIResponse:
         """
         Updates the webhook with the supplied ID.
@@ -163,7 +161,6 @@ class WebhookBaseAPI(views.MethodView):
         return APIResponse(
             result=base.to_dict()
         )
-
 
     async def delete(self, base_id: int) -> APIResponse:
         """

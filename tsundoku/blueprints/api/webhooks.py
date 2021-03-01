@@ -1,5 +1,3 @@
-from typing import List
-
 from quart import request, views
 from quart import current_app as app
 
@@ -51,7 +49,6 @@ class WebhooksAPI(views.MethodView):
         return APIResponse(
             result=webhooks
         )
-
 
     async def put(self, show_id: int, base_id: int) -> APIResponse:
         """

@@ -1,5 +1,4 @@
 import logging
-from tsundoku.blueprints.api.nyaa import NyaaAPI
 
 from quart import Blueprint
 from quart import current_app as app
@@ -153,5 +152,6 @@ def setup_views() -> None:
         view_func=nyaa_view,
         methods=["GET", "POST"]
     )
+
 
 setup_views()
