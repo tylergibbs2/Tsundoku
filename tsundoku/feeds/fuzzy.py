@@ -154,7 +154,7 @@ def extract_matches(query: str, choices: SortableCollection, *,
 
 
 def finder(text: str, collection: Collection[str], *,
-           key: Optional[Callable] = None, lazy: bool = True) -> Union[Generator[str], List[str]]:
+           key: Optional[Callable] = None, lazy: bool = True) -> Union[Generator[str, None, None], List[str]]:
     suggestions = []
     text = str(text)
     pat = '.*?'.join(map(re.escape, text))
