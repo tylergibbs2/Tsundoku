@@ -1,8 +1,9 @@
-from quart import request, views
 from quart import current_app as app
+from quart import request, views
+
+from tsundoku.webhooks import Webhook
 
 from .response import APIResponse
-from tsundoku.webhooks import Webhook
 
 
 class WebhooksAPI(views.MethodView):

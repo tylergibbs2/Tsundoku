@@ -1,9 +1,9 @@
 import base64
 import hashlib
 import logging
-from pathlib import Path
 import re
-from typing import Optional, List
+from pathlib import Path
+from typing import List, Optional
 
 import aiohttp
 import bencodepy
@@ -11,7 +11,6 @@ import bencodepy
 from tsundoku.config import get_config_value
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
-
 
 logger = logging.getLogger("tsundoku")
 

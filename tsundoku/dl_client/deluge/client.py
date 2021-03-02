@@ -7,7 +7,6 @@ import aiohttp
 
 from tsundoku.config import get_config_value
 
-
 logger = logging.getLogger("tsundoku")
 
 

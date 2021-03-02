@@ -1,15 +1,15 @@
 import asyncio
+import logging
 from dataclasses import dataclass
 from functools import partial
-import logging
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
 import feedparser
 from quart.ctx import AppContext
 
-from .fuzzy import extract_one
 from tsundoku.config import get_config_value
 
+from .fuzzy import extract_one
 
 logger = logging.getLogger("tsundoku")
 
@@ -84,6 +84,12 @@ class Poller:
 
         Returns a list of releases found in the format
         (show_id, episode).
+
+        Returns
+        -------
+        List[Tuple[int, int]]
+            A list of tuples in the format (show_id, episode).
+            These are newly found entries that have begun processing.
         """
         logger.info("Checking for New Releases...")
 
@@ -105,6 +111,9 @@ class Poller:
 
         logger.info("Checked for New Releases")
 
+        # This still returns information, despite not being used in this particular
+        # task, because the REST API hooks into the running Poller task and will call
+        # this. See: tsundoku/blueprints/api/routes.py#check_for_releases
         return found
 
     async def check_feed(self, feed: dict) -> List[Tuple[int, int]]:
@@ -188,7 +197,7 @@ class Poller:
         if not show_list:
             return
 
-        # Returns a tuple of (matched_str, percent_match)
+        # Extracts a tuple in the format (matched_str, percent_match)
         match = extract_one(show_name, show_list.keys())
 
         return EntryMatch(
@@ -207,6 +216,11 @@ class Poller:
         ----------
         item: dict
             The item to check for matches.
+
+        Returns
+        -------
+        Optional[Tuple[int, int]]
+            A tuple with (show_id, episode)
         """
         # In case there are any errors with the user-defined parsing
         # functions, this try-except block will prevent the whole
@@ -293,6 +307,7 @@ class Poller:
         except AttributeError:
             self.current_parser._last_modified = None
 
+        # 304 status means no new items according to the etag/modified attributes.
         if feed.status == 304:
             return {}
 

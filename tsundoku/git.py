@@ -1,4 +1,3 @@
-from hypercorn.utils import restart
 import logging
 import os
 import subprocess
@@ -6,8 +5,9 @@ import sys
 from typing import Tuple
 
 import asyncpg
-from yoyo import get_backend, read_migrations
+from hypercorn.utils import restart
 from quart import current_app as app
+from yoyo import get_backend, read_migrations
 
 from tsundoku.config import get_config_value
 

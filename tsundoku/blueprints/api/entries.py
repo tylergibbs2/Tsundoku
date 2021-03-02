@@ -1,10 +1,11 @@
 from typing import Optional
 
-from quart import request, views
 from quart import current_app as app
+from quart import request, views
+
+from tsundoku.feeds.entry import Entry
 
 from .response import APIResponse
-from tsundoku.feeds.entry import Entry
 
 
 class EntriesAPI(views.MethodView):

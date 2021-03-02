@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
@@ -10,7 +11,6 @@ import feedparser
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry, EntryState
-
 
 logger = logging.getLogger("tsundoku")
 

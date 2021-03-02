@@ -1,4 +1,5 @@
 import sys
+
 if sys.version_info < (3, 7):
     print("Please update Python to use version 3.7+")
     exit(1)
@@ -9,9 +10,9 @@ import getpass
 from pathlib import Path
 
 from fluent.runtime import FluentBundle, FluentResource
+
 from tsundoku import app, git
 from tsundoku.fluent import get_injector
-
 
 fluent = get_injector(["cmdline"])
 

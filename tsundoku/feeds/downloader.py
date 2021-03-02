@@ -1,15 +1,14 @@
 import asyncio
 import logging
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import anitopy
 from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry, EntryState
-
 
 logger = logging.getLogger("tsundoku")
 

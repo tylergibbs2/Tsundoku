@@ -2,26 +2,25 @@ import asyncio
 import datetime
 import importlib
 import logging
-from logging.config import dictConfig
 import os
 import secrets
+from logging.config import dictConfig
 from socket import gaierror
 
-from argon2 import PasswordHasher
 import aiohttp
 import asyncpg
+from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
 
-from tsundoku.blueprints.ux import ux_blueprint
+import tsundoku.exceptions as exceptions
+import tsundoku.git as git
 from tsundoku.blueprints.api import api_blueprint
+from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import get_config_value
 from tsundoku.dl_client import Manager
-import tsundoku.exceptions as exceptions
 from tsundoku.feeds import Downloader, Poller
-import tsundoku.git as git
 from tsundoku.user import User
-
 
 hasher = PasswordHasher()
 

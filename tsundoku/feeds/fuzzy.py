@@ -8,11 +8,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # help with: http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
 
-from difflib import SequenceMatcher
 import heapq
 import re
-from typing import Callable, Collection, Generator, List, Sequence, Tuple, Union, Optional
-
+from difflib import SequenceMatcher
+from typing import (Callable, Collection, Generator, List, Optional, Sequence,
+                    Tuple, Union)
 
 SortableCollection = Union[Collection[str], Sequence[str]]
 

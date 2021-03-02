@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 import logging
 from typing import List, Optional
 
 import quart
-
 
 logger = logging.getLogger("tsundoku")
 

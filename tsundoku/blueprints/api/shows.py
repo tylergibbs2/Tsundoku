@@ -1,13 +1,13 @@
 import logging
 from typing import Optional
 
-from quart import request, views
 from quart import current_app as app
+from quart import request, views
 
-from .response import APIResponse
 from tsundoku.kitsu import KitsuManager
 from tsundoku.webhooks import Webhook
 
+from .response import APIResponse
 
 logger = logging.getLogger("tsundoku")
 

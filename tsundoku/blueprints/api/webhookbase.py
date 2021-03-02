@@ -1,10 +1,11 @@
 from typing import Optional
 
-from quart import request, views
 from quart import current_app as app
+from quart import request, views
+
+from tsundoku.webhooks import WebhookBase
 
 from .response import APIResponse
-from tsundoku.webhooks import WebhookBase
 
 
 class WebhookBaseAPI(views.MethodView):

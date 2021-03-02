@@ -4,14 +4,14 @@ from quart import Blueprint
 from quart import current_app as app
 from quart_auth import current_user
 
+from tsundoku.kitsu import KitsuManager
+
 from .entries import EntriesAPI
 from .nyaa import NyaaAPI
 from .response import APIResponse
 from .shows import ShowsAPI
-from .webhooks import WebhooksAPI
 from .webhookbase import WebhookBaseAPI
-from tsundoku.kitsu import KitsuManager
-
+from .webhooks import WebhooksAPI
 
 api_blueprint = Blueprint('api', __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")

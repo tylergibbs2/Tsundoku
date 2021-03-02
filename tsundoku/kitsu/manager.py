@@ -1,11 +1,11 @@
 from __future__ import annotations
-import aiohttp
+
 import datetime
 import logging
 from typing import Optional
 
+import aiohttp
 from quart import current_app as app
-
 
 logger = logging.getLogger("tsundoku")
 

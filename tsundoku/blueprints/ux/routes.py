@@ -1,19 +1,19 @@
 import os
+from typing import Any
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import abort, Blueprint, flash, render_template, redirect, request, url_for
+from quart import Blueprint, abort
 from quart import current_app as app
-from quart_auth import current_user, login_user, logout_user, login_required
+from quart import flash, redirect, render_template, request, url_for
+from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
 from tsundoku.fluent import get_injector
+from tsundoku.git import check_for_updates, update
 from tsundoku.kitsu import KitsuManager
-from tsundoku.webhooks import Webhook, WebhookBase
-from tsundoku.git import update, check_for_updates
 from tsundoku.user import User
-from typing import Any
-
+from tsundoku.webhooks import Webhook, WebhookBase
 
 ux_blueprint = Blueprint(
     'ux',
