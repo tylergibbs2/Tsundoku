@@ -233,12 +233,7 @@ class ShowsAPI(views.MethodView):
         await KitsuManager.fetch(new_id, arguments["title"])
 
         logger.info("New Show Added - Preparing to Check for New Releases")
-        for parser in app.rss_parsers:
-            feed = await app.poller.get_feed_from_parser(parser)
-
-            logger.info(f"{parser.name} - Checking for New Releases...")
-            await app.poller.check_feed(feed)
-            logger.info(f"{parser.name} - Checked for New Releases")
+        await app.poller.poll()
 
         async with app.db_pool.acquire() as con:
             new_show = await con.fetchrow("""
@@ -337,12 +332,7 @@ class ShowsAPI(views.MethodView):
                 episode_offset, show_id)
 
         logger.info("Existing Show Updated - Preparing to Check for New Releases")
-        for parser in app.rss_parsers:
-            feed = await app.poller.get_feed_from_parser(parser)
-
-            logger.info(f"{parser.name} - Checking for New Releases...")
-            await app.poller.check_feed(feed)
-            logger.info(f"{parser.name} - Checked for New Releases")
+        await app.poller.poll()
 
         async with app.db_pool.acquire() as con:
             new_show = await con.fetchrow("""

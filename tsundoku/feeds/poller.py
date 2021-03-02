@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+from functools import partial
 import logging
 from typing import Optional, List, Tuple
 
@@ -93,6 +94,8 @@ class Poller:
         for parser in self.app.rss_parsers:
             self.current_parser = parser
             feed = await self.get_feed_from_parser()
+            if not feed or not feed["items"]:
+                continue
 
             logger.info(f"{parser.name} - Checking for New Releases...")
             found += await self.check_feed(feed)
@@ -254,23 +257,46 @@ class Poller:
 
         return (match.matched_id, show_episode)
 
-    async def get_feed_from_parser(self, parser=None) -> dict:
+    async def get_feed_from_parser(self) -> dict:
         """
         Returns the RSS feed dict from the
         current parser.
-
-        Returns
-        -------
-        dict
-            The parsed RSS feed.
         """
-        self.current_parser = parser or self.current_parser
+        if not hasattr(self.current_parser, "_last_etag"):
+            self.current_parser._last_etag = None
 
-        return await self.loop.run_in_executor(
-            None,
+        if not hasattr(self.current_parser, "_last_modified"):
+            self.current_parser._last_modified = None
+
+        # The last_etag and last_modified attributes are going to
+        # be private due to the fact that `self.current_parser` is
+        # a user-defined class and there's an off-chance they could
+        # use these names.
+
+        feed = await self.loop.run_in_executor(None, partial(
             feedparser.parse,
-            self.current_parser.url
-        )
+            self.current_parser.url,
+            etag=self.current_parser._last_etag,
+            modified=self.current_parser._last_modified
+        ))
+
+        # None of the RSS URLs that I provide with this software out-of-the-box
+        # provide etag or modified headers, but it's entirely possible a user-provided
+        # URL will.
+        try:
+            self.current_parser._last_etag = feed.etag
+        except AttributeError:
+            self.current_parser._last_etag = None
+
+        try:
+            self.current_parser._last_modified = feed.modified
+        except AttributeError:
+            self.current_parser._last_modified = None
+
+        if feed.status == 304:
+            return {}
+
+        return feed
 
     async def get_torrent_link(self, item: dict) -> str:
         """
