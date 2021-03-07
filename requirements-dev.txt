@@ -1,5 +1,5 @@
 -r requirements.txt
-autopep8==2.6.0
+autopep8==1.5.5
 flake8==3.8.4
 isort==5.7.0
 sphinx==3.4.3
