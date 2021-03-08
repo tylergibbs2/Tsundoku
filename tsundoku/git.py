@@ -5,7 +5,6 @@ import sys
 from typing import Tuple
 
 import asyncpg
-from hypercorn.utils import restart
 from quart import current_app as app
 from yoyo import get_backend, read_migrations
 

@@ -31,7 +31,6 @@ class SearchResult:
     def __init__(self, app: AppContext) -> None:
         self._app = app
 
-
     @classmethod
     def from_dict(cls, app: AppContext, _from: dict) -> SearchResult:
         """
@@ -67,7 +66,6 @@ class SearchResult:
 
         return instance
 
-
     @classmethod
     def from_necessary(cls, app: AppContext, show_id: int, torrent_link: str) -> SearchResult:
         """
@@ -95,7 +93,6 @@ class SearchResult:
 
         return instance
 
-
     def to_dict(self) -> dict:
         return {
             "show_id": self.show_id,
@@ -107,7 +104,6 @@ class SearchResult:
             "seeders": self.seeders,
             "leechers": self.leechers
         }
-
 
     async def get_episodes(self) -> List[int]:
         """
@@ -124,7 +120,7 @@ class SearchResult:
         for file in files:
             try:
                 parsed = anitopy.parse(file)
-            except Exception as e:
+            except Exception:
                 logger.warn(f"anitopy - Could not Parse '{file}', skipping")
                 continue
 
@@ -230,7 +226,7 @@ class NyaaSearcher:
         for item in feed["entries"]:
             try:
                 anitopy.parse(item["title"])
-            except Exception as e:
+            except Exception:
                 logger.warn(f"Anitopy - Could not Parse '{item['title']}', skipping")
                 continue
 

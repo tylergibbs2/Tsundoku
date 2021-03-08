@@ -1,6 +1,5 @@
 import configparser
 import json
-import os
 from typing import Any
 
 config = configparser.ConfigParser()

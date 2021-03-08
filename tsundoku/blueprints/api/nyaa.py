@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from quart import current_app as app
 from quart import request, views

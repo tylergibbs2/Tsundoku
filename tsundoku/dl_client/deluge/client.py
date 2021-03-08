@@ -1,11 +1,10 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import aiohttp
 
-from tsundoku.config import get_config_value
 
 logger = logging.getLogger("tsundoku")
 
@@ -23,7 +22,6 @@ class DelugeClient:
         self.password = kwargs.pop("auth")
 
         self.url = self.build_api_url(host, port, secure)
-
 
     def build_api_url(self, host: str, port: int, secure: bool) -> str:
         """
@@ -46,7 +44,6 @@ class DelugeClient:
         protocol = "https" if secure else "http"
 
         return f"{protocol}://{host}:{port}/json"
-
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
@@ -74,7 +71,6 @@ class DelugeClient:
 
         return Path(data["move_completed_path"], data["name"])
 
-
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
         """
         Adds a torrent to Deluge with the given magnet URL.
@@ -91,7 +87,6 @@ class DelugeClient:
         """
         data = await self.request("webapi.add_torrent", [magnet_url])
         return data.get("result")
-
 
     async def ensure_authorization(self) -> Optional[str]:
         """
@@ -141,14 +136,13 @@ class DelugeClient:
             self._request_counter += 1
 
             error = auth_request.get("error")
-            if error or auth_request["result"] == False:
+            if error or auth_request["result"] is False:
                 logger.warn("Deluge - Failed to Authenticate")
                 return
 
         return result
 
-
-    async def request(self, method: str, data: list=[]) -> dict:
+    async def request(self, method: str, data: list = []) -> dict:
         """
         Authorizes and makes a request with the Deluge WebAPI.
 

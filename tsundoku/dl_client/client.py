@@ -39,7 +39,6 @@ class Manager:
 
         self.session = session
 
-
     async def get_magnet(self, location: str) -> str:
         """
         Will take an internet location for a torrent file.
@@ -59,6 +58,7 @@ class Manager:
             The magnet URL for the torrent at the given location.
         """
         pattern = re.compile(r"\burn:btih:([A-z\d]+)\b")
+
         def b32_to_sha1(match: re.Match) -> str:
             hash_ = match.group(1)
             if len(hash_) == 40:
@@ -82,7 +82,6 @@ class Manager:
             + f"xt=urn:btih:{digest}"\
             + f"&dn={metadata[b'info'][b'name'].decode()}"\
             + f"&tr={metadata[b'announce'].decode()}"
-
 
     async def get_file_structure(self, location: str) -> List[str]:
         """
@@ -118,7 +117,6 @@ class Manager:
 
         return file_names
 
-
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Retrieves a torrent's downloaded location from a download client.
@@ -134,7 +132,6 @@ class Manager:
             The torrent Path object.
         """
         return await self._client.get_torrent_fp(torrent_id)
-
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
         """

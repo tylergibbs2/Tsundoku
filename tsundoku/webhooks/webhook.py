@@ -12,6 +12,7 @@ class ExprDict(dict):
     def __missing__(self, value) -> str:
         return value
 
+
 VALID_SERVICES = ("discord", "slack", "custom")
 VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
 
@@ -46,7 +47,8 @@ class WebhookBase:
         }
 
     @classmethod
-    async def new(cls, app: quart.Quart, name: str, service: str, url: str, content_fmt: Optional[str]=None) -> Optional[WebhookBase]:
+    async def new(cls, app: quart.Quart, name: str, service: str, url: str,
+                  content_fmt: Optional[str] = None) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
         returns an instance.
@@ -122,7 +124,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: quart.Quart, base_id: int, with_validity: bool=True) -> Optional[WebhookBase]:
+    async def from_id(cls, app: quart.Quart, base_id: int, with_validity: bool = True) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -273,14 +275,14 @@ class WebhookBase:
         if self.service == "slack":
             try:
                 resp = await self._app.session.post(self.url, json={"text": ""})
-            except Exception as e:
+            except Exception:
                 return False
             text = await resp.text()
             return text == "no_text"
         else:
             try:
                 resp = await self._app.session.head(self.url)
-            except Exception as e:
+            except Exception:
                 return False
             return resp.status == 200
 
@@ -306,7 +308,7 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(cls, app: quart.Quart, show_id: int, with_validity: bool=False) -> List[Webhook]:
+    async def from_show_id(cls, app: quart.Quart, show_id: int, with_validity: bool = False) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -623,5 +625,5 @@ class Webhook:
         try:
             await self._app.session.post(self.base.url, json=payload)
             logger.debug(f"Webhooks - Webhook {self.wh_id} payload sent")
-        except Exception as e:
+        except Exception:
             pass

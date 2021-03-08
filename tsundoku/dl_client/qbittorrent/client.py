@@ -22,7 +22,6 @@ class qBittorrentClient:
 
         self.url = self.build_api_url(host, port, secure)
 
-
     def build_api_url(self, host: str, port: int, secure: bool) -> str:
         """
         Builds the URL to make requests to the qBittorrent WebAPI.
@@ -71,7 +70,6 @@ class qBittorrentClient:
 
         return Path(data["save_path"]) / Path(data["name"])
 
-
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
         """
         Adds a torrent to qBittorrent with the given magnet URL.
@@ -97,7 +95,6 @@ class qBittorrentClient:
             return
 
         return match.group(1).lower()
-
 
     async def login(self) -> bool:
         """
@@ -128,8 +125,8 @@ class qBittorrentClient:
 
         return status == 200
 
-
-    async def request(self, http_method: str, location: str, method: str, payload: dict={}, params: dict={}) -> dict:
+    async def request(self, http_method: str, location: str, method: str,
+                      payload: dict = {}, params: dict = {}) -> dict:
         """
         Makes a request to qBittorrent.
 
