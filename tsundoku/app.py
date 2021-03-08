@@ -247,9 +247,9 @@ async def load_parsers() -> None:
     if not hasattr(app, "db_pool"):
         return
 
-    # It's okay if we're blocking at this point.
-    # The webserver isn't intended to be serving
-    # at this point in time.
+    # It's okay if we're blocking here.
+    # The webserver isn't intended to
+    # be serving at this point in time.
     _load_parsers()
 
 
@@ -317,7 +317,7 @@ async def insert_locale() -> dict:
     return {"LOCALE": locale}
 
 
-def run(with_ui: bool=True) -> None:
+def run(with_ui: bool = True) -> None:
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
 

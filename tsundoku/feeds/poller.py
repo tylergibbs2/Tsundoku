@@ -127,6 +127,12 @@ class Poller:
         ----------
         feed: dict
             The RSS feed.
+
+        Returns
+        -------
+        List[Tuple[int, int]]
+            A list of tuples in the format (show_id, episode).
+            These are newly found entries that have begun processing.
         """
         found_items = []
 

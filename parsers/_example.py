@@ -1,5 +1,8 @@
+from typing import Optional
+
+
 class Example:
-    def __init__(self, app):
+    def __init__(self, app) -> None:
         """
         Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
@@ -18,12 +21,14 @@ class Example:
         """
         return file_name
 
-    def get_episode_number(self, file_name: str) -> int:
+    def get_episode_number(self, file_name: str) -> Optional[int]:
         """
         Using the `file_name` argument, you must parse
         the file name in order to get the episode of the release.
 
         Failure to do so will result in incorrect matching.
+
+        Returning `None` will stop the matching.
         """
         return 0
 
