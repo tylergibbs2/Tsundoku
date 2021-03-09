@@ -5,7 +5,6 @@ from typing import Optional
 
 import aiohttp
 
-
 logger = logging.getLogger("tsundoku")
 
 

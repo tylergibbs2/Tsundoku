@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import logging
 from dataclasses import dataclass
 from functools import partial
@@ -99,12 +100,12 @@ class Poller:
 
         for parser in self.app.rss_parsers:
             self.current_parser = parser
-            feed = await self.get_feed_from_parser()
-            if not feed or not feed["items"]:
+            items = await self.get_items_from_parser()
+            if not items:
                 continue
 
             logger.info(f"{parser.name} - Checking for New Releases...")
-            found += await self.check_feed(feed)
+            found += await self.check_feed(items)
             logger.info(f"{parser.name} - Checked for New Releases")
 
         self.current_parser = None
@@ -116,7 +117,7 @@ class Poller:
         # this. See: tsundoku/blueprints/api/routes.py#check_for_releases
         return found
 
-    async def check_feed(self, feed: dict) -> List[Tuple[int, int]]:
+    async def check_feed(self, items: List[dict]) -> List[Tuple[int, int]]:
         """
         Iterates through the list of items in an
         RSS feed and will individually check each
@@ -126,7 +127,7 @@ class Poller:
         Parameters
         ----------
         feed: dict
-            The RSS feed.
+            The RSS feed items.
 
         Returns
         -------
@@ -136,7 +137,7 @@ class Poller:
         """
         found_items = []
 
-        for item in feed["items"]:
+        for item in items:
             found = await self.check_item(item)
             if found:
                 found_items.append(found)
@@ -277,10 +278,40 @@ class Poller:
 
         return (match.matched_id, show_episode)
 
-    async def get_feed_from_parser(self) -> dict:
+    def hash_rss_item(self, item: dict) -> str:
         """
-        Returns the RSS feed dict from the
-        current parser.
+        Generates a unique hash for an RSS item based
+        off of the item's title and/or description.
+
+        https://www.rssboard.org/rss-profile#element-channel-item
+
+        Parameters
+        ----------
+        item: dict
+            The item to hash.
+
+        Returns
+        -------
+        str
+            SHA-256 hash of the item.
+        """
+        # RSS feed items are required to have at least one of these
+        # attributes. See link in docstring for more details.
+        to_hash = item.get("title", "") + item.get("description", "")
+
+        return hashlib.sha256(
+            to_hash.encode("utf-8")
+        ).hexdigest()
+
+    async def get_items_from_parser(self) -> List[dict]:
+        """
+        Returns new items from the current
+        parser's RSS feed.
+
+        Returns
+        -------
+        List[dict]
+            New items in the RSS feed.
         """
         if not hasattr(self.current_parser, "_last_etag"):
             self.current_parser._last_etag = None
@@ -315,9 +346,42 @@ class Poller:
 
         # 304 status means no new items according to the etag/modified attributes.
         if feed.status == 304:
-            return {}
+            return []
 
-        return feed
+        if self.current_parser._last_etag is not None or self.current_parser._last_modified is not None:
+            return feed["items"]
+
+        # Worst-case scenario, etag header and modified header weren't
+        # implemented on the server-side. Manually check unique item hashes
+        # for all items in the feed.
+        if not hasattr(self.current_parser, "_most_recent_hash"):
+            self.current_parser._most_recent_hash = None
+
+        new_items = []
+
+        # Since new items in the RSS feed are inserted at index 0,
+        # the 0th index item is the most recent item in the feed.
+        if feed["items"]:
+            # If the first item in the feed is the same as it was
+            # on the previous iteration, the feed has no new items.
+            first_hash = self.hash_rss_item(feed["items"][0])
+            if first_hash == self.current_parser._most_recent_hash:
+                return []
+
+            new_items.append(feed["items"][0])
+
+            # Iterate through the rest of the items in the feed,
+            # repeating the same process above.
+            for item in feed["items"][1:]:
+                item_hash = self.hash_rss_item(item)
+                if item_hash == self.current_parser._most_recent_hash:
+                    break
+
+                new_items.append(item)
+
+            self.current_parser._most_recent_hash = first_hash
+
+        return new_items
 
     async def get_torrent_link(self, item: dict) -> str:
         """
