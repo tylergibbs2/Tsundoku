@@ -3,12 +3,11 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-from typing import List
+from typing import Any, List, Optional
 from urllib.parse import quote_plus
 
 import anitopy
 import feedparser
-from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry, EntryState
 
@@ -16,7 +15,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class SearchResult:
-    show_id: int
+    show_id: Optional[int]
 
     title: str
 
@@ -28,17 +27,17 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: AppContext) -> None:
+    def __init__(self, app: Any) -> None:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: AppContext, _from: dict) -> SearchResult:
+    def from_dict(cls, app: Any, _from: dict) -> SearchResult:
         """
         Returns a valid SearchResult object from a data dict.
 
         Parameters
         ----------
-        app: AppContext
+        app: Any
             The Quart app.
         from: dict
             The data dict.
@@ -67,14 +66,14 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(cls, app: AppContext, show_id: int, torrent_link: str) -> SearchResult:
+    def from_necessary(cls, app: Any, show_id: int, torrent_link: str) -> SearchResult:
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
 
         Parameters
         ----------
-        app: AppContext
+        app: Any
             The Quart app.
         show_id: int
             The ID of the show to be added to.
@@ -143,7 +142,7 @@ class SearchResult:
         List[Entry]:
             Returns a list of added entries.
         """
-        added = []
+        added: List[Entry] = []
 
         if self.show_id is None:
             logger.error("Nyaa - Unable to process result without `show_id` set.")
@@ -197,7 +196,7 @@ class SearchResult:
 
 class NyaaSearcher:
     @staticmethod
-    def _get_query_url(query: str) -> None:
+    def _get_query_url(query: str) -> str:
         """
         Sets the query for searching nyaa.si.
 
@@ -209,12 +208,14 @@ class NyaaSearcher:
         return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
 
     @staticmethod
-    async def search(app: AppContext, query: str) -> List[SearchResult]:
+    async def search(app: Any, query: str) -> List[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
         Parameters
         ----------
+        app: Any
+            The app.
         query: str
             The search query.
         """

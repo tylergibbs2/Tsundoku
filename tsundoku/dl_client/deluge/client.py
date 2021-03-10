@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import aiohttp
 
@@ -9,16 +9,16 @@ logger = logging.getLogger("tsundoku")
 
 
 class DelugeClient:
-    def __init__(self, session: aiohttp.ClientSession, **kwargs) -> None:
+    def __init__(self, session: aiohttp.ClientSession, **kwargs: Any) -> None:
         self._request_counter = 0  # counts the number of requests made to Deluge.
 
         self.session = session
 
-        host = kwargs.pop("host")
-        port = kwargs.pop("port")
-        secure = kwargs.pop("secure")
+        host: str = kwargs.pop("host")
+        port: int = kwargs.pop("port")
+        secure: bool = kwargs.pop("secure")
 
-        self.password = kwargs.pop("auth")
+        self.password: str = kwargs.pop("auth")
 
         self.url = self.build_api_url(host, port, secure)
 
@@ -58,15 +58,14 @@ class DelugeClient:
         Optional[Path]:
             The torrent's downloaded file path.
         """
-        torrent_id = [torrent_id]
-        ret = await self.request("webapi.get_torrents", [torrent_id, ["name", "move_completed_path"]])
+        ret = await self.request("webapi.get_torrents", [[torrent_id], ["name", "move_completed_path"]])
 
         ret_list = ret["result"].get("torrents", [])
 
         try:
             data = ret_list[0]
         except IndexError:
-            return
+            return None
 
         return Path(data["move_completed_path"], data["name"])
 
@@ -113,12 +112,12 @@ class DelugeClient:
             )
         except aiohttp.ClientConnectionError:
             logger.error("Deluge - Failed to Connect")
-            auth_status = {}
+            resp = {}
         else:
-            auth_status = await auth_status.json(content_type=None)
+            resp = await auth_status.json(content_type=None)
 
         self._request_counter += 1
-        result = auth_status.get("result")
+        result = resp.get("result")
         if not result:
             payload = {
                 "id": self._request_counter,
@@ -130,14 +129,14 @@ class DelugeClient:
                 json=payload,
                 headers=headers
             )
-            auth_request = await auth_request.json(content_type=None)
+            resp = await auth_request.json(content_type=None)
 
             self._request_counter += 1
 
-            error = auth_request.get("error")
-            if error or auth_request["result"] is False:
+            error = resp.get("error")
+            if error or resp["result"] is False:
                 logger.warn("Deluge - Failed to Authenticate")
-                return
+                return None
 
         return result
 

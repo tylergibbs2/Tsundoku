@@ -6,11 +6,13 @@ import os
 import secrets
 from logging.config import dictConfig
 from socket import gaierror
+from typing import Any
 
 import aiohttp
 import asyncpg
 from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
+from quart.wrappers.response import Response
 from quart_auth import AuthManager, Unauthorized
 
 import tsundoku.exceptions as exceptions
@@ -27,7 +29,7 @@ hasher = PasswordHasher()
 auth = AuthManager()
 auth.user_class = User
 
-app = Quart("Tsundoku", static_folder=None)
+app: Any = Quart("Tsundoku", static_folder=None)
 
 app.seen_titles = set()
 app._tasks = []
@@ -106,7 +108,7 @@ async def insert_user(username: str, password: str) -> None:
 
 
 @app.errorhandler(Unauthorized)
-async def redirect_to_login(*_) -> None:
+async def redirect_to_login(*_: Any) -> Response:
     return redirect(url_for("ux.login"))
 
 
@@ -204,7 +206,7 @@ def _load_parsers() -> None:
     )
 
     for parser in get_config_value("Tsundoku", "parsers"):
-        spec = importlib.util.find_spec(parser)
+        spec: Any = importlib.util.find_spec(parser)
 
         if spec is None:
             logger.error(f"Parser '{parser}' Not Found")

@@ -2,10 +2,15 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 import asyncpg
-from quart import current_app as app
+
+if TYPE_CHECKING:
+    app: Any
+else:
+    from quart import current_app as app
+
 from yoyo import get_backend, read_migrations
 
 from tsundoku.config import get_config_value
@@ -17,11 +22,12 @@ from tsundoku.config import get_config_value
 logger = logging.getLogger("tsundoku")
 
 
-def run(args: str) -> Tuple[str, str]:
+def run(args: str) -> Tuple[str, Optional[bytes]]:
     git_loc = get_config_value("Tsundoku", "git_path")
     cmd = f"{git_loc} {args}"
 
-    output = err = None
+    output: Optional[bytes] = None
+    err: Optional[bytes] = None
 
     try:
         logger.debug(f"Git: Trying to execute '{cmd}' with shell")
@@ -32,18 +38,19 @@ def run(args: str) -> Tuple[str, str]:
             shell=True
         )
         output, err = p.communicate()
-        output = output.strip().decode()
 
-        logger.debug(f"Git: output: {output}")
+        output_text = output.strip().decode()
+
+        logger.debug(f"Git: output: {output_text}")
     except OSError:
         logger.debug(f"Git: command failed: {cmd}")
     else:
-        if "not found" in output or "not recognized as an internal or external command" in output:
+        if "not found" in output_text or "not recognized as an internal or external command" in output_text:
             logger.debug(f"Git: Unable to find executable with command {cmd}")
-        elif "fatal: " in output or err:
+        elif "fatal: " in output_text or err:
             logger.error("Git: Returned bad info. Bad installation?")
 
-    return output, err
+    return (output_text, err)
 
 
 async def migrate() -> None:

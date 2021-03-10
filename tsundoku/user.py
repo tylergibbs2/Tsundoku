@@ -5,11 +5,10 @@ from quart_auth import AuthUser
 
 
 class User(AuthUser):
-    # TODO
     def __init__(self, auth_id: Optional[str]) -> None:
         super().__init__(auth_id)
         self._resolved = False
-        self._username = None
+        self._username = ""
 
     async def _resolve(self) -> None:
         if not self._resolved:

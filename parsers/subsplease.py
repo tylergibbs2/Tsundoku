@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import Any, Optional
 
 import anitopy
 
 
 class SubsPlease:
-    def __init__(self, app) -> None:
+    def __init__(self, app: Any) -> None:
         """
         Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
@@ -38,22 +38,22 @@ class SubsPlease:
         parsed = anitopy.parse(file_name)
 
         if "anime_type" in parsed.keys():
-            return
+            return None
 
         extra_info = parsed.get("release_information", "")
         if "batch" in extra_info.lower():
-            return
+            return None
 
         try:
             episode = parsed["episode_number"]
         except KeyError:
-            return
+            return None
 
         try:
             return int(episode)
         except (ValueError, TypeError):
-            return
+            return None
 
 
-def setup(app):
+def setup(app: Any) -> SubsPlease:
     return SubsPlease(app)

@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Any, Optional
 
 
 class Example:
-    def __init__(self, app) -> None:
+    def __init__(self, app: Any) -> None:
         """
         Change 'self.url' and 'self.name' to be the URL
         and name of the desired RSS feed to parse.
@@ -73,5 +73,5 @@ class Example:
         pass
 
 
-def setup(app):
+def setup(app: Any) -> Example:
     return Example(app)

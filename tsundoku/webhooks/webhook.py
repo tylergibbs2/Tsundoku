@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
-
-import quart
+from typing import Any, List, Optional, Tuple
 
 logger = logging.getLogger("tsundoku")
 
 
 class ExprDict(dict):
-    def __missing__(self, value) -> str:
+    def __missing__(self, value: str) -> str:
         return value
 
 
@@ -18,7 +16,7 @@ VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
 
 
 class WebhookBase:
-    _app: quart.Quart
+    _app: Any
 
     base_id: int
     name: str
@@ -47,7 +45,7 @@ class WebhookBase:
         }
 
     @classmethod
-    async def new(cls, app: quart.Quart, name: str, service: str, url: str,
+    async def new(cls, app: Any, name: str, service: str, url: str,
                   content_fmt: Optional[str] = None) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
@@ -55,7 +53,7 @@ class WebhookBase:
 
         Parameters
         ----------
-        app: quart.Quart:
+        app: Any:
             The app.
         name: str
             The name of the WebhookBase.
@@ -72,9 +70,9 @@ class WebhookBase:
             The new WebhookBase.
         """
         if service not in VALID_SERVICES:
-            return
+            return None
 
-        args = (name, service, url)
+        args: Tuple[str, ...] = (name, service, url)
         if content_fmt:
             query = """
                 INSERT INTO
@@ -99,7 +97,7 @@ class WebhookBase:
             new_base = await con.fetchrow(query, *args)
 
         if not new_base:
-            return
+            return None
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -124,13 +122,13 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: quart.Quart, base_id: int, with_validity: bool = True) -> Optional[WebhookBase]:
+    async def from_id(cls, app: Any, base_id: int, with_validity: bool = True) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
         Parameters
         ----------
-        app: quart.Quart
+        app: Any
             The app.
         base_id: int
             The WebhookBase's ID.
@@ -157,7 +155,7 @@ class WebhookBase:
             """, base_id)
 
         if not base:
-            return
+            return None
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -186,14 +184,14 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls, app: quart.Quart) -> List[WebhookBase]:
+    async def all(cls, app: Any) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
         the database.
 
         Parameters
         ----------
-        app: quart.Quart
+        app: Any
             The app.
 
         Returns
@@ -213,7 +211,9 @@ class WebhookBase:
 
         instances = []
         for id_ in ids:
-            instances.append(await WebhookBase.from_id(app, id_["id"]))
+            wh_base = await WebhookBase.from_id(app, id_["id"])
+            if wh_base:
+                instances.append(wh_base)
 
         return instances
 
@@ -288,7 +288,7 @@ class WebhookBase:
 
 
 class Webhook:
-    _app: quart.Quart
+    _app: Any
 
     show_id: int
     base: WebhookBase
@@ -308,13 +308,13 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(cls, app: quart.Quart, show_id: int, with_validity: bool = False) -> List[Webhook]:
+    async def from_show_id(cls, app: Any, show_id: int, with_validity: bool = False) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
         Parameters
         ----------
-        app: quart.Quart
+        app: Any
             The app.
         show_id: int
             The show's ID.
@@ -349,7 +349,6 @@ class Webhook:
 
             instance._app = app
 
-            instance.wh_id = wh["id"]
             instance.show_id = show_id
             instance.base = base
 
@@ -358,13 +357,13 @@ class Webhook:
         return instances
 
     @classmethod
-    async def from_composite(cls, app: quart.Quart, show_id: int, base_id: int) -> Optional[Webhook]:
+    async def from_composite(cls, app: Any, show_id: int, base_id: int) -> Optional[Webhook]:
         """
         Returns a webhook from its composite key.
 
         Parameters
         ----------
-        app: quart.Quart
+        app: Any
             The app.
         show_id: int
             The show's ID.
@@ -388,13 +387,12 @@ class Webhook:
 
         base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
         if not base:
-            return
+            return None
 
         instance = cls()
 
         instance._app = app
 
-        instance.wh_id = webhook["id"]
         instance.show_id = show_id
         instance.base = base
 
@@ -416,7 +414,7 @@ class Webhook:
                 FROM
                     webhook_trigger
                 WHERE wh_id=$1;
-            """, self.wh_id)
+            """, self.show_id)
 
         return [r["trigger"] for r in triggers]
 
@@ -444,7 +442,7 @@ class Webhook:
                 FROM
                     webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
-            """, self.wh_id, trigger)
+            """, self.show_id, trigger)
 
             if exists:
                 return True
@@ -455,7 +453,7 @@ class Webhook:
                     (wh_id, trigger)
                 VALUES
                     ($1, $2);
-            """, self.wh_id, trigger)
+            """, self.show_id, trigger)
 
         return True
 
@@ -483,7 +481,7 @@ class Webhook:
                 FROM
                     webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
-            """, self.wh_id, trigger)
+            """, self.show_id, trigger)
 
             if not exists:
                 return False
@@ -492,7 +490,7 @@ class Webhook:
                 DELETE FROM
                     webhook_trigger
                 WHERE wh_id=$1 AND trigger=$2;
-            """, self.wh_id, trigger)
+            """, self.show_id, trigger)
 
         return True
 
@@ -546,7 +544,7 @@ class Webhook:
 
         return [title_block, content_block]
 
-    async def generate_payload(self, episode: int, event: str) -> dict:
+    async def generate_payload(self, episode: int, event: str) -> Optional[dict]:
         """
         Generates the complete payload for
         a webhook send.
@@ -573,9 +571,9 @@ class Webhook:
             """, self.show_id)
 
         if not show_name:
-            return
+            return None
 
-        payload = {}
+        payload: Any = {}
 
         expr = ExprDict(
             name=show_name,
@@ -609,21 +607,21 @@ class Webhook:
         """
         if not self.base.valid:
             logger.warn("Webhooks - Attempted to send webhook, but the base webhook was invalid")
-            return
+            return None
 
-        logger.debug(f"Webhooks - Generating payload for Webhook with ID {self.wh_id}")
+        logger.debug(f"Webhooks - Generating payload for Webhook with show ID {self.show_id}")
         payload = await self.generate_payload(episode, event)
 
         if not payload:
-            logger.warn(f"Webhooks - Failed to generate a valid payload for Webhook with ID {self.wh_id}")
-            return
+            logger.warn(f"Webhooks - Failed to generate a valid payload for Webhook with show ID {self.show_id}")
+            return None
 
-        logger.debug(f"Webhooks - Payload generated for Webhook with ID {self.wh_id}")
+        logger.debug(f"Webhooks - Payload generated for Webhook with show ID {self.show_id}")
 
-        logger.debug(f"Webhooks - Webhook {self.wh_id} sending payload...")
+        logger.debug(f"Webhooks - Webhook for show {self.show_id} sending payload...")
 
         try:
             await self._app.session.post(self.base.url, json=payload)
-            logger.debug(f"Webhooks - Webhook {self.wh_id} payload sent")
+            logger.debug(f"Webhooks - Webhook for show {self.show_id} payload sent")
         except Exception:
             pass

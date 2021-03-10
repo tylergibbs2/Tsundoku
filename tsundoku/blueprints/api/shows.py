@@ -81,9 +81,9 @@ class ShowsAPI(views.MethodView):
                     webhooks = await Webhook.from_show_id(app, s["id"])
                     for webhook in webhooks:
                         triggers = await webhook.get_triggers()
-                        webhook = webhook.to_dict()
-                        webhook["triggers"] = triggers
-                        s["webhooks"].append(webhook)
+                        wh = webhook.to_dict()
+                        wh["triggers"] = triggers
+                        s["webhooks"].append(wh)
 
                     manager = await KitsuManager.from_show_id(s["id"])
                     if manager:
@@ -135,9 +135,9 @@ class ShowsAPI(views.MethodView):
                 webhooks = await Webhook.from_show_id(app, s["id"])
                 for webhook in webhooks:
                     triggers = await webhook.get_triggers()
-                    webhook = webhook.to_dict()
-                    webhook["triggers"] = triggers
-                    s["webhooks"].append(webhook)
+                    wh = webhook.to_dict()
+                    wh["triggers"] = triggers
+                    s["webhooks"].append(wh)
 
                 manager = await KitsuManager.from_show_id(s["id"])
                 if manager:

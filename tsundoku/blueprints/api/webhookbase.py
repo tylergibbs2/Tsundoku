@@ -51,7 +51,7 @@ class WebhookBaseAPI(views.MethodView):
                 result=[base.to_dict() for base in await WebhookBase.all(app)]
             )
 
-        base = await WebhookBase.from_id(base_id)
+        base = await WebhookBase.from_id(app, base_id)
         if base:
             return APIResponse(
                 result=[base.to_dict()]

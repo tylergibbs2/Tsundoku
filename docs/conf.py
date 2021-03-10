@@ -26,7 +26,9 @@ author = 'Tyler Gibbs'
 # The full version, including alpha/beta/rc tags
 version = ''
 with open('../tsundoku/__init__.py') as f:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
+    match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE)
+    if match:
+        version = match.group(1)
 
 
 # -- General configuration ---------------------------------------------------

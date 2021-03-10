@@ -110,9 +110,9 @@ async def index() -> str:
             webhooks = await Webhook.from_show_id(app, s["id"])
             for webhook in webhooks:
                 triggers = await webhook.get_triggers()
-                webhook = webhook.to_dict()
-                webhook["triggers"] = triggers
-                s["webhooks"].append(webhook)
+                wh = webhook.to_dict()
+                wh["triggers"] = triggers
+                s["webhooks"].append(wh)
 
             manager = await KitsuManager.from_show_id(s["id"])
             if manager:
@@ -177,8 +177,7 @@ async def webhooks() -> str:
     ctx["_"] = fluent.format_value
 
     all_bases = await WebhookBase.all(app)
-    all_bases = [b.to_dict() for b in all_bases]
-    ctx["bases"] = all_bases
+    ctx["bases"] = [b.to_dict() for b in all_bases]
 
     return await render_template("webhooks.html", **ctx)
 

@@ -1,8 +1,8 @@
 from enum import Enum
 from pathlib import Path
+from typing import Any, Optional
 
 from asyncpg import Record
-from quart.ctx import AppContext
 
 from tsundoku.webhooks import Webhook
 
@@ -21,7 +21,7 @@ class EntryState(str, Enum):
 
 
 class Entry:
-    def __init__(self, app: AppContext, record: Record) -> None:
+    def __init__(self, app: Any, record: Record) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]
@@ -29,9 +29,9 @@ class Entry:
         self.torrent_hash: str = record["torrent_hash"]
 
         fp = record["file_path"]
-        self.file_path: Path = Path(fp) if fp is not None else None
+        self.file_path: Optional[Path] = Path(fp) if fp is not None else None
 
-        self._app: AppContext = app
+        self._app: Any = app
         self._record: Record = record
 
     def to_dict(self) -> dict:

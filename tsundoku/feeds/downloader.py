@@ -3,10 +3,9 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import anitopy
-from quart.ctx import AppContext
 
 from tsundoku.feeds.entry import Entry, EntryState
 
@@ -40,7 +39,7 @@ class Downloader:
     `show_entry` table.
     """
 
-    def __init__(self, app_context: AppContext) -> None:
+    def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
 
     async def start(self) -> None:
@@ -48,7 +47,7 @@ class Downloader:
             await self.check_show_entries()
             await asyncio.sleep(15)
 
-    def get_expression_mapping(self, title: str, season: int, episode: int, **kwargs) -> ExprDict:
+    def get_expression_mapping(self, title: str, season: str, episode: str, **kwargs: str) -> ExprDict:
         """
         Creates an ExprDict of specific expressions to use
         when formatting strings.
@@ -82,7 +81,7 @@ class Downloader:
             **kwargs
         )
 
-    async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> int:
+    async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> Optional[int]:
         """
         Begins downloading an episode of a show
         using the passed magnet URL.
@@ -101,7 +100,7 @@ class Downloader:
 
         Returns
         -------
-        int:
+        Optional[int]:
             The ID of the added entry.
         """
         torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
@@ -109,7 +108,7 @@ class Downloader:
         if torrent_hash is None:
             logger.warn(
                 f"Failed to add Magnet URL {magnet_url} to download client")
-            return
+            return None
 
         # TODO: handle entry insertion in the Entry class
         async with self.app.db_pool.acquire() as con:
@@ -146,7 +145,7 @@ class Downloader:
         """
         if entry.file_path is None:
             logger.error("entry.file_path is None?")
-            return
+            return None
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
@@ -202,6 +201,8 @@ class Downloader:
 
             return moved_file
 
+        return None
+
     async def handle_rename(self, entry: Entry) -> Optional[Path]:
         """
         Handles the rename for a downloaded entry.
@@ -221,7 +222,7 @@ class Downloader:
             # This can't really happen but it's probably best to check
             # just in case the download client returns an incorrect fp.
             logger.error("entry.file_path is None?")
-            return
+            return None
 
         async with self.app.db_pool.acquire() as con:
             show_info = await con.fetchrow("""
@@ -244,8 +245,8 @@ class Downloader:
 
         expressions = self.get_expression_mapping(
             show_info["title"],
-            entry.season,
-            entry.episode,
+            show_info["season"],
+            str(entry.episode),
             ext=suffix
         )
         name = file_fmt.format_map(expressions)
@@ -260,6 +261,8 @@ class Downloader:
             logger.error(f"Error Renaming Release - {e}")
         else:
             return new_path
+
+        return None
 
     def resolve_file(self, root: Path, episode: int) -> Optional[Path]:
         """
@@ -298,6 +301,8 @@ class Downloader:
                 continue
             if found == episode:
                 return subpath
+
+        return None
 
     async def check_show_entry(self, entry: Entry) -> None:
         """

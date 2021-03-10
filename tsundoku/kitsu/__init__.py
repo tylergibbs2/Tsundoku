@@ -1,3 +1,3 @@
 from .manager import KitsuManager
 
-__all__ = [KitsuManager]
+__all__ = ['KitsuManager']

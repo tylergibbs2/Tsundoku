@@ -93,7 +93,7 @@ if __name__ == "__main__":
     elif args.create_user:
         username = input(fluent._("username") + " ")
         match = False
-        password = None
+        password = ""
         while not match:
             password = getpass.getpass(fluent._("password") + " ")
             conf_password = getpass.getpass(fluent._("conf-password") + " ")

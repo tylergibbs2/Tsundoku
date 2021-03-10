@@ -2,7 +2,7 @@ import configparser
 import json
 from typing import Any
 
-config = configparser.ConfigParser()
+config: Any = configparser.ConfigParser()
 
 config.read("config.ini")
 
@@ -32,19 +32,19 @@ def get_config_value(section: str, value: str) -> Any:
         The specified section or value does not exist.
     """
     try:
-        section = config[section]
+        found_section: Any = config[section]
     except KeyError:
         raise KeyError(f"The specified section does not exist: {section}")
 
     try:
-        value = section[value]
+        found_value = found_section[value]
     except KeyError:
         raise KeyError(f"The specified value does not exist: {value}")
 
     try:
-        return json.loads(value)
+        return json.loads(found_value)
     except json.JSONDecodeError:
-        return value
+        return found_value
 
 
 def set_config_value(section: str, value: str, data: Any) -> None:

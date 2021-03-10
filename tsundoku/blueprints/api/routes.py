@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from quart import Blueprint
 from quart import current_app as app
@@ -18,12 +19,14 @@ logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.before_request
-async def ensure_auth() -> APIResponse:
+async def ensure_auth() -> Optional[APIResponse]:
     if not await current_user.is_authenticated:
         return APIResponse(
             status=401,
             result="You are not authorized to access this resource."
         )
+
+    return None
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
@@ -74,7 +77,9 @@ async def delete_show_cache(show_id: int) -> APIResponse:
     logger.info(f"API - Deleting cache for Show {show_id}")
 
     manager = await KitsuManager.from_show_id(show_id)
-    await manager.clear_cache()
+
+    if manager:
+        await manager.clear_cache()
 
     return APIResponse(
         result=True

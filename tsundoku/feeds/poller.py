@@ -3,10 +3,9 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from functools import partial
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import feedparser
-from quart.ctx import AppContext
 
 from tsundoku.config import get_config_value
 
@@ -49,11 +48,11 @@ class Poller:
     renaming, and moving.
     """
 
-    def __init__(self, app_context: AppContext) -> None:
+    def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 
-        self.current_parser = None  # keeps track of the current parser
+        self.current_parser: Any = None  # keeps track of the current parser
 
         interval = get_config_value("Tsundoku", "polling_interval")
         try:
@@ -202,16 +201,19 @@ class Poller:
         show_list = {show["title"]: show["id"] for show in desired_shows}
 
         if not show_list:
-            return
+            return None
 
         # Extracts a tuple in the format (matched_str, percent_match)
-        match = extract_one(show_name, show_list.keys())
+        match = extract_one(show_name, list(show_list.keys()))
 
-        return EntryMatch(
-            show_name,
-            show_list[match[0]],
-            match[1]
-        )
+        if match:
+            return EntryMatch(
+                show_name,
+                show_list[match[0]],
+                match[1]
+            )
+
+        return None
 
     async def check_item(self, item: dict) -> Optional[Tuple[int, int]]:
         """
@@ -235,7 +237,7 @@ class Poller:
         try:
             if self.current_parser.ignore_logic(item) is False:
                 logger.debug(f"{self.current_parser.name} - Release Ignored")
-                return
+                return None
         except AttributeError:
             pass  # The parser doesn't have an ignore_logic method.
 
@@ -250,21 +252,21 @@ class Poller:
         except Exception as e:
             logger.error(
                 f"Parsing Error - {self.current_parser.name}@{self.current_parser.version}: {e}")
-            return
+            return None
 
         if show_episode is None:
-            return
+            return None
 
         self.app.seen_titles.add(show_name)
 
         match = await self.check_item_for_match(show_name)
 
         if match is None or match.match_percent < 90:
-            return
+            return None
 
         entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)
         if entry_is_parsed:
-            return
+            return None
 
         logger.info(
             f"{self.current_parser.name} - Release Found - {show_name}, {show_episode}")

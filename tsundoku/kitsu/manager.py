@@ -21,9 +21,9 @@ class KitsuManager:
         self.SHOW_BASE = "https://kitsu.io/anime/{}"
         self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
 
-        self.show_id = None
-        self.kitsu_id = None
-        self.slug = None
+        self.show_id: Optional[int] = None
+        self.kitsu_id: Optional[int] = None
+        self.slug: Optional[str] = None
 
     @classmethod
     async def fetch(cls, show_id: int, show_name: str) -> Optional[KitsuManager]:
@@ -54,10 +54,10 @@ class KitsuManager:
                 try:
                     result = data["data"][0]
                 except (IndexError, KeyError):
-                    return
+                    return None
 
         if not result or not result.get("id"):
-            return
+            return None
 
         instance = cls()
         instance.kitsu_id = int(result["id"])
@@ -109,10 +109,10 @@ class KitsuManager:
                 try:
                     result = data["data"][0]
                 except IndexError:
-                    return
+                    return None
 
         if not result or not result.get("id"):
-            return
+            return None
 
         instance = cls()
         instance.kitsu_id = int(result["id"])
@@ -164,7 +164,7 @@ class KitsuManager:
                 WHERE show_id=$1;
             """, show_id)
             if not row:
-                return
+                return None
 
         instance = cls()
         instance.kitsu_id = row["kitsu_id"]
@@ -210,7 +210,7 @@ class KitsuManager:
             The desired poster.
         """
         if self.kitsu_id is None:
-            return
+            return None
 
         async with app.db_pool.acquire() as con:
             url = await con.fetchval("""
@@ -238,7 +238,7 @@ class KitsuManager:
                     break
 
         if to_cache is None:
-            return
+            return None
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -261,7 +261,7 @@ class KitsuManager:
             The show's airing status.
         """
         if self.kitsu_id is None:
-            return
+            return None
 
         async with app.db_pool.acquire() as con:
             row = await con.fetchrow("""
@@ -291,10 +291,10 @@ class KitsuManager:
                 try:
                     to_cache = data["data"][0]
                 except IndexError:
-                    return
+                    return None
 
         if to_cache is None:
-            return
+            return None
 
         status = to_cache.get("attributes", {}).get("status")
 

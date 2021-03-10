@@ -3,7 +3,7 @@ import hashlib
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import aiohttp
 import bencodepy
@@ -25,6 +25,7 @@ class Manager:
 
         password = get_config_value("TorrentClient", "password")
 
+        self._client: Union[DelugeClient, qBittorrentClient]
         if client == "deluge":
             self._client = DelugeClient(session, host=host, port=port, secure=secure, auth=password)
         elif client == "qbittorrent":
@@ -33,7 +34,7 @@ class Manager:
                 "username": username,
                 "password": password
             }
-            self._client = qBittorrentClient(session, host=host, port=port, secure=secure, auth=auth)
+            self._client = qBittorrentClient(session, auth=auth, host=host, port=port, secure=secure)
         else:
             logger.error("Invalid TorrentClient in Configuration")
 
@@ -62,9 +63,11 @@ class Manager:
         def b32_to_sha1(match: re.Match) -> str:
             hash_ = match.group(1)
             if len(hash_) == 40:
-                return
+                return match.group(0)
             elif len(hash_) == 32:
                 return base64.b32decode(hash_.upper()).hex()
+
+            return match.group(0)
 
         if location.startswith("magnet:?"):
             return re.sub(pattern, b32_to_sha1, location)

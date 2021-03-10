@@ -8,7 +8,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # help with: http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
 
-import heapq
 import re
 from difflib import SequenceMatcher
 from typing import (Callable, Collection, Generator, List, Optional, Sequence,
@@ -73,111 +72,23 @@ def partial_token_sort_ratio(a: str, b: str) -> int:
     return partial_ratio(a, b)
 
 
-def _extraction_generator(query: str, choices: SortableCollection,
+def _extraction_generator(query: str, choices: List[str],
                           scorer: Callable = quick_ratio, score_cutoff: int = 0) -> Generator:
-    try:
-        for key, value in choices.items():
-            score = scorer(query, key)
-            if score >= score_cutoff:
-                yield (key, score, value)
-    except AttributeError:
-        for choice in choices:
-            score = scorer(query, choice)
-            if score >= score_cutoff:
-                yield (choice, score)
+    for choice in choices:
+        score = scorer(query, choice)
+        if score >= score_cutoff:
+            yield (choice, score)
 
 
-def extract(query: str, choices: SortableCollection, *,
-            scorer: Callable = quick_ratio, score_cutoff: int = 0, limit: int = 10) -> List:
+def extract_one(query: str, choices: List[str], *,
+                scorer: Callable = quick_ratio, score_cutoff: int = 0) -> Optional[Tuple[str, int]]:
     it = _extraction_generator(query, choices, scorer, score_cutoff)
-    def key(t): return t[1]
-    if limit is not None:
-        return heapq.nlargest(limit, it, key=key)
-    return sorted(it, key=key, reverse=True)
 
+    def key(t: Tuple[str, int]) -> int:
+        return t[1]
 
-def extract_one(query: str, choices: SortableCollection, *,
-                scorer: Callable = quick_ratio, score_cutoff: int = 0) -> Optional[int]:
-    it = _extraction_generator(query, choices, scorer, score_cutoff)
-    def key(t): return t[1]
     try:
         return max(it, key=key)
     except Exception:
         # iterator could return nothing
-        return None
-
-
-def extract_or_exact(query: str, choices: SortableCollection, *,
-                     limit: int = None, scorer=quick_ratio, score_cutoff=0) -> List[int]:
-    matches = extract(query, choices, scorer=scorer,
-                      score_cutoff=score_cutoff, limit=limit)
-    if len(matches) == 0:
-        return []
-
-    if len(matches) == 1:
-        return matches
-
-    top = matches[0][1]
-    second = matches[1][1]
-
-    # check if the top one is exact or more than 30% more correct than the top
-    if top == 100 or top > (second + 30):
-        return [matches[0]]
-
-    return matches
-
-
-def extract_matches(query: str, choices: SortableCollection, *,
-                    scorer: Callable = quick_ratio, score_cutoff: int = 0) -> List[int]:
-    matches = extract(query, choices, scorer=scorer,
-                      score_cutoff=score_cutoff, limit=None)
-    if len(matches) == 0:
-        return []
-
-    top_score = matches[0][1]
-    to_return = []
-    index = 0
-    while True:
-        try:
-            match = matches[index]
-        except IndexError:
-            break
-        else:
-            index += 1
-
-        if match[1] != top_score:
-            break
-
-        to_return.append(match)
-
-    return to_return
-
-
-def finder(text: str, collection: Collection[str], *,
-           key: Optional[Callable] = None, lazy: bool = True) -> Union[Generator[str, None, None], List[str]]:
-    suggestions = []
-    text = str(text)
-    pat = '.*?'.join(map(re.escape, text))
-    regex = re.compile(pat, flags=re.IGNORECASE)
-    for item in collection:
-        to_search = key(item) if key else item
-        r = regex.search(to_search)
-        if r:
-            suggestions.append((len(r.group()), r.start(), item))
-
-    def sort_key(tup: Tuple[str]) -> Tuple:
-        if key:
-            return tup[0], tup[1], key(tup[2])
-        return tup
-
-    if lazy:
-        return (z for _, _, z in sorted(suggestions, key=sort_key))
-    else:
-        return [z for _, _, z in sorted(suggestions, key=sort_key)]
-
-
-def find(text: str, collection: Collection[str], *, key: Optional[Callable] = None) -> Optional[List[str]]:
-    try:
-        return finder(text, collection, key=key, lazy=False)[0]
-    except IndexError:
         return None
