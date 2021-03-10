@@ -329,13 +329,11 @@ class Webhook:
         async with app.db_pool.acquire() as con:
             webhooks = await con.fetch("""
                 SELECT
-                    id, base
+                    base
                 FROM
                     webhook
                 WHERE
-                    show_id=$1
-                ORDER BY
-                    id ASC;
+                    show_id=$1;
             """, show_id)
 
         instances = []
@@ -378,7 +376,7 @@ class Webhook:
         async with app.db_pool.acquire() as con:
             webhook = await con.fetchrow("""
                 SELECT
-                    id, base
+                    base
                 FROM
                     webhook
                 WHERE
@@ -413,8 +411,9 @@ class Webhook:
                     trigger
                 FROM
                     webhook_trigger
-                WHERE wh_id=$1;
-            """, self.show_id)
+                WHERE
+                    show_id=$1 AND base=$2;
+            """, self.show_id, self.base.base_id)
 
         return [r["trigger"] for r in triggers]
 
@@ -441,8 +440,8 @@ class Webhook:
                     trigger
                 FROM
                     webhook_trigger
-                WHERE wh_id=$1 AND trigger=$2;
-            """, self.show_id, trigger)
+                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+            """, self.show_id, self.base.base_id, trigger)
 
             if exists:
                 return True
@@ -450,10 +449,10 @@ class Webhook:
             await con.execute("""
                 INSERT INTO
                     webhook_trigger
-                    (wh_id, trigger)
+                    (show_id, base, trigger)
                 VALUES
-                    ($1, $2);
-            """, self.show_id, trigger)
+                    ($1, $2, $3);
+            """, self.show_id, self.base.base_id, trigger)
 
         return True
 
@@ -480,8 +479,8 @@ class Webhook:
                     trigger
                 FROM
                     webhook_trigger
-                WHERE wh_id=$1 AND trigger=$2;
-            """, self.show_id, trigger)
+                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+            """, self.show_id, self.base.base_id, trigger)
 
             if not exists:
                 return False
@@ -489,8 +488,8 @@ class Webhook:
             await con.execute("""
                 DELETE FROM
                     webhook_trigger
-                WHERE wh_id=$1 AND trigger=$2;
-            """, self.show_id, trigger)
+                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+            """, self.show_id, self.base.base_id, trigger)
 
         return True
 

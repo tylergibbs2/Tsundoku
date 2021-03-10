@@ -19,7 +19,7 @@ CREATE TABLE shows (
 
 CREATE TABLE show_entry (
     id SERIAL PRIMARY KEY,
-    show_id SMALLINT NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
+    show_id INT NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
     episode SMALLINT NOT NULL,
     current_state show_state NOT NULL DEFAULT 'downloading',
     torrent_hash TEXT NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE show_entry (
 );
 
 CREATE TABLE kitsu_info (
-    show_id SMALLINT PRIMARY KEY REFERENCES shows(id) ON DELETE CASCADE,
+    show_id INT PRIMARY KEY REFERENCES shows(id) ON DELETE CASCADE,
     kitsu_id INT,
     cached_poster_url TEXT,
     show_status TEXT,
@@ -44,13 +44,15 @@ CREATE TABLE webhook_base (
 );
 
 CREATE TABLE webhook (
-    show_id SMALLINT REFERENCES shows(id) ON DELETE CASCADE,
-    base SMALLINT REFERENCES webhook_base(id) ON DELETE CASCADE,
+    show_id INT REFERENCES shows(id) ON DELETE CASCADE,
+    base INT REFERENCES webhook_base(id) ON DELETE CASCADE,
     PRIMARY KEY (show_id, base)
 );
 
 CREATE TABLE webhook_trigger (
-    wh_id SMALLINT REFERENCES webhook(id) ON DELETE CASCADE,
-    trigger show_state,
-    PRIMARY KEY (wh_id, trigger)
+    show_id INT NOT NULL,
+    base INT NOT NULL,
+    trigger show_state NOT NULL,
+    PRIMARY KEY (show_id, base, trigger),
+    FOREIGN KEY (show_id, base) REFERENCES webhook (show_id, base) ON DELETE CASCADE
 );
