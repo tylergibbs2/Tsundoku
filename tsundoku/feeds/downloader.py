@@ -56,9 +56,9 @@ class Downloader:
         ----------
         title: str
             The title of the show.
-        season: int
+        season: str
             The season of the show.
-        episode: int
+        episode: str
             The episode of the release.
         kwargs:
             Any additional expressions to be
@@ -245,7 +245,7 @@ class Downloader:
 
         expressions = self.get_expression_mapping(
             show_info["title"],
-            show_info["season"],
+            str(show_info["season"]),
             str(entry.episode),
             ext=suffix
         )

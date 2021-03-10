@@ -104,7 +104,7 @@ class qBittorrentClient:
             return None
         data = data[0]
 
-        return Path(data["save_path"]) / Path(data["name"])
+        return Path(data["content_path"])
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
         """
