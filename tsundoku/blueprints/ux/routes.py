@@ -62,6 +62,7 @@ async def index() -> str:
 
     resources = [
         "base",
+        "errors",
         "index"
     ]
 
