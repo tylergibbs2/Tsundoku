@@ -51,7 +51,7 @@ function openEditWebhookModal(webhook: WebhookBase) {
 
     $("#edit-webhook-form :input").each(function (i: number, elem: HTMLElement) {
         let name: string = $(elem).attr("name");
-        $(elem).val(webhook.name)
+        $(elem).val(webhook[name])
     });
 
     form.attr("method", "PUT");
