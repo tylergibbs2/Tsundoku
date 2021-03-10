@@ -2,8 +2,14 @@
     --light-grey: hsl(0, 0%, 93%);
 }
 
-html {
+html::-webkit-scrollbar {
+    display: none;
+  }
+
+html, body {
     overflow: hidden;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
 }
 
 .dpy-special-white {
