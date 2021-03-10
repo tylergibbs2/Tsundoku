@@ -213,7 +213,8 @@ async def login() -> Any:
         username = form.get("username")
         password = form.get("password")
         if username is None or password is None:
-            return abort(400, fluent._("form-missing-data"))
+            await flash(fluent._("form-missing-data"))
+            return redirect(url_for("ux.login"))
 
         async with app.db_pool.acquire() as con:
             user_data = await con.fetchrow("""
@@ -226,12 +227,14 @@ async def login() -> Any:
             """, username.lower())
 
         if not user_data:
-            return abort(401, fluent._("invalid-credentials"))
+            await flash(fluent._("invalid-credentials"))
+            return redirect(url_for("ux.login"))
 
         try:
             hasher.verify(user_data["password_hash"], password)
         except VerifyMismatchError:
-            return abort(401, fluent._("invalid-credentials"))
+            await flash(fluent._("invalid-credentials"))
+            return redirect(url_for("ux.login"))
 
         if hasher.check_needs_rehash(user_data["password_hash"]):
             async with app.db_pool.acquire() as con:
