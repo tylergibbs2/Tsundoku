@@ -93,8 +93,6 @@ class Poller:
         """
         logger.info("Checking for New Releases...")
 
-        self.app.seen_titles = set()
-
         found = []
 
         for parser in self.app.rss_parsers:
