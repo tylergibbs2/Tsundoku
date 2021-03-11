@@ -1,4 +1,4 @@
-anitopy==2.0.0
+git+https://github.com/tylergibbs2/anitopy@next_token_fix
 argon2-cffi==20.1.0
 aiohttp==3.7.4
 asyncpg==0.20.1
