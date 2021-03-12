@@ -276,7 +276,7 @@ class KitsuManager:
         now = datetime.datetime.utcnow()
         delta = now - row["last_updated"]
 
-        if delta.total_seconds() < 86400 and row["show_status"]:
+        if row["show_status"] == "finished" or (delta.total_seconds() < 86400 and row["show_status"]):
             return row["show_status"]
 
         logger.info(f"Retrieving new show status for Kitsu ID {self.kitsu_id} from Kitsu")
