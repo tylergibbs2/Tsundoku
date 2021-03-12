@@ -2,28 +2,52 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 import aiohttp
 from quart import current_app as app
 
+API_URL = "https://kitsu.io/api/edge/anime"
 logger = logging.getLogger("tsundoku")
 
 
+async def gather_statuses(managers: List[KitsuManager]) -> None:
+    to_retrieve: List[int] = []
+
+    for manager in managers:
+        to_retrieve.append(manager.kitsu_id)
+
+    async with aiohttp.ClientSession() as sess:
+        payload = {
+            "filter[id]": ",".join(map(str, to_retrieve)),
+            "fields[anime]": "status"
+        }
+        async with sess.get(API_URL, params=payload) as resp:
+            data = await resp.json()
+            for i in range(len(to_retrieve)):
+                try:
+                    show_response: Dict = data["data"][i]
+                    status = show_response.get("attributes", {}).get("status", None)
+                    managers[i].status = status
+                except IndexError:
+                    pass
+
+
 class KitsuManager:
-    API_URL = "https://kitsu.io/api/edge/anime"
     HEADERS = {
         "Accept": "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json"
     }
 
+    show_id: int
+    kitsu_id: int
+    slug: str
+
+    status: Optional[str]
+
     def __init__(self) -> None:
         self.SHOW_BASE = "https://kitsu.io/anime/{}"
         self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
-
-        self.show_id: Optional[int] = None
-        self.kitsu_id: Optional[int] = None
-        self.slug: Optional[str] = None
 
     @classmethod
     async def fetch(cls, show_id: int, show_name: str) -> Optional[KitsuManager]:
@@ -49,7 +73,7 @@ class KitsuManager:
             payload = {
                 "filter[text]": show_name
             }
-            async with sess.get(cls.API_URL, params=payload) as resp:
+            async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
                 try:
                     result = data["data"][0]
@@ -62,6 +86,8 @@ class KitsuManager:
         instance = cls()
         instance.kitsu_id = int(result["id"])
         instance.slug = result.get("slug")
+
+        instance.status = None
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -104,7 +130,7 @@ class KitsuManager:
             payload = {
                 "filter[id]": kitsu_id
             }
-            async with sess.get(cls.API_URL, params=payload) as resp:
+            async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
                 try:
                     result = data["data"][0]
@@ -117,6 +143,8 @@ class KitsuManager:
         instance = cls()
         instance.kitsu_id = int(result["id"])
         instance.slug = result.get("slug")
+
+        instance.status = None
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -136,7 +164,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_show_id(cls, show_id: int) -> Optional[KitsuManager]:
+    async def from_show_id(cls, show_id: int) -> KitsuManager:
         """
         Retrieves Kitsu information from the database based
         on a show's ID.
@@ -148,7 +176,7 @@ class KitsuManager:
 
         Returns
         -------
-        Optional[KitsuManager]
+        KitsuManager
             A KitsuManager for the show.
         """
         logger.info(f"Retrieving existing Kitsu info for Show ID #{show_id}")
@@ -164,11 +192,13 @@ class KitsuManager:
                 WHERE show_id=$1;
             """, show_id)
             if not row:
-                return None
+                raise Exception(f"KitsuManager for Show ID # {show_id} is missing.")
 
         instance = cls()
         instance.kitsu_id = row["kitsu_id"]
         instance.slug = row["slug"]
+
+        instance.status = None
 
         return instance
 
@@ -284,9 +314,10 @@ class KitsuManager:
         to_cache = None
         async with aiohttp.ClientSession() as sess:
             payload = {
-                "filter[id]": self.kitsu_id
+                "filter[id]": self.kitsu_id,
+                "fields[anime]": "status"
             }
-            async with sess.get(self.API_URL, params=payload) as resp:
+            async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
                 try:
                     to_cache = data["data"][0]

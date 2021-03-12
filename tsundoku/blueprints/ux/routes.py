@@ -1,9 +1,9 @@
 import os
-from typing import Any
+from typing import Any, List
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import Blueprint, abort
+from quart import Blueprint
 from quart import current_app as app
 from quart import flash, redirect, render_template, request, url_for
 from quart_auth import current_user, login_required, login_user, logout_user
@@ -11,7 +11,7 @@ from quart_auth import current_user, login_required, login_user, logout_user
 from tsundoku import __version__ as version
 from tsundoku.fluent import get_injector
 from tsundoku.git import check_for_updates, update
-from tsundoku.kitsu import KitsuManager
+from tsundoku.kitsu import KitsuManager, gather_statuses
 from tsundoku.user import User
 from tsundoku.webhooks import Webhook, WebhookBase
 
@@ -77,6 +77,8 @@ async def index() -> str:
         "upcoming": f"<span class='img-overlay-span tag is-primary'>{fluent._('status-upcoming')}</span>"
     }
 
+    metadata_managers: List[KitsuManager] = []
+
     async with app.db_pool.acquire() as con:
         shows = await con.fetch("""
             SELECT
@@ -116,6 +118,7 @@ async def index() -> str:
                 s["webhooks"].append(wh)
 
             manager = await KitsuManager.from_show_id(s["id"])
+            metadata_managers.append(manager)
             if manager:
                 status = await manager.get_status()
                 if status:
@@ -123,6 +126,12 @@ async def index() -> str:
                 s["kitsu_id"] = manager.kitsu_id
                 s["image"] = await manager.get_poster_image()
                 s["link"] = manager.link
+
+    await gather_statuses(metadata_managers)
+    for i in range(len(shows)):
+        status = metadata_managers[i].status
+        if status is not None:
+            shows[i]["status"] = status
 
     ctx["shows"] = shows
     ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app)]
