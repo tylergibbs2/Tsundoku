@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List
 
+from asyncpg import Record
 from quart import current_app as app
 
 from tsundoku.webhooks.webhook import Webhook
@@ -47,6 +48,36 @@ class Show:
         }
 
     @classmethod
+    async def from_data(cls, data: Record) -> Show:
+        """
+        Creates a Show object from an asyncpg.Record
+        of a Show in the database.
+
+        Parameters
+        ----------
+        data: Record
+            The record to create from.
+
+        Returns
+        -------
+        Show
+            The created Show object.
+        """
+        metadata = await KitsuManager.from_show_id(data["id_"])
+
+        instance = cls(
+            **data,
+            metadata=metadata,
+            _entries=[],
+            _webhooks=[]
+        )
+
+        await instance.entries()
+        await instance.webhooks()
+
+        return instance
+
+    @classmethod
     async def from_id(cls, id_: int) -> Show:
         """
         Retrieves a Show from the database based on
@@ -73,8 +104,8 @@ class Show:
                     episode_offset
                 FROM
                     shows
-                ORDER BY title;
-            """)
+                WHERE id=$1;
+            """, id_)
 
         if not show:
             raise Exception(f"Failed to retrieve show with ID #{id_}")

@@ -46,6 +46,14 @@ class KitsuManager:
         self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
 
     def to_dict(self) -> dict:
+        """
+        Serializes the KitsuManager object.
+
+        Returns
+        -------
+        dict
+            The serialized object.
+        """
         return {
             "show_id": self.show_id,
             "kitsu_id": self.kitsu_id,
@@ -191,7 +199,7 @@ class KitsuManager:
                 SELECT
                     kitsu_id,
                     slug,
-                    last_updated
+                    show_status
                 FROM
                     kitsu_info
                 WHERE show_id=$1;
@@ -210,9 +218,9 @@ class KitsuManager:
         instance.show_id = show_id
         instance.kitsu_id = row["kitsu_id"]
         instance.slug = row["slug"]
-        instance.poster = await instance.get_poster_image()
+        instance.status = row["show_status"]
 
-        instance.status = None
+        instance.poster = await instance.get_poster_image()
 
         return instance
 
@@ -298,17 +306,24 @@ class KitsuManager:
 
         return to_cache
 
-    async def get_status(self) -> Optional[str]:
+    async def should_update_status(self) -> bool:
         """
-        Returns the status of the show.
+        Checks whether a Show's status should be
+        updated.
+
+        Status should be updated only if:
+        - Time elapsed since last check > 2 days
+        - Cached status is not "finished"
+        - Show has a cached kitsu_id
 
         Returns
         -------
-        Optional[str]
-            The show's airing status.
+        bool
+            Whether or not the show's status
+            should be updated.
         """
         if self.kitsu_id is None:
-            return None
+            return False
 
         async with app.db_pool.acquire() as con:
             row = await con.fetchrow("""
@@ -321,31 +336,31 @@ class KitsuManager:
             """, self.kitsu_id)
 
         now = datetime.datetime.utcnow()
+
+        if row["last_updated"] is None:
+            return True
+
         delta = now - row["last_updated"]
 
-        if row["show_status"] == "finished" or (delta.total_seconds() < 86400 and row["show_status"]):
-            return row["show_status"]
+        if row["show_status"] == "finished" or delta.total_seconds() < (2 * 86400):
+            return False
 
-        logger.info(f"Retrieving new show status for Kitsu ID {self.kitsu_id} from Kitsu")
+        return True
 
-        to_cache = None
-        async with aiohttp.ClientSession() as sess:
-            payload = {
-                "filter[id]": self.kitsu_id,
-                "fields[anime]": "status"
-            }
-            async with sess.get(API_URL, params=payload) as resp:
-                data = await resp.json()
-                try:
-                    to_cache = data["data"][0]
-                except IndexError:
-                    return None
+    async def set_status(self, status: str) -> None:
+        """
+        Updates the status of a Show.
 
-        if to_cache is None:
-            return None
+        Parameters
+        ----------
+        status: str
+            The new status.
+        """
+        if self.kitsu_id is None:
+            return
 
-        status = to_cache.get("attributes", {}).get("status")
-
+        self.status = status
+        now = datetime.datetime.utcnow()
         async with app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE
@@ -355,5 +370,3 @@ class KitsuManager:
                     last_updated=$2
                 WHERE kitsu_id=$3;
             """, status, now, self.kitsu_id)
-
-        return status

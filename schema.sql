@@ -32,7 +32,7 @@ CREATE TABLE kitsu_info (
     cached_poster_url TEXT,
     show_status TEXT,
     slug TEXT,
-    last_updated TIMESTAMP NOT NULL DEFAULT NOW()
+    last_updated TIMESTAMP
 );
 
 CREATE TABLE webhook_base (

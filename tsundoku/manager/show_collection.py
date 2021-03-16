@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 
 import aiohttp
 from quart import current_app as app
@@ -40,12 +40,18 @@ class ShowCollection:
         async with app.db_pool.acquire() as con:
             shows = await con.fetch("""
                 SELECT
-                    id
+                    id as id_,
+                    title,
+                    desired_format,
+                    desired_folder,
+                    season,
+                    episode_offset
                 FROM
-                    shows;
+                    shows
+                ORDER BY title;
             """)
 
-        _shows = [await Show.from_id(show["id"]) for show in shows]
+        _shows = [await Show.from_data(show) for show in shows]
         instance = cls(
             _shows=_shows
         )
@@ -59,24 +65,24 @@ class ShowCollection:
         The status is an attribute that is assigned
         on each Show's metadata object.
         """
-        managers = [s.metadata for s in self._shows]
-        to_retrieve: List[int] = []
+        managers = [s.metadata for s in self._shows if await s.metadata.should_update_status()]
 
-        for manager in managers:
-            if manager.kitsu_id is not None:
-                to_retrieve.append(manager.kitsu_id)
+        if not managers:
+            return
 
+        status_map: Dict[int, str] = {}
         async with aiohttp.ClientSession() as sess:
             payload = {
-                "filter[id]": ",".join(map(str, to_retrieve)),
+                "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
                 "fields[anime]": "status"
             }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
-                for i in range(len(to_retrieve)):
-                    try:
-                        show_response: dict = data["data"][i]
-                        status = show_response.get("attributes", {}).get("status", None)
-                        managers[i].status = status
-                    except IndexError:
-                        pass
+                for show in data.get("data", []):
+                    show_id = int(show["id"])
+                    status = show.get("attributes", {}).get("status", None)
+                    status_map[show_id] = status
+
+        for manager in managers:
+            if manager.kitsu_id in status_map:
+                await manager.set_status(status_map[manager.kitsu_id])
