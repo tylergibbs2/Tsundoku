@@ -71,7 +71,12 @@ class Poller:
             return
 
         while True:
-            await self.poll()
+            try:
+                await self.poll()
+            except Exception:
+                import traceback
+                traceback.print_exc()
+
             await asyncio.sleep(self.interval)
 
     async def poll(self) -> List[Tuple[int, int]]:

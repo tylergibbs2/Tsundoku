@@ -73,7 +73,7 @@ async def index() -> str:
     await shows.gather_statuses()
 
     ctx["shows"] = shows.to_list()
-    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app)]
+    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app, with_validity=False)]
     ctx["seen_titles"] = list(app.seen_titles)
 
     if not len(app.rss_parsers):

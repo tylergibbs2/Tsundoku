@@ -187,7 +187,7 @@ class Show:
                     id=$6
             """,
                 self.title,
-                self.desired_folder,
+                self.desired_format,
                 self.desired_folder,
                 self.season,
                 self.episode_offset,

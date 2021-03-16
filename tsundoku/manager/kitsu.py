@@ -250,7 +250,8 @@ class KitsuManager:
                     kitsu_info
                 SET
                     show_status = NULL,
-                    cached_poster_url = NULL
+                    cached_poster_url = NULL,
+                    last_updated = NULL
                 WHERE
                     show_id=$1;
             """, self.show_id)

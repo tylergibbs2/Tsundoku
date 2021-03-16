@@ -22,6 +22,17 @@ interface Webhook {
 }
 
 
+interface Metadata {
+    show_id: number;
+    kitsu_id: number;
+    slug: string;
+    status: string;
+    html_status: string;
+    poster: string;
+    link: string;
+}
+
+
 interface Show {
     id_: number;
     title: string;
@@ -29,7 +40,7 @@ interface Show {
     desired_folder: string;
     season: number;
     episode_offset: number;
-    kitsu_id: number;
+    metadata: Metadata;
     entries: PartialEntry[];
     webhooks: Webhook[];
 }

@@ -379,7 +379,7 @@ function openEditShowModal(show: Show) {
         $(elem).val(show[$(elem).attr("name")])
     });
 
-    $("#fix-match-input").val(show.kitsu_id);
+    $("#fix-match-input").val(show.metadata.kitsu_id);
 
     table.empty();
     webhookTable.empty();

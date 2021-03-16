@@ -44,7 +44,12 @@ class Downloader:
 
     async def start(self) -> None:
         while True:
-            await self.check_show_entries()
+            try:
+                await self.check_show_entries()
+            except Exception:
+                import traceback
+                traceback.print_exc()
+
             await asyncio.sleep(15)
 
     def get_expression_mapping(self, title: str, season: str, episode: str, **kwargs: str) -> ExprDict:
@@ -251,9 +256,8 @@ class Downloader:
         )
         name = file_fmt.format_map(expressions)
 
-        new_path = entry.file_path.with_name(name + suffix)
-
         try:
+            new_path = entry.file_path.with_name(name + suffix)
             os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error("Error Renaming Release - Invalid Permissions")
@@ -330,6 +334,8 @@ class Downloader:
             elif not path.parent.is_dir():
                 logger.error(f"'{path}' could not be read")
                 return
+
+            await entry.set_path(path)
         else:
             path = entry.file_path
 
@@ -358,6 +364,7 @@ class Downloader:
                 f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
 
         if entry.state == EntryState.downloaded:
+            logger.info(f"Preparing to Rename Release - {entry.show_id}, {entry.episode}")
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
                 return
@@ -368,6 +375,7 @@ class Downloader:
                 f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
 
         if entry.state == EntryState.renamed:
+            logger.info(f"Preparing to Move Release - {entry.show_id}, {entry.episode}")
             moved_path = await self.handle_move(entry)
             if moved_path is None:
                 return

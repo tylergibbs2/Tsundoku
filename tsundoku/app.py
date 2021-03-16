@@ -141,7 +141,11 @@ async def setup_session() -> None:
 
     jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
-    app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar)
+    app.session = aiohttp.ClientSession(
+        loop=loop,
+        cookie_jar=jar,
+        timeout=aiohttp.ClientTimeout(total=15.0)
+        )
     app.dl_client = Manager(app.session)
 
     app.update_info = []
