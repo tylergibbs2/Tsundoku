@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from asyncpg import Record
 
@@ -37,6 +39,11 @@ class Entry:
     def to_dict(self) -> dict:
         """
         Returns the Entry object as a dictionary.
+
+        Returns
+        -------
+        dict
+            The serialized Entry object.
         """
         return {
             "id": self.id,
@@ -46,6 +53,45 @@ class Entry:
             "torrent_hash": self.torrent_hash,
             "file_path": str(self.file_path)
         }
+
+    @classmethod
+    async def from_show_id(cls, app: Any, show_id: int) -> List[Entry]:
+        """
+        Retrieves a list of Entries that are associated
+        with a specific Show's ID.
+
+        Parameters
+        ----------
+        app: Any
+            The Quart app.
+        show_id: int
+            The Show's ID.
+
+        Returns
+        -------
+        List[Entry]
+            A list of associated Show Entries.
+        """
+        async with app.db_pool.acquire() as con:
+            entries = await con.fetch("""
+                SELECT
+                    id,
+                    show_id,
+                    episode,
+                    current_state,
+                    torrent_hash,
+                    file_path
+                FROM
+                    show_entry
+                WHERE show_id=$1
+                ORDER BY episode ASC;
+            """, show_id)
+
+        ret: List[Entry] = []
+        for entry in entries:
+            ret.append(Entry(app, entry))
+
+        return ret
 
     async def set_state(self, new_state: EntryState) -> None:
         """

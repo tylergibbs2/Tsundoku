@@ -5,7 +5,7 @@ from quart import Blueprint
 from quart import current_app as app
 from quart_auth import current_user
 
-from tsundoku.kitsu import KitsuManager
+from tsundoku.manager import Show
 
 from .entries import EntriesAPI
 from .nyaa import NyaaAPI
@@ -76,10 +76,8 @@ async def delete_show_cache(show_id: int) -> APIResponse:
     """
     logger.info(f"API - Deleting cache for Show {show_id}")
 
-    manager = await KitsuManager.from_show_id(show_id)
-
-    if manager:
-        await manager.clear_cache()
+    show = await Show.from_id(show_id)
+    await show.metadata.clear_cache()
 
     return APIResponse(
         result=True

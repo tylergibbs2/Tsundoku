@@ -84,7 +84,7 @@ class WebhooksAPI(views.MethodView):
 
         if not wh:
             return APIResponse(status=404, error="Webhook with specified ID does not exist.")
-        elif any(t in valid_triggers for t in triggers):
+        elif any(t not in valid_triggers for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
 
         all_triggers = await wh.get_triggers()

@@ -4,8 +4,7 @@ from typing import Optional
 from quart import current_app as app
 from quart import request, views
 
-from tsundoku.kitsu import KitsuManager
-from tsundoku.webhooks import Webhook
+from tsundoku.manager import Show, ShowCollection
 
 from .response import APIResponse
 
@@ -51,105 +50,17 @@ class ShowsAPI(views.MethodView):
         get_1: with the `show_id` argument.
         """
         if show_id is None:
-            async with app.db_pool.acquire() as con:
-                shows = await con.fetch("""
-                    SELECT
-                        id,
-                        title,
-                        desired_format,
-                        desired_folder,
-                        season,
-                        episode_offset
-                    FROM
-                        shows;
-                """)
-                shows = [dict(s) for s in shows]
-                for s in shows:
-                    entries = await con.fetch("""
-                        SELECT
-                            id,
-                            show_id,
-                            episode,
-                            current_state
-                        FROM
-                            show_entry
-                        WHERE show_id=$1
-                        ORDER BY episode ASC;
-                    """, s["id"])
-                    s["entries"] = [dict(e) for e in entries]
-                    s["webhooks"] = []
-                    webhooks = await Webhook.from_show_id(app, s["id"])
-                    for webhook in webhooks:
-                        triggers = await webhook.get_triggers()
-                        wh = webhook.to_dict()
-                        wh["triggers"] = triggers
-                        s["webhooks"].append(wh)
-
-                    manager = await KitsuManager.from_show_id(s["id"])
-                    if manager:
-                        status = await manager.get_status()
-                        if status:
-                            s["status"] = status_html_map[status]
-                        s["kitsu_id"] = manager.kitsu_id
-                        s["image"] = await manager.get_poster_image()
-                        s["link"] = manager.link
-
-                return APIResponse(
-                    result=[dict(record) for record in shows]
-                )
-        else:
-            async with app.db_pool.acquire() as con:
-                s = await con.fetchrow("""
-                    SELECT
-                        id,
-                        title,
-                        desired_format,
-                        desired_folder,
-                        season,
-                        episode_offset
-                    FROM
-                        shows
-                    WHERE id=$1;
-                """, show_id)
-
-                if not s:
-                    return APIResponse(
-                        status=404,
-                        error="Show with specified ID does not exist."
-                    )
-
-                s = dict(s)
-                entries = await con.fetch("""
-                    SELECT
-                        id,
-                        show_id,
-                        episode,
-                        current_state
-                    FROM
-                        show_entry
-                    WHERE show_id=$1
-                    ORDER BY episode ASC;
-                """, s["id"])
-                s["entries"] = [dict(e) for e in entries]
-                s["webhooks"] = []
-                webhooks = await Webhook.from_show_id(app, s["id"])
-                for webhook in webhooks:
-                    triggers = await webhook.get_triggers()
-                    wh = webhook.to_dict()
-                    wh["triggers"] = triggers
-                    s["webhooks"].append(wh)
-
-                manager = await KitsuManager.from_show_id(s["id"])
-                if manager:
-                    status = await manager.get_status()
-                    if status:
-                        s["status"] = status_html_map[status]
-                    s["kitsu_id"] = manager.kitsu_id
-                    s["image"] = await manager.get_poster_image()
-                    s["link"] = manager.link
+            shows = await ShowCollection.all()
+            await shows.gather_statuses()
 
             return APIResponse(
-                result=dict(s)
+                result=shows.to_list()
+            )
+        else:
+            show = await Show.from_id(show_id)
+
+            return APIResponse(
+                result=show.to_dict()
             )
 
     async def post(self, show_id: None) -> APIResponse:
@@ -210,54 +121,31 @@ class ShowsAPI(views.MethodView):
                     error="Episode offset is not an integer."
                 )
 
-        async with app.db_pool.acquire() as con:
-            new_id = await con.fetchval("""
-                INSERT INTO
-                    shows
-                    (title, desired_format, desired_folder,
-                    season, episode_offset)
-                VALUES
-                    ($1, $2, $3, $4, $5)
-                RETURNING id;
-            """, arguments["title"], desired_format, desired_folder, season,
-                episode_offset)
+        show = await Show.insert(
+            title=arguments["title"],
+            desired_format=desired_format,
+            desired_folder=desired_folder,
+            season=season,
+            episode_offset=episode_offset
+        )
 
+        async with app.db_pool.acquire() as con:
             await con.execute("""
                 INSERT INTO
                     webhook
                     (show_id, base)
                 SELECT ($1), id FROM webhook_base
                 ON CONFLICT DO NOTHING;
-            """, new_id)
-
-        await KitsuManager.fetch(new_id, arguments["title"])
+            """, show.id_)
 
         logger.info("New Show Added - Preparing to Check for New Releases")
         await app.poller.poll()
 
-        async with app.db_pool.acquire() as con:
-            new_show = await con.fetchrow("""
-                SELECT
-                    id,
-                    title,
-                    desired_format,
-                    desired_folder,
-                    season,
-                    episode_offset
-                FROM
-                    shows
-                WHERE id=$1;
-            """, new_id)
+        show = await Show.from_id(show.id_)
 
-        if new_show:
-            return APIResponse(
-                result=dict(new_show)
-            )
-        else:
-            return APIResponse(
-                status=500,
-                error="The server failed to add the new Show."
-            )
+        return APIResponse(
+            result=show.to_dict()
+        )
 
     async def put(self, show_id: int) -> APIResponse:
         """
@@ -290,73 +178,40 @@ class ShowsAPI(views.MethodView):
         season = int(arguments["season"])
         episode_offset = int(arguments["episode_offset"])
 
-        async with app.db_pool.acquire() as con:
-            old_title = await con.fetchval("""
-                SELECT
-                    title
-                FROM
-                    shows
-                WHERE id=$1;
-            """, show_id)
+        show = await Show.from_id(show_id)
+        do_poll = False
 
-            if old_title != arguments["title"]:
-                await KitsuManager.fetch(show_id, arguments["title"])
+        old_title = show.title
+        old_kitsu = show.metadata.kitsu_id
 
-            old_kitsu = await con.fetchval("""
-                SELECT
-                    kitsu_id
-                FROM
-                    kitsu_info
-                WHERE
-                    show_id=$1;
-            """, show_id)
+        if old_title != arguments["title"]:
+            do_poll = True
+            await show.metadata.fetch(show_id, arguments["title"])
 
-            try:
-                new_kitsu = int(arguments["kitsu_id"])
-                if old_kitsu != new_kitsu:
-                    await KitsuManager.fetch_by_kitsu(show_id, new_kitsu)
-            except ValueError:
-                pass
+        try:
+            new_kitsu = int(arguments["kitsu_id"])
+            if old_kitsu != new_kitsu:
+                await show.metadata.fetch_by_kitsu(show_id, new_kitsu)
+        except ValueError:
+            pass
 
-            await con.execute("""
-                UPDATE
-                    shows
-                SET
-                    title=$1,
-                    desired_format=$2,
-                    desired_folder=$3,
-                    season=$4,
-                    episode_offset=$5
-                WHERE id=$6;
-            """, arguments["title"], desired_format, desired_folder, season,
-                episode_offset, show_id)
+        show.title = arguments["title"]
+        show.desired_format = desired_format
+        show.desired_folder = desired_folder
+        show.season = season
+        show.episode_offset = episode_offset
 
-        logger.info("Existing Show Updated - Preparing to Check for New Releases")
-        await app.poller.poll()
+        await show.update()
 
-        async with app.db_pool.acquire() as con:
-            new_show = await con.fetchrow("""
-                SELECT
-                    id,
-                    title,
-                    desired_format,
-                    desired_folder,
-                    season,
-                    episode_offset
-                FROM
-                    shows
-                WHERE id=$1;
-            """, show_id)
+        if do_poll:
+            logger.info("Existing Show Updated - Preparing to Check for New Releases")
+            await app.poller.poll()
 
-        if new_show:
-            return APIResponse(
-                result=dict(new_show)
-            )
-        else:
-            return APIResponse(
-                status=500,
-                error="The server failed to update the existing Show."
-            )
+        show = await Show.from_id(show_id)
+
+        return APIResponse(
+            result=show.to_dict()
+        )
 
     async def delete(self, show_id: int) -> APIResponse:
         """

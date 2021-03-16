@@ -183,7 +183,7 @@ function bufferShowEntryAddition(event: Event) {
     let entry = {
         "id": 0,
         "show_id": show_id,
-        "current_state": _("entry-status-buffered"),
+        "state": _("entry-status-buffered"),
         "episode": episode
     }
     addRowToShowEntryTable(entry);
@@ -224,13 +224,13 @@ function addRowToShowEntryTable(entry: PartialEntry) {
     let cell_delete: HTMLTableCellElement = row.insertCell(2);
 
     $(cell_episode).html(entry.episode.toString());
-    $(cell_status).html(entry.current_state);
+    $(cell_status).html(_(`entry-status-${entry.state.toLowerCase()}`));
 
     let deleteBtn: HTMLButtonElement = document.createElement("button");
     $(deleteBtn).addClass("delete");
 
     $(deleteBtn).on("click", function () {
-        if (entry.current_state !== _("entry-status-buffered"))
+        if (entry.state !== _("entry-status-buffered"))
             bufferShowEntryDeletion(entry.show_id, entry.id);
         entriesToAdd = entriesToAdd.filter(function (entryToAdd) {
             return entryToAdd[1] != entry.episode;
@@ -392,17 +392,17 @@ function openEditShowModal(show: Show) {
         addRowToShowWebhookTable(webhook);
     }
 
-    $("#add-show-entry-form input[name='show_id']").val(show.id);
+    $("#add-show-entry-form input[name='show_id']").val(show.id_);
 
     form.attr("method", "PUT");
-    form.attr("action", `/api/v1/shows/${show.id}`);
+    form.attr("action", `/api/v1/shows/${show.id_}`);
 
     form.on("submit", submitAddOrEditShowForm);
 
     addEntryForm.on("submit", bufferShowEntryAddition);
 
     $("#del-cache-btn").on("click", function () {
-        deleteShowCache(show.id);
+        deleteShowCache(show.id_);
     })
 
     $(document.documentElement).addClass("is-clipped");
@@ -415,7 +415,7 @@ function openDeleteShowModal(show: Show) {
         e.preventDefault();
         $.ajax(
             {
-                url: `/api/v1/shows/${show.id}`,
+                url: `/api/v1/shows/${show.id_}`,
                 type: "DELETE",
                 success: function () {
                     location.reload();

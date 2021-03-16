@@ -1,5 +1,5 @@
 import os
-from typing import Any, List
+from typing import Any
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -11,9 +11,9 @@ from quart_auth import current_user, login_required, login_user, logout_user
 from tsundoku import __version__ as version
 from tsundoku.fluent import get_injector
 from tsundoku.git import check_for_updates, update
-from tsundoku.kitsu import KitsuManager, gather_statuses
+from tsundoku.manager import ShowCollection
 from tsundoku.user import User
-from tsundoku.webhooks import Webhook, WebhookBase
+from tsundoku.webhooks import WebhookBase
 
 ux_blueprint = Blueprint(
     'ux',
@@ -69,71 +69,10 @@ async def index() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    status_html_map = {
-        "current": f"<span class='img-overlay-span tag is-success'>{fluent._('status-airing')}</span>",
-        "finished": f"<span class='img-overlay-span tag is-danger'>{fluent._('status-finished')}</span>",
-        "tba": f"<span class='img-overlay-span tag is-warning'>{fluent._('status-tba')}</span>",
-        "unreleased": f"<span class='img-overlay-span tag is-info'>{fluent._('status-unreleased')}</span>",
-        "upcoming": f"<span class='img-overlay-span tag is-primary'>{fluent._('status-upcoming')}</span>"
-    }
+    shows = await ShowCollection.all()
+    await shows.gather_statuses()
 
-    metadata_managers: List[KitsuManager] = []
-
-    async with app.db_pool.acquire() as con:
-        shows = await con.fetch("""
-            SELECT
-                id,
-                title,
-                desired_format,
-                desired_folder,
-                season,
-                episode_offset
-            FROM
-                shows
-            ORDER BY title;
-        """)
-        shows = [dict(s) for s in shows]
-        for s in shows:
-            entries = await con.fetch("""
-                SELECT
-                    id,
-                    show_id,
-                    episode,
-                    current_state
-                FROM
-                    show_entry
-                WHERE show_id=$1
-                ORDER BY episode ASC;
-            """, s["id"])
-            s["entries"] = [dict(e) for e in entries]
-            for e in s["entries"]:
-                e["current_state"] = fluent.format_value(f"entry-status-{e['current_state']}")
-
-            s["webhooks"] = []
-            webhooks = await Webhook.from_show_id(app, s["id"])
-            for webhook in webhooks:
-                triggers = await webhook.get_triggers()
-                wh = webhook.to_dict()
-                wh["triggers"] = triggers
-                s["webhooks"].append(wh)
-
-            manager = await KitsuManager.from_show_id(s["id"])
-            metadata_managers.append(manager)
-            if manager:
-                status = await manager.get_status()
-                if status:
-                    s["status"] = status_html_map[status]
-                s["kitsu_id"] = manager.kitsu_id
-                s["image"] = await manager.get_poster_image()
-                s["link"] = manager.link
-
-    await gather_statuses(metadata_managers)
-    for i in range(len(shows)):
-        status = metadata_managers[i].status
-        if status is not None:
-            shows[i]["status"] = status
-
-    ctx["shows"] = shows
+    ctx["shows"] = shows.to_list()
     ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app)]
     ctx["seen_titles"] = list(app.seen_titles)
 

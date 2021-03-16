@@ -292,6 +292,7 @@ class Webhook:
 
     show_id: int
     base: WebhookBase
+    triggers: List[str]
 
     def to_dict(self) -> dict:
         """
@@ -304,7 +305,8 @@ class Webhook:
         """
         return {
             "show_id": self.show_id,
-            "base": self.base.to_dict()
+            "base": self.base.to_dict(),
+            "triggers": self.triggers
         }
 
     @classmethod
@@ -349,6 +351,7 @@ class Webhook:
 
             instance.show_id = show_id
             instance.base = base
+            instance.triggers = await instance.get_triggers()
 
             instances.append(instance)
 
@@ -393,6 +396,7 @@ class Webhook:
 
         instance.show_id = show_id
         instance.base = base
+        instance.triggers = await instance.get_triggers()
 
         return instance
 
@@ -415,9 +419,11 @@ class Webhook:
                     show_id=$1 AND base=$2;
             """, self.show_id, self.base.base_id)
 
-        return [r["trigger"] for r in triggers]
+        self.triggers = [r["trigger"] for r in triggers]
 
-    async def add_trigger(self, trigger: str) -> bool:
+        return self.triggers
+
+    async def add_trigger(self, trigger: str) -> List[str]:
         """
         Adds a new trigger to a webhook.
 
@@ -428,11 +434,11 @@ class Webhook:
 
         Returns
         -------
-        bool
-            Whether the webhook was added or not.
+        List[str]
+            List of triggers after attempted change.
         """
         if trigger not in VALID_TRIGGERS:
-            return False
+            return await self.get_triggers()
 
         async with self._app.db_pool.acquire() as con:
             exists = await con.fetchval("""
@@ -444,7 +450,7 @@ class Webhook:
             """, self.show_id, self.base.base_id, trigger)
 
             if exists:
-                return True
+                return await self.get_triggers()
 
             await con.execute("""
                 INSERT INTO
@@ -454,9 +460,9 @@ class Webhook:
                     ($1, $2, $3);
             """, self.show_id, self.base.base_id, trigger)
 
-        return True
+        return await self.get_triggers()
 
-    async def remove_trigger(self, trigger: str) -> bool:
+    async def remove_trigger(self, trigger: str) -> List[str]:
         """
         Removes a trigger from a webhook.
 
@@ -467,11 +473,11 @@ class Webhook:
 
         Returns
         -------
-        bool
-            Whether the webhook was deleted or not.
+        List[str]
+            List of triggers after attempted change.
         """
         if trigger not in VALID_TRIGGERS:
-            return False
+            return await self.get_triggers()
 
         async with self._app.db_pool.acquire() as con:
             exists = await con.fetchval("""
@@ -483,7 +489,7 @@ class Webhook:
             """, self.show_id, self.base.base_id, trigger)
 
             if not exists:
-                return False
+                return await self.get_triggers()
 
             await con.execute("""
                 DELETE FROM
@@ -491,7 +497,7 @@ class Webhook:
                 WHERE show_id=$1 AND base=$2 AND trigger=$3;
             """, self.show_id, self.base.base_id, trigger)
 
-        return True
+        return await self.get_triggers()
 
     def generate_discord_embed(self, content: str) -> dict:
         """

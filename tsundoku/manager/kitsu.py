@@ -2,35 +2,30 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 import aiohttp
 from quart import current_app as app
 
+from tsundoku.fluent import get_injector
+
 API_URL = "https://kitsu.io/api/edge/anime"
 logger = logging.getLogger("tsundoku")
+resources = [
+    "base",
+    "errors",
+    "index"
+]
 
+fluent = get_injector(resources)
 
-async def gather_statuses(managers: List[KitsuManager]) -> None:
-    to_retrieve: List[int] = []
-
-    for manager in managers:
-        to_retrieve.append(manager.kitsu_id)
-
-    async with aiohttp.ClientSession() as sess:
-        payload = {
-            "filter[id]": ",".join(map(str, to_retrieve)),
-            "fields[anime]": "status"
-        }
-        async with sess.get(API_URL, params=payload) as resp:
-            data = await resp.json()
-            for i in range(len(to_retrieve)):
-                try:
-                    show_response: Dict = data["data"][i]
-                    status = show_response.get("attributes", {}).get("status", None)
-                    managers[i].status = status
-                except IndexError:
-                    pass
+status_html_map = {
+    "current": f"<span class='img-overlay-span tag is-success'>{fluent._('status-airing')}</span>",
+    "finished": f"<span class='img-overlay-span tag is-danger'>{fluent._('status-finished')}</span>",
+    "tba": f"<span class='img-overlay-span tag is-warning'>{fluent._('status-tba')}</span>",
+    "unreleased": f"<span class='img-overlay-span tag is-info'>{fluent._('status-unreleased')}</span>",
+    "upcoming": f"<span class='img-overlay-span tag is-primary'>{fluent._('status-upcoming')}</span>"
+}
 
 
 class KitsuManager:
@@ -40,17 +35,29 @@ class KitsuManager:
     }
 
     show_id: int
-    kitsu_id: int
-    slug: str
 
+    kitsu_id: Optional[int]
+    slug: Optional[str]
     status: Optional[str]
+    poster: Optional[str]
 
     def __init__(self) -> None:
         self.SHOW_BASE = "https://kitsu.io/anime/{}"
         self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
 
+    def to_dict(self) -> dict:
+        return {
+            "show_id": self.show_id,
+            "kitsu_id": self.kitsu_id,
+            "link": self.link,
+            "slug": self.slug,
+            "status": self.status,
+            "html_status": status_html_map[self.status] if self.status else None,
+            "poster": self.poster
+        }
+
     @classmethod
-    async def fetch(cls, show_id: int, show_name: str) -> Optional[KitsuManager]:
+    async def fetch(cls, show_id: int, show_name: str) -> KitsuManager:
         """
         Attempts to retrieve Kitsu information
         for a specified show name from the Kitsu API.
@@ -64,7 +71,7 @@ class KitsuManager:
 
         Returns
         -------
-        Optional[KitsuManager]
+        KitsuManager
             A KitsuManager for a show.
         """
         logger.info(f"Fetching Kitsu ID for Show {show_name}")
@@ -78,14 +85,13 @@ class KitsuManager:
                 try:
                     result = data["data"][0]
                 except (IndexError, KeyError):
-                    return None
-
-        if not result or not result.get("id"):
-            return None
+                    result = {}
 
         instance = cls()
-        instance.kitsu_id = int(result["id"])
+        instance.show_id = show_id
+        instance.kitsu_id = int(result["id"]) if result else None
         instance.slug = result.get("slug")
+        instance.poster = await instance.get_poster_image()
 
         instance.status = None
 
@@ -107,7 +113,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def fetch_by_kitsu(cls, show_id: int, kitsu_id: int) -> Optional[KitsuManager]:
+    async def fetch_by_kitsu(cls, show_id: int, kitsu_id: int) -> KitsuManager:
         """
         Attempts to retrieve Kitsu information
         for a specified show ID from the Kitsu API.
@@ -135,14 +141,13 @@ class KitsuManager:
                 try:
                     result = data["data"][0]
                 except IndexError:
-                    return None
-
-        if not result or not result.get("id"):
-            return None
+                    result = {}
 
         instance = cls()
-        instance.kitsu_id = int(result["id"])
+        instance.show_id = show_id
+        instance.kitsu_id = int(result["id"]) if result else None
         instance.slug = result.get("slug")
+        instance.poster = await instance.get_poster_image()
 
         instance.status = None
 
@@ -192,28 +197,40 @@ class KitsuManager:
                 WHERE show_id=$1;
             """, show_id)
             if not row:
-                raise Exception(f"KitsuManager for Show ID # {show_id} is missing.")
+                show_name = await con.fetchval("""
+                    SELECT
+                        title
+                    FROM
+                        shows
+                    WHERE id=$1;
+                """, show_id)
+                return await KitsuManager.fetch(show_id, show_name)
 
         instance = cls()
+        instance.show_id = show_id
         instance.kitsu_id = row["kitsu_id"]
         instance.slug = row["slug"]
+        instance.poster = await instance.get_poster_image()
 
         instance.status = None
 
         return instance
 
     @property
-    def link(self) -> str:
+    def link(self) -> Optional[str]:
         """
         Returns the link to the show on Kitsu
         from the show's ID.
 
         Returns
         -------
-        str
+        Optional[str]
             The show's link.
         """
-        return self.SHOW_BASE.format(self.kitsu_id)
+        if self.kitsu_id:
+            return self.SHOW_BASE.format(self.kitsu_id)
+        else:
+            return None
 
     async def clear_cache(self) -> None:
         """

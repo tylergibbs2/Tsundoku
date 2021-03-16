@@ -10,7 +10,7 @@ interface WebhookBase {
 interface PartialEntry {
     id: number;
     show_id: number;
-    current_state: string;
+    state: string;
     episode: number;
 }
 
@@ -23,7 +23,7 @@ interface Webhook {
 
 
 interface Show {
-    id: number;
+    id_: number;
     title: string;
     desired_format: string;
     desired_folder: string;

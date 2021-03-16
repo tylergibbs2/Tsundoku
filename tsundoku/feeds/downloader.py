@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 import anitopy
 
-from tsundoku.feeds.entry import Entry, EntryState
+from tsundoku.manager import Entry, EntryState
 
 logger = logging.getLogger("tsundoku")
 

@@ -9,7 +9,7 @@ from urllib.parse import quote_plus
 import anitopy
 import feedparser
 
-from tsundoku.feeds.entry import Entry, EntryState
+from tsundoku.manager import Entry, EntryState
 
 logger = logging.getLogger("tsundoku")
 
