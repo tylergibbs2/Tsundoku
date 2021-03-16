@@ -248,10 +248,12 @@ class Downloader:
 
         suffix = entry.file_path.suffix
 
+        episode = str(entry.episode + show_info["episode_offset"])
+
         expressions = self.get_expression_mapping(
             show_info["title"],
             str(show_info["season"]),
-            str(entry.episode),
+            episode,
             ext=suffix
         )
         name = file_fmt.format_map(expressions)
