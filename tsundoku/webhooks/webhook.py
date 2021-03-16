@@ -184,7 +184,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls, app: Any) -> List[WebhookBase]:
+    async def all(cls, app: Any, with_validity: bool = True) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
         the database.
@@ -193,6 +193,8 @@ class WebhookBase:
         ----------
         app: Any
             The app.
+        with_validity: bool
+            Whether to fetch if base is valid.
 
         Returns
         -------
@@ -209,9 +211,9 @@ class WebhookBase:
                     id ASC;
             """)
 
-        instances = []
+        instances: List[WebhookBase] = []
         for id_ in ids:
-            wh_base = await WebhookBase.from_id(app, id_["id"])
+            wh_base = await WebhookBase.from_id(app, id_["id"], with_validity=with_validity)
             if wh_base:
                 instances.append(wh_base)
 
