@@ -20,8 +20,13 @@ interface NyaaShowModalParams {
 }
 
 export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams) => {
+
+    let addingDefaultState = false;
+    if (shows.length)
+        addingDefaultState = true;
+
     const [submitting, setSubmitting] = useState<boolean>(false);
-    const [addingToExisting, setAddingToExisting] = useState<boolean>(true);
+    const [addingToExisting, setAddingToExisting] = useState<boolean>(addingDefaultState);
     const [showId, setShowId] = useState<number>(null);
 
     const addToExisting = () => {
@@ -58,7 +63,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 setAddingToExisting(true);
                 setShowId(null);
                 toast({
-                    message: _("entry-add-success", {"count": addedCount}),
+                    message: _("entry-add-success", { "count": addedCount }),
                     duration: 5000,
                     position: "bottom-right",
                     type: "is-success",
@@ -85,8 +90,20 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 <section class="modal-card-body">
                     <div class="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
-                            <li class={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>{_("modal-tab-new")}</a></li>
-                            <li class={addingToExisting ? "is-active" : ""}><a onClick={addToExisting}>{_("modal-tab-existing")}</a></li>
+                            <li class={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>
+                                <span class="icon is-small"><i class="fas fa-plus-circle"></i></span>
+                                <span>{_("modal-tab-new")}</span>
+                            </a></li>
+                            <li class={addingToExisting ? "is-active" : ""}>
+                                <a
+                                    onClick={shows.length ? addToExisting : null}
+                                    style={shows.length ? {} : { cursor: "auto" }}
+                                    class={shows.length ? "" : "has-text-grey-light"}
+                                >
+                                    <span class="icon is-small"><i class="fas fa-pen-square"></i></span>
+                                    <span>{_("modal-tab-existing")}</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
@@ -114,7 +131,7 @@ interface ModalFormParams {
 
 
 const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback }: ModalFormParams) => {
-    if (addingToExisting)
+    if (addingToExisting && shows.length)
         return (<AddToExistingShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />);
     else
         return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} />);
@@ -162,13 +179,13 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
     }
 
     return (
-        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
+        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form" class="has-text-centered">
             <div class="field">
                 <label class="label">
                     <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                         data-tooltip={_("existing-show-tt")}>{_("existing-show-field")}</span>
                 </label>
-                <div class="select">
+                <div class="select is-fullwidth">
                     <ExistingShowSelect register={register} name="existingShow" shows={shows} />
                 </div>
             </div>
