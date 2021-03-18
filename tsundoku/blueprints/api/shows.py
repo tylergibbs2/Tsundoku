@@ -139,6 +139,7 @@ class ShowsAPI(views.MethodView):
             """, show.id_)
 
         logger.info("New Show Added - Preparing to Check for New Releases")
+        app.poller.reset_rss_cache()
         await app.poller.poll()
 
         show = await Show.from_id(show.id_)
@@ -205,6 +206,7 @@ class ShowsAPI(views.MethodView):
 
         if do_poll:
             logger.info("Existing Show Updated - Preparing to Check for New Releases")
+            app.poller.reset_rss_cache()
             await app.poller.poll()
 
         show = await Show.from_id(show_id)

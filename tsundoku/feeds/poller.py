@@ -79,6 +79,17 @@ class Poller:
 
             await asyncio.sleep(self.interval)
 
+    def reset_rss_cache(self) -> None:
+        """
+        Resets all cache attributes on parser
+        objects for re-fetching the complete RSS
+        feed.
+        """
+        for parser in self.app.rss_parsers:
+            parser._last_etag = None
+            parser._last_modified = None
+            parser._most_recent_hash = None
+
     async def poll(self) -> List[Tuple[int, int]]:
         """
         Iterates through every installed RSS parser
