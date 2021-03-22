@@ -81,10 +81,10 @@ class Manager:
         hash_data = bencodepy.encode(subject)
         digest = hashlib.sha1(hash_data).hexdigest()
 
-        magnet_url = "magnet:?" \
-            + f"xt=urn:btih:{digest}" \
-            + f"&dn={metadata[b'info'][b'name'].decode()}" \
-            + f"&tr={metadata[b'announce'].decode()}"
+        magnet_url = ("magnet:?"
+                      f"xt=urn:btih:{digest}"
+                      f"&dn={metadata[b'info'][b'name'].decode()}"
+                      f"&tr={metadata[b'announce'].decode()}")
 
         return re.sub(pattern, b32_to_sha1, magnet_url)
 
