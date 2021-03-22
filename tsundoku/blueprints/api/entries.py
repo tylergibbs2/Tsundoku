@@ -119,7 +119,8 @@ class EntriesAPI(views.MethodView):
             )
 
         if arguments["magnet"]:
-            entry_id = await app.downloader.begin_handling(show_id, episode, arguments["magnet"])
+            magnet = await app.dl_client.get_magnet(arguments["magnet"])
+            entry_id = await app.downloader.begin_handling(show_id, episode, magnet)
         else:
             async with app.db_pool.acquire() as con:
                 entry_id = await con.fetchval("""
