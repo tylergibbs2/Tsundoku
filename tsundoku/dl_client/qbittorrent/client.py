@@ -79,7 +79,7 @@ class qBittorrentClient:
         """
         payload = {
             "hashes": torrent_id,
-            "filter": "completed"
+            "filter": "completed,seeding"
         }
 
         data = await self.request("get", "torrents", "info", params=payload)
