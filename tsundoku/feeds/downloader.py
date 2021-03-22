@@ -344,6 +344,12 @@ class Downloader:
         if path is None:
             return
 
+        # Sometimes the file path may exist on disk, but it isn't fully
+        # downloaded by the torrent client at this point in time.
+        is_completed = await self.app.dl_client.check_torrent_completed(entry.torrent_hash)
+        if not is_completed:
+            return
+
         # This ensures that the path is an actual file rather than
         # a directory. Sometimes with torrents the files can be in
         # folders. Batch releases are typically always in folders.

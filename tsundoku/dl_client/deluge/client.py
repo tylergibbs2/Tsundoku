@@ -44,6 +44,32 @@ class DelugeClient:
 
         return f"{protocol}://{host}:{port}/json"
 
+    async def check_torrent_completed(self, torrent_id: str) -> bool:
+        """
+        Checks whether a torrent is fully completed and ready
+        for file I/O operations.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to check.
+
+        Returns
+        -------
+        bool:
+            The torrent's completion status.
+        """
+        ret = await self.request("webapi.get_torrents", [[torrent_id], ["state"]])
+
+        ret_list = ret["result"].get("torrents", [])
+
+        try:
+            data = ret_list[0]
+        except IndexError:
+            return False
+
+        return data["state"] == "Seeding"
+
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Returns information for a specified torrent.
@@ -159,8 +185,10 @@ class DelugeClient:
         dict
             The response dict.
         """
-        while not await self.ensure_authorization():
+        retries = 5
+        while retries and not await self.ensure_authorization():
             await asyncio.sleep(10)
+            retries -= 1
             continue
 
         logger.info("Deluge - Successfully Authenticated")
