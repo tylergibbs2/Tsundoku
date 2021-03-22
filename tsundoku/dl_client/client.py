@@ -122,6 +122,23 @@ class Manager:
 
         return file_names
 
+    async def check_torrent_completed(self, torrent_id: str) -> bool:
+        """
+        Checks whether a torrent is fully completed and ready
+        for file I/O operations.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to check.
+
+        Returns
+        -------
+        bool:
+            The torrent's completion status.
+        """
+        return await self._client.check_torrent_completed(torrent_id)
+
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Retrieves a torrent's downloaded location from a download client.

@@ -62,6 +62,29 @@ class qBittorrentClient:
         fp = await self.get_torrent_fp(torrent_id)
         return bool(fp)
 
+    async def check_torrent_completed(self, torrent_id: str) -> bool:
+        """
+        Checks whether a torrent is fully completed and ready
+        for file I/O operations.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to check.
+
+        Returns
+        -------
+        bool:
+            The torrent's completion status.
+        """
+        payload = {
+            "hashes": torrent_id,
+            "filter": "completed"
+        }
+
+        data = await self.request("get", "torrents", "info", params=payload)
+        return bool(data)
+
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         """
         Sends a request to the client to delete the torrent,
