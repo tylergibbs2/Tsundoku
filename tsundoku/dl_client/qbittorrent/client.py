@@ -104,6 +104,9 @@ class qBittorrentClient:
             return None
         data = data[0]
 
+        if data.get("hash") != torrent_id:
+            return None
+
         return Path(data["content_path"])
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:

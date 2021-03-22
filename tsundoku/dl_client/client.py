@@ -65,7 +65,7 @@ class Manager:
             if len(hash_) == 40:
                 return match.group(0)
             elif len(hash_) == 32:
-                return base64.b32decode(hash_.upper()).hex()
+                return "urn:btih:" + base64.b32decode(hash_.upper()).hex()
 
             return match.group(0)
 
@@ -81,10 +81,12 @@ class Manager:
         hash_data = bencodepy.encode(subject)
         digest = hashlib.sha1(hash_data).hexdigest()
 
-        return "magnet:?"\
-            + f"xt=urn:btih:{digest}"\
-            + f"&dn={metadata[b'info'][b'name'].decode()}"\
+        magnet_url = "magnet:?" \
+            + f"xt=urn:btih:{digest}" \
+            + f"&dn={metadata[b'info'][b'name'].decode()}" \
             + f"&tr={metadata[b'announce'].decode()}"
+
+        return re.sub(pattern, b32_to_sha1, magnet_url)
 
     async def get_file_structure(self, location: str) -> List[str]:
         """
