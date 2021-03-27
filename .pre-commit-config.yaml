@@ -20,7 +20,7 @@ repos:
     hooks:
     -   id: isort
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: ''
+    rev: 'v0.812'
     hooks:
     -   id: mypy
         args: [--ignore-missing-imports, --disallow-untyped-defs, --disallow-untyped-calls]
