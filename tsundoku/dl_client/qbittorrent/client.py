@@ -78,12 +78,15 @@ class qBittorrentClient:
             The torrent's completion status.
         """
         payload = {
-            "hashes": torrent_id,
-            "filter": "completed,seeding"
+            "hashes": torrent_id
         }
 
         data = await self.request("get", "torrents", "info", params=payload)
-        return bool(data)
+        if not data or not data[0].get("state"):
+            return False
+
+        state = data[0].get("state")
+        return state in ("stalledUP", "checkingUP", "forcedUP", "uploading", "completed")
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         """
