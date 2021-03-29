@@ -86,7 +86,7 @@ class qBittorrentClient:
             return False
 
         state = data[0].get("state")
-        return state in ("stalledUP", "checkingUP", "forcedUP", "uploading", "completed")
+        return state in ("stalledUP", "pausedUP", "checkingUP", "forcedUP", "uploading", "completed")
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         """
