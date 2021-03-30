@@ -57,6 +57,7 @@ class NyaaAPI(views.MethodView):
 
         show_id = arguments.get("show_id")
         torrent_link = arguments.get("torrent_link")
+        overwrite = arguments.get("overwrite")
 
         if not show_id or not torrent_link:
             return APIResponse(
@@ -92,7 +93,7 @@ class NyaaAPI(views.MethodView):
             show_id,
             torrent_link
         )
-        entries = await search_result.process()
+        entries = await search_result.process(overwrite=overwrite)
 
         return APIResponse(
             result=[e.to_dict() for e in entries]

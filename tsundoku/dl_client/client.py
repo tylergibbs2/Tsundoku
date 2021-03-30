@@ -139,6 +139,20 @@ class Manager:
         """
         return await self._client.check_torrent_completed(torrent_id)
 
+    async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
+        """
+        Sends a request to the client to delete the torrent,
+        optionally also delete the files.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to delete.
+        with_files: bool
+            Whether or not to delete the files downloaded.
+        """
+        await self._client.delete_torrent(torrent_id, with_files=with_files)
+
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Retrieves a torrent's downloaded location from a download client.

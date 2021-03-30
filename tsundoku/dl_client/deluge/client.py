@@ -70,6 +70,20 @@ class DelugeClient:
 
         return data["state"] == "Seeding"
 
+    async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
+        """
+        Sends a request to the client to delete the torrent,
+        optionally also delete the files.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to delete.
+        with_files: bool
+            Whether or not to delete the files downloaded.
+        """
+        await self.request("webapi.remove_torrent", [torrent_id, with_files])
+
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
         """
         Returns information for a specified torrent.

@@ -28,6 +28,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [addingToExisting, setAddingToExisting] = useState<boolean>(addingDefaultState);
     const [showId, setShowId] = useState<number>(null);
+    const [doOverwrite, setDoOverwrite] = useState<boolean>(false);
 
     const addToExisting = () => {
         setAddingToExisting(true);
@@ -46,7 +47,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ "show_id": showId, "torrent_link": choice.torrent_link })
+            body: JSON.stringify({ "show_id": showId, "torrent_link": choice.torrent_link, "overwrite": doOverwrite })
         }
 
         fetch("/api/v1/nyaa", request)
@@ -73,6 +74,13 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
             });
 
     }, [showId]);
+
+    const returnCallback = (data: any) => {
+        if ("overwrite" in data)
+            setDoOverwrite(data.overwrite);
+        if ("showId" in data)
+            setShowId(data.showId);
+    }
 
     const closeModal = () => {
         setChoice(null);
@@ -106,7 +114,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                             </li>
                         </ul>
                     </div>
-                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={setShowId} shows={shows} />
+                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />
                 </section>
 
                 <footer class="modal-card-foot is-size-7">
@@ -126,7 +134,7 @@ interface ModalFormParams {
     addingToExisting: boolean;
     shows: Show[];
     setSubmitting: StateUpdater<boolean>;
-    returnCallback?: StateUpdater<number>;
+    returnCallback?: any;
 }
 
 
@@ -159,12 +167,13 @@ const ExistingShowSelect = ({ register, name, shows }: ExistingShowSelectInputs)
 interface AddToExistingShowFormParams {
     shows: Show[];
     setSubmitting: StateUpdater<boolean>;
-    returnCallback?: StateUpdater<number>;
+    returnCallback?: any;
 }
 
 
 interface AddToExistingShowFormInputs {
     existingShow: number;
+    overwrite: boolean;
 }
 
 
@@ -175,7 +184,10 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
     const submitHandler = (data: AddToExistingShowFormInputs) => {
         setSubmitting(true);
 
-        returnCallback(data.existingShow);
+        returnCallback({
+            showId: data.existingShow,
+            overwrite: data.overwrite
+        });
     }
 
     return (
@@ -189,6 +201,10 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
                     <ExistingShowSelect register={register} name="existingShow" shows={shows} />
                 </div>
             </div>
+            <label class="checkbox">
+                <input ref={register} name="overwrite" type="checkbox" />
+                <span class="ml-1">Overwrite existing entries?</span>
+            </label>
         </form>
     )
 }
@@ -204,7 +220,7 @@ interface AddShowFormInputs {
 
 interface AddShowFormParams {
     setSubmitting: StateUpdater<boolean>;
-    returnCallback?: StateUpdater<number>;
+    returnCallback?: any;
 }
 
 const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
@@ -235,7 +251,9 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
             })
             .then((res: any) => {
                 if (typeof returnCallback !== 'undefined')
-                    returnCallback(res.result.id);
+                    returnCallback({
+                        showId: res.result.id_
+                    });
                 else
                     setSubmitting(false);
             })

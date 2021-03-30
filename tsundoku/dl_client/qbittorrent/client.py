@@ -102,7 +102,7 @@ class qBittorrentClient:
         """
         payload = {
             "hashes": torrent_id,
-            "deleteFiles": with_files
+            "deleteFiles": "true" if with_files else "false"
         }
 
         await self.request("get", "torrents", "delete", params=payload)

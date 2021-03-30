@@ -133,9 +133,15 @@ class SearchResult:
 
         return episodes
 
-    async def process(self) -> List[Entry]:
+    async def process(self, overwrite: bool = False) -> List[Entry]:
         """
         Processes a SearchResult for downloading.
+
+        Parameters
+        ----------
+        overwrite: bool
+            Whether or not to overwrite existing
+            entries in the database.
 
         Returns
         -------
@@ -149,11 +155,12 @@ class SearchResult:
             return added
 
         episodes_to_process = []
+        existing_torrents = set()
         async with self._app.db_pool.acquire() as con:
             for episode in await self.get_episodes():
                 exists = await con.fetchval("""
                     SELECT
-                        episode
+                        torrent_hash
                     FROM
                         show_entry
                     WHERE
@@ -161,13 +168,25 @@ class SearchResult:
                     AND
                         episode=$2;
                 """, self.show_id, episode)
-                if exists:
-                    continue
-
-                episodes_to_process.append(episode)
+                if exists and overwrite:
+                    existing_torrents.add(exists)
+                    episodes_to_process.append(episode)
+                elif not exists:
+                    episodes_to_process.append(episode)
 
         if not episodes_to_process:
             return added
+
+        if overwrite:
+            async with self._app.db_pool.acquire() as con:
+                for hash_ in existing_torrents:
+                    await con.execute("""
+                        DELETE FROM
+                            show_entry
+                        WHERE
+                            torrent_hash=$1;
+                    """, hash_)
+                    await self._app.dl_client.delete_torrent(hash_)
 
         magnet = await self._app.dl_client.get_magnet(self.torrent_link)
         torrent_hash = await self._app.dl_client.add_torrent(magnet)
