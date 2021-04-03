@@ -1,5 +1,3 @@
-import { } from "../patch";
-
 import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
@@ -145,13 +143,3 @@ const IndexApp = () => {
 }
 
 hydrate(<IndexApp />, document.getElementById("index-main"));
-
-// PATCHES
-window.displayShowInfo = displayShowInfo;
-window.openAddShowModal = openAddShowModal;
-window.openEditShowModal = openEditShowModal;
-window.openDeleteShowModal = openDeleteShowModal;
-window.closeModals = closeModals;
-window.toggleFixMatchDropdown = toggleFixMatchDropdown;
-window.displayShowEntries = displayShowEntries;
-window.displayShowWebhooks = displayShowWebhooks;
