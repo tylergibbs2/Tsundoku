@@ -165,14 +165,13 @@ class ShowsAPI(views.MethodView):
 
         :returns: :class:`dict`
         """
-        await request.get_data()
-        arguments = await request.form
+        arguments = await request.get_json()
 
-        desired_format = arguments["desired_format"]
+        desired_format = arguments.get("desired_format")
         if not desired_format:
             desired_format = None
 
-        desired_folder = arguments["desired_folder"]
+        desired_folder = arguments.get("desired_folder")
         if not desired_folder:
             desired_folder = None
 
@@ -193,7 +192,7 @@ class ShowsAPI(views.MethodView):
             new_kitsu = int(arguments["kitsu_id"])
             if old_kitsu != new_kitsu:
                 await show.metadata.fetch_by_kitsu(show_id, new_kitsu)
-        except ValueError:
+        except (KeyError, ValueError):
             pass
 
         show.title = arguments["title"]

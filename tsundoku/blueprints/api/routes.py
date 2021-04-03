@@ -78,9 +78,10 @@ async def delete_show_cache(show_id: int) -> APIResponse:
 
     show = await Show.from_id(show_id)
     await show.metadata.clear_cache()
+    await show.refetch()
 
     return APIResponse(
-        result=True
+        result=show.to_dict()
     )
 
 

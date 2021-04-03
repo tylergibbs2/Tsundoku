@@ -100,11 +100,10 @@ class EntriesAPI(views.MethodView):
 
         :returns: :class:`dict`
         """
+        arguments = await request.get_json()
         required_arguments = {"episode", "magnet"}
-        await request.get_data()
-        arguments = await request.form
 
-        if set(arguments.keys()) != required_arguments:
+        if all(arg not in arguments.keys() for arg in required_arguments):
             return APIResponse(
                 status=400,
                 error="Too many arguments or missing required argument."
@@ -125,7 +124,12 @@ class EntriesAPI(views.MethodView):
             async with app.db_pool.acquire() as con:
                 entry_id = await con.fetchval("""
                     INSERT INTO
-                        show_entry (show_id, episode, current_state, torrent_hash)
+                        show_entry (
+                            show_id,
+                            episode,
+                            current_state,
+                            torrent_hash
+                        )
                     VALUES
                         ($1, $2, $3, $4)
                     RETURNING id;
@@ -149,7 +153,7 @@ class EntriesAPI(views.MethodView):
         await entry._handle_webhooks()
 
         return APIResponse(
-            result=dict(new_entry)
+            result=entry.to_dict()
         )
 
     async def delete(self, show_id: int, entry_id: int) -> APIResponse:

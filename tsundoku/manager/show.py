@@ -124,6 +124,13 @@ class Show:
 
         return instance
 
+    async def refetch(self) -> None:
+        """
+        Refetches the Show's metadata and applies
+        it to the current instance.
+        """
+        self.metadata = await KitsuManager.from_show_id(self.id_)
+
     @staticmethod
     async def insert(**kwargs: Any) -> Show:
         """

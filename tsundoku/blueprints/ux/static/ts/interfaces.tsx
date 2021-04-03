@@ -7,15 +7,16 @@ interface WebhookBase {
     valid: boolean;
 }
 
-interface PartialEntry {
+interface Entry {
     id: number;
     show_id: number;
     state: string;
     episode: number;
+    torrent_hash?: string;
+    file_path?: string;
 }
 
 interface Webhook {
-    wh_id: number;
     show_id: number;
     triggers: string[];
     base: WebhookBase;
@@ -24,12 +25,12 @@ interface Webhook {
 
 interface Metadata {
     show_id: number;
-    kitsu_id: number;
-    slug: string;
-    status: string;
-    html_status: string;
-    poster: string;
-    link: string;
+    kitsu_id?: number;
+    slug?: string;
+    status?: string;
+    html_status?: string;
+    poster?: string;
+    link?: string;
 }
 
 
@@ -41,7 +42,7 @@ interface Show {
     season: number;
     episode_offset: number;
     metadata: Metadata;
-    entries: PartialEntry[];
+    entries: Entry[];
     webhooks: Webhook[];
 }
 
@@ -63,7 +64,7 @@ interface NyaaSearchResult {
 
 export {
     Show,
-    PartialEntry,
+    Entry,
     Webhook,
     WebhookBase,
     NyaaIndividualResult,

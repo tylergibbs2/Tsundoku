@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import importlib
+import importlib.util
 import logging
 import os
 import secrets
@@ -145,7 +146,7 @@ async def setup_session() -> None:
         loop=loop,
         cookie_jar=jar,
         timeout=aiohttp.ClientTimeout(total=15.0)
-        )
+    )
     app.dl_client = Manager(app.session)
 
     app.update_info = []

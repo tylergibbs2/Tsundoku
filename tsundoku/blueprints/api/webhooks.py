@@ -38,8 +38,6 @@ class WebhooksAPI(views.MethodView):
         ----------
         show_id: int
             The show to retrieve webhooks for.
-        wh_id: int
-            The specific webhook to retrieve.
 
         Returns
         -------
@@ -71,8 +69,7 @@ class WebhooksAPI(views.MethodView):
         :returns: :class:`dict`
         """
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
-        await request.get_data()
-        arguments = await request.form
+        arguments = await request.get_json()
 
         triggers = arguments.get("triggers")
         triggers = triggers.split(",")

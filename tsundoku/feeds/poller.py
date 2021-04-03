@@ -361,7 +361,7 @@ class Poller:
             self.current_parser._last_modified = None
 
         # 304 status means no new items according to the etag/modified attributes.
-        if feed.status == 304:
+        if hasattr(feed, "status") and feed.status == 304:
             return []
 
         if self.current_parser._last_etag is not None or self.current_parser._last_modified is not None:

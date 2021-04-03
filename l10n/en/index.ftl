@@ -26,6 +26,7 @@ add-modal-header = Add Show
 
 add-form-name-tt = Name of the title as it appears in the RSS feed.
 add-form-name-field = Name
+add-form-name-placeholder = Attack on Titan
 
 add-form-desired-format-tt = Desired name of the file after it is renamed.
 add-form-desired-format-field = Desired Format
@@ -74,6 +75,7 @@ edit-webhooks-th-completed = Completed
 
 edit-form-name-tt = Name of the title as it appears in the RSS feed.
 edit-form-name-field = Name
+edit-form-name-placeholder = Show title
 
 edit-form-desired-format-tt = Desired name of the file after it is renamed.
 edit-form-desired-format-field = Desired Format

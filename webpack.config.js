@@ -31,6 +31,9 @@ module.exports = {
       'react': 'preact/compat',
       'react-dom': 'preact/compat',
       '~': path.resolve('./node_modules')
+    },
+    fallback: {
+      buffer: false
     }
   },
   plugins: [new WebpackFluentPlugin()],

@@ -1,5 +1,47 @@
 {% if updates|length > 0 %}
-<div id="update-modal" class="modal modal-fx-fadeInScale is-active">
+<script>
+var canCloseModals = true;
+
+function closeModals() {
+    if (canCloseModals)
+        document.querySelector(".modal").classList.remove("is-active");
+}
+
+function updateTsundoku() {
+    canCloseModals = false;
+    document.querySelector("#update-button").classList.add("is-loading");
+
+    $.ajax({
+        url: "/update",
+        type: "POST"
+    });
+
+    function poll() {
+        setTimeout(function () {
+            $.ajax({
+                url: "/",
+                type: "GET",
+                success: function () {
+                    location.reload();
+                },
+                statusCode: {
+                    302: function (xhr) {
+                        location.reload();
+                    }
+                },
+                complete: function () {
+                    poll();
+                },
+                timeout: 1000
+            });
+        }, 1000);
+    };
+
+    setTimeout(poll, 5000);
+}
+</script>
+
+<div class="modal modal-fx-fadeInScale is-active">
     <div class="modal-background" onclick="closeModals();"></div>
     <div class="modal-card">
         <header class="modal-card-head">
@@ -42,9 +84,8 @@
         </section>
 
         <footer class="modal-card-foot">
-            <progress id="updating-pg-bar" class="progress is-large is-primary is-hidden" max="100"></progress>
             <button id="update-button" class="button is-primary" onclick="updateTsundoku();">{{ _("update-button" )}}</button>
-            <button id="close-update-modal-button" class="button" onclick="closeModals();">{{ _("update-close-button") }}</button>
+            <button class="button" onclick="closeModals();">{{ _("update-close-button") }}</button>
         </footer>
     </div>
 </div>

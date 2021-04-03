@@ -21,85 +21,10 @@
 
 {% include "modals/update_modal.html" %}
 
-{% include "modals/shows/delete_modal.html" %}
+{% include "messages.html" %}
 
-{% include "modals/shows/edit_modal.html" %}
+<section id="index-main" class="section">
 
-{% include "modals/shows/add_modal.html" %}
-
-<section class="section">
-    {% include "messages.html" %}
-
-    <div class="container mb-3">
-        <h1 class="title">{{ _("shows-page-title") }}</h1>
-        <h2 class="subtitle">{{ _("shows-page-subtitle") }}</h2>
-    </div>
-
-    <div id="show-card-container" class="container">
-        <div class="columns is-multiline">
-            {% set not_shown = namespace(value=0) %}
-            {% for show in shows %}
-            <div class="column is-one-fifth {% if loop.index > max_cards %}is-hidden{% endif %}">
-                {% if loop.index > max_cards %}
-                {% set not_shown.value = not_shown.value + 1 %}
-                {% endif %}
-                <div class="card">
-                    {% if show.metadata.poster %}
-                    <div class="card-image">
-                        {% if show.metadata.html_status %}
-                        {{ show.metadata.html_status|safe }}
-                        {% endif %}
-                        <a href="{{ show.metadata.link }}">
-                            <figure class="image is-3by4">
-                                <img src="{{ show.metadata.poster }}">
-                            </figure>
-                        </a>
-                    </div>
-                    {% endif %}
-                    <div class="card-content">
-                        <p class="subtitle has-tooltip-arrow has-tooltip-multiline has-tooltip-up"
-                            data-tooltip="{{ show.title }}">
-                            <span>
-                                {% if show.metadata.link %}
-                                <a href="{{ show.metadata.link }}"><b>{{ show.title }}</b></a>
-                                {% else %}
-                                <b>{{ show.title }}</b>
-                                {% endif %}
-                            </span>
-                        </p>
-                    </div>
-                    <footer class="card-footer">
-                        <p class="card-footer-item">
-                            <a onclick='openEditShowModal( {{ show|tojson }} );'>{{ _("show-edit-link") }}</a>
-                        </p>
-                        <p class="card-footer-item">
-                            <a onclick='openDeleteShowModal( {{ show|tojson }} );'>{{ _("show-delete-link") }}</a>
-                        </p>
-                    </footer>
-                </div>
-            </div>
-            {% else %}
-            <div class="container has-text-centered my-6">
-                <h3 class="title is-3">{{ _("empty-show-container") }}</h3>
-                <h4 class="subtitle is-5">{{ _("empty-show-container-help") }}</h4>
-            </div>
-            {% endfor %}
-        </div>
-        {% if not_shown.value %}
-        <a id="all-shows-link">
-            <p class="has-text-centered">
-                {{ _("click-for-more-shows", {'not_shown': not_shown.value}) }}
-            </p>
-        </a>
-        <a id="back-to-top-link" class="is-hidden">
-            <p class="has-text-centered">{{ _("back-to-top-link") }}</p>
-        </a>
-        {% endif %}
-    </div>
-
-    <div class="has-text-centered mt-3">
-        <button class="button is-medium is-success" onclick="openAddShowModal();">{{ _("add-show-button") }}</button>
-    </div>
 
 </section>
 
