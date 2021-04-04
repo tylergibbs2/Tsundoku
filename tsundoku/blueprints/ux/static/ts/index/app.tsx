@@ -94,14 +94,14 @@ const IndexApp = () => {
     }
 
     const filterAiring = () => {
-        let idx = filters.indexOf("airing");
+        let idx = filters.indexOf("current");
 
         if (idx !== -1) {
             let copy = [...filters];
             copy.splice(idx, 1);
             setFilters(copy);
         } else
-            setFilters(["airing", ...filters]);
+            setFilters(["current", ...filters]);
     }
 
     const filterFinished = () => {
@@ -175,7 +175,7 @@ const IndexApp = () => {
             <div class="container mb-3">
                 <h1 class="title">{_("shows-page-title")}</h1>
                 <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("airing") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
                 <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
                 <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
                 <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
