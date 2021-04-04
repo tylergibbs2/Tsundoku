@@ -22,9 +22,12 @@ const _ = getInjector(resources);
 
 const IndexApp = () => {
 
+    let storedFilters = localStorage.getItem("showFilters");
+
     const [shows, setShows] = useState<Show[]>([]);
     const [activeShow, setActiveShow] = useState<Show | null>(null);
     const [currentModal, setCurrentModal] = useState<string | null>(null);
+    const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || []);
 
     const fetchShows = () => {
         let request = {
@@ -76,11 +79,74 @@ const IndexApp = () => {
     }, []);
 
     useEffect(() => {
+        localStorage.setItem("showFilters", JSON.stringify(filters));
+    }, [filters])
+
+    useEffect(() => {
         if (currentModal)
             document.body.classList.add("is-clipped");
         else
             document.body.classList.remove("is-clipped");
     }, [currentModal]);
+
+    const isFilter = (status: string) => {
+        return (filters.length === 0 || filters.includes(status));
+    }
+
+    const filterAiring = () => {
+        let idx = filters.indexOf("airing");
+
+        if (idx !== -1) {
+            let copy = [...filters];
+            copy.splice(idx, 1);
+            setFilters(copy);
+        } else
+            setFilters(["airing", ...filters]);
+    }
+
+    const filterFinished = () => {
+        let idx = filters.indexOf("finished");
+
+        if (idx !== -1) {
+            let copy = [...filters];
+            copy.splice(idx, 1);
+            setFilters(copy);
+        } else
+            setFilters(["finished", ...filters]);
+    }
+
+    const filterTba = () => {
+        let idx = filters.indexOf("tba");
+
+        if (idx !== -1) {
+            let copy = [...filters];
+            copy.splice(idx, 1);
+            setFilters(copy);
+        } else
+            setFilters(["tba", ...filters]);
+    }
+
+    const filterUnreleased = () => {
+        let idx = filters.indexOf("unreleased");
+
+        if (idx !== -1) {
+            let copy = [...filters];
+            copy.splice(idx, 1);
+            setFilters(copy);
+        } else
+            setFilters(["unreleased", ...filters]);
+    }
+
+    const filterUpcoming = () => {
+        let idx = filters.indexOf("upcoming");
+
+        if (idx !== -1) {
+            let copy = [...filters];
+            copy.splice(idx, 1);
+            setFilters(copy);
+        } else
+            setFilters(["upcoming", ...filters]);
+    }
 
     return (
         <>
@@ -109,20 +175,24 @@ const IndexApp = () => {
             <div class="container mb-3">
                 <h1 class="title">{_("shows-page-title")}</h1>
                 <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("airing") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
+                <span class={"noselect tag mr-1 is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
             </div>
 
             <div id="show-card-container" class="container">
                 <div class="columns is-multiline">
                     {
                         shows.map((show: Show) => (
-                            <div class="column is-2">
-                                <Card
-                                    key={show.id_}
-                                    show={show}
-                                    setCurrentModal={setCurrentModal}
-                                    setActiveShow={setActiveShow}
-                                />
-                            </div>
+                            <Card
+                                filters={filters}
+                                key={show.id_}
+                                show={show}
+                                setCurrentModal={setCurrentModal}
+                                setActiveShow={setActiveShow}
+                            />
                         ))
                     }
 

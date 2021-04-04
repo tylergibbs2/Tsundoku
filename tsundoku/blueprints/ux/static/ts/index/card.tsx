@@ -5,13 +5,14 @@ import ReactHtmlParser from "react-html-parser";
 
 
 interface CardParams {
+    filters: string[];
     show: Show;
     setCurrentModal: StateUpdater<string | null>;
     setActiveShow: StateUpdater<Show | null>;
 }
 
 
-export const Card = ({ show, setCurrentModal, setActiveShow }: CardParams) => {
+export const Card = ({ filters, show, setCurrentModal, setActiveShow }: CardParams) => {
     let resources = [
         "index"
     ];
@@ -24,6 +25,10 @@ export const Card = ({ show, setCurrentModal, setActiveShow }: CardParams) => {
     else
         title = <b>{show.title}</b>
 
+    let shouldShow: boolean = true;
+    if (filters.length !== 0)
+        shouldShow = filters.includes(show.metadata.status);
+
     const openEditModal = () => {
         setActiveShow(show);
         setCurrentModal("edit");
@@ -35,33 +40,35 @@ export const Card = ({ show, setCurrentModal, setActiveShow }: CardParams) => {
     }
 
     return (
-        <div class="card">
-            { show.metadata.poster &&
-                <div class="card-image">
-                    {show.metadata.html_status && ReactHtmlParser(show.metadata.html_status)}
-                    <a href={show.metadata.link}>
-                        <figure class="image is-3by4">
-                            <img src={show.metadata.poster} />
-                        </figure>
-                    </a>
+        <div class={"column is-2 " + (shouldShow ? "" : "is-hidden")}>
+            <div class="card">
+                {show.metadata.poster &&
+                    <div class="card-image">
+                        {show.metadata.html_status && ReactHtmlParser(show.metadata.html_status)}
+                        <a href={show.metadata.link}>
+                            <figure class="image is-3by4">
+                                <img src={show.metadata.poster} />
+                            </figure>
+                        </a>
+                    </div>
+                }
+                <div class="card-content">
+                    <p class="subtitle has-tooltip-arrow has-tooltip-multiline has-tooltip-up"
+                        data-tooltip={show.title}>
+                        <span>
+                            {title}
+                        </span>
+                    </p>
                 </div>
-            }
-            <div class="card-content">
-                <p class="subtitle has-tooltip-arrow has-tooltip-multiline has-tooltip-up"
-                    data-tooltip={show.title}>
-                    <span>
-                        {title}
-                    </span>
-                </p>
+                <footer class="card-footer">
+                    <p class="card-footer-item">
+                        <a onClick={openEditModal}>{_("show-edit-link")}</a>
+                    </p>
+                    <p class="card-footer-item">
+                        <a onClick={openDeleteModal}>{_("show-delete-link")}</a>
+                    </p>
+                </footer>
             </div>
-            <footer class="card-footer">
-                <p class="card-footer-item">
-                    <a onClick={openEditModal}>{_("show-edit-link")}</a>
-                </p>
-                <p class="card-footer-item">
-                    <a onClick={openDeleteModal}>{_("show-delete-link")}</a>
-                </p>
-            </footer>
         </div>
     )
 }
