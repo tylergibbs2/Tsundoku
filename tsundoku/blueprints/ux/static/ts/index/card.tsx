@@ -78,13 +78,12 @@ export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
     }
 
     return (
-        <div class="card is-flex is-align-self-center" onClick={openModal} style={{ minHeight: "100%", cursor: "pointer" }}>
-            <div class="card-content mt-6">
-                <span class="has-text-centered is-size-1">
-                    <i class="fas fa-2x fa-plus-square"></i>
+        <div class="column is-2">
+            <button onClick={openModal} style={{height: "100%"}} class="button is-outlined is-success is-large is-fullwidth">
+                <span class="icon">
+                    <i class="fa fa-plus"></i>
                 </span>
-                <p class="has-text-centered mt-4"><b>Track New Show</b></p>
-            </div>
+            </button>
         </div>
     )
 }

@@ -20,11 +20,11 @@ resources = [
 fluent = get_injector(resources)
 
 status_html_map = {
-    "current": f"<span class='img-overlay-span tag is-success'>{fluent._('status-airing')}</span>",
-    "finished": f"<span class='img-overlay-span tag is-danger'>{fluent._('status-finished')}</span>",
-    "tba": f"<span class='img-overlay-span tag is-warning'>{fluent._('status-tba')}</span>",
-    "unreleased": f"<span class='img-overlay-span tag is-info'>{fluent._('status-unreleased')}</span>",
-    "upcoming": f"<span class='img-overlay-span tag is-primary'>{fluent._('status-upcoming')}</span>"
+    "current": f"<span class='img-overlay-span tag is-success noselect'>{fluent._('status-airing')}</span>",
+    "finished": f"<span class='img-overlay-span tag is-danger noselect'>{fluent._('status-finished')}</span>",
+    "tba": f"<span class='img-overlay-span tag is-warning noselect'>{fluent._('status-tba')}</span>",
+    "unreleased": f"<span class='img-overlay-span tag is-info noselect'>{fluent._('status-unreleased')}</span>",
+    "upcoming": f"<span class='img-overlay-span tag is-primary noselect'>{fluent._('status-upcoming')}</span>"
 }
 
 

@@ -126,16 +126,8 @@ const IndexApp = () => {
                         ))
                     }
 
-                    <div class="column is-2">
-                        <AddShowCard setCurrentModal={setCurrentModal} />
-                    </div>
+                    <AddShowCard setCurrentModal={setCurrentModal} />
 
-                    {shows.length === 0 &&
-                        <div class="container has-text-centered my-6">
-                            <h3 class="title is-3">{_("empty-show-container")}</h3>
-                            <h4 class="subtitle is-5">{_("empty-show-container-help")}</h4>
-                        </div>
-                    }
                 </div>
             </div>
         </>

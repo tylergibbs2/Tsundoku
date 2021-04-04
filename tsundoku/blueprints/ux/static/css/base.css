@@ -4,12 +4,14 @@
 
 html::-webkit-scrollbar {
     display: none;
-  }
+}
 
 html, body {
     overflow: hidden;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 .dpy-special-white {
@@ -23,4 +25,24 @@ html, body {
 
 .menu-panel-footer p {
     position: relative;
+}
+
+.is-clickable {
+    cursor: pointer !important;
+}
+
+.noselect {
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old versions of Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
 }
