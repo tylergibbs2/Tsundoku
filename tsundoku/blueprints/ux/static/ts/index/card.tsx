@@ -85,12 +85,29 @@ export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
     }
 
     return (
-        <div class="column is-2">
-            <button onClick={openModal} style={{height: "100%"}} class="button is-outlined is-success is-large is-fullwidth">
-                <span class="icon">
-                    <i class="fa fa-plus"></i>
-                </span>
-            </button>
-        </div>
+        <>
+            <div class="column is-2">
+                <button onClick={openModal} style={{ height: "100%" }} class="button is-outlined is-success is-large is-fullwidth">
+                    <span class="icon">
+                        <i class="fa fa-plus"></i>
+                    </span>
+                </button>
+            </div>
+            <div class="column is-2 is-invisible">
+                <div class="card">
+                    <figure class="image is-3by4">
+                    </figure>
+
+                    <div class="card-content">
+
+                    </div>
+                    <footer class="card-footer">
+                        <p class="card-footer-item">
+                            <a>Placeholder</a>
+                        </p>
+                    </footer>
+                </div>
+            </div>
+        </>
     )
 }
