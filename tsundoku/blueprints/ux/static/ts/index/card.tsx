@@ -5,6 +5,7 @@ import ReactHtmlParser from "react-html-parser";
 
 
 interface CardParams {
+    textFilter: string;
     filters: string[];
     show: Show;
     setCurrentModal: StateUpdater<string | null>;
@@ -12,7 +13,7 @@ interface CardParams {
 }
 
 
-export const Card = ({ filters, show, setCurrentModal, setActiveShow }: CardParams) => {
+export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow }: CardParams) => {
     let resources = [
         "index"
     ];
@@ -28,6 +29,9 @@ export const Card = ({ filters, show, setCurrentModal, setActiveShow }: CardPara
     let shouldShow: boolean = true;
     if (filters.length !== 0)
         shouldShow = filters.includes(show.metadata.status);
+
+    if (shouldShow)
+        shouldShow = show.title.toLowerCase().includes(textFilter.toLowerCase());
 
     const openEditModal = () => {
         setActiveShow(show);

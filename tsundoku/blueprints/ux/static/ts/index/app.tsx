@@ -28,6 +28,7 @@ const IndexApp = () => {
     const [activeShow, setActiveShow] = useState<Show | null>(null);
     const [currentModal, setCurrentModal] = useState<string | null>(null);
     const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || []);
+    const [textFilter, setTextFilter] = useState<string>("");
 
     const fetchShows = () => {
         let request = {
@@ -148,6 +149,11 @@ const IndexApp = () => {
             setFilters(["upcoming", ...filters]);
     }
 
+    const filterSearch = (e: Event) => {
+        let query = (e.target as HTMLInputElement).value;
+        setTextFilter(query);
+    }
+
     return (
         <>
             <AddModal
@@ -172,33 +178,45 @@ const IndexApp = () => {
                 updateShow={updateShow}
             />
 
-            <div class="container mb-3">
-                <h1 class="title">{_("shows-page-title")}</h1>
-                <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
-                <span class={"noselect tag mr-1 is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
-            </div>
-
-            <div id="show-card-container" class="container">
-                <div class="columns is-multiline">
-                    {
-                        shows.map((show: Show) => (
-                            <Card
-                                filters={filters}
-                                key={show.id_}
-                                show={show}
-                                setCurrentModal={setCurrentModal}
-                                setActiveShow={setActiveShow}
-                            />
-                        ))
-                    }
-
-                    <AddShowCard setCurrentModal={setCurrentModal} />
-
+            <div class="columns">
+                <div class="column is-full">
+                    <h1 class="title">{_("shows-page-title")}</h1>
+                    <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
                 </div>
+            </div>
+            <div class="columns mb-3">
+                <div class="column is-6">
+                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
+                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
+                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
+                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
+                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
+                </div>
+                <div class="column is-4 is-offset-2">
+                    <div class="control has-icons-left">
+                        <input type="text" class="input is-pulled-right" onInput={filterSearch} placeholder="Attack on Titan"></input>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="columns is-multiline">
+                {
+                    shows.map((show: Show) => (
+                        <Card
+                            textFilter={textFilter}
+                            filters={filters}
+                            key={show.id_}
+                            show={show}
+                            setCurrentModal={setCurrentModal}
+                            setActiveShow={setActiveShow}
+                        />
+                    ))
+                }
+
+                <AddShowCard setCurrentModal={setCurrentModal} />
+
             </div>
         </>
     )
