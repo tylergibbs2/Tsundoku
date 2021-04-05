@@ -184,13 +184,20 @@ const IndexApp = () => {
                     <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
                 </div>
             </div>
-            <div class="columns mb-3">
+            <div class="columns pb-3" style={{
+                position: "sticky",
+                top: "0",
+                zIndex: "5",
+                backgroundImage: "linear-gradient(rgba(255, 255, 255, 1) 80%, rgba(255, 255, 255, 0) 100%)"
+            }}>
                 <div class="column is-6">
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
+                    <div class="tags are-medium">
+                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
+                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
+                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
+                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
+                        <span class={"noselect tag is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
+                    </div>
                 </div>
                 <div class="column is-4 is-offset-2">
                     <div class="control has-icons-left">
