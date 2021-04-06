@@ -51,7 +51,7 @@ export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow
                         {show.metadata.html_status && ReactHtmlParser(show.metadata.html_status)}
                         <a href={show.metadata.link}>
                             <figure class="image is-3by4">
-                                <img src={show.metadata.poster} />
+                                <img src={show.metadata.poster} loading="lazy"/>
                             </figure>
                         </a>
                     </div>
