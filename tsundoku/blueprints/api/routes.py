@@ -3,6 +3,7 @@ from typing import Optional
 
 from quart import Blueprint
 from quart import current_app as app
+from quart import request
 from quart_auth import current_user
 
 from tsundoku.manager import Show
@@ -20,7 +21,28 @@ logger = logging.getLogger("tsundoku")
 
 @api_blueprint.before_request
 async def ensure_auth() -> Optional[APIResponse]:
-    if not await current_user.is_authenticated:
+    authed = False
+    if request.headers.get("Authorization"):
+        token = request.headers["Authorization"]
+        async with app.db_pool.acquire() as con:
+            try:
+                user = await con.fetchval("""
+                    SELECT
+                        id
+                    FROM
+                        users
+                    WHERE
+                        api_key=$1;
+                """, token)
+
+                if user:
+                    authed = True
+            except Exception:
+                pass
+    if not authed and await current_user.is_authenticated:
+        authed = True
+
+    if not authed:
         return APIResponse(
             status=401,
             result="You are not authorized to access this resource."

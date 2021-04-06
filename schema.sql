@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved', 'completed');
 CREATE TYPE webhook_service AS ENUM ('discord', 'slack', 'custom');
 
@@ -5,7 +7,8 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    api_key uuid NOT NULL DEFAULT uuid_generate_v4()
 );
 
 CREATE TABLE shows (
