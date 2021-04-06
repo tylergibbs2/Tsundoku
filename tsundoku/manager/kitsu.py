@@ -86,7 +86,8 @@ class KitsuManager:
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
             payload = {
-                "filter[text]": show_name
+                "filter[text]": show_name,
+                "fields[anime]": "id,status,slug"
             }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
@@ -95,13 +96,15 @@ class KitsuManager:
                 except (IndexError, KeyError):
                     result = {}
 
+        attributes = result.get("attributes", {})
+
         instance = cls()
         instance.show_id = show_id
         instance.kitsu_id = int(result["id"]) if result else None
-        instance.slug = result.get("slug")
-        instance.poster = await instance.get_poster_image()
+        instance.slug = attributes.get("slug")
+        instance.status = attributes.get("status")
 
-        instance.status = None
+        instance.poster = await instance.get_poster_image()
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -112,11 +115,15 @@ class KitsuManager:
             """, show_id)
             await con.execute("""
                 INSERT INTO
-                    kitsu_info
-                    (show_id, kitsu_id, slug)
+                    kitsu_info (
+                        show_id,
+                        kitsu_id,
+                        slug,
+                        show_status
+                    )
                 VALUES
-                    ($1, $2, $3);
-            """, show_id, instance.kitsu_id, instance.slug)
+                    ($1, $2, $3, $4);
+            """, show_id, instance.kitsu_id, instance.slug, instance.status)
 
         return instance
 
@@ -142,7 +149,8 @@ class KitsuManager:
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
             payload = {
-                "filter[id]": kitsu_id
+                "filter[id]": kitsu_id,
+                "fields[anime]": "status,slug"
             }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
@@ -151,13 +159,15 @@ class KitsuManager:
                 except IndexError:
                     result = {}
 
+        attributes = result.get("attributes", {})
+
         instance = cls()
         instance.show_id = show_id
         instance.kitsu_id = int(result["id"]) if result else None
-        instance.slug = result.get("slug")
-        instance.poster = await instance.get_poster_image()
+        instance.slug = attributes.get("slug")
+        instance.status = attributes.get("status")
 
-        instance.status = None
+        instance.poster = await instance.get_poster_image()
 
         async with app.db_pool.acquire() as con:
             await con.execute("""
@@ -168,11 +178,15 @@ class KitsuManager:
             """, show_id)
             await con.execute("""
                 INSERT INTO
-                    kitsu_info
-                    (show_id, kitsu_id, slug)
+                    kitsu_info (
+                        show_id,
+                        kitsu_id,
+                        slug,
+                        show_status
+                    )
                 VALUES
-                    ($1, $2, $3);
-            """, show_id, instance.kitsu_id, instance.slug)
+                    ($1, $2, $3, $4);
+            """, show_id, instance.kitsu_id, instance.slug, instance.status)
 
         return instance
 
