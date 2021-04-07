@@ -17,7 +17,6 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 * Import third-party RSS parsers to search other feeds
 * Send updates to Discord or Slack with webhooks
 * View airing status of shows
-* Forward completion status to Sonarr/Radarr (in-dev)
 * Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.readthedocs.io/en/latest/))
 
 ## Requirements
