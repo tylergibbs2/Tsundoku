@@ -69,13 +69,6 @@ async def index() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    shows = await ShowCollection.all()
-    await shows.gather_statuses()
-
-    ctx["shows"] = shows.to_list()
-    ctx["bases"] = [b.to_dict() for b in await WebhookBase.all(app, with_validity=False)]
-    ctx["seen_titles"] = list(app.seen_titles)
-
     if not len(app.rss_parsers):
         await flash(fluent._("no-rss-parsers"))
     elif not len(app.seen_titles):
