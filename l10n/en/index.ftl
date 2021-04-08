@@ -60,6 +60,10 @@ edit-tab-webhooks = Webhooks
 
 edit-entries-th-episode = Episode
 edit-entries-th-status = Status
+edit-entries-th-last-update = Updated
+
+edit-entries-is-empty = No entries yet!
+edit-entries-last-update = {$time} ago
 
 edit-entries-form-episode = Episode
 edit-entries-form-magnet = Magnet URL
@@ -72,6 +76,8 @@ edit-webhooks-th-downloaded = Downloaded
 edit-webhooks-th-renamed = Renamed
 edit-webhooks-th-moved = Moved
 edit-webhooks-th-completed = Completed
+
+edit-webhooks-is-empty = Add webhooks on the webhooks page.
 
 edit-form-name-tt = Name of the title as it appears in the RSS feed.
 edit-form-name-field = Name

@@ -14,6 +14,7 @@ interface Entry {
     episode: number;
     torrent_hash?: string;
     file_path?: string;
+    last_update: string;
 }
 
 interface Webhook {

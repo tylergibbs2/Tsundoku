@@ -1,4 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE FUNCTION now_utc() RETURNS TIMESTAMP AS $$
+  SELECT NOW() AT TIME ZONE 'utc';
+$$ LANGUAGE SQL;
 
 CREATE TYPE show_state AS ENUM ('downloading', 'downloaded', 'renamed', 'moved', 'completed');
 CREATE TYPE webhook_service AS ENUM ('discord', 'slack', 'custom');
@@ -7,7 +10,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT now_utc(),
     api_key uuid NOT NULL DEFAULT uuid_generate_v4()
 );
 
@@ -17,7 +20,8 @@ CREATE TABLE shows (
     desired_format TEXT,
     desired_folder TEXT,
     season SMALLINT NOT NULL,
-    episode_offset SMALLINT NOT NULL DEFAULT 0
+    episode_offset SMALLINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT now_utc()
 );
 
 CREATE TABLE show_entry (
@@ -26,7 +30,8 @@ CREATE TABLE show_entry (
     episode SMALLINT NOT NULL,
     current_state show_state NOT NULL DEFAULT 'downloading',
     torrent_hash TEXT NOT NULL,
-    file_path TEXT
+    file_path TEXT,
+    last_update TIMESTAMP NOT NULL DEFAULT now_utc()
 );
 
 CREATE TABLE kitsu_info (

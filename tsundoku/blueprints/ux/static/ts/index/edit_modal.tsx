@@ -2,6 +2,7 @@ import { getInjector } from "../fluent";
 import { useState, StateUpdater, useEffect } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { Show, Entry, Webhook } from "../interfaces";
+import * as humanizeDuration from "humanize-duration";
 
 
 let resources = [
@@ -401,7 +402,8 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
             episode: data.episode,
             show_id: show.id_,
             state: "buffered",
-            magnet: data.magnet
+            magnet: data.magnet,
+            last_update: ""
         }
         let temp = [entry, ...entries];
 
@@ -441,6 +443,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                         <tr>
                             <th>{_("edit-entries-th-episode")}</th>
                             <th>{_("edit-entries-th-status")}</th>
+                            <th>{_("edit-entries-th-last-update")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -458,7 +461,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
             }
             {entries.length === 0 &&
                 <div class="container has-text-centered mb-5">
-                    <h2 class="subtitle">No entries yet!</h2>
+                    <h2 class="subtitle">{_("edit-entries-is-empty")}</h2>
                 </div>
             }
             <form onSubmit={handleSubmit(bufferAddEntry)}>
@@ -494,10 +497,21 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
         bufferRemoveEntry(entry);
     }
 
+    const lastUpdate = new Date(`${entry.last_update}Z`);
+    const diff = lastUpdate.getTime() - Date.now();
+
+    const localized = humanizeDuration(diff, {
+        language: window["LOCALE"],
+        fallbacks: ["en"],
+        round: true,
+        largest: 2
+    })
+
     return (
         <tr>
             <td>{entry.episode}</td>
             <td>{_(`entry-status-${entry.state}`)}</td>
+            <td>{_("edit-entries-last-update", {time: localized})}</td>
             <td>
                 <button class="delete" onClick={bufferDelete}></button>
             </td>
@@ -572,7 +586,7 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
             }
             {show.webhooks.length === 0 &&
                 <div class="container has-text-centered mb-5">
-                    <h2 class="subtitle">Add webhooks on the webhooks page.</h2>
+                    <h2 class="subtitle">{_("edit-webhooks-is-empty")}</h2>
                 </div>
             }
         </div>

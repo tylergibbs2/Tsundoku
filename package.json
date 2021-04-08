@@ -12,6 +12,7 @@
     "bulma-toast": "^2.2.0",
     "css-loader": "^5.0.1",
     "eslint": "^7.23.0",
+    "humanize-duration": "^3.25.1",
     "intl-pluralrules": "^1.2.2",
     "preact": "^10.5.10",
     "react-async-hook": "^3.6.2",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, List, Optional
@@ -29,6 +30,7 @@ class Entry:
         self.episode: int = record["episode"]
         self.state: EntryState = EntryState[record["current_state"]]
         self.torrent_hash: str = record["torrent_hash"]
+        self.last_update: datetime = record["last_update"]
 
         fp = record["file_path"]
         self.file_path: Optional[Path] = Path(fp) if fp is not None else None
@@ -51,7 +53,8 @@ class Entry:
             "episode": self.episode,
             "state": self.state.value,
             "torrent_hash": self.torrent_hash,
-            "file_path": str(self.file_path)
+            "file_path": str(self.file_path),
+            "last_update": self.last_update.isoformat()
         }
 
     @classmethod
@@ -80,7 +83,8 @@ class Entry:
                     episode,
                     current_state,
                     torrent_hash,
-                    file_path
+                    file_path,
+                    last_update
                 FROM
                     show_entry
                 WHERE show_id=$1
@@ -106,7 +110,8 @@ class Entry:
         async with self._app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE show_entry SET
-                    current_state = $1
+                    current_state = $1,
+                    last_update = now_utc()
                 WHERE id=$2;
             """, new_state.value, self.id)
 
