@@ -2,14 +2,30 @@ import asyncio
 import logging
 import os
 import shutil
+from functools import partial, wraps
 from pathlib import Path
 from typing import Any, Optional
 
+import aiofiles.os
 import anitopy
 
 from tsundoku.manager import Entry, EntryState
 
 logger = logging.getLogger("tsundoku")
+
+
+def wrap(func: Any) -> Any:
+    @wraps(func)
+    async def run(*args: Any, loop: Any = None, executor: Any = None, **kwargs: Any) -> Any:
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        pfunc = partial(func, *args, **kwargs)
+        return await loop.run_in_executor(executor, pfunc)
+
+    return run
+
+
+move = wrap(shutil.move)
 
 
 class ExprDict(dict):
@@ -182,7 +198,7 @@ class Downloader:
         name = entry.file_path.name
 
         try:
-            shutil.move(str(entry.file_path), str(desired_folder / name))
+            await move(str(entry.file_path), str(desired_folder / name))
         except PermissionError:
             logger.error("Error Moving Release - Invalid Permissions")
         except Exception as e:
@@ -260,7 +276,7 @@ class Downloader:
 
         try:
             new_path = entry.file_path.with_name(name + suffix)
-            os.rename(entry.file_path, new_path)
+            await aiofiles.os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error("Error Renaming Release - Invalid Permissions")
         except Exception as e:
