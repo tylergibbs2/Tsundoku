@@ -118,11 +118,8 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                 </section>
 
                 <footer class="modal-card-foot is-size-7">
-                    <progress class={"progress is-primary is-small mt-2 " + (submitting ? "" : "is-hidden")} max="100"></progress>
-                    <div class={submitting ? "is-hidden" : ""}>
-                        <input class="button is-success" type="submit" form="nyaa-result-form" value={_("add-button")}></input>
-                        <button onClick={submitting ? null : closeModal} class="button">{_("cancel-button")}</button>
-                    </div>
+                    <button class={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="nyaa-result-form">{_("add-button")}</button>
+                    <button onClick={submitting ? null : closeModal} class="button">{_("cancel-button")}</button>
                 </footer>
             </div>
         </div>
