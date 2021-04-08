@@ -54,8 +54,7 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModal
 
                 <footer class="modal-card-foot">
                     <progress class="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
-                    <input class="button is-success" type="submit" form="add-show-form"
-                        value={_("add-form-add-button")}></input>
+                    <button class={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="add-show-form">{_("add-form-add-button")}</button>
                     <button class="button closes-modals" onClick={cancel}>{_("add-form-cancel-button")}</button>
                 </footer>
             </div>
@@ -70,7 +69,7 @@ interface AddShowFormParams {
 
 const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
 
-    const { register, handleSubmit } = useForm({
+    const { register, handleSubmit, reset } = useForm({
         defaultValues: {
             "season": 1,
             "episode_offset": 0
@@ -96,8 +95,10 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                     setSubmitting(false);
             })
             .then((res: any) => {
-                if (typeof returnCallback !== 'undefined')
+                if (typeof returnCallback !== 'undefined') {
                     returnCallback(res.result);
+                    reset();
+                }
                 else
                     setSubmitting(false);
             })
