@@ -203,7 +203,7 @@ class SearchResult:
                         (show_id, episode, torrent_hash)
                     VALUES
                         ($1, $2, $3)
-                    RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
+                    RETURNING id, show_id, episode, current_state, torrent_hash, file_path, last_update;
                 """, self.show_id, episode, torrent_hash)
 
                 entry = Entry(self._app, entry)

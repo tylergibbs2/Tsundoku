@@ -143,7 +143,8 @@ class EntriesAPI(views.MethodView):
                     episode,
                     current_state,
                     torrent_hash,
-                    file_path
+                    file_path,
+                    last_update
                 FROM
                     show_entry
                 WHERE id=$1;

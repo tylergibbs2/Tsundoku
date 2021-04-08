@@ -135,11 +135,21 @@ class Downloader:
         async with self.app.db_pool.acquire() as con:
             entry = await con.fetchrow("""
                 INSERT INTO
-                    show_entry
-                    (show_id, episode, torrent_hash)
+                    show_entry (
+                        show_id,
+                        episode,
+                        torrent_hash
+                    )
                 VALUES
                     ($1, $2, $3)
-                RETURNING id, show_id, episode, current_state, torrent_hash, file_path;
+                RETURNING
+                    id,
+                    show_id,
+                    episode,
+                    current_state,
+                    torrent_hash,
+                    file_path,
+                    last_update;
             """, show_id, episode, torrent_hash)
 
         entry = Entry(self.app, entry)
@@ -427,7 +437,8 @@ class Downloader:
                     episode,
                     torrent_hash,
                     current_state,
-                    file_path
+                    file_path,
+                    last_update
                 FROM
                     show_entry
                 WHERE current_state != 'completed';
