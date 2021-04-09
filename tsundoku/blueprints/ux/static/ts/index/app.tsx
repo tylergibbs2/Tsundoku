@@ -31,7 +31,7 @@ const IndexApp = () => {
     const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || []);
     const [textFilter, setTextFilter] = useState<string>("");
 
-    const fetchShows = () => {
+    const fetchShows = async () => {
         let request = {
             method: "GET",
             headers: {
@@ -39,16 +39,14 @@ const IndexApp = () => {
             }
         };
 
-        (async () => {
-            let resp = await fetch("/api/v1/shows", request);
-            let resp_json: any;
-            if (resp.ok)
-                resp_json = await resp.json();
-            else
-                return;
+        let resp = await fetch("/api/v1/shows", request);
+        let resp_json: any;
+        if (resp.ok)
+            resp_json = await resp.json();
+        else
+            return;
 
-            setShows(resp_json.result);
-        })();
+        setShows(resp_json.result);
     }
 
     const addShow = (show: Show) => {
