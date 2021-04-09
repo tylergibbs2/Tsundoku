@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es2020",
         "jsx": "react-jsx",
         "jsxImportSource": "preact",
         "module": "commonjs",
-        "lib": ["ES2016", "DOM"]
+        "lib": ["ES2020", "ES2016", "DOM"]
     },
     "include": [
         "tsundoku/blueprints/ux/static/ts/index/app.tsx",
