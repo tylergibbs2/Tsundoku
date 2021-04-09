@@ -32,7 +32,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
     const [entriesToDelete, setEntriesToDelete] = useState<Entry[]>([]);
     const [webhooksToUpdate, setWebhooksToUpdate] = useState<Webhook[]>([]);
 
-    const { register, reset, trigger, getValues } = useForm();
+    const { register, reset, trigger, getValues, setValue } = useForm();
 
     useEffect(() => {
         if (activeShow) {
@@ -246,12 +246,10 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                             </div>
                             <div class="dropdown-menu">
                                 <div class="dropdown-content">
-                                    <div class="dropdown-item">
-                                        <p><strong>{_("edit-kitsu-id")}</strong></p>
-                                    </div>
-                                    <div class="dropdown-item">
-                                        <input ref={register} name="kitsu_id" type="number" min="0" class="input" />
-                                    </div>
+                                    <FixMatchDropdown
+                                        register={register}
+                                        setValue={setValue}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -290,12 +288,131 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 </section>
 
                 <footer class="modal-card-foot">
-                    <progress class="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
                     <button class={"button is-success " + (submitting ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
                     <button class="button closes-modals" onClick={cancel}>{_('edit-form-cancel-button')}</button>
                 </footer>
             </div>
         </div>
+    )
+}
+
+
+interface FixMatchDropdownParams {
+    register: any;
+    setValue: any;
+}
+
+
+interface KitsuAPIResultItem {
+    id: string;
+    type: string;
+    attributes: any
+}
+
+
+interface KitsuAPIResult {
+    data: KitsuAPIResultItem[];
+}
+
+
+interface FixMatchRowParams {
+    result: KitsuAPIResultItem;
+    selectedId: string;
+    setSelectedId: StateUpdater<string>;
+}
+
+
+const FixMatchRow = ({result, selectedId, setSelectedId}: FixMatchRowParams) => {
+    const setSelf = () => {
+        setSelectedId(result.id);
+    }
+
+    return (
+        <tr onClick={setSelf} class={"is-clickable " + (result.id === selectedId ? "is-selected" : "")}>
+            <td>{result.attributes.titles["en_jp"]}</td>
+        </tr>
+    )
+}
+
+
+const FixMatchDropdown = ({ register, setValue }: FixMatchDropdownParams) => {
+    const [isSearching, setSearchingState] = useState<boolean>(false);
+    const [results, setResults] = useState<KitsuAPIResultItem[]>([]);
+    const [selectedId, setSelectedId] = useState<string>("");
+
+    const waitInterval: number = 2250;
+
+    let query: string = "";
+    let queryTimer: number = 0;
+
+    useEffect(() => {
+        if (selectedId)
+            setValue("kitsu_id", selectedId);
+    }, [selectedId])
+
+    const updateResults = async () => {
+        setSearchingState(true);
+
+        const include = "&fields[anime]=id,titles";
+
+        let requestUrl = "https://kitsu.io/api/edge/anime";
+        if (/^\d+$/.test(query))
+            requestUrl +=`?filter[id]=${query}`;
+        else
+            requestUrl += `?filter[text]=${encodeURIComponent(query)}`;
+
+        requestUrl += include;
+
+        const resp = await fetch(requestUrl);
+        let resp_json: KitsuAPIResult;
+        if (resp.ok)
+            resp_json = await resp.json();
+        else {
+            setSearchingState(false);
+            return;
+        }
+        setResults(resp_json.data);
+
+        setSearchingState(false);
+    };
+
+    const updateQuery = (e: Event) => {
+        query = (e.target as HTMLInputElement).value;
+
+        setSearchingState(false);
+        window.clearTimeout(queryTimer);
+        queryTimer = window.setTimeout(updateResults, waitInterval);
+    }
+
+    return (
+        <>
+            <input type="hidden" name="kitsu_id" ref={register} />
+            <div class="dropdown-item">
+                <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
+                    <input type="text" class="input is-small" onInput={updateQuery} placeholder="Attack on Titan" disabled={isSearching} />
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </div>
+            </div>
+            {results.length !== 0 &&
+            <div class="dropdown-item">
+                <table class="table is-fullwidth is-hoverable">
+                    <tbody>
+                        {
+                            results.slice(0, 5).map((result) => (
+                                <FixMatchRow
+                                    result={result}
+                                    selectedId={selectedId}
+                                    setSelectedId={setSelectedId}
+                                />
+                            ))
+                        }
+                    </tbody>
+                </table>
+            </div>
+            }
+        </>
     )
 }
 
@@ -516,7 +633,7 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
         <tr>
             <td>{entry.episode}</td>
             <td>{_(`entry-status-${entry.state}`)}</td>
-            <td title={localizedTitle}>{_("edit-entries-last-update", {time: localized})}</td>
+            <td title={localizedTitle}>{_("edit-entries-last-update", { time: localized })}</td>
             <td>
                 <button class="delete" onClick={bufferDelete}></button>
             </td>
