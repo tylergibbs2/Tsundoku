@@ -24,9 +24,3 @@ repos:
     hooks:
     -   id: mypy
         args: [--ignore-missing-imports, --disallow-untyped-defs, --disallow-untyped-calls]
--   repo: https://github.com/pre-commit/mirrors-eslint
-    rev: 'v7.22.0'
-    hooks:
-    -   id: eslint
-        files: \.tsx?$
-        types: [file]
