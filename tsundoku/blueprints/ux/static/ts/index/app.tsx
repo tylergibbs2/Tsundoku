@@ -1,3 +1,4 @@
+import { toast } from "bulma-toast";
 import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
@@ -38,14 +39,16 @@ const IndexApp = () => {
             }
         };
 
-        fetch("/api/v1/shows", request)
-            .then((res) => {
-                if (res.ok)
-                    return res.json();
-            })
-            .then((res: any) => {
-                setShows(res.result);
-            });
+        (async () => {
+            let resp = await fetch("/api/v1/shows", request);
+            let resp_json: any;
+            if (resp.ok)
+                resp_json = await resp.json();
+            else
+                return;
+
+            setShows(resp_json.result);
+        })();
     }
 
     const addShow = (show: Show) => {
@@ -54,6 +57,14 @@ const IndexApp = () => {
         });
 
         setShows(newShows);
+        toast({
+            message: _("show-add-success"),
+            duration: 5000,
+            position: "bottom-right",
+            type: "is-success",
+            dismissible: true,
+            animate: { in: "fadeIn", out: "fadeOut" }
+        })
     }
 
     const updateShow = (show: Show) => {
@@ -63,6 +74,14 @@ const IndexApp = () => {
             newShows[toReplace] = show;
 
         setShows(newShows);
+        toast({
+            message: _("show-update-success"),
+            duration: 5000,
+            position: "bottom-right",
+            type: "is-success",
+            dismissible: true,
+            animate: { in: "fadeIn", out: "fadeOut" }
+        })
     }
 
     const removeShow = (show: Show) => {
@@ -73,6 +92,14 @@ const IndexApp = () => {
         }
 
         setShows(newShows);
+        toast({
+            message: _("show-delete-success"),
+            duration: 5000,
+            position: "bottom-right",
+            type: "is-success",
+            dismissible: true,
+            animate: { in: "fadeIn", out: "fadeOut" }
+        })
     }
 
     useEffect(() => {

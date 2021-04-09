@@ -10,6 +10,10 @@ status-upcoming = Upcoming
 show-edit-link = Edit
 show-delete-link = Delete
 
+show-add-success = Show successfully added.
+show-update-success = Show successfully updated.
+show-delete-success = Show successfully removed.
+
 empty-show-container = Nothing to see here!
 empty-show-container-help = Begin by adding a show below.
 
