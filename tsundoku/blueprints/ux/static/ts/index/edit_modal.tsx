@@ -506,12 +506,17 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
         round: true,
         largest: 2
     })
+    const localizedTitle = new Intl.DateTimeFormat(window["LOCALE"], {
+        // @ts-ignore
+        dateStyle: 'full',
+        timeStyle: 'medium'
+    }).format(lastUpdate)
 
     return (
         <tr>
             <td>{entry.episode}</td>
             <td>{_(`entry-status-${entry.state}`)}</td>
-            <td>{_("edit-entries-last-update", {time: localized})}</td>
+            <td title={localizedTitle}>{_("edit-entries-last-update", {time: localized})}</td>
             <td>
                 <button class="delete" onClick={bufferDelete}></button>
             </td>
