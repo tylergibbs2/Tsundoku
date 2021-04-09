@@ -260,12 +260,8 @@ class KitsuManager:
         """
         async with app.db_pool.acquire() as con:
             await con.execute("""
-                UPDATE
+                DELETE FROM
                     kitsu_info
-                SET
-                    show_status = NULL,
-                    cached_poster_url = NULL,
-                    last_updated = NULL
                 WHERE
                     show_id=$1;
             """, self.show_id)
