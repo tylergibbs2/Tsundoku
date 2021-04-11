@@ -1,8 +1,13 @@
 {% with messages = get_flashed_messages() %}
 {% if messages %}
+<script type="text/javascript">
+    function deleteNotif() {
+        document.querySelector(".notification").remove();
+    }
+</script>
 {% for message in messages %}
-<div class="notification is-danger">
-    <button class="delete"></button>
+<div class="notification is-danger mx-6 mt-3">
+    <button class="delete" onclick="deleteNotif();"></button>
     {{ message }}
 </div>
 {% endfor %}
