@@ -244,7 +244,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                                     {_("edit-fix-match")}
                                 </button>
                             </div>
-                            <div class="dropdown-menu">
+                            <div class="dropdown-menu" style={{minWidth: "20rem"}}>
                                 <div class="dropdown-content">
                                     <FixMatchDropdown
                                         show={activeShow}
