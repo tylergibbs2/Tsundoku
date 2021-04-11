@@ -247,6 +247,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                             <div class="dropdown-menu">
                                 <div class="dropdown-content">
                                     <FixMatchDropdown
+                                        show={activeShow}
                                         register={register}
                                         setValue={setValue}
                                     />
@@ -298,6 +299,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
 
 interface FixMatchDropdownParams {
+    show: Show;
     register: any;
     setValue: any;
 }
@@ -324,7 +326,10 @@ interface FixMatchRowParams {
 
 const FixMatchRow = ({result, selectedId, setSelectedId}: FixMatchRowParams) => {
     const setSelf = () => {
-        setSelectedId(result.id);
+        if (selectedId === result.id)
+            setSelectedId("");
+        else
+            setSelectedId(result.id);
     }
 
     return (
@@ -335,7 +340,7 @@ const FixMatchRow = ({result, selectedId, setSelectedId}: FixMatchRowParams) => 
 }
 
 
-const FixMatchDropdown = ({ register, setValue }: FixMatchDropdownParams) => {
+const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) => {
     const [isSearching, setSearchingState] = useState<boolean>(false);
     const [results, setResults] = useState<KitsuAPIResultItem[]>([]);
     const [selectedId, setSelectedId] = useState<string>("");
@@ -348,20 +353,30 @@ const FixMatchDropdown = ({ register, setValue }: FixMatchDropdownParams) => {
     useEffect(() => {
         if (selectedId)
             setValue("kitsu_id", selectedId);
+        else if (show && selectedId === "") {
+            setValue("kitsu_id", show.metadata.kitsu_id);
+        }
     }, [selectedId])
 
+    useEffect(() => {
+        query = "";
+        setSelectedId("");
+        setResults([]);
+    }, [show])
+
     const updateResults = async () => {
+        if (query === "") {
+            setResults([]);
+            return;
+        }
+
         setSearchingState(true);
 
-        const include = "&fields[anime]=id,titles";
-
-        let requestUrl = "https://kitsu.io/api/edge/anime";
+        let requestUrl = "https://kitsu.io/api/edge/anime?fields[anime]=id,titles";
         if (/^\d+$/.test(query))
-            requestUrl +=`?filter[id]=${query}`;
+            requestUrl +=`&filter[id]=${query}`;
         else
-            requestUrl += `?filter[text]=${encodeURIComponent(query)}`;
-
-        requestUrl += include;
+            requestUrl += `&filter[text]=${encodeURIComponent(query)}`;
 
         const resp = await fetch(requestUrl);
         let resp_json: KitsuAPIResult;
