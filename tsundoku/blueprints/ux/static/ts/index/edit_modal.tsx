@@ -535,7 +535,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
             show_id: show.id_,
             state: "buffered",
             magnet: data.magnet,
-            last_update: ""
+            last_update: new Date().toISOString()
         }
         let temp = [entry, ...entries];
 
@@ -629,7 +629,9 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
         bufferRemoveEntry(entry);
     }
 
-    const lastUpdate = new Date(`${entry.last_update}Z`);
+    let timeString = entry.last_update + (entry.last_update.endsWith("Z") ? "" : "Z")
+
+    const lastUpdate = new Date(timeString);
     const diff = lastUpdate.getTime() - Date.now();
 
     const localized = humanizeDuration(diff, {
