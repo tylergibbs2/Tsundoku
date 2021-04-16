@@ -81,6 +81,7 @@ class qBittorrentClient:
             "hashes": torrent_id
         }
 
+        logger.debug(f"Retrieving torrent state for hash '{torrent_id}'")
         data = await self.request("get", "torrents", "info", params=payload)
         if not data or not data[0].get("state"):
             return False

@@ -346,8 +346,7 @@ class Downloader:
         entry: Entry
             The object of the entry in the database.
         """
-        logger.info(
-            f"Checking Release Status - {entry.show_id, entry.episode}")
+        logger.info(f"Checking Release Status - {entry}")
 
         # Initial downloading check. This conditional branch is essentially
         # waiting for the downloaded file to appear in the file system.
@@ -356,8 +355,7 @@ class Downloader:
             if not path:
                 show_id = entry.show_id
                 episode = entry.episode
-                logger.error(
-                    f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
+                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
                 return
             elif not path.parent.is_dir():
                 logger.error(f"'{path}' could not be read")
@@ -374,6 +372,7 @@ class Downloader:
         # downloaded by the torrent client at this point in time.
         is_completed = await self.app.dl_client.check_torrent_completed(entry.torrent_hash)
         if not is_completed:
+            logger.info(f"{entry} torrent state is not completed")
             return
 
         # This ensures that the path is an actual file rather than
@@ -383,8 +382,7 @@ class Downloader:
         if path is None:
             return
 
-        logger.info(
-            f"Found Release to Process - {entry.show_id}, {entry.episode}, {entry.state}")
+        logger.info(f"Found Release to Process - {entry}")
 
         # These aren't elifs due to the fact that processing can
         # stop at any time and the ifs are actually used to continue
@@ -394,34 +392,30 @@ class Downloader:
         if entry.state == EntryState.downloading:
             await entry.set_state(EntryState.downloaded)
             await entry.set_path(path)
-            logger.info(
-                f"Release Marked as Downloaded - {entry.show_id}, {entry.episode}")
+            logger.info(f"Release Marked as Downloaded - {entry}")
 
         if entry.state == EntryState.downloaded:
-            logger.info(f"Preparing to Rename Release - {entry.show_id}, {entry.episode}")
+            logger.info(f"Preparing to Rename Release - {entry}")
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
                 return
 
             await entry.set_state(EntryState.renamed)
             await entry.set_path(renamed_path)
-            logger.info(
-                f"Release Marked as Renamed - {entry.show_id}, {entry.episode}")
+            logger.info(f"Release Marked as Renamed - {entry}")
 
         if entry.state == EntryState.renamed:
-            logger.info(f"Preparing to Move Release - {entry.show_id}, {entry.episode}")
+            logger.info(f"Preparing to Move Release - {entry}")
             moved_path = await self.handle_move(entry)
             if moved_path is None:
                 return
 
             await entry.set_state(EntryState.moved)
             await entry.set_path(moved_path)
-            logger.info(
-                f"Release Marked as Moved - {entry.show_id}, {entry.episode}")
+            logger.info(f"Release Marked as Moved - {entry}")
 
         await entry.set_state(EntryState.completed)
-        logger.info(
-            f"Release Marked as Completed - {entry.show_id}, {entry.episode}")
+        logger.info(f"Release Marked as Completed - {entry}")
 
     async def check_show_entries(self) -> None:
         """

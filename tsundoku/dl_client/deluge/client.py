@@ -59,6 +59,7 @@ class DelugeClient:
         bool:
             The torrent's completion status.
         """
+        logger.debug(f"Retrieving torrent state for hash '{torrent_id}'")
         ret = await self.request("webapi.get_torrents", [[torrent_id], ["state"]])
 
         ret_list = ret["result"].get("torrents", [])
@@ -68,6 +69,7 @@ class DelugeClient:
         except IndexError:
             return False
 
+        logger.debug(f"Torrent {torrent_id} is '{data['state']}'")
         return data["state"] == "Seeding"
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
