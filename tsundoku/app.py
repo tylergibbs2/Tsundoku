@@ -314,10 +314,7 @@ async def cleanup() -> None:
 @ux_blueprint.context_processor
 async def insert_locale() -> dict:
     # Inserts the user's locale into jinja2 variables.
-    try:
-        locale = get_config_value("Tsundoku", "locale")
-    except KeyError:
-        locale = "en"
+    locale = get_config_value("Tsundoku", "locale", default="en")
 
     return {"LOCALE": locale}
 
