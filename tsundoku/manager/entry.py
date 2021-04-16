@@ -152,3 +152,7 @@ class Entry:
             triggers = await wh.get_triggers()
             if self.state.value in triggers:
                 await wh.send(self.episode, self.state)
+
+    def __repr__(self) -> str:
+        return f"<Entry id={self.id} show_id={self.show_id} episode={self.episode}" \
+               f"state={self.state} hash={self.torrent_hash}>"

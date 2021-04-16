@@ -226,3 +226,6 @@ class Show:
         """
         self._webhooks = await Webhook.from_show_id(app, self.id_)
         return self._webhooks
+
+    def __repr__(self) -> str:
+        return f"<Show id={self.id_} title={self.title}>"
