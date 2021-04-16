@@ -2,12 +2,12 @@ import configparser
 import json
 from typing import Any
 
-config: Any = configparser.ConfigParser()
+config = configparser.ConfigParser()
 
 config.read("config.ini")
 
 
-def get_config_value(section: str, value: str) -> Any:
+def get_config_value(section: str, value: str, default: Any = None) -> Any:
     """
     Returns a specified value from the config.ini file.
 
@@ -34,12 +34,12 @@ def get_config_value(section: str, value: str) -> Any:
     try:
         found_section: Any = config[section]
     except KeyError:
-        raise KeyError(f"The specified section does not exist: {section}")
+        return default
 
     try:
-        found_value = found_section[value]
+        found_value: str = found_section[value]
     except KeyError:
-        raise KeyError(f"The specified value does not exist: {value}")
+        return default
 
     try:
         return json.loads(found_value)

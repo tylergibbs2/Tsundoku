@@ -9,6 +9,7 @@ do_update_checks = true
 check_every_n_days = 1
 git_path = git
 locale = en
+log_level = info
 
 [PostgreSQL]
 host = localhost

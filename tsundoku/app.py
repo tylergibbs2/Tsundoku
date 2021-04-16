@@ -56,13 +56,11 @@ dictConfig({
     "handlers": {
         "stream": {
             "class": "logging.StreamHandler",
-            "level": "DEBUG",
             "formatter": "default"
         },
         "file": {
             "filename": "tsundoku.log",
             "class": "logging.FileHandler",
-            "level": "DEBUG",
             "formatter": "default",
             "encoding": "utf-8"
         }
@@ -70,7 +68,7 @@ dictConfig({
     "loggers": {
         "tsundoku": {
             "handlers": ["stream", "file"],
-            "level": "DEBUG",
+            "level": get_config_value("Tsundoku", "log_level", default="info").upper(),
             "propagate": True
         }
     }
