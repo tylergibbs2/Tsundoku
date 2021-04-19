@@ -1,7 +1,15 @@
-import { getInjector } from "../fluent";
+import { getInjector } from "../../fluent";
 import { StateUpdater } from "preact/hooks";
-import { Show } from "../interfaces";
+import { Show } from "../../interfaces";
+
 import ReactHtmlParser from "react-html-parser";
+
+
+let resources = [
+    "index"
+];
+
+const _ = getInjector(resources);
 
 
 interface CardParams {
@@ -14,12 +22,6 @@ interface CardParams {
 
 
 export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow }: CardParams) => {
-    let resources = [
-        "index"
-    ];
-
-    const _ = getInjector(resources);
-
     let title: any;
     if (show.metadata.link)
         title = <a href={show.metadata.link}><b>{show.title}</b></a>
@@ -27,11 +29,13 @@ export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow
         title = <b>{show.title}</b>
 
     let shouldShow: boolean = true;
-    if (filters.length !== 0)
-        shouldShow = filters.includes(show.metadata.status);
+    if (show.metadata.kitsu_id !== null) {
+        if (filters.length !== 0)
+            shouldShow = filters.includes(show.metadata.status);
 
-    if (shouldShow)
-        shouldShow = show.title.toLowerCase().includes(textFilter.toLowerCase());
+        if (shouldShow)
+            shouldShow = show.title.toLowerCase().includes(textFilter.toLowerCase());
+    }
 
     const openEditModal = () => {
         setActiveShow(show);
@@ -51,7 +55,7 @@ export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow
                         {show.metadata.html_status && ReactHtmlParser(show.metadata.html_status)}
                         <a href={show.metadata.link}>
                             <figure class="image is-3by4">
-                                <img src={show.metadata.poster} loading="lazy"/>
+                                <img src={show.metadata.poster} loading="lazy" />
                             </figure>
                         </a>
                     </div>
@@ -79,7 +83,7 @@ export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow
 
 
 interface AddShowCardParams {
-    setCurrentModal: any;
+    setCurrentModal: StateUpdater<string>;
 }
 
 export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {

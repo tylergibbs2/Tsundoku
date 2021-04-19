@@ -101,3 +101,12 @@ edit-form-episode-offset-field = Episode Offset
 
 edit-form-save-button = Save changes
 edit-form-cancel-button = Cancel
+
+list-view-actions-header = Actions
+list-view-entry-update-header = Last Update
+
+sort-by-header = Sort By
+sort-dir-asc = Asc
+sort-dir-desc = Desc
+sort-key-title = Title
+sort-key-update = Last Update

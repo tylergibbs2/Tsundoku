@@ -188,6 +188,7 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
     }
 
     return (
+        // @ts-ignore
         <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form" class="has-text-centered">
             <div class="field">
                 <label class="label">
@@ -258,6 +259,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     }
 
     return (
+        // @ts-ignore
         <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
             <div class="field">
                 <label class="label">

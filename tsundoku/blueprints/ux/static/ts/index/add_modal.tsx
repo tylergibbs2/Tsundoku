@@ -106,6 +106,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     }
 
     return (
+        // @ts-ignore
         <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
             <div class="field">
                 <label class="label">

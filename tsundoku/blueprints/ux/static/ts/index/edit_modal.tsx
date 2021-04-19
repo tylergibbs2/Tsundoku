@@ -596,6 +596,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                     <h2 class="subtitle">{_("edit-entries-is-empty")}</h2>
                 </div>
             }
+            {/*@ts-ignore */}
             <form onSubmit={handleSubmit(bufferAddEntry)}>
                 <div class="field is-horizontal">
                     <div class="field-body">

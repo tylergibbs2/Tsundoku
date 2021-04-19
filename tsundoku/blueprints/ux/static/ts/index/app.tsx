@@ -2,12 +2,13 @@ import { toast } from "bulma-toast";
 import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
-import { AddShowCard, Card } from "./card";
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
-import { Show } from "../interfaces";
+import { Entry, Show } from "../interfaces";
 import { getInjector } from "../fluent";
+import { Filters } from "./components/filters";
+import { Shows } from "./components/shows";
 
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
@@ -24,12 +25,19 @@ const _ = getInjector(resources);
 const IndexApp = () => {
 
     let storedFilters = localStorage.getItem("showFilters");
+    let storedViewType = localStorage.getItem("viewType");
+
+    let storedSortDirection = localStorage.getItem("sortDirection");
+    let storedSortKey = localStorage.getItem("sortKey");
 
     const [shows, setShows] = useState<Show[]>([]);
     const [activeShow, setActiveShow] = useState<Show | null>(null);
     const [currentModal, setCurrentModal] = useState<string | null>(null);
-    const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || []);
+    const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || ["current", "finished", "tba", "unreleased", "upcoming"]);
+    const [viewType, setViewType] = useState<string>(storedViewType || "cards");
     const [textFilter, setTextFilter] = useState<string>("");
+    const [sortDirection, setSortDirection] = useState<string>(storedSortDirection || "+");
+    const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 
     const fetchShows = async () => {
         let request = {
@@ -46,7 +54,7 @@ const IndexApp = () => {
         else
             return;
 
-        setShows(resp_json.result);
+        setShows(getSortedShows(resp_json.result));
     }
 
     const addShow = (show: Show) => {
@@ -54,7 +62,7 @@ const IndexApp = () => {
             return a.title > b.title ? 1 : -1;
         });
 
-        setShows(newShows);
+        setShows(getSortedShows(newShows));
         toast({
             message: _("show-add-success"),
             duration: 5000,
@@ -71,7 +79,7 @@ const IndexApp = () => {
         if (toReplace !== -1)
             newShows[toReplace] = show;
 
-        setShows(newShows);
+        setShows(getSortedShows(newShows));
         toast({
             message: _("show-update-success"),
             duration: 5000,
@@ -89,7 +97,7 @@ const IndexApp = () => {
                 newShows.push(existing);
         }
 
-        setShows(newShows);
+        setShows(getSortedShows(newShows));
         toast({
             message: _("show-delete-success"),
             duration: 5000,
@@ -100,13 +108,62 @@ const IndexApp = () => {
         })
     }
 
+    const getSortedShows = (toSort: Show[]) => {
+        let first = 1;
+        let second = -1;
+        if (sortDirection === "-") {
+            first = -1;
+            second = 1;
+        }
+
+        let newShows = [...toSort];
+        let sortFunc: any;
+        switch (sortKey) {
+            case "title":
+                sortFunc = (a: Show, b: Show) => {
+                    return a.title > b.title ? first : second;
+                }
+                newShows.sort(sortFunc);
+                break;
+            case "update":
+                let entrySortFunc = (a: Entry, b: Entry) => {
+                    let dateA = new Date(a.last_update);
+                    let dateB = new Date(b.last_update);
+                    return dateB > dateA ? 1 : -1;
+                }
+                sortFunc = (a: Show, b: Show) => {
+                    let aEntries = [...a.entries].sort(entrySortFunc);
+                    let bEntries = [...b.entries].sort(entrySortFunc);
+                    let dateA = new Date(aEntries[0].last_update);
+                    let dateB = new Date(bEntries[0].last_update);
+                    return dateA > dateB ? first : second;
+                }
+                newShows.sort(sortFunc);
+                break;
+        }
+
+        return newShows;
+    }
+
     useEffect(() => {
         fetchShows();
     }, []);
 
     useEffect(() => {
         localStorage.setItem("showFilters", JSON.stringify(filters));
-    }, [filters])
+    }, [filters]);
+
+    useEffect(() => {
+        localStorage.setItem("viewType", viewType);
+    }, [viewType]);
+
+    useEffect(() => {
+        localStorage.setItem("sortDirection", sortDirection);
+        localStorage.setItem("sortKey", sortKey);
+
+        setShows(getSortedShows(shows));
+    }, [sortDirection, sortKey]);
+
 
     useEffect(() => {
         if (currentModal)
@@ -114,70 +171,6 @@ const IndexApp = () => {
         else
             document.body.classList.remove("is-clipped");
     }, [currentModal]);
-
-    const isFilter = (status: string) => {
-        return (filters.length === 0 || filters.includes(status));
-    }
-
-    const filterAiring = () => {
-        let idx = filters.indexOf("current");
-
-        if (idx !== -1) {
-            let copy = [...filters];
-            copy.splice(idx, 1);
-            setFilters(copy);
-        } else
-            setFilters(["current", ...filters]);
-    }
-
-    const filterFinished = () => {
-        let idx = filters.indexOf("finished");
-
-        if (idx !== -1) {
-            let copy = [...filters];
-            copy.splice(idx, 1);
-            setFilters(copy);
-        } else
-            setFilters(["finished", ...filters]);
-    }
-
-    const filterTba = () => {
-        let idx = filters.indexOf("tba");
-
-        if (idx !== -1) {
-            let copy = [...filters];
-            copy.splice(idx, 1);
-            setFilters(copy);
-        } else
-            setFilters(["tba", ...filters]);
-    }
-
-    const filterUnreleased = () => {
-        let idx = filters.indexOf("unreleased");
-
-        if (idx !== -1) {
-            let copy = [...filters];
-            copy.splice(idx, 1);
-            setFilters(copy);
-        } else
-            setFilters(["unreleased", ...filters]);
-    }
-
-    const filterUpcoming = () => {
-        let idx = filters.indexOf("upcoming");
-
-        if (idx !== -1) {
-            let copy = [...filters];
-            copy.splice(idx, 1);
-            setFilters(copy);
-        } else
-            setFilters(["upcoming", ...filters]);
-    }
-
-    const filterSearch = (e: Event) => {
-        let query = (e.target as HTMLInputElement).value;
-        setTextFilter(query);
-    }
 
     return (
         <>
@@ -209,47 +202,25 @@ const IndexApp = () => {
                     <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
                 </div>
             </div>
-            <div class="columns pb-3" style={{
-                position: "sticky",
-                top: "0",
-                zIndex: "5",
-                backgroundImage: "linear-gradient(rgba(255, 255, 255, 1) 80%, rgba(255, 255, 255, 0) 100%)"
-            }}>
-                <div class="column is-6">
-                    <div class="tags are-medium">
-                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
-                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
-                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
-                        <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
-                        <span class={"noselect tag is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
-                    </div>
-                </div>
-                <div class="column is-4 is-offset-2">
-                    <div class="control has-icons-left">
-                        <input type="text" class="input is-pulled-right" onInput={filterSearch} placeholder="Attack on Titan"></input>
-                        <span class="icon is-small is-left">
-                            <i class="fas fa-search"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="columns is-multiline">
-                {
-                    shows.map((show: Show) => (
-                        <Card
-                            textFilter={textFilter}
-                            filters={filters}
-                            key={show.id_}
-                            show={show}
-                            setCurrentModal={setCurrentModal}
-                            setActiveShow={setActiveShow}
-                        />
-                    ))
-                }
-
-                <AddShowCard setCurrentModal={setCurrentModal} />
-
-            </div>
+            <Filters
+                filters={filters}
+                setFilters={setFilters}
+                setTextFilter={setTextFilter}
+                viewType={viewType}
+                setViewType={setViewType}
+                sortKey={sortKey}
+                setSortKey={setSortKey}
+                sortDirection={sortDirection}
+                setSortDirection={setSortDirection}
+            />
+            <Shows
+                shows={shows}
+                setActiveShow={setActiveShow}
+                filters={filters}
+                textFilter={textFilter}
+                setCurrentModal={setCurrentModal}
+                viewType={viewType}
+            />
         </>
     )
 }
