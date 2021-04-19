@@ -5,7 +5,7 @@ import logging
 from typing import Optional
 
 import aiohttp
-from quart import current_app as app
+from quart import current_app as app, url_for
 
 from tsundoku.fluent import get_injector
 
@@ -276,7 +276,7 @@ class KitsuManager:
             The desired poster.
         """
         if self.kitsu_id is None:
-            return None
+            return url_for("ux.static", filename="img/missing.png")
 
         async with app.db_pool.acquire() as con:
             url = await con.fetchval("""
