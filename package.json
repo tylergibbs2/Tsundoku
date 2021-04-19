@@ -7,6 +7,7 @@
     "@fluent/bundle": "^0.16.0",
     "@types/jquery": "^3.5.5",
     "@types/jqueryui": "^1.12.14",
+    "@types/react-html-parser": "^2.0.1",
     "bulma-dashboard": "^0.3.1",
     "bulma-toast": "^2.2.0",
     "css-loader": "^5.0.1",
