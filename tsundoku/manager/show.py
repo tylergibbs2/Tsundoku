@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, List
 
 from asyncpg import Record
@@ -20,6 +21,7 @@ class Show:
     desired_folder: str
     season: int
     episode_offset: int
+    created_at: datetime
 
     metadata: KitsuManager
 
@@ -42,6 +44,7 @@ class Show:
             "desired_folder": self.desired_folder,
             "season": self.season,
             "episode_offset": self.episode_offset,
+            "created_at": self.created_at.isoformat(),
             "entries": [e.to_dict() for e in self._entries],
             "metadata": self.metadata.to_dict(),
             "webhooks": [wh.to_dict() for wh in self._webhooks]
@@ -101,7 +104,8 @@ class Show:
                     desired_format,
                     desired_folder,
                     season,
-                    episode_offset
+                    episode_offset,
+                    created_at
                 FROM
                     shows
                 WHERE id=$1;

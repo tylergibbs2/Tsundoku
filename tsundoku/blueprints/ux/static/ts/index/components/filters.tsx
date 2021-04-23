@@ -157,7 +157,7 @@ interface SortDropdownParams {
     setSortKey: StateUpdater<string>;
 }
 
-const SortDropdown = ({sortDirection, setSortDirection, sortKey, setSortKey}: SortDropdownParams) => {
+const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: SortDropdownParams) => {
 
     const sortKeyTitle = () => {
         if (sortKey !== "title")
@@ -167,6 +167,11 @@ const SortDropdown = ({sortDirection, setSortDirection, sortKey, setSortKey}: So
     const sortKeyUpdate = () => {
         if (sortKey !== "update")
             setSortKey("update");
+    }
+
+    const sortKeyAdded = () => {
+        if (sortKey !== "dateAdded")
+            setSortKey("dateAdded");
     }
 
     const sortDirAsc = () => {
@@ -186,6 +191,8 @@ const SortDropdown = ({sortDirection, setSortDirection, sortKey, setSortKey}: So
             break;
         case "update":
             sortDisplayText = <span>{_("sort-key-update")}</span>
+        case "dateAdded":
+            sortDisplayText = <span>{_("sort-key-date-added")}</span>
     }
 
     let sortDisplayArrow: any;
@@ -216,6 +223,9 @@ const SortDropdown = ({sortDirection, setSortDirection, sortKey, setSortKey}: So
                     </a>
                     <a onClick={sortKeyUpdate} class={"dropdown-item " + (sortKey === "update" ? "is-active" : "")}>
                         {_("sort-key-update")}
+                    </a>
+                    <a onClick={sortKeyAdded} class={"dropdown-item " + (sortKey === "dateAdded" ? "is-active" : "")}>
+                        {_("sort-key-date-added")}
                     </a>
                     <hr class="dropdown-divider"></hr>
                     <a onClick={sortDirAsc} class={"dropdown-item has-text-centered " + (sortDirection === "+" ? "is-active" : "")}>

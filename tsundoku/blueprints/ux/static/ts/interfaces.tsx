@@ -42,6 +42,7 @@ interface Show {
     desired_folder: string;
     season: number;
     episode_offset: number;
+    created_at: string;
     metadata: Metadata;
     entries: Entry[];
     webhooks: Webhook[];

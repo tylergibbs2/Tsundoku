@@ -45,7 +45,8 @@ class ShowCollection:
                     desired_format,
                     desired_folder,
                     season,
-                    episode_offset
+                    episode_offset,
+                    created_at
                 FROM
                     shows
                 ORDER BY title;

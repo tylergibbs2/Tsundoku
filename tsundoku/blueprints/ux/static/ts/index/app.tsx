@@ -140,6 +140,14 @@ const IndexApp = () => {
                 }
                 newShows.sort(sortFunc);
                 break;
+            case "dateAdded":
+                sortFunc = (a: Show, b: Show) => {
+                    let dateA = new Date(a.created_at);
+                    let dateB = new Date(b.created_at);
+                    return dateA > dateB ? first : second;
+                }
+                newShows.sort(sortFunc);
+                break;
         }
 
         return newShows;
