@@ -152,7 +152,7 @@ interface ExistingShowSelectInputs {
 
 const ExistingShowSelect = ({ register, name, shows }: ExistingShowSelectInputs) => {
     return (
-        <select ref={register} name={name} required>
+        <select {...register(name, { required: true })} required>
             {shows.map(show => (
                 <option value={show.id_}>{show.title}</option>
             ))}
@@ -200,11 +200,11 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
                 </div>
             </div>
             <label class="checkbox">
-                <input ref={register} name="overwrite" type="checkbox" />
+                <input {...register('overwrite')} type="checkbox" />
                 <span class="ml-1">Overwrite existing entries?</span>
             </label>
         </form>
-    )
+    );
 }
 
 
@@ -224,7 +224,10 @@ interface AddShowFormParams {
 const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     const { register, handleSubmit } = useForm({
         defaultValues: {
-            "season": "1",
+            "title": "",
+            "desired_format": "",
+            "desired_folder": "",
+            "season": 1,
             "episode_offset": 0
         }
     });
@@ -267,7 +270,10 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("name-tt")}>{_("name-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="title" ref={register({ required: true })} class="input" type="text"
+                    <input
+                        {...register('title', { required: true })}
+                        class="input"
+                        type="text"
                         placeholder={_("name-placeholder")} />
                 </div>
             </div>
@@ -278,7 +284,11 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("desired-format-tt")}>{_("desired-format-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_format" ref={register} class="input" type="text" placeholder="{n} - {s00e00}" />
+                    <input
+                        {...register('desired_format')}
+                        class="input"
+                        type="text"
+                        placeholder="{n} - {s00e00}" />
                 </div>
             </div>
 
@@ -288,7 +298,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("desired-folder-tt")}>{_("desired-folder-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_folder" ref={register} class="input" type="text" />
+                    <input {...register('desired_folder')} class="input" type="text" />
                 </div>
             </div>
 
@@ -298,7 +308,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("season-tt")}>{_("season-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="season" ref={register({ required: true })} class="input" type="number" />
+                    <input {...register('season', { required: true })} class="input" type="number" />
                 </div>
             </div>
 
@@ -308,9 +318,12 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("episode-offset-tt")}>{_("episode-offset-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="episode_offset" ref={register({ required: true })} class="input" type="number" />
+                    <input
+                        {...register('episode_offset', { required: true })}
+                        class="input"
+                        type="number" />
                 </div>
             </div>
         </form>
-    )
+    );
 }

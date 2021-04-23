@@ -206,9 +206,8 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
     }
 
     const triggerForm = async () => {
-        const result = await trigger();
-        if (result)
-            await submitHandler(getValues());
+        await trigger();
+        await submitHandler(getValues());
     }
 
     const clearCache = async () => {
@@ -401,7 +400,7 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
 
     return (
         <>
-            <input type="hidden" name="kitsu_id" ref={register} />
+            <input type="hidden" {...register("kitsu_id")} />
             <div class="dropdown-item">
                 <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
                     <input type="text" class="input is-small" onInput={updateQuery} placeholder="Attack on Titan" disabled={isSearching} />
@@ -451,7 +450,7 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                         data-tooltip={_("edit-form-name-tt")}>{_("edit-form-name-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="title" ref={register({ required: true })} class="input" type="text"
+                    <input {...register("title", { required: true })} class="input" type="text"
                         placeholder={_("edit-form-name-placeholder")} />
                 </div>
             </div>
@@ -462,7 +461,7 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                         data-tooltip={_("edit-form-desired-format-tt")}>{_("edit-form-desired-format-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_format" ref={register} class="input" type="text" placeholder="{n} - {s00e00}" />
+                    <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
                 </div>
             </div>
 
@@ -472,7 +471,7 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                         data-tooltip={_("edit-form-desired-folder-tt")}>{_("edit-form-desired-folder-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_folder" ref={register} class="input" type="text" />
+                    <input {...register("desired_folder")} class="input" type="text" />
                 </div>
             </div>
 
@@ -482,7 +481,7 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                         data-tooltip={_("edit-form-season-tt")}>{_("edit-form-season-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="season" ref={register({ required: true })} class="input" type="number" />
+                    <input {...register("season", { required: true })} class="input" type="number" />
                 </div>
             </div>
 
@@ -492,7 +491,7 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                         data-tooltip={_("edit-form-episode-offset-tt")}>{_("edit-form-episode-offset-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="episode_offset" ref={register({ required: true })} class="input" type="number" />
+                    <input{...register("episode_offset", { required: true })} class="input" type="number" />
                 </div>
             </div>
         </form>
@@ -604,18 +603,22 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                             <label class="label">{_('edit-entries-form-episode')}</label>
                         </div>
                         <div class="field">
-                            <input name="episode" class="input" ref={register} type="number" value="0" required />
+                            <input {...register('episode')} class="input" type="number" value="0" required />
                             <p class="help is-danger is-hidden">{_("edit-entries-form-exists")}</p>
                         </div>
                         <div class="field">
-                            <input name="magnet" class="input" ref={register} type="text" placeholder={_('edit-entries-form-magnet')} />
+                            <input
+                                {...register('magnet')}
+                                class="input"
+                                type="text"
+                                placeholder={_('edit-entries-form-magnet')} />
                         </div>
                         <input class="button is-success" type="submit" value={_('edit-entries-form-add-button')} />
                     </div>
                 </div>
             </form>
         </div>
-    )
+    );
 }
 
 
@@ -779,20 +782,20 @@ const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }:
         <tr class="has-text-centered">
             <td class="is-vcentered">{webhook.base.name}</td>
             <td class="is-vcentered">
-                <input type="checkbox" ref={register} onChange={update} name="downloading"></input>
+                <input type="checkbox" onChange={update} {...register('downloading')}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" ref={register} onChange={update} name="downloaded"></input>
+                <input type="checkbox" onChange={update} {...register('downloaded')}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" ref={register} onChange={update} name="renamed"></input>
+                <input type="checkbox" onChange={update} {...register('renamed')}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" ref={register} onChange={update} name="moved"></input>
+                <input type="checkbox" onChange={update} {...register('moved')}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" ref={register} onChange={update} name="completed"></input>
+                <input type="checkbox" onChange={update} {...register('completed')}></input>
             </td>
         </tr>
-    )
+    );
 }

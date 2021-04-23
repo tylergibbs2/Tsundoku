@@ -110,3 +110,4 @@ sort-dir-asc = Asc
 sort-dir-desc = Desc
 sort-key-title = Title
 sort-key-update = Last Update
+sort-key-date-added = Date Added

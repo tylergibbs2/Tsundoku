@@ -71,6 +71,9 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
 
     const { register, handleSubmit, reset } = useForm({
         defaultValues: {
+            "title": "",
+            "desired_format": "",
+            "desired_folder": "",
             "season": 1,
             "episode_offset": 0
         }
@@ -114,7 +117,10 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("add-form-name-tt")}>{_("add-form-name-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="title" ref={register({ required: true })} class="input" type="text"
+                    <input
+                        {...register('title', { required: true })}
+                        class="input"
+                        type="text"
                         placeholder={_("add-form-name-placeholder")} />
                 </div>
             </div>
@@ -125,7 +131,11 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("add-form-desired-format-tt")}>{_("add-form-desired-format-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_format" ref={register} class="input" type="text" placeholder="{n} - {s00e00}" />
+                    <input
+                        {...register('desired_format')}
+                        class="input"
+                        type="text"
+                        placeholder="{n} - {s00e00}" />
                 </div>
             </div>
 
@@ -135,7 +145,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("add-form-desired-folder-tt")}>{_("add-form-desired-folder-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="desired_folder" ref={register} class="input" type="text" />
+                    <input {...register('desired_folder')} class="input" type="text" />
                 </div>
             </div>
 
@@ -145,7 +155,7 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("add-form-season-tt")}>{_("add-form-season-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="season" ref={register({ required: true })} class="input" type="number" />
+                    <input {...register('season', { required: true })} class="input" type="number" />
                 </div>
             </div>
 
@@ -155,9 +165,12 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
                         data-tooltip={_("add-form-episode-offset-tt")}>{_("add-form-episode-offset-field")}</span>
                 </label>
                 <div class="control">
-                    <input name="episode_offset" ref={register({ required: true })} class="input" type="number" />
+                    <input
+                        {...register('episode_offset', { required: true })}
+                        class="input"
+                        type="number" />
                 </div>
             </div>
         </form>
-    )
+    );
 }

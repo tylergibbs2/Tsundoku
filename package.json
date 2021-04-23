@@ -15,7 +15,7 @@
     "intl-pluralrules": "^1.2.2",
     "preact": "^10.5.10",
     "react-async-hook": "^3.6.2",
-    "react-hook-form": "^6.14.1",
+    "react-hook-form": "^7.2.3",
     "react-html-parser": "^2.0.2",
     "style-loader": "^2.0.0",
     "ts-loader": "^8.0.14",

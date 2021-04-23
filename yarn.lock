@@ -1002,10 +1002,17 @@ react-async-hook@^3.6.2:
   resolved "https://registry.npmjs.org/react-async-hook/-/react-async-hook-3.6.2.tgz"
   integrity sha512-RkwHCJ8V7I6umKZLHneapuTRWf+eO4LOj0qUwUDsSn27jrAOcW6ClbV3x22Z4hVxH9bA0zb7y+ozDJDJ8PnZoA==
 
+<<<<<<< Updated upstream
 react-hook-form@^6.14.1:
   version "6.14.1"
   resolved "https://registry.npmjs.org/react-hook-form/-/react-hook-form-6.14.1.tgz"
   integrity sha512-Bf2fWcL2F34hUUqrx1rpgZ8ZErQ4/DvrPs6Je+lUYL59km8PXIQqyCTz/NbggC1RQUj7rChSmTx6eFap+mCttw==
+=======
+react-hook-form@^7.2.3:
+  version "7.2.3"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.2.3.tgz#a4be9214cab3a6e6358f95d342da2e7ded37e3f0"
+  integrity sha512-ki83pkQH/NK6HbSWb4zHLD78s8nh6OW2j4GC5kAjhB2C3yiiVGvNAvybgAfnsXBbx+xb9mPgSpRRVOQUbss+JQ==
+>>>>>>> Stashed changes
 
 react-html-parser@^2.0.2:
   version "2.0.2"
