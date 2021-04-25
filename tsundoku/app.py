@@ -76,6 +76,7 @@ dictConfig({
 
 
 app.register_blueprint(api_blueprint)
+app.register_blueprint(ux_blueprint)
 
 
 async def insert_user(username: str, password: str) -> None:
@@ -319,12 +320,9 @@ async def insert_locale() -> dict:
     return {"LOCALE": locale}
 
 
-def run(with_ui: bool = True) -> None:
+def run() -> None:
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
-
-    if with_ui:
-        app.register_blueprint(ux_blueprint)
 
     auth.init_app(app)
     app.run(host=host, port=port, use_reloader=True)

@@ -80,7 +80,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=fluent._("title"))
     parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
     parser.add_argument("--create-user", action="store_true", help=fluent._("cmd-create-user"))
-    parser.add_argument("--no-ui", action="store_true", help=fluent._("cmd-no-ui"))
     parser.add_argument("--l10n-compat", type=str, nargs=2, help=fluent._("cmd-l10n-compat"))
     args = parser.parse_args()
 
@@ -106,7 +105,5 @@ if __name__ == "__main__":
         print(fluent._("creating-user"))
         loop.run_until_complete(app.insert_user(username, password))
         print(fluent._("created-user"))
-    elif args.no_ui:
-        app.run(with_ui=False)
     else:
         app.run()
