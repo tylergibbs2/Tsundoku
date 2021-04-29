@@ -191,6 +191,7 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
             break;
         case "update":
             sortDisplayText = <span>{_("sort-key-update")}</span>
+            break;
         case "dateAdded":
             sortDisplayText = <span>{_("sort-key-date-added")}</span>
     }
