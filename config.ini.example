@@ -11,13 +11,6 @@ git_path = git
 locale = en
 log_level = info
 
-[PostgreSQL]
-host = localhost
-port = 5432
-database = tsundoku
-user = postgres
-password = password
-
 [TorrentClient]
 client = deluge
 host = localhost

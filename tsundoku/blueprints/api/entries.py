@@ -44,8 +44,8 @@ class EntriesAPI(views.MethodView):
             the requested entry information.
         """
         if entry_id is None:
-            async with app.db_pool.acquire() as con:
-                entries = await con.fetch("""
+            async with app.acquire_db() as con:
+                await con.execute("""
                     SELECT
                         id,
                         episode,
@@ -53,15 +53,16 @@ class EntriesAPI(views.MethodView):
                         torrent_hash
                     FROM
                         show_entry
-                    WHERE show_id=$1;
+                    WHERE show_id=?;
                 """, show_id)
+                entries = await con.fetchall()
 
             return APIResponse(
                 result=[dict(record) for record in entries]
             )
         else:
-            async with app.db_pool.acquire() as con:
-                entry = await con.fetchrow("""
+            async with app.acquire_db() as con:
+                await con.execute("""
                     SELECT
                         id,
                         episode,
@@ -69,8 +70,9 @@ class EntriesAPI(views.MethodView):
                         torrent_hash
                     FROM
                         show_entry
-                    WHERE show_id=$1 AND id=$2;
-                """, show_id, entry_id)
+                    WHERE id=?;
+                """, entry_id)
+                entry = await con.fetchone()
 
             if entry is None:
                 return APIResponse(
@@ -121,8 +123,8 @@ class EntriesAPI(views.MethodView):
             magnet = await app.dl_client.get_magnet(arguments["magnet"])
             entry_id = await app.downloader.begin_handling(show_id, episode, magnet)
         else:
-            async with app.db_pool.acquire() as con:
-                entry_id = await con.fetchval("""
+            async with app.acquire_db() as con:
+                await con.execute("""
                     INSERT INTO
                         show_entry (
                             show_id,
@@ -131,12 +133,12 @@ class EntriesAPI(views.MethodView):
                             torrent_hash
                         )
                     VALUES
-                        ($1, $2, $3, $4)
-                    RETURNING id;
+                        (?, ?, ?, ?);
                 """, show_id, episode, "completed", "")
+                entry_id = con.lastrowid
 
-        async with app.db_pool.acquire() as con:
-            new_entry = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     show_id,
@@ -147,8 +149,9 @@ class EntriesAPI(views.MethodView):
                     last_update
                 FROM
                     show_entry
-                WHERE id=$1;
+                WHERE id=?;
             """, entry_id)
+            new_entry = await con.fetchone()
 
         entry = Entry(app, new_entry)
         await entry._handle_webhooks()
@@ -168,20 +171,13 @@ class EntriesAPI(views.MethodView):
 
         :returns: :class:`bool`
         """
-        async with app.db_pool.acquire() as con:
-            deleted = await con.fetchval("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 DELETE FROM
                     show_entry
-                WHERE id=$1
-                RETURNING id;
+                WHERE id=?;
             """, entry_id)
 
-        if deleted:
-            return APIResponse(
-                result=True
-            )
-        else:
-            return APIResponse(
-                status=404,
-                error="Entry with specified ID does not exist."
-            )
+        return APIResponse(
+            result=True
+        )

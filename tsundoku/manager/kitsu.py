@@ -5,7 +5,8 @@ import logging
 from typing import Optional
 
 import aiohttp
-from quart import current_app as app, url_for
+from quart import current_app as app
+from quart import url_for
 
 from tsundoku.fluent import get_injector
 
@@ -106,12 +107,12 @@ class KitsuManager:
 
         instance.poster = await instance.get_poster_image()
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
                 DELETE FROM
                     kitsu_info
                 WHERE
-                    show_id=$1;
+                    show_id=?;
             """, show_id)
             await con.execute("""
                 INSERT INTO
@@ -122,7 +123,7 @@ class KitsuManager:
                         show_status
                     )
                 VALUES
-                    ($1, $2, $3, $4);
+                    (?, ?, ?, ?);
             """, show_id, instance.kitsu_id, instance.slug, instance.status)
 
         return instance
@@ -169,12 +170,12 @@ class KitsuManager:
 
         instance.poster = await instance.get_poster_image()
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
                 DELETE FROM
                     kitsu_info
                 WHERE
-                    show_id=$1;
+                    show_id=?;
             """, show_id)
             await con.execute("""
                 INSERT INTO
@@ -185,7 +186,7 @@ class KitsuManager:
                         show_status
                     )
                 VALUES
-                    ($1, $2, $3, $4);
+                    (?, ?, ?, ?);
             """, show_id, instance.kitsu_id, instance.slug, instance.status)
 
         return instance
@@ -206,26 +207,28 @@ class KitsuManager:
         KitsuManager
             A KitsuManager for the show.
         """
-        logger.info(f"Retrieving existing Kitsu info for Show ID #{show_id}")
+        logger.debug(f"Retrieving existing Kitsu info for Show ID #{show_id}")
 
-        async with app.db_pool.acquire() as con:
-            row = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     kitsu_id,
                     slug,
                     show_status
                 FROM
                     kitsu_info
-                WHERE show_id=$1;
+                WHERE show_id=?;
             """, show_id)
+            row = await con.fetchone()
             if not row:
-                show_name = await con.fetchval("""
+                await con.execute("""
                     SELECT
                         title
                     FROM
                         shows
-                    WHERE id=$1;
+                    WHERE id=?;
                 """, show_id)
+                show_name = await con.fetchval()
                 return await KitsuManager.fetch(show_id, show_name)
 
         instance = cls()
@@ -258,12 +261,12 @@ class KitsuManager:
         """
         Clears the cached data for a show.
         """
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
                 DELETE FROM
                     kitsu_info
                 WHERE
-                    show_id=$1;
+                    show_id=?;
             """, self.show_id)
 
     async def get_poster_image(self) -> Optional[str]:
@@ -278,14 +281,15 @@ class KitsuManager:
         if self.kitsu_id is None:
             return url_for("ux.static", filename="img/missing.png")
 
-        async with app.db_pool.acquire() as con:
-            url = await con.fetchval("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     cached_poster_url
                 FROM
                     kitsu_info
-                WHERE kitsu_id=$1;
+                WHERE kitsu_id=?;
             """, self.kitsu_id)
+            url = await con.fetchval()
             if url:
                 return url
 
@@ -306,13 +310,13 @@ class KitsuManager:
         if to_cache is None:
             return None
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
                 UPDATE
                     kitsu_info
                 SET
-                    cached_poster_url=$1
-                WHERE kitsu_id=$2;
+                    cached_poster_url=?
+                WHERE kitsu_id=?;
             """, to_cache, self.kitsu_id)
 
         return to_cache
@@ -336,15 +340,16 @@ class KitsuManager:
         if self.kitsu_id is None:
             return False
 
-        async with app.db_pool.acquire() as con:
-            row = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     show_status,
                     last_updated
                 FROM
                     kitsu_info
-                WHERE kitsu_id=$1;
+                WHERE kitsu_id=?;
             """, self.kitsu_id)
+            row = await con.fetchone()
 
         now = datetime.datetime.utcnow()
 
@@ -371,13 +376,12 @@ class KitsuManager:
             return
 
         self.status = status
-        now = datetime.datetime.utcnow()
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
                 UPDATE
                     kitsu_info
                 SET
-                    show_status=$1,
-                    last_updated=$2
-                WHERE kitsu_id=$3;
-            """, status, now, self.kitsu_id)
+                    show_status=?,
+                    last_updated=CURRENT_TIMESTAMP
+                WHERE kitsu_id=?;
+            """, status, self.kitsu_id)

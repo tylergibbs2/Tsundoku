@@ -174,14 +174,15 @@ class Poller:
         bool
             True if the episode has been parsed, False otherwise.
         """
-        async with self.app.db_pool.acquire() as con:
-            show_entry = await con.fetchval("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id
                 FROM
                     show_entry
-                WHERE show_id=$1 AND episode=$2;
+                WHERE show_id=? AND episode=?;
             """, show_id, episode)
+            show_entry = await con.fetchval()
 
         return bool(show_entry)
 
@@ -204,14 +205,15 @@ class Poller:
             The EntryMatch for the passed show name.
             Could be None if no shows are desired.
         """
-        async with self.app.db_pool.acquire() as con:
-            desired_shows = await con.fetch("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     title
                 FROM
                     shows;
             """)
+            desired_shows = await con.fetchall()
         show_list = {show["title"]: show["id"] for show in desired_shows}
 
         if not show_list:

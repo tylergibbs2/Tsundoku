@@ -156,18 +156,19 @@ class SearchResult:
 
         episodes_to_process = []
         existing_torrents = set()
-        async with self._app.db_pool.acquire() as con:
+        async with self._app.acquire_db() as con:
             for episode in await self.get_episodes():
-                exists = await con.fetchval("""
+                await con.execute("""
                     SELECT
                         torrent_hash
                     FROM
                         show_entry
                     WHERE
-                        show_id=$1
+                        show_id=?
                     AND
-                        episode=$2;
+                        episode=?;
                 """, self.show_id, episode)
+                exists = await con.fetchval()
                 if exists and overwrite:
                     existing_torrents.add(exists)
                     episodes_to_process.append(episode)
@@ -178,13 +179,13 @@ class SearchResult:
             return added
 
         if overwrite:
-            async with self._app.db_pool.acquire() as con:
+            async with self._app.acquire_db() as con:
                 for hash_ in existing_torrents:
                     await con.execute("""
                         DELETE FROM
                             show_entry
                         WHERE
-                            torrent_hash=$1;
+                            torrent_hash=?;
                     """, hash_)
                     await self._app.dl_client.delete_torrent(hash_)
 
@@ -195,16 +196,29 @@ class SearchResult:
             logger.warn(f"Failed to add Magnet URL {magnet} to download client")
             return added
 
-        async with self._app.db_pool.acquire() as con:
+        async with self._app.acquire_db() as con:
             for episode in episodes_to_process:
-                entry = await con.fetchrow("""
+                await con.execute("""
                     INSERT INTO
                         show_entry
                         (show_id, episode, torrent_hash)
                     VALUES
-                        ($1, $2, $3)
-                    RETURNING id, show_id, episode, current_state, torrent_hash, file_path, last_update;
+                        (?, ?, ?);
                 """, self.show_id, episode, torrent_hash)
+                await con.execute("""
+                    SELECT
+                        id,
+                        show_id,
+                        episode,
+                        current_state,
+                        torrent_hash,
+                        file_path,
+                        last_update
+                    FROM
+                        show_entry
+                    WHERE id = ?;
+                """, con.lastrowid)
+                entry = await con.fetchone()
 
                 entry = Entry(self._app, entry)
                 await entry.set_state(EntryState.downloading)

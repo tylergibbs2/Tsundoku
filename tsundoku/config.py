@@ -1,10 +1,16 @@
 import configparser
 import json
+import os
 from typing import Any
 
 config = configparser.ConfigParser()
 
-config.read("config.ini")
+if os.getenv("IS_DOCKER"):
+    fp = "data/config.ini"
+else:
+    fp = "config.ini"
+
+config.read(fp)
 
 
 def get_config_value(section: str, value: str, default: Any = None) -> Any:
@@ -66,8 +72,8 @@ def set_config_value(section: str, value: str, data: Any) -> None:
     -------
     None
     """
-    config.read("config.ini")
+    config.read(fp)
     config.set(section, value, json.dumps(data))
 
-    with open("config.ini", "w") as f:
+    with open(fp, "w") as f:
         config.write(f)

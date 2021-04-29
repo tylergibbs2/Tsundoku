@@ -5,24 +5,27 @@ import importlib.util
 import logging
 import os
 import secrets
+from asyncio.events import AbstractEventLoop
 from logging.config import dictConfig
-from socket import gaierror
-from typing import Any
+from typing import Any, Union
+from uuid import uuid4
 
 import aiohttp
-import asyncpg
 from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
 from quart.wrappers.response import Response
 from quart_auth import AuthManager, Unauthorized
 
+import tsundoku.asqlite
 import tsundoku.exceptions as exceptions
 import tsundoku.git as git
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import get_config_value
+from tsundoku.database import acquire, migrate
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Poller
+from tsundoku.feeds.encoder import Encoder
 from tsundoku.user import User
 
 hasher = PasswordHasher()
@@ -75,36 +78,23 @@ dictConfig({
 })
 
 
-app.register_blueprint(api_blueprint)
-app.register_blueprint(ux_blueprint)
-
-
 async def insert_user(username: str, password: str) -> None:
-    host = get_config_value("PostgreSQL", "host")
-    port = get_config_value("PostgreSQL", "port")
-    user = get_config_value("PostgreSQL", "user")
-    db_password = get_config_value("PostgreSQL", "password")
-    database = get_config_value("PostgreSQL", "database")
+    await migrate()
 
-    con = await asyncpg.connect(
-        host=host,
-        port=port,
-        user=user,
-        password=db_password,
-        database=database
-    )
+    if os.getenv("IS_DOCKER"):
+        fp = "data/tsundoku.db"
+    else:
+        fp = "tsundoku.db"
 
     pw_hash = hasher.hash(password)
-
-    await con.execute("""
-        INSERT INTO
-            users
-            (username, password_hash)
-        VALUES
-            ($1, $2);
-    """, username, pw_hash)
-
-    await con.close()
+    async with tsundoku.asqlite.connect(fp) as con:
+        await con.execute("""
+            INSERT INTO
+                users
+                (username, password_hash, api_key)
+            VALUES
+                (?, ?, ?);
+        """, username, pw_hash, str(uuid4()))
 
 
 @app.errorhandler(Unauthorized)
@@ -158,41 +148,20 @@ async def setup_db() -> None:
     """
     Creates a database pool for PostgreSQL interaction.
     """
-    if os.environ.get("IS_DOCKER", False):
-        await git.migrate()
+    await migrate()
+    app.acquire_db = acquire
 
-    host = get_config_value("PostgreSQL", "host")
-    port = get_config_value("PostgreSQL", "port")
-    user = get_config_value("PostgreSQL", "user")
-    password = get_config_value("PostgreSQL", "password")
-    database = get_config_value("PostgreSQL", "database")
+    async with app.acquire_db() as con:
+        await con.execute("""
+            SELECT
+                COUNT(*)
+            FROM
+                users;
+        """)
+        users = await con.fetchval()
 
-    loop = asyncio.get_event_loop()
-
-    try:
-        app.db_pool = await asyncpg.create_pool(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            database=database,
-            loop=loop
-        )
-    except (OSError, gaierror):
-        logger.error("Failed to connect to the database. Is your configuration correct?")
-        await app.shutdown()
-
-    if hasattr(app, "db_pool"):
-        async with app.db_pool.acquire() as con:
-            users = await con.fetchval("""
-                SELECT
-                    COUNT(*)
-                FROM
-                    users;
-            """)
-
-        if not users:
-            logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
+    if not users:
+        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
 def _load_parsers() -> None:
@@ -250,9 +219,6 @@ async def load_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
-    if not hasattr(app, "db_pool"):
-        return
-
     # It's okay if we're blocking here.
     # The webserver isn't intended to
     # be serving at this point in time.
@@ -307,7 +273,6 @@ async def cleanup() -> None:
 
     try:
         await app.session.close()
-        await app.db_pool.close()
     except Exception:
         pass
 
@@ -320,9 +285,25 @@ async def insert_locale() -> dict:
     return {"LOCALE": locale}
 
 
+app.register_blueprint(api_blueprint)
+app.register_blueprint(ux_blueprint)
+
+
 def run() -> None:
     host = get_config_value("Tsundoku", "host")
     port = get_config_value("Tsundoku", "port")
 
+    loop: Union[asyncio.ProactorEventLoop, AbstractEventLoop]
+    try:
+        loop = asyncio.ProactorEventLoop()
+        asyncio.set_event_loop(loop)
+    except AttributeError:
+        loop = asyncio.get_event_loop()
+
     auth.init_app(app)
-    app.run(host=host, port=port, use_reloader=True)
+    app.run(
+        host=host,
+        port=port,
+        use_reloader=True,
+        loop=loop
+    )

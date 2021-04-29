@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from uuid import uuid4
 
 from quart import Blueprint
 from quart import current_app as app
@@ -24,16 +25,17 @@ async def ensure_auth() -> Optional[APIResponse]:
     authed = False
     if request.headers.get("Authorization"):
         token = request.headers["Authorization"]
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             try:
-                user = await con.fetchval("""
+                await con.execute("""
                     SELECT
                         id
                     FROM
                         users
                     WHERE
-                        api_key=$1;
+                        api_key=?;
                 """, token)
+                user = await con.fetchval()
 
                 if user:
                     authed = True

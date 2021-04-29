@@ -76,11 +76,14 @@ class WebhookBase:
         if content_fmt:
             query = """
                 INSERT INTO
-                    webhook_base
-                    (name, base_service, base_url, content_fmt)
+                    webhook_base (
+                        name,
+                        base_service,
+                        base_url,
+                        content_fmt
+                    )
                 VALUES
-                    ($1, $2, $3, $4)
-                RETURNING id, content_fmt;
+                    (?, ?, ?, ?);
             """
             args += (content_fmt,)
         else:
@@ -89,23 +92,31 @@ class WebhookBase:
                     webhook_base
                     (name, base_service, base_url)
                 VALUES
-                    ($1, $2, $3)
-                RETURNING id, content_fmt;
+                    (?, ?, ?);
             """
 
-        async with app.db_pool.acquire() as con:
-            new_base = await con.fetchrow(query, *args)
+        async with app.acquire_db() as con:
+            await con.execute(query, *args)
+            await con.execute("""
+                SELECT
+                    id,
+                    content_fmt
+                FROM
+                    webhook_base
+                WHERE
+                    id = ?;
+            """, con.lastrowid)
+            new_base = await con.fetchone()
 
         if not new_base:
             return None
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
-                INSERT INTO
+                INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
-                SELECT id, ($1) FROM shows
-                ON CONFLICT DO NOTHING;
+                SELECT id, (?) FROM shows;
             """, new_base["id"])
 
         instance = cls()
@@ -140,8 +151,8 @@ class WebhookBase:
         Optional[WebhookBase]
             The requested webhook base.
         """
-        async with app.db_pool.acquire() as con:
-            base = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     name,
@@ -151,19 +162,19 @@ class WebhookBase:
                 FROM
                     webhook_base
                 WHERE
-                    id=$1;
+                    id=?;
             """, base_id)
+            base = await con.fetchone()
 
         if not base:
             return None
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
-                INSERT INTO
+                INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
-                SELECT id, ($1) FROM shows
-                ON CONFLICT DO NOTHING;
+                SELECT id, (?) FROM shows;
             """, base_id)
 
         instance = cls()
@@ -201,8 +212,8 @@ class WebhookBase:
         List[WebhookBase]
             All rows.
         """
-        async with app.db_pool.acquire() as con:
-            ids = await con.fetch("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id
                 FROM
@@ -210,6 +221,7 @@ class WebhookBase:
                 ORDER BY
                     id ASC;
             """)
+            ids = await con.fetchall()
 
         instances: List[WebhookBase] = []
         for id_ in ids:
@@ -219,56 +231,38 @@ class WebhookBase:
 
         return instances
 
-    async def save(self) -> bool:
+    async def save(self) -> None:
         """
         Saves the attributes of the object
         to the database.
-
-        Returns
-        -------
-        bool:
-            Whether it was saved or not.
         """
-        if self.service not in VALID_SERVICES:
-            return False
-        elif not self.content_fmt:
-            return False
+        if self.service not in VALID_SERVICES or not self.content_fmt:
+            return
 
-        async with self._app.db_pool.acquire() as con:
-            updated = await con.fetchval("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 UPDATE
                     webhook_base
                 SET
-                    name=$1,
-                    base_service=$2,
-                    base_url=$3,
-                    content_fmt=$4
+                    name=?,
+                    base_service=?,
+                    base_url=?,
+                    content_fmt=?
                 WHERE
-                    id=$5
-                RETURNING content_fmt;
+                    id=?;
             """, self.name, self.service, self.url, self.content_fmt, self.base_id)
 
-        return bool(updated)
-
-    async def delete(self) -> bool:
+    async def delete(self) -> None:
         """
         Deletes a WebhookBase from the database.
-
-        Returns
-        -------
-        bool:
-            Whether the webhook base was deleted or not.
         """
-        async with self._app.db_pool.acquire() as con:
-            deleted = await con.fetchval("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 DELETE FROM
                     webhook_base
                 WHERE
-                    id=$1
-                RETURNING content_fmt;
+                    id=?;
             """, self.base_id)
-
-        return bool(deleted)
 
     async def is_valid(self) -> bool:
         """
@@ -330,15 +324,16 @@ class Webhook:
         List[Webhook]
             All found webhooks.
         """
-        async with app.db_pool.acquire() as con:
-            webhooks = await con.fetch("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     base
                 FROM
                     webhook
                 WHERE
-                    show_id=$1;
+                    show_id=?;
             """, show_id)
+            webhooks = await con.fetchall()
 
         instances = []
 
@@ -378,15 +373,16 @@ class Webhook:
         Optional[Webhook]
             The found webhook.
         """
-        async with app.db_pool.acquire() as con:
-            webhook = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     base
                 FROM
                     webhook
                 WHERE
-                    show_id=$1 AND base=$2;
+                    show_id=? AND base=?;
             """, show_id, base_id)
+            webhook = await con.fetchone()
 
         base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
         if not base:
@@ -411,15 +407,16 @@ class Webhook:
         List[str]
             All valid triggers.
         """
-        async with self._app.db_pool.acquire() as con:
-            triggers = await con.fetch("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
                 WHERE
-                    show_id=$1 AND base=$2;
+                    show_id=? AND base=?;
             """, self.show_id, self.base.base_id)
+            triggers = await con.fetchall()
 
         self.triggers = [r["trigger"] for r in triggers]
 
@@ -442,14 +439,15 @@ class Webhook:
         if trigger not in VALID_TRIGGERS:
             return await self.get_triggers()
 
-        async with self._app.db_pool.acquire() as con:
-            exists = await con.fetchval("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
-                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+                WHERE show_id=? AND base=? AND trigger=?;
             """, self.show_id, self.base.base_id, trigger)
+            exists = await con.fetchval()
 
             if exists:
                 return await self.get_triggers()
@@ -459,7 +457,7 @@ class Webhook:
                     webhook_trigger
                     (show_id, base, trigger)
                 VALUES
-                    ($1, $2, $3);
+                    (?, ?, ?);
             """, self.show_id, self.base.base_id, trigger)
 
         return await self.get_triggers()
@@ -481,14 +479,15 @@ class Webhook:
         if trigger not in VALID_TRIGGERS:
             return await self.get_triggers()
 
-        async with self._app.db_pool.acquire() as con:
-            exists = await con.fetchval("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
-                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+                WHERE show_id=? AND base=? AND trigger=?;
             """, self.show_id, self.base.base_id, trigger)
+            exists = await con.fetchval()
 
             if not exists:
                 return await self.get_triggers()
@@ -496,7 +495,7 @@ class Webhook:
             await con.execute("""
                 DELETE FROM
                     webhook_trigger
-                WHERE show_id=$1 AND base=$2 AND trigger=$3;
+                WHERE show_id=? AND base=? AND trigger=?;
             """, self.show_id, self.base.base_id, trigger)
 
         return await self.get_triggers()
@@ -568,14 +567,15 @@ class Webhook:
         dict:
             The generated payload.
         """
-        async with self._app.db_pool.acquire() as con:
-            show_name = await con.fetchval("""
+        async with self._app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     title
                 FROM
                     shows
-                WHERE id=$1;
+                WHERE id=?;
             """, self.show_id)
+            show_name = await con.fetchval()
 
         if not show_name:
             return None

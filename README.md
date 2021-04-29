@@ -23,7 +23,6 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 * Python 3.7+
 * [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi) OR [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
-* PostgreSQL 9+
 
 ## Installation
 
@@ -34,8 +33,7 @@ $ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ pip install -r requirements.txt
-$ python -m tsundoku --migrate       # Loads the database schema into PSQL, must be done after PSQL config
-$ python -m tsundoku --create-user   # Creates a user for logging in, must be done after PSQL config
+$ python -m tsundoku --create-user   # Creates a user for logging in
 ```
 
 Copy `config.ini.example` to `config.ini` and then [configure](#Configuration).
@@ -47,7 +45,6 @@ $ git pull
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ pip install -r requirements.txt
-$ python -m tsundoku --migrate
 ```
 
 ## Usage
@@ -60,14 +57,11 @@ $ python -m tsundoku
 
 ## Installation (Docker)
 
-- Containerized PostgreSQL is required. I recommend that your PostgreSQL container is setup to be persistent.
-  [Here's a link to a StackOverflow question](https://stackoverflow.com/questions/41637505/how-to-persist-data-in-a-dockerized-postgres-database-using-volumes) which will help you ensure your PostgreSQL data is persistent.
-
 1. Copy the `docker-compose.yml` file from the repository.
 2. Copy the `config.ini.example` file and rename it `config.ini`.
 3. Copy any parsers that you want and put them in a new folder.
 4. [Configure](#Configuration) the configuration file.
-5. Replace the file paths and replace the Postgres Docker service name.
+5. Replace the file paths.
 6. Run `docker-compose up -d`.
 
 I will not be providing an example on how to start the container using
@@ -75,7 +69,6 @@ I will not be providing an example on how to start the container using
 
 You will then need to perform the following commands:
 ```sh
-docker container exec -it tsundoku python -m tsundoku --migrate
 docker container exec -it tsundoku python -m tsundoku --create-user
 ```
 
@@ -93,18 +86,16 @@ services:
       - PUID=1000
       - PGID=1000
     volumes:
-      - /opt/appdata/tsundoku/config.ini:/app/config.ini
+      - /opt/appdata/tsundoku/data:/app/data
       - /opt/appdata/tsundoku/parsers:/app/parsers
       - /mediadrives/Downloaded:/downloaded
       - /mediadrives/Anime:/target
     ports:
       - "6439:6439"
-    depends_on:
-      - postgres
     restart: always
 ```
 
-`/opt/appdata/tsundoku/config.ini` is the absolute path where I put the `config.ini` file.
+`/opt/appdata/tsundoku/data` is the folder path where I put the `config.ini` file.
 
 `/opt/appdata/tsundoku/parsers` is the folder where I manually placed all the parsers I use.
 
@@ -129,13 +120,6 @@ do_update_checks = true  # Will always be false regardless of setting if in Dock
 check_every_n_days = 1   # How often (in days) to perform update checks
 git_path = git           # Path to Git executable, only needed for update checks
 locale = en              # Locale to use, see the "l10n" folder for valid locales
-
-[PostgreSQL]             # PSQL connection info
-host = localhost
-port = 5432
-database = tsundoku
-user = postgres
-password = password
 
 [TorrentClient]          # Torrent client connection info
 client = deluge          # Can be either 'deluge' or 'qbittorrent'

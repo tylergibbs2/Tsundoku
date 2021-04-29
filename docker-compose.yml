@@ -7,12 +7,10 @@ services:
       - PUID=1000
       - PGID=1000
     volumes:
-      - <path to config file>:/app/config.ini
+      - <path to data folder>:/app/data
       - <path to parser folder>:/app/parsers
       - <path to downloaded>:/downloaded
       - <path to target location>:/target
     ports:
       - "6439:6439"
-    depends_on:
-      - <replace this with your postgres docker service name>
     restart: unless-stopped

@@ -132,8 +132,8 @@ class Downloader:
             return None
 
         # TODO: handle entry insertion in the Entry class
-        async with self.app.db_pool.acquire() as con:
-            entry = await con.fetchrow("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 INSERT INTO
                     show_entry (
                         show_id,
@@ -141,16 +141,23 @@ class Downloader:
                         torrent_hash
                     )
                 VALUES
-                    ($1, $2, $3)
-                RETURNING
+                    (?, ?, ?);
+            """, show_id, episode, torrent_hash)
+            await con.execute("""
+                SELECT
                     id,
                     show_id,
                     episode,
                     current_state,
                     torrent_hash,
                     file_path,
-                    last_update;
-            """, show_id, episode, torrent_hash)
+                    last_update
+                FROM
+                    show_entry
+                WHERE
+                    id = ?;
+            """, con.lastrowid)
+            entry = await con.fetchone()
 
         entry = Entry(self.app, entry)
         await entry.set_state(EntryState.downloading)
@@ -178,8 +185,8 @@ class Downloader:
             logger.error("entry.file_path is None?")
             return None
 
-        async with self.app.db_pool.acquire() as con:
-            show_info = await con.fetchrow("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     title,
                     desired_folder,
@@ -187,8 +194,9 @@ class Downloader:
                     season
                 FROM
                     shows
-                WHERE id=$1;
+                WHERE id=?;
             """, entry.show_id)
+            show_info = await con.fetchone()
 
         season = str(show_info["season"])
         episode = str(entry.episode + show_info["episode_offset"])
@@ -255,8 +263,8 @@ class Downloader:
             logger.error("entry.file_path is None?")
             return None
 
-        async with self.app.db_pool.acquire() as con:
-            show_info = await con.fetchrow("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     title,
                     desired_format,
@@ -264,8 +272,9 @@ class Downloader:
                     episode_offset
                 FROM
                     shows
-                WHERE id=$1;
+                WHERE id=?;
             """, entry.show_id)
+            show_info = await con.fetchone()
 
         if show_info["desired_format"]:
             file_fmt = show_info["desired_format"]
@@ -423,8 +432,8 @@ class Downloader:
         downloading, then passes them to a separate function
         to check for completion.
         """
-        async with self.app.db_pool.acquire() as con:
-            entries = await con.fetch("""
+        async with self.app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     show_id,
@@ -437,6 +446,7 @@ class Downloader:
                     show_entry
                 WHERE current_state != 'completed';
             """)
+            entries = await con.fetchall()
 
         for entry in entries:
             entry = Entry(self.app, entry)

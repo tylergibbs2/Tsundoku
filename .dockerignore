@@ -8,3 +8,5 @@ __pycache__
 .Python
 docs
 parsers
+tsundoku.db
+tsundoku.log

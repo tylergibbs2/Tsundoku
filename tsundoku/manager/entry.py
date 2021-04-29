@@ -3,9 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from sqlite3 import Row
 from typing import Any, List, Optional
-
-from asyncpg import Record
 
 from tsundoku.webhooks import Webhook
 
@@ -24,7 +23,7 @@ class EntryState(str, Enum):
 
 
 class Entry:
-    def __init__(self, app: Any, record: Record) -> None:
+    def __init__(self, app: Any, record: Row) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]
@@ -36,7 +35,7 @@ class Entry:
         self.file_path: Optional[Path] = Path(fp) if fp is not None else None
 
         self._app: Any = app
-        self._record: Record = record
+        self._record: Row = record
 
     def to_dict(self) -> dict:
         """
@@ -75,8 +74,8 @@ class Entry:
         List[Entry]
             A list of associated Show Entries.
         """
-        async with app.db_pool.acquire() as con:
-            entries = await con.fetch("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     show_id,
@@ -87,9 +86,10 @@ class Entry:
                     last_update
                 FROM
                     show_entry
-                WHERE show_id=$1
+                WHERE show_id=?
                 ORDER BY episode ASC;
             """, show_id)
+            entries = await con.fetchall()
 
         ret: List[Entry] = []
         for entry in entries:
@@ -107,12 +107,12 @@ class Entry:
             The new state to update to.
         """
         self.state = new_state
-        async with self._app.db_pool.acquire() as con:
+        async with self._app.acquire_db() as con:
             await con.execute("""
                 UPDATE show_entry SET
-                    current_state = $1,
-                    last_update = now_utc()
-                WHERE id=$2;
+                    current_state = ?,
+                    last_update = CURRENT_TIMESTAMP
+                WHERE id=?;
             """, new_state.value, self.id)
 
         await self._handle_webhooks()
@@ -127,11 +127,11 @@ class Entry:
             The new path to update to.
         """
         self.file_path = new_path
-        async with self._app.db_pool.acquire() as con:
+        async with self._app.acquire_db() as con:
             await con.execute("""
                 UPDATE show_entry SET
-                    file_path = $1
-                WHERE id=$2;
+                    file_path = ?
+                WHERE id=?;
             """, str(new_path), self.id)
 
     async def _handle_webhooks(self) -> None:
@@ -155,4 +155,4 @@ class Entry:
 
     def __repr__(self) -> str:
         return f"<Entry id={self.id} show_id={self.show_id} episode={self.episode}" \
-               f"state={self.state} hash={self.torrent_hash}>"
+               f" state={self.state} hash={self.torrent_hash}>"

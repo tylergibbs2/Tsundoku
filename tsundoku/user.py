@@ -12,14 +12,16 @@ class User(AuthUser):
 
     async def _resolve(self) -> None:
         if not self._resolved:
-            async with app.db_pool.acquire() as con:
-                self._username = await con.fetchval("""
+            async with app.acquire_db() as con:
+                await con.execute("""
                     SELECT
                         username
                     FROM
                         users
-                    WHERE id = $1;
+                    WHERE id = ?;
                 """, self.auth_id)
+                user = await con.fetchone()
+            self._username = user["username"]
             self._resolved = True
 
     @property

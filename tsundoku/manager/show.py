@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from sqlite3 import Row
 from typing import Any, List
 
-from asyncpg import Record
 from quart import current_app as app
 
 from tsundoku.webhooks.webhook import Webhook
@@ -51,14 +51,14 @@ class Show:
         }
 
     @classmethod
-    async def from_data(cls, data: Record) -> Show:
+    async def from_data(cls, data: Row) -> Show:
         """
-        Creates a Show object from an asyncpg.Record
+        Creates a Show object from a sqlite3.Row
         of a Show in the database.
 
         Parameters
         ----------
-        data: Record
+        data: Row
             The record to create from.
 
         Returns
@@ -69,7 +69,7 @@ class Show:
         metadata = await KitsuManager.from_show_id(data["id_"])
 
         instance = cls(
-            **data,
+            **dict(data),
             metadata=metadata,
             _entries=[],
             _webhooks=[]
@@ -96,8 +96,8 @@ class Show:
         Show
             The retrieved Show's object.
         """
-        async with app.db_pool.acquire() as con:
-            show = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id as id_,
                     title,
@@ -108,8 +108,9 @@ class Show:
                     created_at
                 FROM
                     shows
-                WHERE id=$1;
+                WHERE id=?;
             """, id_)
+            show = await con.fetchone()
 
         if not show:
             raise Exception(f"Failed to retrieve show with ID #{id_}")
@@ -152,8 +153,8 @@ class Show:
         Show
             The inserted Show object.
         """
-        async with app.db_pool.acquire() as con:
-            new_id = await con.fetchval(
+        async with app.acquire_db() as con:
+            await con.execute(
                 """
                 INSERT INTO
                     shows
@@ -165,9 +166,7 @@ class Show:
                     episode_offset
                 )
                 VALUES
-                    ($1, $2, $3, $4, $5)
-                RETURNING
-                    id;
+                    (?, ?, ?, ?, ?);
             """,
                 kwargs["title"],
                 kwargs["desired_format"],
@@ -175,6 +174,7 @@ class Show:
                 kwargs["season"],
                 kwargs["episode_offset"]
             )
+            new_id = con.lastrowid
 
         return await Show.from_id(new_id)
 
@@ -183,19 +183,19 @@ class Show:
         Updates a Show in the database using the
         existing object's attributes.
         """
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute(
                 """
                 UPDATE
                     shows
                 SET
-                    title=$1,
-                    desired_format=$2,
-                    desired_folder=$3,
-                    season=$4,
-                    episode_offset=$5
+                    title=?,
+                    desired_format=?,
+                    desired_folder=?,
+                    season=?,
+                    episode_offset=?
                 WHERE
-                    id=$6
+                    id=?
             """,
                 self.title,
                 self.desired_format,

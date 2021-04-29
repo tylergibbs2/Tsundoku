@@ -4,16 +4,13 @@ import subprocess
 import sys
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-import asyncpg
-
 if TYPE_CHECKING:
     app: Any
 else:
     from quart import current_app as app
 
-from yoyo import get_backend, read_migrations
-
 from tsundoku.config import get_config_value
+from tsundoku.database import migrate
 
 # Git run command inspired by Tautulli's version check code!
 # https://github.com/Tautulli/Tautulli/blob/master/plexpy/versioncheck.py
@@ -51,53 +48,6 @@ def run(args: str) -> Tuple[str, Optional[bytes]]:
             logger.error("Git: Returned bad info. Bad installation?")
 
     return (output_text, err)
-
-
-async def migrate() -> None:
-    host = get_config_value("PostgreSQL", "host")
-    port = get_config_value("PostgreSQL", "port")
-    user = get_config_value("PostgreSQL", "user")
-    db_password = get_config_value("PostgreSQL", "password")
-    database = get_config_value("PostgreSQL", "database")
-
-    try:
-        con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database=database
-        )
-    except asyncpg.InvalidCatalogNameError:
-        sys_con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database="template1"
-        )
-        await sys_con.execute(f"""
-            CREATE DATABASE "{database}" OWNER "{user}";
-        """)
-        await sys_con.close()
-
-    con = await asyncpg.connect(
-        host=host,
-        user=user,
-        password=db_password,
-        port=port,
-        database=database
-    )
-
-    await con.close()
-
-    backend = get_backend(f"postgres://{user}:{db_password}@{host}:{port}/{database}")
-    migrations = read_migrations("migrations")
-
-    logger.info("Applying database migrations...")
-    with backend.lock():
-        backend.apply_migrations(backend.to_apply(migrations))
-    logger.info("Database migrations applied.")
 
 
 async def update() -> None:

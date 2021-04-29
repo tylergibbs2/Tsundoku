@@ -26,19 +26,21 @@ hasher = PasswordHasher()
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
-    async with app.db_pool.acquire() as con:
-        shows = await con.fetchval("""
+    async with app.acquire_db() as con:
+        await con.execute("""
             SELECT
                 COUNT(*)
             FROM
                 shows;
         """)
-        entries = await con.fetchval("""
+        shows = await con.fetchval()
+        await con.execute("""
             SELECT
                 COUNT(*)
             FROM
                 show_entry;
         """)
+        entries = await con.fetchval()
 
     stats = {
         "shows": shows,
@@ -88,8 +90,8 @@ async def nyaa_search() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    async with app.db_pool.acquire() as con:
-        shows = await con.fetch("""
+    async with app.acquire_db() as con:
+        await con.execute("""
             SELECT
                 id,
                 title
@@ -97,6 +99,7 @@ async def nyaa_search() -> str:
                 shows
             ORDER BY title;
         """)
+        shows = await con.fetchall()
         ctx["shows"] = [dict(s) for s in shows]
 
     ctx["seen_titles"] = list(app.seen_titles)
@@ -156,15 +159,16 @@ async def login() -> Any:
             await flash(fluent._("form-missing-data"))
             return redirect(url_for("ux.login"))
 
-        async with app.db_pool.acquire() as con:
-            user_data = await con.fetchrow("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 SELECT
                     id,
                     password_hash
                 FROM
                     users
-                WHERE LOWER(username) = $1;
+                WHERE LOWER(username) = ?;
             """, username.lower())
+            user_data = await con.fetchone()
 
         if not user_data:
             await flash(fluent._("invalid-credentials"))
@@ -177,13 +181,13 @@ async def login() -> Any:
             return redirect(url_for("ux.login"))
 
         if hasher.check_needs_rehash(user_data["password_hash"]):
-            async with app.db_pool.acquire() as con:
+            async with app.acquire_db() as con:
                 await con.execute("""
                     UPDATE
                         users
                     SET
-                        password_hash=$1
-                    WHERE username=$2;
+                        password_hash=?
+                    WHERE username=?;
                 """, hasher.hash(password), username)
 
         remember = form.get("remember", False)

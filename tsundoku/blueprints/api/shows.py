@@ -129,13 +129,12 @@ class ShowsAPI(views.MethodView):
             episode_offset=episode_offset
         )
 
-        async with app.db_pool.acquire() as con:
+        async with app.acquire_db() as con:
             await con.execute("""
-                INSERT INTO
+                INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
-                SELECT ($1), id FROM webhook_base
-                ON CONFLICT DO NOTHING;
+                SELECT (?), id FROM webhook_base;
             """, show.id_)
 
         logger.info("New Show Added - Preparing to Check for New Releases")
@@ -222,25 +221,17 @@ class ShowsAPI(views.MethodView):
 
         .. :quickref: Shows; Delete a show.
 
-        :status 200: show deleted successfully
-        :status 404: show with id not found
+        :status 200: deletion request received
 
         :returns: :class:`bool`
         """
-        async with app.db_pool.acquire() as con:
-            deleted = await con.fetchval("""
+        async with app.acquire_db() as con:
+            await con.execute("""
                 DELETE FROM
                     shows
-                WHERE id=$1
-                RETURNING id;
+                WHERE id=?;
             """, show_id)
 
-        if deleted:
-            return APIResponse(
-                result=True
-            )
-        else:
-            return APIResponse(
-                status=404,
-                error="Show with specified ID does not exist."
-            )
+        return APIResponse(
+            result=True
+        )

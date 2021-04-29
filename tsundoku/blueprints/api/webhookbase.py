@@ -182,14 +182,7 @@ class WebhookBaseAPI(views.MethodView):
                 error="WebhookBase with specified ID does not exist."
             )
 
-        deleted = await base.delete()
-
-        if deleted:
-            return APIResponse(
-                result=base.to_dict()
-            )
-        else:
-            return APIResponse(
-                status=500,
-                error="The server encountered an error deleting the specified WebhookBase."
-            )
+        await base.delete()
+        return APIResponse(
+            result=base.to_dict()
+        )
