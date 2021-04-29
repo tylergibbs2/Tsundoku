@@ -5,7 +5,8 @@ module.exports = {
   entry: {
     index: './tsundoku/blueprints/ux/static/ts/index/app.tsx',
     nyaa: './tsundoku/blueprints/ux/static/ts/nyaa/app.tsx',
-    webhooks: './tsundoku/blueprints/ux/static/ts/webhooks/app.tsx'
+    webhooks: './tsundoku/blueprints/ux/static/ts/webhooks/app.tsx',
+    config: './tsundoku/blueprints/ux/static/ts/config/app.tsx'
   },
   module: {
     rules: [

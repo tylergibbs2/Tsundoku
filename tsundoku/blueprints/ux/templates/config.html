@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block nav_config %}is-active{% endblock %}
+
+{% block extralib %}
+<!-- CSS -->
+<link rel="stylesheet" href="{{ url_for('ux.static', filename='css/config.css') }}">
+{% endblock %}
+
+{% block webpack %}
+<script src="{{ url_for('ux.static', filename='js/config.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+{% include "messages.html" %}
+
+<section id="config-main" class="section">
+
+
+</section>
+
+{% endblock %}

@@ -2,7 +2,6 @@ title = Tsundoku Command Line
 
 cmd-migrate = Migrates the Tsundoku database to match any updates.
 cmd-create-user = Creates a new login user.
-cmd-no-ui = Launches Tsundoku with only the API routes enabled.
 cmd-l10n-compat = Compares two languages, will point out missing translations in the second one.
 
 username = Username:
