@@ -243,7 +243,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                                     {_("edit-fix-match")}
                                 </button>
                             </div>
-                            <div class="dropdown-menu" style={{minWidth: "20rem"}}>
+                            <div class="dropdown-menu" style={{ minWidth: "20rem" }}>
                                 <div class="dropdown-content">
                                     <FixMatchDropdown
                                         show={activeShow}
@@ -323,7 +323,7 @@ interface FixMatchRowParams {
 }
 
 
-const FixMatchRow = ({result, selectedId, setSelectedId}: FixMatchRowParams) => {
+const FixMatchRow = ({ result, selectedId, setSelectedId }: FixMatchRowParams) => {
     const setSelf = () => {
         if (selectedId === result.id)
             setSelectedId("");
@@ -373,7 +373,7 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
 
         let requestUrl = "https://kitsu.io/api/edge/anime?fields[anime]=id,titles";
         if (/^\d+$/.test(query))
-            requestUrl +=`&filter[id]=${query}`;
+            requestUrl += `&filter[id]=${query}`;
         else
             requestUrl += `&filter[text]=${encodeURIComponent(query)}`;
 
@@ -410,21 +410,21 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
                 </div>
             </div>
             {results.length !== 0 &&
-            <div class="dropdown-item">
-                <table class="table is-fullwidth is-hoverable">
-                    <tbody>
-                        {
-                            results.slice(0, 5).map((result) => (
-                                <FixMatchRow
-                                    result={result}
-                                    selectedId={selectedId}
-                                    setSelectedId={setSelectedId}
-                                />
-                            ))
-                        }
-                    </tbody>
-                </table>
-            </div>
+                <div class="dropdown-item">
+                    <table class="table is-fullwidth is-hoverable">
+                        <tbody>
+                            {
+                                results.slice(0, 5).map((result) => (
+                                    <FixMatchRow
+                                        result={result}
+                                        selectedId={selectedId}
+                                        setSelectedId={setSelectedId}
+                                    />
+                                ))
+                            }
+                        </tbody>
+                    </table>
+                </div>
             }
         </>
     )
@@ -745,30 +745,34 @@ interface EditWebhookTableRowParams {
 
 
 const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }: EditWebhookTableRowParams) => {
-    const { register, reset, getValues } = useForm();
+    const [triggers, setTriggers] = useState(webhook.triggers);
 
-    useEffect(() => {
-        reset({
-            downloading: webhook.triggers.includes("downloading"),
-            downloaded: webhook.triggers.includes("downloaded"),
-            renamed: webhook.triggers.includes("renamed"),
-            moved: webhook.triggers.includes("moved"),
-            completed: webhook.triggers.includes("completed")
-        });
-    }, [webhook]);
+    const { register, reset } = useForm({
+        defaultValues: {
+            downloading: triggers.includes("downloading"),
+            downloaded: triggers.includes("downloaded"),
+            renamed: triggers.includes("renamed"),
+            moved: triggers.includes("moved"),
+            completed: triggers.includes("completed")
+        }
+    });
 
-    const update = () => {
-        let data = getValues();
-        let triggers: string[] = [];
-        for (const trigger in data) {
-            if (data[trigger])
-                triggers.push(trigger);
+    const update = (e: any) => {
+        let idx = triggers.findIndex(tr => tr === e.target.name);
+        let newTrs: string[];
+        if (idx === -1) {
+            newTrs = [e.target.name, ...triggers];
+            setTriggers(newTrs);
+        } else {
+            newTrs = [...triggers];
+            newTrs.splice(idx, 1);
+            setTriggers(newTrs);
         }
 
         let newWh: Webhook = JSON.parse(JSON.stringify(webhook));
-        newWh.triggers = triggers;
+        newWh.triggers = newTrs;
 
-        let idx = webhooksToUpdate.findIndex((toFind) => toFind.base.base_id === newWh.base.base_id);
+        idx = webhooksToUpdate.findIndex((toFind) => toFind.base.base_id === newWh.base.base_id);
         if (idx === -1)
             setWebhooksToUpdate([newWh, ...webhooksToUpdate]);
         else {
@@ -782,19 +786,19 @@ const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }:
         <tr class="has-text-centered">
             <td class="is-vcentered">{webhook.base.name}</td>
             <td class="is-vcentered">
-                <input type="checkbox" onChange={update} {...register('downloading')}></input>
+                <input type="checkbox" {...register('downloading')} onChange={update}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" onChange={update} {...register('downloaded')}></input>
+                <input type="checkbox" {...register('downloaded')} onChange={update}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" onChange={update} {...register('renamed')}></input>
+                <input type="checkbox" {...register('renamed')} onChange={update}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" onChange={update} {...register('moved')}></input>
+                <input type="checkbox" {...register('moved')} onChange={update}></input>
             </td>
             <td class="is-vcentered">
-                <input type="checkbox" onChange={update} {...register('completed')}></input>
+                <input type="checkbox" {...register('completed')} onChange={update}></input>
             </td>
         </tr>
     );
