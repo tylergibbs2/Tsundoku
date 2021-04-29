@@ -9,10 +9,13 @@ from quart import flash, redirect, render_template, request, url_for
 from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
+from tsundoku.blueprints.api import APIResponse
 from tsundoku.fluent import get_injector
 from tsundoku.git import check_for_updates, update
 from tsundoku.user import User
 from tsundoku.webhooks import WebhookBase
+
+from .issues import get_issue_url
 
 ux_blueprint = Blueprint(
     'ux',
@@ -54,6 +57,18 @@ async def update_context() -> dict:
         "updates": app.update_info,
         "docker": os.environ.get("IS_DOCKER", False)
     }
+
+
+@ux_blueprint.route("/issue", methods=["POST"])
+async def issue() -> APIResponse:
+    data = await request.get_json()
+
+    issue_type = data.get("issue_type")
+    user_agent = data.get("user_agent")
+
+    return APIResponse(
+        result=get_issue_url(issue_type, user_agent)
+    )
 
 
 @ux_blueprint.route("/", methods=["GET"])
@@ -124,6 +139,21 @@ async def webhooks() -> str:
     ctx["bases"] = [b.to_dict() for b in all_bases]
 
     return await render_template("webhooks.html", **ctx)
+
+
+@ux_blueprint.route("/config", methods=["GET"])
+@login_required
+async def config() -> str:
+    ctx = {}
+
+    resources = [
+        "base"
+    ]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
+
+    return await render_template("config.html", **ctx)
 
 
 @ux_blueprint.route("/update", methods=["GET", "POST"])

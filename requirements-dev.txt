@@ -4,7 +4,6 @@ flake8==3.9.0
 git+https://github.com/tylergibbs2/httpdomain
 isort==5.7.0
 mypy==0.812
-pre-commit==2.11.1
 sphinx==3.4.3
 sphinx-rtd-theme==0.5.1
 tusker==0.2.2
