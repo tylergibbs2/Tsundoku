@@ -46,3 +46,7 @@ html, body {
     /* Non-prefixed version, currently
                                     supported by Chrome, Edge, Opera and Firefox */
 }
+
+.switch[type=checkbox] {
+    position: fixed !important;
+}
