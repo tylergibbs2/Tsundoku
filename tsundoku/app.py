@@ -226,35 +226,27 @@ async def load_parsers() -> None:
 
 
 @app.before_serving
-async def setup_poller() -> None:
+async def setup_tasks() -> None:
     """
-    Creates in instance of the polling manager
-    and starts it.
-    """
-    if not hasattr(app, "db_pool"):
-        return
+    Creates the instances for the following tasks:
+    poller, downloader, encoder
 
-    async def bg_task() -> None:
+    These tasks are added to the app's global task list.
+    """
+
+    async def poller() -> None:
         app.poller = Poller(app.app_context())
         await app.poller.start()
 
-    app._tasks.append(asyncio.create_task(bg_task()))
-
-
-@app.before_serving
-async def setup_downloader() -> None:
-    """
-    Creates an instance of the downloader manager
-    and starts it.
-    """
-    if not hasattr(app, "db_pool"):
-        return
-
-    async def bg_task() -> None:
+    async def downloader() -> None:
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
-    app._tasks.append(asyncio.create_task(bg_task()))
+    app.encoder = Encoder(app.app_context())
+    await app.encoder.resume()
+
+    app._tasks.append(asyncio.create_task(poller()))
+    app._tasks.append(asyncio.create_task(downloader()))
 
 
 @app.after_serving

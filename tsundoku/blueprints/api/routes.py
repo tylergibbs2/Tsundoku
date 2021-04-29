@@ -7,6 +7,7 @@ from quart import current_app as app
 from quart import request
 from quart_auth import current_user
 
+from tsundoku.feeds.encoder import VALID_SPEEDS
 from tsundoku.manager import Show
 
 from .entries import EntriesAPI
@@ -51,6 +52,100 @@ async def ensure_auth() -> Optional[APIResponse]:
         )
 
     return None
+
+
+@api_blueprint.route("/config/token", methods=["GET", "POST"])
+async def config_token() -> APIResponse:
+    api_key = request.headers.get("Authorization") or await current_user.api_key
+    if request.method == "POST":
+        async with app.acquire_db() as con:
+            new_key = str(uuid4())
+            await con.execute("""
+                UPDATE
+                    users
+                SET
+                    api_key = ?
+                WHERE
+                    api_key = ?;
+            """, new_key, api_key)
+    else:
+        new_key = api_key
+
+    return APIResponse(
+        status=200,
+        result=str(new_key)
+    )
+
+
+@api_blueprint.route("/config/encode", methods=["GET", "PATCH"])
+async def config_encode() -> APIResponse:
+    async with app.acquire_db() as con:
+        await con.execute("""
+            INSERT OR IGNORE INTO
+                encode_config (
+                    id
+                )
+            VALUES (0);
+            """)
+
+    if request.method == "PATCH":
+        arguments = await request.get_json()
+
+        CFG_KEYS = (
+            "enabled",
+            "quality_preset",
+            "speed_preset",
+            "maximum_encodes",
+            "retry_on_fail"
+        )
+        if any(k not in CFG_KEYS for k in arguments.keys()):
+            return APIResponse(
+                status=400,
+                error="Invalid configuration keys."
+            )
+        elif arguments.get("speed_preset") and arguments["speed_preset"] not in VALID_SPEEDS:
+            return APIResponse(
+                status=400,
+                error="Invalid speed preset."
+            )
+        elif arguments.get("quality_preset") and arguments["quality_preset"] not in ("high", "low", "moderate"):
+            return APIResponse(
+                status=400,
+                error="Invalid quality preset."
+            )
+        elif arguments.get("maximum_encodes") and int(arguments["maximum_encodes"]) <= 0:
+            arguments["maximum_encodes"] = 1
+
+        async with app.acquire_db() as con:
+            sets = ", ".join(f"{col} = ?" for col in arguments.keys())
+            await con.execute(f"""
+                UPDATE
+                    encode_config
+                SET
+                    {sets}
+                WHERE id = 0;
+            """, *arguments.values())
+
+    async with app.acquire_db() as con:
+        await con.execute("""
+            SELECT
+                enabled,
+                quality_preset,
+                speed_preset,
+                maximum_encodes,
+                retry_on_fail
+            FROM
+                encode_config;
+        """)
+        cfg = await con.fetchone()
+
+    cfg = dict(cfg)
+    cfg["has_ffmpeg"] = await app.encoder.has_ffmpeg()
+
+    return APIResponse(
+        status=200,
+        result=cfg
+    )
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])

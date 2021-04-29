@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fluent.runtime import FluentBundle, FluentResource
 
-from tsundoku import app, git
+from tsundoku import app, database
 from tsundoku.fluent import get_injector
 
 fluent = get_injector(["cmdline"])
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         compare_locales(from_lang, to_lang)
     elif args.migrate:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(git.migrate())
+        loop.run_until_complete(database.migrate())
     elif args.create_user:
         username = input(fluent._("username") + " ")
         match = False

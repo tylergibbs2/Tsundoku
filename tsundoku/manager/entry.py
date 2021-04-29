@@ -115,6 +115,9 @@ class Entry:
                 WHERE id=?;
             """, new_state.value, self.id)
 
+        if new_state == "completed" and self.file_path is not None:
+            await self._app.encoder.encode(self.id)
+
         await self._handle_webhooks()
 
     async def set_path(self, new_path: Path) -> None:
