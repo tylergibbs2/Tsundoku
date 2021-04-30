@@ -1,6 +1,6 @@
+import asyncio
 import logging
 import os
-import subprocess
 import sys
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
@@ -19,24 +19,23 @@ from tsundoku.database import migrate
 logger = logging.getLogger("tsundoku")
 
 
-def run(args: str) -> Tuple[str, Optional[bytes]]:
+async def run(args: str) -> Tuple[str, Optional[bytes]]:
     git_loc = get_config_value("Tsundoku", "git_path")
     cmd = f"{git_loc} {args}"
 
-    output: Optional[bytes] = None
-    err: Optional[bytes] = None
+    stdout: Optional[bytes] = None
+    stderr: Optional[bytes] = None
 
     try:
         logger.debug(f"Git: Trying to execute '{cmd}' with shell")
-        p = subprocess.Popen(
+        proc = await asyncio.subprocess.create_subprocess_shell(
             cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=True
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
-        output, err = p.communicate()
+        stdout, stderr = await proc.communicate()
 
-        output_text = output.strip().decode()
+        output_text = stdout.strip().decode()
 
         logger.debug(f"Git: output: {output_text}")
     except OSError:
@@ -44,10 +43,10 @@ def run(args: str) -> Tuple[str, Optional[bytes]]:
     else:
         if "not found" in output_text or "not recognized as an internal or external command" in output_text:
             logger.debug(f"Git: Unable to find executable with command {cmd}")
-        elif "fatal: " in output_text or err:
+        elif "fatal: " in output_text or stderr:
             logger.error("Git: Returned bad info. Bad installation?")
 
-    return (output_text, err)
+    return output_text, stderr
 
 
 async def update() -> None:
@@ -60,7 +59,7 @@ async def update() -> None:
 
     logger.info("Tsundoku is updating...")
 
-    out, e = run("pull --ff-only")
+    out, _ = await run("pull --ff-only")
 
     if not out:
         logger.error("Git: Unable to download latest version")
@@ -74,14 +73,17 @@ async def update() -> None:
             logger.error(f"Git: Unable to update, {line}")
             return
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    proc = await asyncio.subprocess.create_subprocess_shell(
+        f"{sys.executable} -m pip install -r requirements.txt"
+    )
+    await proc.wait()
 
     await migrate()
 
     app.update_info = []
 
 
-def check_for_updates() -> None:
+async def check_for_updates() -> None:
     """
     Checks for updates from GitHub.
 
@@ -91,8 +93,8 @@ def check_for_updates() -> None:
     if is_docker:
         return
 
-    out, e = run("fetch")
-    out, e = run("rev-list --format=oneline HEAD..origin/master")
+    out, e = await run("fetch")
+    out, e = await run("rev-list --format=oneline HEAD..origin/master")
     if not out or e:
         return
 

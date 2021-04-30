@@ -118,7 +118,7 @@ async def update_check_needed() -> None:
 
     next_ = app.last_update_check + datetime.timedelta(hours=frequency)
     if next_ < datetime.datetime.utcnow():
-        git.check_for_updates()
+        await git.check_for_updates()
         app.last_update_check = datetime.datetime.utcnow()
 
 
@@ -139,7 +139,7 @@ async def setup_session() -> None:
     app.dl_client = Manager(app.session)
 
     app.update_info = []
-    git.check_for_updates()
+    await git.check_for_updates()
     app.last_update_check = datetime.datetime.utcnow()
 
 

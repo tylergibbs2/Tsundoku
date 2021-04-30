@@ -11,7 +11,6 @@ from quart_auth import current_user, login_required, login_user, logout_user
 from tsundoku import __version__ as version
 from tsundoku.blueprints.api import APIResponse
 from tsundoku.fluent import get_injector
-from tsundoku.git import check_for_updates, update
 from tsundoku.user import User
 from tsundoku.webhooks import WebhookBase
 
@@ -154,17 +153,6 @@ async def config() -> str:
     ctx["_"] = fluent.format_value
 
     return await render_template("config.html", **ctx)
-
-
-@ux_blueprint.route("/update", methods=["GET", "POST"])
-@login_required
-async def update_() -> Any:
-    if request.method == "GET":
-        check_for_updates()
-    else:
-        await update()
-
-    return redirect(url_for("ux.index"))
 
 
 @ux_blueprint.route("/login", methods=["GET", "POST"])
