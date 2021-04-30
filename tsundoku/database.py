@@ -171,6 +171,8 @@ async def backport_psql() -> None:
         FROM
             webhook_trigger;
     """)
+    await con.close()
+
     async with acquire() as sqlite:
         await sqlite.executemany("""
             INSERT INTO
@@ -219,8 +221,6 @@ async def backport_psql() -> None:
             VALUES
                 (:show_id, :base, :trigger);
         """, [dict(trigger) for trigger in webhook_trigger])
-
-    await con.close()
 
 
 async def migrate() -> None:
