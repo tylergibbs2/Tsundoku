@@ -22,6 +22,8 @@ act
 
 # Database
 tsundoku.db
+tsundoku.db-shm
+tsundoku.db-wal
 
 # Ignore built JS
 tsundoku/blueprints/ux/static/js/*.js
