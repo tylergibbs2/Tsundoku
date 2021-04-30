@@ -5,6 +5,7 @@ parsers = [
     "parsers.subsplease"
     ]
 polling_interval = 900
+complete_check_interval = 15
 do_update_checks = true
 check_every_n_days = 1
 git_path = git
