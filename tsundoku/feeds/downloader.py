@@ -4,6 +4,7 @@ import os
 import shutil
 from functools import partial, wraps
 from pathlib import Path
+from tsundoku.config import get_config_value
 from typing import Any, Optional
 
 import aiofiles.os
@@ -58,6 +59,19 @@ class Downloader:
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
 
+        self.update_config()
+
+    def update_config(self) -> None:
+        """
+        Updates the configuration for the task.
+        """
+        complete_check = get_config_value("Tsundoku", "complete_check_interval", 15)
+        try:
+            self.complete_check = int(complete_check)
+        except ValueError:
+            logger.error(f"'{complete_check}' is an invalid complete check interval, using default.")
+            self.complete_check = 15
+
     async def start(self) -> None:
         while True:
             try:
@@ -66,7 +80,8 @@ class Downloader:
                 import traceback
                 traceback.print_exc()
 
-            await asyncio.sleep(15)
+            await asyncio.sleep(self.complete_check)
+            self.update_config()
 
     def get_expression_mapping(self, title: str, season: str, episode: str, **kwargs: str) -> ExprDict:
         """

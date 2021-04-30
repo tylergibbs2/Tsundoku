@@ -53,13 +53,18 @@ class Poller:
         self.loop = asyncio.get_running_loop()
 
         self.current_parser: Any = None  # keeps track of the current parser
+        self.update_config()
 
-        interval = get_config_value("Tsundoku", "polling_interval")
+    def update_config(self) -> None:
+        """
+        Updates the configuration for the task.
+        """
+        interval = get_config_value("Tsundoku", "polling_interval", 900)
         try:
             self.interval = int(interval)
         except ValueError:
-            logger.error(f"'{interval}' is an invalid polling interval.")
-            raise Exception(f"'{interval}' is an invalid polling interval.")
+            logger.error(f"'{interval}' is an invalid polling interval, using default.")
+            self.interval = 900
 
     async def start(self) -> None:
         """
@@ -78,6 +83,7 @@ class Poller:
                 traceback.print_exc()
 
             await asyncio.sleep(self.interval)
+            self.update_config()
 
     def reset_rss_cache(self) -> None:
         """
