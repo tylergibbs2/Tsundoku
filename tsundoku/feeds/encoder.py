@@ -3,7 +3,7 @@ import logging
 import os
 from asyncio import create_subprocess_shell
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from quart import request
 
