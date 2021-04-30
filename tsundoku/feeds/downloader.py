@@ -4,12 +4,12 @@ import os
 import shutil
 from functools import partial, wraps
 from pathlib import Path
-from tsundoku.config import get_config_value
 from typing import Any, Optional
 
 import aiofiles.os
 import anitopy
 
+from tsundoku.config import get_config_value
 from tsundoku.manager import Entry, EntryState
 
 logger = logging.getLogger("tsundoku")
