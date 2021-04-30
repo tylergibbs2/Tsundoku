@@ -66,6 +66,13 @@ class Poller:
             logger.error(f"'{interval}' is an invalid polling interval, using default.")
             self.interval = 900
 
+        fuzzy_match_cutoff = get_config_value("Tsundoku", "fuzzy_match_cutoff", 90)
+        try:
+            self.fuzzy_match_cutoff = int(fuzzy_match_cutoff)
+        except ValueError:
+            logger.error(f"'{fuzzy_match_cutoff}' is an invalid fuzzy match cutoff, using default.")
+            self.fuzzy_match_cutoff = 90
+
     async def start(self) -> None:
         """
         The program will poll every n seconds, as specified
@@ -283,7 +290,7 @@ class Poller:
 
         match = await self.check_item_for_match(show_name)
 
-        if match is None or match.match_percent < 90:
+        if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None
 
         entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)

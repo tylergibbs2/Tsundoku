@@ -110,24 +110,26 @@ And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like 
 
 ```ini
 [Tsundoku]
-host = localhost         # IP that Tsundoku will be hosted at
-port = 6439              # Port to use for hosting
-parsers = [              # List of parsers in "parsers/"
+host = localhost             # IP that Tsundoku will be hosted at
+port = 6439                  # Port to use for hosting
+parsers = [                  # List of parsers in "parsers/"
     "parsers.subsplease"
     ]
-polling_interval = 900   # How often, in seconds, Tsundoku should check parsers
-do_update_checks = true  # Will always be false regardless of setting if in Docker
-check_every_n_days = 1   # How often (in days) to perform update checks
-git_path = git           # Path to Git executable, only needed for update checks
-locale = en              # Locale to use, see the "l10n" folder for valid locales
+polling_interval = 900       # How often, in seconds, Tsundoku should check parsers
+complete_check_interval = 15 # How often, in seconds, Tsundoku will check for completed items
+fuzzy_match_cutoff = 90      # The cutoff percent for show titles when searching RSS feeds
+do_update_checks = true      # Will always be false regardless of setting if in Docker
+check_every_n_days = 1       # How often (in days) to perform update checks
+git_path = git               # Path to Git executable, only needed for update checks
+locale = en                  # Locale to use, see the "l10n" folder for valid locales
 
-[TorrentClient]          # Torrent client connection info
-client = deluge          # Can be either 'deluge' or 'qbittorrent'
+[TorrentClient]              # Torrent client connection info
+client = deluge              # Can be either 'deluge' or 'qbittorrent'
 host = localhost
 port = 8112
-username = admin         # Only needed if using qBittorrent
+username = admin             # Only needed if using qBittorrent
 password = password
-secure = false           # Use HTTPS
+secure = false               # Use HTTPS
 ```
 
 ## Parsers

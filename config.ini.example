@@ -6,6 +6,7 @@ parsers = [
     ]
 polling_interval = 900
 complete_check_interval = 15
+fuzzy_match_cutoff = 90
 do_update_checks = true
 check_every_n_days = 1
 git_path = git
