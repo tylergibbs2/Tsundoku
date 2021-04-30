@@ -85,10 +85,10 @@ class Encoder:
             cfg = await con.fetchone()
 
         self.CRF = {
-            "high": 19,
-            "moderate": 23,
-            "low": 27
-        }.get(cfg["quality_preset"], 23)
+            "high": 18,
+            "moderate": 22,
+            "low": 26
+        }.get(cfg["quality_preset"], 22)
 
         if cfg["speed_preset"] not in VALID_SPEEDS:
             self.SPEED_PRESET = "medium"
@@ -143,7 +143,7 @@ class Encoder:
 
         outfile = infile.with_suffix(self.TEMP_SUFFIX)
         return (f"ffmpeg -hide_banner -loglevel error -i \"{infile}\" -map 0 -c copy -c:v {encoder} -crf {self.CRF}"
-                f" -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y \"{outfile}\"")
+                f" -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y \"{outfile}\"")
 
     async def encode(self, entry_id: int) -> None:
         """
