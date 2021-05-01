@@ -1,5 +1,4 @@
 import asyncio
-from asyncio.queues import Queue
 import datetime
 import importlib
 import importlib.util
@@ -7,6 +6,7 @@ import logging
 import os
 import secrets
 from asyncio.events import AbstractEventLoop
+from asyncio.queues import Queue
 from typing import Any, Union
 from uuid import uuid4
 
@@ -264,7 +264,7 @@ def run() -> None:
     except AttributeError:
         loop = asyncio.get_event_loop()
 
-    app.logging_queue = Queue(loop=loop)
+    app.logging_queue = Queue(loop=loop, maxsize=50)
     auth.init_app(app)
     app.run(
         host=host,

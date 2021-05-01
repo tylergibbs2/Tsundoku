@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from asyncio import QueueFull
 import logging
 from logging.config import dictConfig
 from typing import Any
@@ -18,7 +19,10 @@ class SocketHandler(logging.Handler):
         if not hasattr(self.app, "logging_queue"):
             return
 
-        self.app.logging_queue.put_nowait(self.format(record))
+        try:
+            self.app.logging_queue.put_nowait(self.format(record))
+        except QueueFull:
+            pass
 
 
 def setup_logging(app: Any) -> None:
