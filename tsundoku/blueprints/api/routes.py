@@ -193,7 +193,7 @@ async def delete_show_cache(show_id: int) -> APIResponse:
 
     .. :quickref: Shows; Deletes show metadata.
     """
-    logger.info(f"API - Deleting cache for Show {show_id}")
+    logger.info(f"API - Deleting cache for Show <s{show_id}>")
 
     show = await Show.from_id(show_id)
     await show.metadata.clear_cache()

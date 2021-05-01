@@ -81,13 +81,13 @@ class qBittorrentClient:
             "hashes": torrent_id
         }
 
-        logger.debug(f"Retrieving torrent state for hash '{torrent_id}'")
+        logger.debug(f"Retrieving torrent state for hash `{torrent_id}`")
         data = await self.request("get", "torrents", "info", params=payload)
         if not data or not data[0].get("state"):
             return False
 
         state = data[0].get("state")
-        logger.debug(f"Torrent {torrent_id} is '{state}'")
+        logger.debug(f"Torrent `{torrent_id}` is `{state}`")
         return state in ("checkingUP", "completed", "forcedUP", "pausedUP", "queuedUP", "stalledUP", "uploading")
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:

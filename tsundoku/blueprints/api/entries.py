@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from quart import current_app as app
@@ -6,6 +7,8 @@ from quart import request, views
 from tsundoku.manager import Entry
 
 from .response import APIResponse
+
+logger = logging.getLogger("tsundoku")
 
 
 class EntriesAPI(views.MethodView):
@@ -39,7 +42,7 @@ class EntriesAPI(views.MethodView):
 
         Returns
         -------
-        Union[dict, List[dict]]
+        APIResponse
             A dict or a list of dict containing
             the requested entry information.
         """
@@ -154,6 +157,9 @@ class EntriesAPI(views.MethodView):
             new_entry = await con.fetchone()
 
         entry = Entry(app, new_entry)
+
+        logger.info(f"Entry Manually Added - <e{entry.id}>")
+
         await entry._handle_webhooks()
 
         return APIResponse(
@@ -177,6 +183,8 @@ class EntriesAPI(views.MethodView):
                     show_entry
                 WHERE id=?;
             """, entry_id)
+
+        logger.info(f"Entry Deleted - <e{entry_id}>")
 
         return APIResponse(
             result=True

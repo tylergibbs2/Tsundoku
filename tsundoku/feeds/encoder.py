@@ -177,7 +177,7 @@ class Encoder:
         try:
             ret = await self._encode(entry_id)
         except Exception as e:
-            logger.error(f"Failed to encode entry #{entry_id}: {e}")
+            logger.error(f"Failed to encode <e{entry_id}>: {e}")
 
         if not ret and self.RETRY_ON_FAIL:
             await self.encode(entry_id)
@@ -234,28 +234,28 @@ class Encoder:
             entry = await con.fetchone()
 
         if entry["file_path"] is None:
-            logger.warn(f"Error when attempting to encode entry ID #{entry_id}: file path is None")
+            logger.warn(f"Error when attempting to encode entry <e{entry_id}>: file path is None")
             return False
         elif entry["current_state"] != "completed":
-            logger.warn(f"Error when attempting to encode entry ID #{entry_id}: cannot encode a non-completed entry")
+            logger.warn(f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry")
             return False
 
-        logger.debug(f"Starting new encode process for entry ID #{entry_id}...")
+        logger.debug(f"Starting new encode process for entry <e{entry_id}>...")
 
         infile = Path(entry["file_path"])
         if not infile.exists():
-            logger.warn(f"Error when attemping to encode entry ID #{entry_id}: input fp does not exist")
+            logger.warn(f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist")
             return False
         elif not infile.is_file() or infile.is_symlink():
             logger.warn(
-                f"Error when attemping to encode entry ID #{entry_id}: input fp is not a file, or is a symlink")
+                f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink")
             return False
 
         cmd = self.build_cmd(entry_id, infile)
         try:
             await create_subprocess_shell(cmd)
         except Exception as e:
-            logger.error(f"Failed starting new encode for entry ID #{entry_id}: {e}")
+            logger.error(f"Failed starting new encode for entry <e{entry_id}>: {e}")
         else:
             self.__active_encodes += 1
             file_size = os.path.getsize(str(infile))
@@ -313,11 +313,11 @@ class Encoder:
         str
             Empty dict response.
         """
-        logger.debug(f"Encode started for entry ID #{entry_id}")
+        logger.debug(f"Encode started for entry <e{entry_id}>")
         last_received = {}
         async for data in request.body:
             last_received = self.process_progress_data(data)
-            logger.debug(f"Encode progress entry ID #{entry_id}: {last_received.get('out_time')}")
+            logger.debug(f"Encode progress entry <e{entry_id}>: `{last_received.get('out_time')}`")
 
         self.__active_encodes -= 1
         await self.encode_next()
@@ -327,7 +327,7 @@ class Encoder:
         return "{}"
 
     async def handle_finished(self, entry_id: int) -> None:
-        logger.debug(f"Encode finished for entry ID #{entry_id}")
+        logger.debug(f"Encode finished for entry <e{entry_id}>")
         async with self.app.acquire_db() as con:
             await con.execute("""
                 SELECT
@@ -340,7 +340,7 @@ class Encoder:
             entry_path = await con.fetchval()
 
             if entry_path is None:
-                logger.warn(f"Error when finalizing encode for entry ID #{entry_id}: file path is None")
+                logger.warn(f"Error when finalizing encode for entry <e{entry_id}>: file path is None")
                 return
 
             original = Path(entry_path)
@@ -358,7 +358,7 @@ class Encoder:
             """, encoded_size, entry_id)
 
         await move(encoded, original)
-        logger.debug(f"Encode moved for entry ID #{entry_id}")
+        logger.debug(f"Encode moved for entry <e{entry_id}>")
 
     async def has_ffmpeg(self) -> bool:
         """

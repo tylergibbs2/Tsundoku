@@ -137,7 +137,7 @@ class ShowsAPI(views.MethodView):
                 SELECT (?), id FROM webhook_base;
             """, show.id_)
 
-        logger.info("New Show Added - Preparing to Check for New Releases")
+        logger.info(f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases")
         app.poller.reset_rss_cache()
         await app.poller.poll()
 
@@ -203,7 +203,7 @@ class ShowsAPI(views.MethodView):
         await show.update()
 
         if do_poll:
-            logger.info("Existing Show Updated - Preparing to Check for New Releases")
+            logger.info(f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases")
             app.poller.reset_rss_cache()
             await app.poller.poll()
 
@@ -231,6 +231,8 @@ class ShowsAPI(views.MethodView):
                     shows
                 WHERE id=?;
             """, show_id)
+
+        logger.info(f"Show Deleted - <s{show_id}>")
 
         return APIResponse(
             result=True

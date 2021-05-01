@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from sqlite3 import Row
@@ -11,6 +12,8 @@ from tsundoku.webhooks.webhook import Webhook
 
 from .entry import Entry
 from .kitsu import KitsuManager
+
+logger = logging.getLogger("tsundoku")
 
 
 @dataclass
@@ -113,6 +116,7 @@ class Show:
             show = await con.fetchone()
 
         if not show:
+            logger.error(f"Failed to retrieve show with ID #{id_}")
             raise Exception(f"Failed to retrieve show with ID #{id_}")
 
         metadata = await KitsuManager.from_show_id(show["id_"])

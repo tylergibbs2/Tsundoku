@@ -63,14 +63,14 @@ class Poller:
         try:
             self.interval = int(interval)
         except ValueError:
-            logger.error(f"'{interval}' is an invalid polling interval, using default.")
+            logger.error(f"`{interval}` is an invalid polling interval, using default.")
             self.interval = 900
 
         fuzzy_match_cutoff = get_config_value("Tsundoku", "fuzzy_match_cutoff", 90)
         try:
             self.fuzzy_match_cutoff = int(fuzzy_match_cutoff)
         except ValueError:
-            logger.error(f"'{fuzzy_match_cutoff}' is an invalid fuzzy match cutoff, using default.")
+            logger.error(f"`{fuzzy_match_cutoff}` is an invalid fuzzy match cutoff, using default.")
             self.fuzzy_match_cutoff = 90
 
     async def start(self) -> None:
@@ -130,9 +130,9 @@ class Poller:
             if not items:
                 continue
 
-            logger.info(f"{parser.name} - Checking for New Releases...")
+            logger.info(f"`{parser.name}` - Checking for New Releases...")
             found += await self.check_feed(items)
-            logger.info(f"{parser.name} - Checked for New Releases")
+            logger.info(f"`{parser.name}` - Checked for New Releases")
 
         self.current_parser = None
 
@@ -280,7 +280,7 @@ class Poller:
             show_episode = self.current_parser.get_episode_number(torrent_name)
         except Exception as e:
             logger.error(
-                f"Parsing Error - {self.current_parser.name}@{self.current_parser.version}: {e}")
+                f"Parsing Error - `{self.current_parser.name}@{self.current_parser.version}`: {e}")
             return None
 
         if show_episode is None:
@@ -298,7 +298,7 @@ class Poller:
             return None
 
         logger.info(
-            f"{self.current_parser.name} - Release Found - {show_name}, {show_episode}")
+            f"{self.current_parser.name} - Release Found for <s{match.matched_id}>, episode {show_episode}")
 
         magnet_url = await self.get_torrent_link(item)
         await self.app.downloader.begin_handling(

@@ -616,19 +616,19 @@ class Webhook:
             logger.warn("Webhooks - Attempted to send webhook, but the base webhook was invalid")
             return None
 
-        logger.debug(f"Webhooks - Generating payload for Webhook with show ID {self.show_id}")
+        logger.debug(f"Webhooks - Generating payload for webhook for <s{self.show_id}>")
         payload = await self.generate_payload(episode, event)
 
         if not payload:
-            logger.warn(f"Webhooks - Failed to generate a valid payload for Webhook with show ID {self.show_id}")
+            logger.warn(f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>")
             return None
 
-        logger.debug(f"Webhooks - Payload generated for Webhook with show ID {self.show_id}")
+        logger.debug(f"Webhooks - Payload generated for webhook for <s{self.show_id}>")
 
-        logger.debug(f"Webhooks - Webhook for show {self.show_id} sending payload...")
+        logger.debug(f"Webhooks - Webhook for show <s{self.show_id}> sending payload...")
 
         try:
             await self._app.session.post(self.base.url, json=payload)
-            logger.debug(f"Webhooks - Webhook for show {self.show_id} payload sent")
+            logger.debug(f"Webhooks - Webhook for show <s{self.show_id}> payload sent")
         except Exception:
             pass

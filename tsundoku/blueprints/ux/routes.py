@@ -1,11 +1,12 @@
 import os
-from typing import Any
+from typing import Any, Union
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import Blueprint
+from quart import Blueprint, Response
 from quart import current_app as app
-from quart import flash, redirect, render_template, request, url_for
+from quart import (flash, redirect, render_template, request, send_file,
+                   url_for, websocket)
 from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
@@ -155,6 +156,27 @@ async def config() -> str:
     return await render_template("config.html", **ctx)
 
 
+@ux_blueprint.route("/logs", methods=["GET"])
+@login_required
+async def logs() -> Union[str, Response]:
+    if request.args.get("dl"):
+        return await send_file(
+            "tsundoku.log",
+            as_attachment=True
+        )
+
+    ctx = {}
+
+    resources = [
+        "base"
+    ]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
+
+    return await render_template("logs.html", **ctx)
+
+
 @ux_blueprint.route("/login", methods=["GET", "POST"])
 async def login() -> Any:
     if await current_user.is_authenticated:
@@ -220,3 +242,11 @@ async def login() -> Any:
 async def logout() -> Any:
     logout_user()
     return redirect(url_for("ux.index"))
+
+
+@ux_blueprint.websocket("/ws/logs")
+async def logs_ws() -> None:
+    await websocket.send("ACCEPT")
+    while True:
+        record = await app.logging_queue.get()
+        await websocket.send(record)

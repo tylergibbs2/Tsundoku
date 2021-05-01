@@ -5,9 +5,9 @@ page-shows = Shows
 page-nyaa = Nyaa Search
 
 category-settings = Settings
-page-integrations = Integrations
 page-webhooks = Webhooks
 page-config = Config
+page-logs = Logs
 
 logout-button = Logout
 

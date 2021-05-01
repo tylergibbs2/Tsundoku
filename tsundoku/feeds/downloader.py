@@ -69,7 +69,7 @@ class Downloader:
         try:
             self.complete_check = int(complete_check)
         except ValueError:
-            logger.error(f"'{complete_check}' is an invalid complete check interval, using default.")
+            logger.error(f"`{complete_check}` is an invalid complete check interval, using default.")
             self.complete_check = 15
 
     async def start(self) -> None:
@@ -177,7 +177,7 @@ class Downloader:
         entry = Entry(self.app, entry)
         await entry.set_state(EntryState.downloading)
 
-        logger.info(f"Release Marked as Downloading - {show_id}, {episode}")
+        logger.info(f"Release Marked as Downloading - <e{entry.id}>")
 
         return entry.id
 
@@ -197,7 +197,7 @@ class Downloader:
             The new path of the moved file.
         """
         if entry.file_path is None:
-            logger.error("entry.file_path is None?")
+            logger.error(f"<e{entry.id}> file path is None?")
             return None
 
         async with self.app.acquire_db() as con:
@@ -275,7 +275,7 @@ class Downloader:
         if entry.file_path is None:
             # This can't really happen but it's probably best to check
             # just in case the download client returns an incorrect fp.
-            logger.error("entry.file_path is None?")
+            logger.error(f"<e{entry.id}> file_path is None?")
             return None
 
         async with self.app.acquire_db() as con:
@@ -312,7 +312,7 @@ class Downloader:
             new_path = entry.file_path.with_name(name + suffix)
             await aiofiles.os.rename(entry.file_path, new_path)
         except PermissionError:
-            logger.error("Error Renaming Release - Invalid Permissions")
+            logger.error(f"Error Renaming Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
             logger.error(f"Error Renaming Release - {e}")
         else:
@@ -348,7 +348,7 @@ class Downloader:
                 parsed = anitopy.parse(subpath.name)
             except Exception:
                 logger.debug(
-                    f"anitopy - Could not parse '{subpath.name}', skipping")
+                    f"Anitopy - Could not parse `{subpath.name}`, skipping")
                 continue
 
             try:
@@ -370,19 +370,17 @@ class Downloader:
         entry: Entry
             The object of the entry in the database.
         """
-        logger.info(f"Checking Release Status - {entry}")
+        logger.info(f"Checking Release Status - <e{entry.id}>")
 
         # Initial downloading check. This conditional branch is essentially
         # waiting for the downloaded file to appear in the file system.
         if entry.state == EntryState.downloading:
             path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
             if not path:
-                show_id = entry.show_id
-                episode = entry.episode
-                logger.error(f"Show Entry with ID {show_id} Episode {episode} missing from download client.")
+                logger.error(f"Entry <e{entry.id}> missing from download client.")
                 return
             elif not path.parent.is_dir():
-                logger.error(f"'{path}' could not be read")
+                logger.error(f"<e{entry.id}>, `{path}` could not be read")
                 return
 
             await entry.set_path(path)
@@ -396,7 +394,7 @@ class Downloader:
         # downloaded by the torrent client at this point in time.
         is_completed = await self.app.dl_client.check_torrent_completed(entry.torrent_hash)
         if not is_completed:
-            logger.info(f"{entry} torrent state is not completed")
+            logger.info(f"<e{entry.id}> torrent state is not completed")
             return
 
         # This ensures that the path is an actual file rather than
@@ -406,7 +404,7 @@ class Downloader:
         if path is None:
             return
 
-        logger.info(f"Found Release to Process - {entry}")
+        logger.info(f"Found Release to Process - <e{entry.id}>")
 
         # These aren't elifs due to the fact that processing can
         # stop at any time and the ifs are actually used to continue
@@ -416,30 +414,30 @@ class Downloader:
         if entry.state == EntryState.downloading:
             await entry.set_state(EntryState.downloaded)
             await entry.set_path(path)
-            logger.info(f"Release Marked as Downloaded - {entry}")
+            logger.info(f"Release Marked as Downloaded - <e{entry.id}>")
 
         if entry.state == EntryState.downloaded:
-            logger.info(f"Preparing to Rename Release - {entry}")
+            logger.info(f"Preparing to Rename Release - <e{entry.id}>")
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
                 return
 
             await entry.set_state(EntryState.renamed)
             await entry.set_path(renamed_path)
-            logger.info(f"Release Marked as Renamed - {entry}")
+            logger.info(f"Release Marked as Renamed - <e{entry.id}>")
 
         if entry.state == EntryState.renamed:
-            logger.info(f"Preparing to Move Release - {entry}")
+            logger.info(f"Preparing to Move Release - <e{entry.id}>")
             moved_path = await self.handle_move(entry)
             if moved_path is None:
                 return
 
             await entry.set_state(EntryState.moved)
             await entry.set_path(moved_path)
-            logger.info(f"Release Marked as Moved - {entry}")
+            logger.info(f"Release Marked as Moved - <e{entry.id}>")
 
         await entry.set_state(EntryState.completed)
-        logger.info(f"Release Marked as Completed - {entry}")
+        logger.info(f"Release Marked as Completed - <e{entry.id}>")
 
     async def check_show_entries(self) -> None:
         """

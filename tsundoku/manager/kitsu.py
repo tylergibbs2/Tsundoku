@@ -83,7 +83,7 @@ class KitsuManager:
         KitsuManager
             A KitsuManager for a show.
         """
-        logger.info(f"Fetching Kitsu ID for Show {show_name}")
+        logger.info(f"Fetching Kitsu ID for {show_name}")
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
             payload = {
@@ -146,7 +146,7 @@ class KitsuManager:
         Optional[KitsuManager]
             A KitsuManager for a show.
         """
-        logger.info(f"Fetching Kitsu ID for Show #{show_id}")
+        logger.info(f"Fetching Kitsu ID for <s{show_id}>")
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
             payload = {
@@ -207,7 +207,7 @@ class KitsuManager:
         KitsuManager
             A KitsuManager for the show.
         """
-        logger.debug(f"Retrieving existing Kitsu info for Show ID #{show_id}")
+        logger.debug(f"Retrieving existing Kitsu info for <s{show_id}>")
 
         async with app.acquire_db() as con:
             await con.execute("""
@@ -293,7 +293,7 @@ class KitsuManager:
             if url:
                 return url
 
-        logger.info(f"Retrieving new poster URL for Kitsu ID {self.kitsu_id} from Kitsu")
+        logger.info(f"Retrieving new poster URL for <s{self.show_id}> from Kitsu")
 
         to_cache = None
         async with aiohttp.ClientSession() as sess:
@@ -303,7 +303,7 @@ class KitsuManager:
                     if resp.status == 404:
                         continue
 
-                    logger.info(f"New poster found for Kitsu ID {self.kitsu_id} at [{size}] quality")
+                    logger.info(f"New poster found for <s{self.show_id}> at [{size}] quality")
                     to_cache = url
                     break
 

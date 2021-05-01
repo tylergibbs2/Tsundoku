@@ -120,7 +120,7 @@ class SearchResult:
             try:
                 parsed = anitopy.parse(file)
             except Exception:
-                logger.warn(f"anitopy - Could not Parse '{file}', skipping")
+                logger.warn(f"Anitopy - Could not Parse `{file}`, skipping")
                 continue
 
             if "anime_type" in parsed.keys():
@@ -261,7 +261,7 @@ class NyaaSearcher:
             try:
                 anitopy.parse(item["title"])
             except Exception:
-                logger.warn(f"Anitopy - Could not Parse '{item['title']}', skipping")
+                logger.warn(f"Anitopy - Could not Parse `{item['title']}`, skipping")
                 continue
 
             found.append(SearchResult.from_dict(app, item))

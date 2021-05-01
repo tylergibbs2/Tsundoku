@@ -6,7 +6,8 @@ module.exports = {
     index: './tsundoku/blueprints/ux/static/ts/index/app.tsx',
     nyaa: './tsundoku/blueprints/ux/static/ts/nyaa/app.tsx',
     webhooks: './tsundoku/blueprints/ux/static/ts/webhooks/app.tsx',
-    config: './tsundoku/blueprints/ux/static/ts/config/app.tsx'
+    config: './tsundoku/blueprints/ux/static/ts/config/app.tsx',
+    logs: './tsundoku/blueprints/ux/static/ts/logs/app.tsx'
   },
   module: {
     rules: [

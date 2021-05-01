@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.queues import Queue
 import datetime
 import importlib
 import importlib.util
@@ -6,7 +7,6 @@ import logging
 import os
 import secrets
 from asyncio.events import AbstractEventLoop
-from logging.config import dictConfig
 from typing import Any, Union
 from uuid import uuid4
 
@@ -26,6 +26,7 @@ from tsundoku.database import acquire, migrate
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Poller
 from tsundoku.feeds.encoder import Encoder
+from tsundoku.log import setup_logging
 from tsundoku.user import User
 
 hasher = PasswordHasher()
@@ -46,36 +47,7 @@ class QuartConfig:
 
 
 app.config.from_object(QuartConfig())
-
-
-dictConfig({
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        }
-    },
-    "handlers": {
-        "stream": {
-            "class": "logging.StreamHandler",
-            "formatter": "default"
-        },
-        "file": {
-            "filename": "tsundoku.log",
-            "class": "logging.FileHandler",
-            "formatter": "default",
-            "encoding": "utf-8"
-        }
-    },
-    "loggers": {
-        "tsundoku": {
-            "handlers": ["stream", "file"],
-            "level": get_config_value("Tsundoku", "log_level", default="info").upper(),
-            "propagate": True
-        }
-    }
-})
+setup_logging(app)
 
 
 async def insert_user(username: str, password: str) -> None:
@@ -182,36 +154,36 @@ def _load_parsers() -> None:
         spec: Any = importlib.util.find_spec(parser)
 
         if spec is None:
-            logger.error(f"Parser '{parser}' Not Found")
+            logger.error(f"Parser `{parser}` Not Found")
             raise exceptions.ParserNotFound(parser)
 
         lib = importlib.util.module_from_spec(spec)
 
         try:
             spec.loader.exec_module(lib)
-        except Exception as e:
-            logger.error(f"Parser '{parser}' Failed")
-            raise exceptions.ParserFailed(parser, e) from e
+        except Exception:
+            logger.error(f"Parser `{parser}` Failed")
+            continue
 
         try:
             setup = getattr(lib, "setup")
         except AttributeError:
-            logger.error(f"Parser '{parser}' Missing Setup Function")
-            raise exceptions.ParserMissingSetup(parser)
+            logger.error(f"Parser `{parser}` Missing Setup Function")
+            continue
 
         try:
             new_context = app.app_context()
             parser_object = setup(new_context.app)
             for func in required_attrs:
                 if not hasattr(parser_object, func):
-                    logger.error(f"Parser '{parser}' missing attr/function '{func}'")
-                    raise exceptions.ParserMissingRequiredFunction(f"{parser}: missing attr/function '{func}'")
+                    logger.error(f"Parser `{parser}` missing attr/function `{func}`")
+                    continue
             app.rss_parsers.append(parser_object)
         except Exception as e:
-            logger.error(f"Parser '{parser}' Failed: {e}")
-            raise exceptions.ParserFailed(parser, e) from e
+            logger.error(f"Parser `{parser}` Failed: {e}")
+            continue
 
-        logger.info("Loaded Parser {0.name} v{0.version}".format(parser_object))
+        logger.info("Loaded Parser `{0.name} v{0.version}`".format(parser_object))
 
 
 @app.before_serving
@@ -292,6 +264,7 @@ def run() -> None:
     except AttributeError:
         loop = asyncio.get_event_loop()
 
+    app.logging_queue = Queue(loop=loop)
     auth.init_app(app)
     app.run(
         host=host,

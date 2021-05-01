@@ -94,6 +94,9 @@ class NyaaAPI(views.MethodView):
             show_id,
             torrent_link
         )
+
+        logger.info(f"Processing new search result for Show <s{show_id}>")
+
         entries = await search_result.process(overwrite=overwrite)
 
         return APIResponse(

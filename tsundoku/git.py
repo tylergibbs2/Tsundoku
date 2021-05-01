@@ -27,7 +27,7 @@ async def run(args: str) -> Tuple[str, Optional[bytes]]:
     stderr: Optional[bytes] = None
 
     try:
-        logger.debug(f"Git: Trying to execute '{cmd}' with shell")
+        logger.debug(f"Git: Trying to execute `{cmd}` with shell")
         proc = await asyncio.subprocess.create_subprocess_shell(
             cmd,
             stdout=asyncio.subprocess.PIPE,
