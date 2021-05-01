@@ -43,7 +43,7 @@ const LogsApp = () => {
     return (
         <>
             <div class="columns" style={{
-                height: "10%"
+                height: "12%"
             }}>
                 <div class="column is-full">
                     <h1 class="title is-inline">{_("logs-page-title")}</h1>
@@ -54,15 +54,9 @@ const LogsApp = () => {
             <div class="box mb-0" style={{
                 display: "flex",
                 overflow: "hidden",
-                height: "85%"
+                height: "83%"
             }}>
-                <div style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                    overflowAnchor: "none",
-                    alignItems: "stretch"
-                }}>
+                <div class="logrow-container">
                     {messageHistory.current.map((msg, idx) => (
                         <LogRow
                             key={idx}
@@ -118,12 +112,12 @@ const LogRow = ({ row, shows }: LogRowParams) => {
     }).format(dt);
 
     return (
-        <div class="is-size-5" style={{
-            position: "relative",
-            flex: "0 0 auto"
-        }}>
-            {localized} {logLevel} <b>{match.groups.name}</b>: <Content raw_content={match.groups.content} shows={shows} />
-        </div>
+        <>
+            <div></div>
+            <div class="is-size-5">
+                {localized} {logLevel} <b>{match.groups.name}</b>: <Content raw_content={match.groups.content} shows={shows} />
+            </div>
+        </>
     );
 }
 
@@ -217,8 +211,22 @@ interface ContextParams {
 }
 
 const Context = ({ show, entry }: ContextParams) => {
+    const [isUp, setIsUp] = useState<boolean>(true);
+    let ref = useRef(null);
+
+    const calcPos = () => {
+        if (!ref.current) {
+            setIsUp(true);
+            return;
+        }
+        let elem = ref.current;
+        let rect = elem.getBoundingClientRect();
+        if (isUp)
+            setIsUp(elem.clientHeight < rect.top);
+    }
+
     return (
-        <div class="dropdown is-hoverable is-up">
+        <div onMouseOver={calcPos} class={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
             <div class="dropdown-trigger">
                 <a>
                     {!entry &&
@@ -232,21 +240,26 @@ const Context = ({ show, entry }: ContextParams) => {
                     }
                 </a>
             </div>
-            <div class="dropdown-menu" style={{
-                width: "12rem"
+            <div ref={ref} class="dropdown-menu" style={{
+                width: "20rem"
             }}>
                 <div class="dropdown-content">
                     <div class="dropdown-item has-text-centered">
-                        <b>{show.title}</b>
+                        <div class="columns is-vcentered">
+                            <div class="column is-4">
+                                <figure class="image is-3by4">
+                                    <img loading="lazy" src={show.metadata.poster} />
+                                </figure>
+                            </div>
+                            <div class="column is-8">
+                                <b>{show.title}</b>
+                            </div>
+                        </div>
                     </div>
                     <div class="dropdown-item has-text-centered">
                         {ReactHtmlParser(show.metadata.html_status)}
                     </div>
-                    <div class="dropdown-item has-text-centered">
-                        <figure class="image is-3by4">
-                            <img loading="lazy" src={show.metadata.poster} />
-                        </figure>
-                    </div>
+
                     {entry &&
                         <div class="dropdown-item has-text-centered">
                             <b>{_("episode-prefix-state", {
