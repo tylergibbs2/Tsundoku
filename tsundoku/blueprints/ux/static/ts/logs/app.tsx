@@ -232,7 +232,9 @@ const Context = ({ show, entry }: ContextParams) => {
                     }
                 </a>
             </div>
-            <div class="dropdown-menu">
+            <div class="dropdown-menu" style={{
+                width: "12rem"
+            }}>
                 <div class="dropdown-content">
                     <div class="dropdown-item has-text-centered">
                         <b>{show.title}</b>
