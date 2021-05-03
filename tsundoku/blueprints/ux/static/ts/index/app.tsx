@@ -134,8 +134,17 @@ const IndexApp = () => {
                 sortFunc = (a: Show, b: Show) => {
                     let aEntries = [...a.entries].sort(entrySortFunc);
                     let bEntries = [...b.entries].sort(entrySortFunc);
-                    let dateA = new Date(aEntries[0].last_update);
-                    let dateB = new Date(bEntries[0].last_update);
+                    let dateA, dateB;
+                    try {
+                        dateA = new Date(aEntries[0].last_update);
+                    } catch {
+                        dateA = new Date(null);
+                    }
+                    try {
+                        dateB = new Date(bEntries[0].last_update);
+                    } catch {
+                        dateB = new Date(null);
+                    }
                     return dateA > dateB ? first : second;
                 }
                 newShows.sort(sortFunc);
