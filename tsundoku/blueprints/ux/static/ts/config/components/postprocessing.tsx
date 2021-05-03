@@ -139,13 +139,13 @@ const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) 
                         <h2 class="subtitle is-6">{_("process-quality-subtitle")}</h2>
                         <div class="columns is-fullwidth mb-0">
                             <div class="column">
-                                <strong title="CRF 27">{_("encode-quality-low")}</strong>
+                                <strong title={`CRF 26 (${_("encode-quality-low-desc")})`}>{_("encode-quality-low")}</strong>
                             </div>
                             <div class="column has-text-centered">
-                                <strong title="CRF 23">{_("encode-quality-moderate")}</strong>
+                                <strong title={`CRF 22 (${_("encode-quality-moderate-desc")})`}>{_("encode-quality-moderate")}</strong>
                             </div>
                             <div class="column" style={{ textAlign: "right" }}>
-                                <strong title="CRF 19">{_("encode-quality-high")}</strong>
+                                <strong title={`CRF 18 (${_("encode-quality-high-desc")})`}>{_("encode-quality-high")}</strong>
                             </div>
                         </div>
                         <input class="slider is-fullwidth is-info mt-0" step="1" min="0" max="2" type="range" disabled={disabled} value={getQualityValue()} onChange={inputQualityValue}></input>

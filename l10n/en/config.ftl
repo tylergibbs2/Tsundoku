@@ -20,6 +20,10 @@ encode-quality-low = Low
 encode-quality-moderate = Moderate
 encode-quality-high = High
 
+encode-quality-low-desc = actually really bad
+encode-quality-moderate-desc = meh
+encode-quality-high-desc = visually lossless
+
 process-speed-title = Speed Preset
 process-speed-subtitle = Faster speeds will result in lower quality and larger file sizes
 
