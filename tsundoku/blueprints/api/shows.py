@@ -126,7 +126,8 @@ class ShowsAPI(views.MethodView):
             desired_format=desired_format,
             desired_folder=desired_folder,
             season=season,
-            episode_offset=episode_offset
+            episode_offset=episode_offset,
+            watch=True
         )
 
         async with app.acquire_db() as con:

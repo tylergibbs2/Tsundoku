@@ -222,12 +222,13 @@ class Poller:
             await con.execute("""
                 SELECT
                     id,
-                    title
+                    title,
+                    watch
                 FROM
                     shows;
             """)
             desired_shows = await con.fetchall()
-        show_list = {show["title"]: show["id"] for show in desired_shows}
+        show_list = {show["title"]: show["id"] for show in desired_shows if show["watch"]}
 
         if not show_list:
             return None

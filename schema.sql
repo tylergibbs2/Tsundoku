@@ -33,6 +33,7 @@ CREATE TABLE shows (
     desired_folder TEXT,
     season INTEGER NOT NULL,
     episode_offset INTEGER NOT NULL DEFAULT 0,
+    watch BOOLEAN NOT NULL DEFAULT '1',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

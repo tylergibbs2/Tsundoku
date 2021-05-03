@@ -46,6 +46,7 @@ class ShowCollection:
                     desired_folder,
                     season,
                     episode_offset,
+                    watch,
                     created_at
                 FROM
                     shows

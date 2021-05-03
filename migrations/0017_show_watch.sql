@@ -1,0 +1,4 @@
+ALTER TABLE
+    shows
+ADD COLUMN
+    watch BOOLEAN NOT NULL DEFAULT '1';
