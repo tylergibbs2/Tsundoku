@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from asyncio import Queue
+from functools import wraps
 import os
 from typing import Any, Union
 
@@ -244,9 +248,22 @@ async def logout() -> Any:
     return redirect(url_for("ux.index"))
 
 
+def collect_websocket(func):  # type: ignore
+    @wraps(func)
+    async def wrapper(*args, **kwargs):  # type: ignore
+        queue = Queue()  # type: ignore
+        app.connected_websockets.add(queue)
+        try:
+            return await func(queue, *args, **kwargs)
+        finally:
+            app.connected_websockets.remove(queue)
+    return wrapper
+
+
 @ux_blueprint.websocket("/ws/logs")
-async def logs_ws() -> None:
+@collect_websocket
+async def logs_ws(queue: Queue[str]) -> None:
     await websocket.send("ACCEPT")
     while True:
-        record = await app.logging_queue.get()
+        record = await queue.get()
         await websocket.send(record)

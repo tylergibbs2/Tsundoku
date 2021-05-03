@@ -37,6 +37,7 @@ auth.user_class = User
 app: Any = Quart("Tsundoku", static_folder=None)
 
 app.seen_titles = set()
+app.connected_websockets = set()
 app._tasks = []
 logger = logging.getLogger("tsundoku")
 

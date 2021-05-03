@@ -19,10 +19,14 @@ class SocketHandler(logging.Handler):
         if not hasattr(self.app, "logging_queue"):
             return
 
-        try:
-            self.app.logging_queue.put_nowait(self.format(record))
-        except QueueFull:
-            pass
+        if hasattr(self.app, "connected_websockets") and not len(self.app.connected_websockets):
+            return
+
+        for queue in self.app.connected_websockets:
+            try:
+                queue.put_nowait(self.format(record))
+            except QueueFull:
+                continue
 
 
 def setup_logging(app: Any) -> None:
