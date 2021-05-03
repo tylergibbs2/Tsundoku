@@ -225,8 +225,12 @@ const Context = ({ show, entry }: ContextParams) => {
             setIsUp(elem.clientHeight < rect.top);
     }
 
+    const makeUp = () => {
+        setIsUp(true);
+    }
+
     return (
-        <div onMouseOver={calcPos} class={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
+        <div onMouseOver={calcPos} onMouseOut={makeUp} class={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
             <div class="dropdown-trigger">
                 <a>
                     {!entry &&
