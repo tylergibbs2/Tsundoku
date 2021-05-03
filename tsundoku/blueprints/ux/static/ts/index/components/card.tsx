@@ -3,6 +3,7 @@ import { StateUpdater } from "preact/hooks";
 import { Show } from "../../interfaces";
 
 import ReactHtmlParser from "react-html-parser";
+import { IonIcon } from "../../icon";
 
 
 let resources = [
@@ -97,7 +98,7 @@ export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
             <div class="column is-2">
                 <button onClick={openModal} style={{ height: "100%" }} class="button is-outlined is-success is-large is-fullwidth">
                     <span class="icon">
-                        <i class="fa fa-plus"></i>
+                        <IonIcon name="add-circle" />
                     </span>
                 </button>
             </div>

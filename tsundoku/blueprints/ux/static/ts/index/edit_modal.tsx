@@ -3,6 +3,7 @@ import { useState, StateUpdater, useEffect } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { Show, Entry, Webhook } from "../interfaces";
 import * as humanizeDuration from "humanize-duration";
+import { IonIcon } from "../icon";
 
 
 let resources = [
@@ -405,7 +406,7 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
                 <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
                     <input type="text" class="input is-small" onInput={updateQuery} placeholder="Attack on Titan" disabled={isSearching} />
                     <span class="icon is-small is-left">
-                        <i class="fas fa-search"></i>
+                        <IonIcon name="search" />
                     </span>
                 </div>
             </div>
@@ -685,31 +686,31 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
                             <td>
                                 <span class="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-downloading')}>
-                                    <i class="fas fa-download"></i>
+                                    <IonIcon name="download" />
                                 </span>
                             </td>
                             <td>
                                 <span class="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-downloaded')}>
-                                    <i class="fas fa-save"></i>
+                                    <IonIcon name="save" />
                                 </span>
                             </td>
                             <td>
                                 <span class="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-renamed')}>
-                                    <i class="fas fa-pencil-alt"></i>
+                                    <IonIcon name="pencil-sharp" />
                                 </span>
                             </td>
                             <td>
                                 <span class="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-moved')}>
-                                    <i class="fas fa-file-export"></i>
+                                    <IonIcon name="arrow-forward-circle" />
                                 </span>
                             </td>
                             <td>
                                 <span class="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-completed')}>
-                                    <i class="fas fa-check-circle"></i>
+                                    <IonIcon name="checkmark-circle" />
                                 </span>
                             </td>
                         </tr>

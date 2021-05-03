@@ -4,6 +4,7 @@ import { getInjector } from "../../fluent";
 import * as humanizeDuration from "humanize-duration";
 
 import { Entry, Show } from "../../interfaces";
+import { IonIcon } from "../../icon";
 
 
 let resources = [
@@ -95,10 +96,10 @@ export const ListItem = ({ textFilter, filters, show, setCurrentModal, setActive
             <td class="is-vcentered">{timeDisplay}</td>
             <td class="is-vcentered">
                 <a class="button is-info mr-1" onClick={openEditModal} title={_("show-edit-link")}>
-                    <span class="icon"><i class="fa fa-pencil-alt"></i></span>
+                    <span class="icon"><IonIcon name="pencil-sharp" /></span>
                 </a>
                 <a class="button is-danger" onClick={openDeleteModal} title={_("show-delete-link")}>
-                    <span class="icon"><i class="fa fa-trash-alt"></i></span>
+                    <span class="icon"><IonIcon name="trash" /></span>
                 </a>
             </td>
         </tr>
@@ -119,7 +120,7 @@ export const AddShowLI = ({ setCurrentModal }: AddShowLIParams) => {
             <td colSpan={4}>
                 <button onClick={openModal} style={{ height: "100%" }} class="button is-outlined is-success is-large is-fullwidth">
                     <span class="icon">
-                        <i class="fa fa-plus"></i>
+                        <IonIcon name="add-circle" />
                     </span>
                 </button>
             </td>

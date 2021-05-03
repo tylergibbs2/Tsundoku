@@ -2,6 +2,7 @@ import { useState, StateUpdater } from "preact/hooks";
 
 import { NyaaSearchResult, NyaaIndividualResult } from "../interfaces";
 import { getInjector } from "../fluent";
+import { IonIcon } from "../icon";
 
 
 const NyaaSearchURL = "/api/v1/nyaa";
@@ -48,7 +49,7 @@ export const SearchBox = ({ setResults }: SearchBoxParams) => {
         <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
             <input class="input" type="text" placeholder={_("search-placeholder")} onInput={updateQuery} disabled={isSearching}></input>
             <span class="icon is-small is-left">
-                <i class="fas fa-search"></i>
+                <IonIcon name="search" />
             </span>
         </div>
     )
@@ -77,9 +78,9 @@ export const SearchTable = ({ setChoice, results }: SearchTableParams) => {
                         <th>{_("search-th-name")}</th>
                         <th>{_("search-th-size")}</th>
                         <th>{_("search-th-date")}</th>
-                        <th title={_("search-th-seeders")}><span class="icon"><i class="fas fa-arrow-up"></i></span></th>
-                        <th title={_("search-th-leechers")}><span class="icon"><i class="fas fa-arrow-down"></i></span></th>
-                        <th title={_("search-th-link")}><span class="icon"><i class="fas fa-link"></i></span></th>
+                        <th title={_("search-th-seeders")}><span class="icon"><IonIcon name="arrow-up" /></span></th>
+                        <th title={_("search-th-leechers")}><span class="icon"><IonIcon name="arrow-down" /></span></th>
+                        <th title={_("search-th-link")}><span class="icon"><IonIcon name="link" /></span></th>
                     </tr>
                 </thead>
                 <tbody>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
 
 
 let resources = [
@@ -61,7 +62,7 @@ export const APITokenComponent = () => {
             <div class="control">
                 <button onClick={setToken} title={_("api-key-refresh")} class={"button is-danger " + (isFetching ? "is-loading" : "")}>
                     <span class="icon">
-                        <i class="fas fa-sync-alt"></i>
+                        <IonIcon name="refresh" />
                     </span>
                 </button>
             </div>

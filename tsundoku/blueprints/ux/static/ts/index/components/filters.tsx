@@ -1,5 +1,6 @@
 import { StateUpdater } from "preact/hooks";
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
 
 let resources = [
     "base",
@@ -126,12 +127,12 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
                         <div class="field has-addons is-narrow">
                             <div class="control">
                                 <a class={"button " + (viewType === "cards" ? "is-info" : "")} onClick={cardView}>
-                                    <span class="icon"><i class="fas fa-portrait"></i></span>
+                                    <span class="icon"><IonIcon name="images" /></span>
                                 </a>
                             </div>
                             <div class="control">
                                 <a class={"button " + (viewType === "list" ? "is-info" : "")} onClick={listView}>
-                                    <span class="icon"><i class="fas fa-list"></i></span>
+                                    <span class="icon"><IonIcon name="list" /></span>
                                 </a>
                             </div>
                         </div>
@@ -139,7 +140,7 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
                             <div class="control has-icons-left">
                                 <input type="text" class="input is-pulled-right" onInput={filterSearch} placeholder="Attack on Titan"></input>
                                 <span class="icon is-small is-left">
-                                    <i class="fas fa-search"></i>
+                                    <IonIcon name="search" />
                                 </span>
                             </div>
                         </div>
@@ -198,9 +199,9 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
 
     let sortDisplayArrow: any;
     if (sortDirection === "+")
-        sortDisplayArrow = <span class="icon"><i class="fas fa-arrow-up"></i></span>
+        sortDisplayArrow = <span class="icon"><IonIcon name="arrow-up" /></span>
     else
-        sortDisplayArrow = <span class="icon"><i class="fas fa-arrow-down"></i></span>
+        sortDisplayArrow = <span class="icon"><IonIcon name="arrow-down" /></span>
 
     return (
         <div class="dropdown is-hoverable">
@@ -209,7 +210,7 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
                     {sortDisplayText}
                     {sortDisplayArrow}
                     <span class="icon is-small">
-                        <i class="fas fa-angle-down"></i>
+                        <IonIcon name="chevron-down" />
                     </span>
                 </button>
             </div>
@@ -236,7 +237,7 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
                             </div>
                             <div class="column is-2 is-offset-8">
                                 <span class="icon is-small">
-                                    <i class="fas fa-arrow-up"></i>
+                                    <IonIcon name="arrow-up" />
                                 </span>
                             </div>
                         </div>
@@ -248,7 +249,7 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
                             </div>
                             <div class="column is-2 is-offset-8">
                                 <span class="icon is-small">
-                                    <i class="fas fa-arrow-down"></i>
+                                    <IonIcon name="arrow-down" />
                                 </span>
                             </div>
                         </div>

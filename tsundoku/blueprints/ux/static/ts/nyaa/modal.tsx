@@ -4,6 +4,7 @@ import { toast } from "bulma-toast";
 import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
+import { IonIcon } from "../icon";
 
 
 let resources = [
@@ -99,7 +100,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                     <div class="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
                             <li class={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>
-                                <span class="icon is-small"><i class="fas fa-plus-circle"></i></span>
+                                <span class="icon is-small"><IonIcon name="add-circle" /></span>
                                 <span>{_("modal-tab-new")}</span>
                             </a></li>
                             <li class={addingToExisting ? "is-active" : ""}>
@@ -108,7 +109,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                                     style={shows.length ? {} : { cursor: "auto" }}
                                     class={shows.length ? "" : "has-text-grey-light"}
                                 >
-                                    <span class="icon is-small"><i class="fas fa-pen-square"></i></span>
+                                    <span class="icon is-small"><IonIcon name="pencil-sharp" /></span>
                                     <span>{_("modal-tab-existing")}</span>
                                 </a>
                             </li>
