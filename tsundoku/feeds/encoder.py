@@ -173,6 +173,7 @@ class Encoder:
             """, entry_id)
 
         if self.__active_encodes >= self.MAX_ENCODES:
+            logger.debug(f"Reached maximum encodes, queuing <e{entry_id}>")
             self.__encode_queue.append(entry_id)
             return
 
