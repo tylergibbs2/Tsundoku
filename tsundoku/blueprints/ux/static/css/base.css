@@ -50,3 +50,17 @@ html, body {
 .switch[type=checkbox] {
     position: fixed !important;
 }
+
+.form-columns {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-top: 0 !important;
+}
+
+.form-columns:last-child {
+    margin-bottom: 0 !important;
+}
+
+ion-icon {
+    pointer-events: none;
+}

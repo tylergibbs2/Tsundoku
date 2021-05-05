@@ -2,6 +2,7 @@ import { useState, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { Show } from "../interfaces";
+import { WatchButton } from "./components/watch_button";
 
 
 let resources = [
@@ -20,6 +21,17 @@ interface DeleteModalParams {
 
 export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModalParams) => {
     const [submitting, setSubmitting] = useState<boolean>(false);
+
+    const { register, handleSubmit, reset, setValue } = useForm({
+        defaultValues: {
+            "title": "",
+            "desired_format": "",
+            "desired_folder": "",
+            "season": 1,
+            "episode_offset": 0,
+            "watch": true
+        }
+    });
 
     const finalize = (show: Show) => {
         addShow(show);
@@ -40,7 +52,9 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModal
             <div class="modal-card">
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("add-modal-header")}</p>
-                    <button class="delete" onClick={cancel} aria-label="close"></button>
+                    <div class="buttons">
+                        <WatchButton setValue={setValue} />
+                    </div>
                 </header>
 
                 <section class="modal-card-body">
@@ -48,6 +62,9 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModal
                     <AddShowForm
                         setSubmitting={setSubmitting}
                         returnCallback={finalize}
+                        register={register}
+                        handleSubmit={handleSubmit}
+                        reset={reset}
                     />
 
                 </section>
@@ -65,19 +82,12 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModal
 interface AddShowFormParams {
     setSubmitting: StateUpdater<boolean>;
     returnCallback: any;
+    register: any;
+    handleSubmit: any;
+    reset: any;
 }
 
-const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
-
-    const { register, handleSubmit, reset } = useForm({
-        defaultValues: {
-            "title": "",
-            "desired_format": "",
-            "desired_folder": "",
-            "season": 1,
-            "episode_offset": 0
-        }
-    });
+const AddShowForm = ({ setSubmitting, returnCallback, register, handleSubmit, reset }: AddShowFormParams) => {
 
     const submitHandler = (data: any) => {
         setSubmitting(true);
@@ -109,66 +119,67 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     }
 
     return (
-        // @ts-ignore
         <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("add-form-name-tt")}>{_("add-form-name-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('title', { required: true })}
-                        class="input"
-                        type="text"
-                        placeholder={_("add-form-name-placeholder")} />
+            <div class="form-columns columns is-multiline">
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("add-form-name-tt")}>{_("add-form-name-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("title", { required: true })} class="input" type="text"
+                                placeholder={_("add-form-name-placeholder")} />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("add-form-desired-format-tt")}>{_("add-form-desired-format-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('desired_format')}
-                        class="input"
-                        type="text"
-                        placeholder="{n} - {s00e00}" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("add-form-desired-format-tt")}>{_("add-form-desired-format-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("add-form-desired-folder-tt")}>{_("add-form-desired-folder-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register('desired_folder')} class="input" type="text" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("add-form-desired-folder-tt")}>{_("add-form-desired-folder-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_folder")} class="input" type="text" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("add-form-season-tt")}>{_("add-form-season-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register('season', { required: true })} class="input" type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("add-form-season-tt")}>{_("add-form-season-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("season", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("add-form-episode-offset-tt")}>{_("add-form-episode-offset-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('episode_offset', { required: true })}
-                        class="input"
-                        type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                                data-tooltip={_("add-form-episode-offset-tt")}>{_("add-form-episode-offset-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>

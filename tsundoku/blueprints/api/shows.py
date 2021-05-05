@@ -127,7 +127,7 @@ class ShowsAPI(views.MethodView):
             desired_folder=desired_folder,
             season=season,
             episode_offset=episode_offset,
-            watch=True
+            watch=arguments.get("watch", True)
         )
 
         async with app.acquire_db() as con:
@@ -200,6 +200,7 @@ class ShowsAPI(views.MethodView):
         show.desired_folder = desired_folder
         show.season = season
         show.episode_offset = episode_offset
+        show.watch = arguments.get("watch", True)
 
         await show.update()
 

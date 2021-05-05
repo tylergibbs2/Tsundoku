@@ -1,8 +1,12 @@
 import { getInjector } from "../fluent";
 import { useState, StateUpdater, useEffect } from "preact/hooks";
 import { useForm } from "react-hook-form";
-import { Show, Entry, Webhook } from "../interfaces";
+
 import * as humanizeDuration from "humanize-duration";
+import "bulma-extensions/dist/css/bulma-extensions.min.css";
+
+import { WatchButton } from "./components/watch_button";
+import { Show, Entry, Webhook } from "../interfaces";
 import { IonIcon } from "../icon";
 
 
@@ -35,6 +39,8 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
     const { register, reset, trigger, getValues, setValue } = useForm();
 
+    register("watch", { required: true });
+
     useEffect(() => {
         if (activeShow) {
             setFixMatch(false);
@@ -45,6 +51,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 "desired_folder": activeShow.desired_folder,
                 "season": activeShow.season,
                 "episode_offset": activeShow.episode_offset,
+                "watch": activeShow.watch,
                 "kitsu_id": activeShow.metadata.kitsu_id
             })
         }
@@ -237,7 +244,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("edit-modal-header")}</p>
                     <div class="buttons">
-                        <button class="button is-warning has-text-white" onClick={clearCache}>{_("edit-clear-cache")}</button>
+                        <WatchButton show={activeShow} setValue={setValue} />
                         <div class={"dropdown is-right " + (fixMatch ? "is-active" : "")}>
                             <div class="dropdown-trigger">
                                 <button class="button is-link" onClick={fixMatchDropdown}>
@@ -444,55 +451,69 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
         return (<></>)
 
     return (
-        <form class={tab !== "info" ? "is-hidden" : ""}>
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("edit-form-name-tt")}>{_("edit-form-name-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register("title", { required: true })} class="input" type="text"
-                        placeholder={_("edit-form-name-placeholder")} />
+        <form class={tab !== "info" ? "is-hidden" : ""} style={{
+            overflow: "hidden auto"
+        }}>
+            <div class="form-columns columns is-multiline">
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("edit-form-name-tt")}>{_("edit-form-name-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("title", { required: true })} class="input" type="text"
+                                placeholder={_("edit-form-name-placeholder")} />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("edit-form-desired-format-tt")}>{_("edit-form-desired-format-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("edit-form-desired-format-tt")}>{_("edit-form-desired-format-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("edit-form-desired-folder-tt")}>{_("edit-form-desired-folder-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register("desired_folder")} class="input" type="text" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("edit-form-desired-folder-tt")}>{_("edit-form-desired-folder-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_folder")} class="input" type="text" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("edit-form-season-tt")}>{_("edit-form-season-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register("season", { required: true })} class="input" type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("edit-form-season-tt")}>{_("edit-form-season-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("season", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("edit-form-episode-offset-tt")}>{_("edit-form-episode-offset-field")}</span>
-                </label>
-                <div class="control">
-                    <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                                data-tooltip={_("edit-form-episode-offset-tt")}>{_("edit-form-episode-offset-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>

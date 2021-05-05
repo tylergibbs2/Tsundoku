@@ -36,3 +36,6 @@ update-prompt = Would you like to update? The most recent {$count ->
 
 update-button = Update
 update-close-button = No, not now
+
+watch-button-title = Watch
+unwatch-button-title = Unwatch

@@ -5,6 +5,7 @@ import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
+import { WatchButton } from "../index/components/watch_button";
 
 
 let resources = [
@@ -30,6 +31,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
     const [addingToExisting, setAddingToExisting] = useState<boolean>(addingDefaultState);
     const [showId, setShowId] = useState<number>(null);
     const [doOverwrite, setDoOverwrite] = useState<boolean>(false);
+    const [watch, setWatch] = useState<boolean>(false);
 
     const addToExisting = () => {
         setAddingToExisting(true);
@@ -87,13 +89,17 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
         setChoice(null);
     }
 
+    const receiveWatch = (_: any, state: boolean) => {
+        setWatch(state);
+    }
+
     return (
         <div id="upsert-show-modal" class={"modal modal-fx-fadeInScale " + (choice ? "is-active" : "")}>
             <div class="modal-background" onClick={submitting ? null : closeModal}></div>
             <div class="modal-card">
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("modal-title")}</p>
-                    <button onClick={submitting ? null : closeModal} class="delete" aria-label="close"></button>
+                    <WatchButton setValue={receiveWatch} disabled={addingToExisting} />
                 </header>
 
                 <section class="modal-card-body">
@@ -115,7 +121,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                             </li>
                         </ul>
                     </div>
-                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />
+                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} watch={watch} />
                 </section>
 
                 <footer class="modal-card-foot is-size-7">
@@ -133,14 +139,15 @@ interface ModalFormParams {
     shows: Show[];
     setSubmitting: StateUpdater<boolean>;
     returnCallback?: any;
+    watch: boolean;
 }
 
 
-const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback }: ModalFormParams) => {
+const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback, watch }: ModalFormParams) => {
     if (addingToExisting && shows.length)
         return (<AddToExistingShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />);
     else
-        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} />);
+        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} watch={watch} />);
 }
 
 
@@ -220,18 +227,24 @@ interface AddShowFormInputs {
 interface AddShowFormParams {
     setSubmitting: StateUpdater<boolean>;
     returnCallback?: any;
+    watch: boolean;
 }
 
-const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
-    const { register, handleSubmit } = useForm({
+const AddShowForm = ({ setSubmitting, returnCallback, watch }: AddShowFormParams) => {
+    const { register, handleSubmit, setValue } = useForm({
         defaultValues: {
             "title": "",
             "desired_format": "",
             "desired_folder": "",
             "season": 1,
-            "episode_offset": 0
+            "episode_offset": 0,
+            "watch": true
         }
     });
+
+    useEffect(() => {
+        setValue("watch", watch);
+    }, [watch])
 
     const submitHandler = (data: AddShowFormInputs) => {
         setSubmitting(true);
@@ -265,64 +278,66 @@ const AddShowForm = ({ setSubmitting, returnCallback }: AddShowFormParams) => {
     return (
         // @ts-ignore
         <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("name-tt")}>{_("name-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('title', { required: true })}
-                        class="input"
-                        type="text"
-                        placeholder={_("name-placeholder")} />
+            <div class="form-columns columns is-multiline">
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("name-tt")}>{_("name-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("title", { required: true })} class="input" type="text"
+                                placeholder={_("name-placeholder")} />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("desired-format-tt")}>{_("desired-format-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('desired_format')}
-                        class="input"
-                        type="text"
-                        placeholder="{n} - {s00e00}" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("desired-format-tt")}>{_("desired-format-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("desired-folder-tt")}>{_("desired-folder-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register('desired_folder')} class="input" type="text" />
+                <div class="column is-full">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("desired-folder-tt")}>{_("desired-folder-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("desired_folder")} class="input" type="text" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("season-tt")}>{_("season-field")}</span>
-                </label>
-                <div class="control">
-                    <input {...register('season', { required: true })} class="input" type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                                data-tooltip={_("season-tt")}>{_("season-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input {...register("season", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                        data-tooltip={_("episode-offset-tt")}>{_("episode-offset-field")}</span>
-                </label>
-                <div class="control">
-                    <input
-                        {...register('episode_offset', { required: true })}
-                        class="input"
-                        type="number" />
+                <div class="column is-half">
+                    <div class="field">
+                        <label class="label">
+                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                                data-tooltip={_("episode-offset-tt")}>{_("episode-offset-field")}</span>
+                        </label>
+                        <div class="control">
+                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
