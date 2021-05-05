@@ -524,14 +524,15 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
     }, [show]);
 
     const bufferAddEntry = (data: any) => {
-        if (data.episode < 0) {
+        let newEpNum = parseInt(data.episode);
+        if (newEpNum < 0) {
             reset();
             return;
         }
 
         let entry = {
             id: fakeId,
-            episode: data.episode,
+            episode: newEpNum,
             show_id: show.id_,
             state: "buffered",
             magnet: data.magnet,
@@ -539,7 +540,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
         }
         let temp = [entry, ...entries];
 
-        let exists = entries.findIndex((existing: Entry) => existing.episode === data.episode);
+        let exists = entries.findIndex((existing: Entry) => existing.episode === newEpNum);
         if (exists !== -1) {
             reset();
             return;
@@ -748,7 +749,7 @@ interface EditWebhookTableRowParams {
 const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }: EditWebhookTableRowParams) => {
     const [triggers, setTriggers] = useState(webhook.triggers);
 
-    const { register, reset } = useForm({
+    const { register } = useForm({
         defaultValues: {
             downloading: triggers.includes("downloading"),
             downloaded: triggers.includes("downloaded"),
