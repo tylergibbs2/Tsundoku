@@ -605,7 +605,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                             <label class="label">{_('edit-entries-form-episode')}</label>
                         </div>
                         <div class="field">
-                            <input {...register('episode')} class="input" type="number" value="0" required />
+                            <input {...register('episode')} min="0" class="input" type="number" value="0" required />
                             <p class="help is-danger is-hidden">{_("edit-entries-form-exists")}</p>
                         </div>
                         <div class="field">
