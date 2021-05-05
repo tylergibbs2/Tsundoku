@@ -157,8 +157,11 @@ class Encoder:
         """
         await self.update_config()
         has_ffmpeg = await self.has_ffmpeg()
-        if not self.ENABLED or not has_ffmpeg:
+        if not self.ENABLED:
+            logger.debug(f"Encoding is disabled, skipping for <e{entry_id}>")
             return
+        elif not has_ffmpeg:
+            logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
 
         async with self.app.acquire_db() as con:
             await con.execute("""
