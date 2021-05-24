@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from asyncio import create_subprocess_shell
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -24,6 +25,23 @@ VALID_SPEEDS = (
     "slower",
     "veryslow"
 )
+
+
+def seconds_until(start: int, end: int) -> int:
+    now = datetime.now()
+    if start <= now.hour <= end - 1:
+        return 0
+
+    start_dt = datetime(
+        now.year,
+        now.month,
+        now.day,
+        start
+    )
+    if now.hour > end - 1:
+        start_dt += timedelta(days=1)
+
+    return int((start_dt - now).total_seconds())
 
 
 class Encoder:
@@ -55,6 +73,10 @@ class Encoder:
         self.SPEED_PRESET = "medium"
         self.RETRY_ON_FAIL = False
 
+        self.TIMED_ENCODING = False
+        self.HOUR_START = 3
+        self.HOUR_END = 6
+
         self.__encode_queue: List[int] = []
         self.__active_encodes = 0
 
@@ -78,7 +100,10 @@ class Encoder:
                     quality_preset,
                     speed_preset,
                     maximum_encodes,
-                    retry_on_fail
+                    retry_on_fail,
+                    timed_encoding,
+                    hour_start,
+                    hour_end
                 FROM
                     encode_config;
             """)
@@ -98,6 +123,9 @@ class Encoder:
         self.ENABLED = cfg["enabled"]
         self.RETRY_ON_FAIL = cfg["retry_on_fail"]
         self.MAX_ENCODES = cfg["maximum_encodes"] if cfg["maximum_encodes"] > 0 else 1
+        self.TIMED_ENCODING = cfg["timed_encoding"]
+        self.HOUR_START = cfg["hour_start"]
+        self.HOUR_END = cfg["hour_end"]
 
         logger.debug(f"Encode config updated: {dict(cfg)}")
 
@@ -162,6 +190,11 @@ class Encoder:
             return
         elif not has_ffmpeg:
             logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
+
+        if self.TIMED_ENCODING:
+            to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
+            logger.debug(f"Timed encoding enabled, sleeping '{to_sleep}' seconds before encoding...")
+            await asyncio.sleep(to_sleep)
 
         async with self.app.acquire_db() as con:
             await con.execute("""
