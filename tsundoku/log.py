@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from asyncio import QueueFull
 import logging
+from asyncio import QueueFull
 from logging.config import dictConfig
 from typing import Any
 

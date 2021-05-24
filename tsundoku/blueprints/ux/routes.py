@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import os
 from asyncio import Queue
 from functools import wraps
-import os
 from typing import Any, Union
 
 from argon2 import PasswordHasher
