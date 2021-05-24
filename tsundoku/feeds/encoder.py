@@ -111,9 +111,9 @@ class Encoder:
 
         self.CRF = {
             "high": 18,
-            "moderate": 22,
-            "low": 26
-        }.get(cfg["quality_preset"], 22)
+            "moderate": 21,
+            "low": 24
+        }.get(cfg["quality_preset"], 21)
 
         if cfg["speed_preset"] not in VALID_SPEEDS:
             self.SPEED_PRESET = "medium"
