@@ -215,11 +215,13 @@ async def setup_tasks() -> None:
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
-    app.encoder = Encoder(app.app_context())
-    await app.encoder.resume()
+    async def encoder() -> None:
+        app.encoder = Encoder(app.app_context())
+        await app.encoder.resume()
 
     app._tasks.append(asyncio.create_task(poller()))
     app._tasks.append(asyncio.create_task(downloader()))
+    app._tasks.append(asyncio.create_task(encoder()))
 
 
 @app.after_serving

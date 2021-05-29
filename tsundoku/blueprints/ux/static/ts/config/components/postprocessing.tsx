@@ -16,6 +16,9 @@ interface EncodeConfig {
     speed_preset?: string;
     maximum_encodes?: number;
     retry_on_fail?: boolean;
+    timed_encoding?: boolean;
+    hour_start?: number;
+    hour_end?: number;
     has_ffmpeg?: boolean;
 }
 
@@ -119,6 +122,25 @@ const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) 
         updateConfig("speed_preset", target.options[target.selectedIndex].value);
     }
 
+    const inputHourStart = (e: Event) => {
+        let target = e.target as HTMLSelectElement;
+
+        updateConfig("hour_start", target.options[target.selectedIndex].value);
+    }
+
+    const inputHourEnd = (e: Event) => {
+        let target = e.target as HTMLSelectElement;
+
+        updateConfig("hour_end", target.options[target.selectedIndex].value);
+    }
+
+    const inputTimedEncoding = (e: Event) => {
+        if ((e.target as HTMLInputElement).checked)
+            updateConfig("timed_encoding", true);
+        else
+            updateConfig("timed_encoding", false);
+    }
+
     const getQualityValue = () => {
         switch (config.quality_preset) {
             case "high":
@@ -169,12 +191,50 @@ const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) 
                     </div>
                 </div>
                 <div class="columns">
-                    <div class="column is-one-half">
+                    <div class="column is-one-third">
                         <h1 class="title is-5">{_("process-max-encode-title")}</h1>
                         <h2 class="subtitle is-6 mb-3">{_("process-max-encode-subtitle")}</h2>
-                        <input class="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} style={{ width: "50%" }} disabled={disabled}></input>
+                        <input class="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} disabled={disabled}></input>
                     </div>
-                    <div class="column is-one-half">
+                    <div class="column is-one-third">
+                        <h1 class="title is-5">{_("encode-time-title")}</h1>
+                        <h2 class="subtitle is-6">{_("encode-time-subtitle")}</h2>
+                        <div class="columns is-vcentered">
+                            <div class="column">
+                                <div class="field is-vcentered">
+                                    <input id="timeCheck" type="checkbox" class="switch" onChange={inputTimedEncoding} checked={config.timed_encoding} disabled={disabled} />
+                                    <label for="timeCheck">{_("checkbox-enabled")}</label>
+                                </div>
+                            </div>
+                            <div class="column">
+                                <div class="select is-fullwidth is-vcentered">
+                                    <select onChange={inputHourStart} disabled={disabled}>
+                                        {
+                                            [...Array(24).keys()].map(hour => {
+                                                if (hour >= config.hour_end) return;
+                                                return <option value={hour.toString()} selected={config.hour_start === hour}>{_(`hour-${hour}`)}</option>
+                                            })
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="column">
+                                <div class="select is-fullwidth is-vcentered ml-1">
+                                    <select onChange={inputHourEnd} disabled={disabled}>
+                                        {
+                                            [...Array(24).keys()].map(hour => {
+                                                if (hour <= config.hour_start) return;
+                                                return <option value={hour.toString()} selected={config.hour_end === hour}>{_(`hour-${hour}`)}</option>
+                                            })
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="column is-one-third">
                         <h1 class="title is-5">{_("process-retry-title")}</h1>
                         <h2 class="subtitle is-6">{_("process-retry-subtitle")}</h2>
                         <div class="field">

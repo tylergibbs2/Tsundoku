@@ -1,4 +1,5 @@
 import logging
+import sqlite3
 from typing import Optional
 from uuid import uuid4
 
@@ -96,7 +97,10 @@ async def config_encode() -> APIResponse:
             "quality_preset",
             "speed_preset",
             "maximum_encodes",
-            "retry_on_fail"
+            "retry_on_fail",
+            "timed_encoding",
+            "hour_start",
+            "hour_end"
         )
         if any(k not in CFG_KEYS for k in arguments.keys()):
             return APIResponse(
@@ -116,15 +120,28 @@ async def config_encode() -> APIResponse:
         elif arguments.get("maximum_encodes") and int(arguments["maximum_encodes"]) <= 0:
             arguments["maximum_encodes"] = 1
 
+        hour_start, hour_end = arguments.get("hour_start"), arguments.get("hour_end")
+        if hour_start and hour_end and int(hour_start) >= int(hour_end):
+            return APIResponse(
+                status=400,
+                error="Hour start cannot be after hour end."
+            )
+
         async with app.acquire_db() as con:
             sets = ", ".join(f"{col} = ?" for col in arguments.keys())
-            await con.execute(f"""
-                UPDATE
-                    encode_config
-                SET
-                    {sets}
-                WHERE id = 0;
-            """, *arguments.values())
+            try:
+                await con.execute(f"""
+                    UPDATE
+                        encode_config
+                    SET
+                        {sets}
+                    WHERE id = 0;
+                """, *arguments.values())
+            except sqlite3.IntegrityError:
+                return APIResponse(
+                    status=400,
+                    error="Error inserting new configuration data."
+                )
 
     async with app.acquire_db() as con:
         await con.execute("""
@@ -133,7 +150,10 @@ async def config_encode() -> APIResponse:
                 quality_preset,
                 speed_preset,
                 maximum_encodes,
-                retry_on_fail
+                retry_on_fail,
+                timed_encoding,
+                hour_start,
+                hour_end
             FROM
                 encode_config;
         """)

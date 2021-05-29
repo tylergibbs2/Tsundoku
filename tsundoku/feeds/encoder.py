@@ -191,11 +191,6 @@ class Encoder:
         elif not has_ffmpeg:
             logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
 
-        if self.TIMED_ENCODING:
-            to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
-            logger.debug(f"Timed encoding enabled, sleeping '{to_sleep}' seconds before encoding...")
-            await asyncio.sleep(to_sleep)
-
         async with self.app.acquire_db() as con:
             await con.execute("""
                 INSERT OR IGNORE INTO
@@ -204,6 +199,11 @@ class Encoder:
                     )
                 VALUES (?);
             """, entry_id)
+
+        if self.TIMED_ENCODING:
+            to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
+            logger.debug(f"Timed encoding enabled, sleeping '{to_sleep:,}' seconds before encoding...")
+            await asyncio.sleep(to_sleep)
 
         if self.__active_encodes >= self.MAX_ENCODES:
             logger.debug(f"Reached maximum encodes, queuing <e{entry_id}>")
