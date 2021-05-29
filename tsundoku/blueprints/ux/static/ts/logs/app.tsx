@@ -13,9 +13,17 @@ let resources = [
 
 const _ = getInjector(resources);
 
+
+const codeRe = /`[^`]+`/g;
+const contextRe = /<[es]\d+>/g;
+
+
 const LogsApp = () => {
     let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
     let protocol = location.protocol === "https:" ? "wss:" : "ws:";
+
+    let showAccessCache: Map<number, Show> = new Map();
+    let entryAccessCache: Map<number, Entry> = new Map();
 
     let [shows, setShows] = useState<Show[]>([]);
 
@@ -62,6 +70,8 @@ const LogsApp = () => {
                             key={idx}
                             row={msg}
                             shows={shows}
+                            showAccessCache={showAccessCache}
+                            entryAccessCache={entryAccessCache}
                         />
                     ))}
                 </div>
@@ -80,9 +90,11 @@ const LogsApp = () => {
 interface LogRowParams {
     row?: MessageEvent;
     shows: Show[];
+    showAccessCache: Map<number, Show>;
+    entryAccessCache: Map<number, Entry>;
 }
 
-const LogRow = ({ row, shows }: LogRowParams) => {
+const LogRow = ({ row, shows, showAccessCache, entryAccessCache }: LogRowParams) => {
     if (!row || row.data === "ACCEPT")
         return (<></>);
 
@@ -115,7 +127,12 @@ const LogRow = ({ row, shows }: LogRowParams) => {
         <>
             <div></div>
             <div class="is-size-5">
-                {localized} {logLevel} <b>{match.groups.name}</b>: <Content raw_content={match.groups.content} shows={shows} />
+                {localized} {logLevel} <b>{match.groups.name}</b>: <Content
+                    raw_content={match.groups.content}
+                    shows={shows}
+                    showAccessCache={showAccessCache}
+                    entryAccessCache={entryAccessCache}
+                />
             </div>
         </>
     );
@@ -125,72 +142,110 @@ const LogRow = ({ row, shows }: LogRowParams) => {
 interface ContentParams {
     raw_content: string;
     shows: Show[];
+    showAccessCache: Map<number, Show>;
+    entryAccessCache: Map<number, Entry>;
 }
 
-const Content = ({ raw_content, shows }: ContentParams) => {
-    let toJoin: any = [];
+const Content = ({ raw_content, shows, showAccessCache, entryAccessCache }: ContentParams) => {
+    const [toJoin, setToJoin] = useState<any>([]);
 
-    const showFromId = (id: number): Show => {
-        return shows.find(show => show.id_ === id);
+    const fetchShow = async (id: number): Promise<Show> | null => {
+        let resp = await fetch(`/api/v1/shows/${id}`);
+        if (resp.ok) {
+            return await resp.json();
+        }
     }
 
-    const entryFromId = (id: number): Entry => {
+    const showFromId = async (id: number): Promise<Show> | null => {
+        let exists = showAccessCache.get(id);
+        if (exists)
+            return exists;
+
+        let found = shows.find(show => show.id_ === id);
+        if (found) {
+            showAccessCache.set(id, found);
+            return found;
+        } else {
+            found = await fetchShow(id);
+            if (found) {
+                showAccessCache.set(id, found);
+                return found
+            }
+        }
+    }
+
+    const entryFromId = async (id: number): Promise<Entry> | null => {
+        let exists = entryAccessCache.get(id);
+        if (exists)
+            return exists;
+
         let entries: Entry[] = [];
         for (const show of shows)
             entries = entries.concat(show.entries);
 
-        return entries.find(entry => entry.id === id);
+        let found = entries.find(entry => entry.id === id);
+        if (found) {
+            entryAccessCache.set(id, found);
+            return found;
+        }
     }
 
-    let codeRe = /`[^`]+`/g;
-    let formatted = raw_content.replace(codeRe, (match, _) => {
-        return `<code>${match.substring(1, match.length - 1)}</code>`;
-    });
+    const render = async () => {
+        let temp: any = [];
+        let formatted = raw_content.replace(codeRe, (match, _) => {
+            return `<code>${match.substring(1, match.length - 1)}</code>`;
+        });
 
-    let contextRe = /<[es]\d+>/g;
-    let matches = formatted.matchAll(contextRe);
+        let matches = formatted.matchAll(contextRe);
 
-    for (const match of matches) {
-        let data = match[0];
+        for (const match of matches) {
+            let data = match[0];
 
-        let [front, end] = formatted.split(data);
+            let [front, end] = formatted.split(data);
 
-        let type = data.charAt(1);
-        let id = parseInt(data.substring(2, data.length - 1));
+            let type = data.charAt(1);
+            let id = parseInt(data.substring(2, data.length - 1));
 
-        let res: any;
-        switch (type) {
-            case "s":
-                let show = showFromId(id);
-                if (show) {
-                    res = <Context show={show} />
-                    break;
-                }
-            case "e":
-                let entry = entryFromId(id);
-                if (entry) {
-                    let show = showFromId(entry.show_id);
+            let res: any;
+            switch (type) {
+                case "s":
+                    let show = await showFromId(id);
                     if (show) {
-                        res = <Context show={show} entry={entry} />
+                        res = <Context show={show} />
                         break;
                     }
-                }
-            default:
-                res = _("context-cache-failure", {
-                    type: type,
-                    id: id
-                });
-        }
+                case "e":
+                    let entry = await entryFromId(id);
+                    if (entry) {
+                        let show = await showFromId(entry.show_id);
+                        if (show) {
+                            res = <Context show={show} entry={entry} />
+                            break;
+                        }
+                    }
+                default:
+                    res = _("context-cache-failure", {
+                        type: type,
+                        id: id
+                    });
+            }
 
-        toJoin = toJoin.concat([
-            front,
-            res,
-            end
-        ]);
-    };
+            temp = temp.concat([
+                front,
+                res,
+                end
+            ]);
+        };
 
-    if (toJoin.length === 0)
-        toJoin.push(formatted);
+        if (temp.length === 0)
+            temp.push(formatted);
+
+        setToJoin(temp);
+    }
+
+    useEffect(() => {
+        render();
+    }, [])
 
     return (
         <>
