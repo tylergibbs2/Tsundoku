@@ -116,7 +116,7 @@ class Entry:
             """, new_state.value, self.id)
 
         if new_state == "completed" and self.file_path is not None:
-            await self._app.encoder.encode(self.id)
+            self._app.encoder.encode_task(self.id)
 
         await self._handle_webhooks()
 

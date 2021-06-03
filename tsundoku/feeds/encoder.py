@@ -173,6 +173,18 @@ class Encoder:
         return (f"ffmpeg -hide_banner -loglevel error -i \"{infile}\" -map 0 -c copy -c:v {encoder} -crf {self.CRF}"
                 f" -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y \"{outfile}\"")
 
+    def encode_task(self, entry_id: int) -> None:
+        """
+        Launches an encode task.
+
+        Parameters
+        ----------
+        entry_id: int
+            THe entry ID to encode.
+        """
+        logger.debug(f"Launching new encode task for <e{entry_id}>")
+        asyncio.create_task(self.encode(entry_id))
+
     async def encode(self, entry_id: int) -> None:
         """
         Either starts an encode process or adds
@@ -190,6 +202,7 @@ class Encoder:
             return
         elif not has_ffmpeg:
             logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
+            return
 
         async with self.app.acquire_db() as con:
             await con.execute("""
