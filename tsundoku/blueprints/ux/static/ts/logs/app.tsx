@@ -25,14 +25,15 @@ const LogsApp = () => {
     let showAccessCache: Map<number, Show> = new Map();
     let entryAccessCache: Map<number, Entry> = new Map();
 
-    let [shows, setShows] = useState<Show[]>([]);
+    let [shows, setShows] = useState<Show[] | null>(null);
 
     const getShows = async () => {
         let resp = await fetch("/api/v1/shows");
         if (resp.ok) {
             let data = await resp.json();
             setShows(data.result);
-        }
+        } else
+            setShows([]);
     }
 
     useEffect(() => {
@@ -160,6 +161,9 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache }: Cont
         let exists = showAccessCache.get(id);
         if (exists)
             return exists;
+
+        while (shows === null)
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
         let found = shows.find(show => show.id_ === id);
         if (found) {
