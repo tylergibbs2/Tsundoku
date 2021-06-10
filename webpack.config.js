@@ -41,6 +41,8 @@ module.exports = {
   plugins: [new WebpackFluentPlugin()],
   output: {
     filename: '[name].js',
+    sourceMapFilename: '[name].js.map',
     path: path.resolve(__dirname, 'tsundoku/blueprints/ux/static/js/'),
-  }
+  },
+  devtool: "source-map"
 };
