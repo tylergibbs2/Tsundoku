@@ -152,7 +152,7 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache }: Cont
     const fetchShow = async (id: number): Promise<Show> | null => {
         let resp = await fetch(`/api/v1/shows/${id}`);
         if (resp.ok) {
-            return await resp.json();
+            return (await resp.json()).result;
         }
     }
 
