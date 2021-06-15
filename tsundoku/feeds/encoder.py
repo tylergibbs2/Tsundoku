@@ -79,6 +79,7 @@ class Encoder:
 
         self.__encode_queue: List[int] = []
         self.__active_encodes = 0
+        self.__has_ffmpeg = False
 
     async def update_config(self) -> None:
         """
@@ -414,6 +415,9 @@ class Encoder:
         """
         Checks if ffmpeg is available to use.
         """
+        if self.__has_ffmpeg:
+            return self.__has_ffmpeg
+
         proc = await asyncio.create_subprocess_shell(
             "ffmpeg -buildconf",
             stdout=asyncio.subprocess.PIPE,
@@ -422,4 +426,5 @@ class Encoder:
         stdout, _ = await proc.communicate()
 
         output = stdout.decode("utf-8")
-        return "--enable-libx264" in output
+        self.__has_ffmpeg = "--enable-libx264" in output
+        return self.__has_ffmpeg
