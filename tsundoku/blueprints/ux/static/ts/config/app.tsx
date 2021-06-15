@@ -27,10 +27,10 @@ const ConfigApp = () => {
             <section class="section">
                 <h1 class="title is-4">{_("section-api-title")}</h1>
                 <h2 class="subtitle is-6">{_("section-api-subtitle")}</h2>
-                <div style={{width: "50%"}}>
+                <div class="box" style={{width: "50%"}}>
                     <APITokenComponent />
+                    <a href="https://tsundoku.readthedocs.io/en/latest/" class="button is-info mt-2">{_("config-api-documentation")}</a>
                 </div>
-                <a href="https://tsundoku.readthedocs.io/en/latest/" class="button is-info mt-2">{_("config-api-documentation")}</a>
             </section>
             <section class="section">
                 <h1 class="title is-4">{_("section-encode-title")}</h1>
