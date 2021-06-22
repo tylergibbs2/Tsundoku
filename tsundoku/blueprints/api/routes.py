@@ -8,7 +8,9 @@ from quart import current_app as app
 from quart import request
 from quart_auth import current_user
 
-from tsundoku.feeds.encoder import VALID_SPEEDS
+from tsundoku.config import (ConfigCheckFailure, ConfigInvalidKey,
+                             EncodeConfig, FeedsConfig, GeneralConfig,
+                             TorrentConfig)
 from tsundoku.manager import Show
 
 from .entries import EntriesAPI
@@ -78,93 +80,58 @@ async def config_token() -> APIResponse:
     )
 
 
-@api_blueprint.route("/config/encode", methods=["GET", "PATCH"])
-async def config_encode() -> APIResponse:
-    async with app.acquire_db() as con:
-        await con.execute("""
-            INSERT OR IGNORE INTO
-                encode_config (
-                    id
-                )
-            VALUES (0);
-            """)
+@api_blueprint.route("/config/<string:cfg_type>", methods=["GET", "PATCH"])
+async def config_route(cfg_type: str) -> APIResponse:
+    if cfg_type == "general":
+        cfg_class = GeneralConfig
+    elif cfg_type == "feeds":
+        cfg_class = FeedsConfig
+    elif cfg_type == "encode":
+        cfg_class = EncodeConfig
+    elif cfg_type == "torrent":
+        cfg_class = TorrentConfig
+    else:
+        return APIResponse(
+            status=400,
+            error="Invalid configuration type."
+        )
+
+    cfg = await cfg_class.retrieve()
 
     if request.method == "PATCH":
         arguments = await request.get_json()
 
-        CFG_KEYS = (
-            "enabled",
-            "quality_preset",
-            "speed_preset",
-            "maximum_encodes",
-            "retry_on_fail",
-            "timed_encoding",
-            "hour_start",
-            "hour_end"
-        )
-        if any(k not in CFG_KEYS for k in arguments.keys()):
+        try:
+            cfg.update(arguments)
+        except ConfigInvalidKey:
             return APIResponse(
                 status=400,
-                error="Invalid configuration keys."
+                error="Invalid key contained in new configuration settings."
             )
-        elif arguments.get("speed_preset") and arguments["speed_preset"] not in VALID_SPEEDS:
+
+        try:
+            await cfg.save()
+        except (ConfigCheckFailure, sqlite3.IntegrityError):
             return APIResponse(
                 status=400,
-                error="Invalid speed preset."
-            )
-        elif arguments.get("quality_preset") and arguments["quality_preset"] not in ("high", "low", "moderate"):
-            return APIResponse(
-                status=400,
-                error="Invalid quality preset."
-            )
-        elif arguments.get("maximum_encodes") and int(arguments["maximum_encodes"]) <= 0:
-            arguments["maximum_encodes"] = 1
-
-        hour_start, hour_end = arguments.get("hour_start"), arguments.get("hour_end")
-        if hour_start and hour_end and int(hour_start) >= int(hour_end):
-            return APIResponse(
-                status=400,
-                error="Hour start cannot be after hour end."
+                error="Error inserting new configuration data."
             )
 
-        async with app.acquire_db() as con:
-            sets = ", ".join(f"{col} = ?" for col in arguments.keys())
-            try:
-                await con.execute(f"""
-                    UPDATE
-                        encode_config
-                    SET
-                        {sets}
-                    WHERE id = 0;
-                """, *arguments.values())
-            except sqlite3.IntegrityError:
-                return APIResponse(
-                    status=400,
-                    error="Error inserting new configuration data."
-                )
-
-    async with app.acquire_db() as con:
-        await con.execute("""
-            SELECT
-                enabled,
-                quality_preset,
-                speed_preset,
-                maximum_encodes,
-                retry_on_fail,
-                timed_encoding,
-                hour_start,
-                hour_end
-            FROM
-                encode_config;
-        """)
-        cfg = await con.fetchone()
-
-    cfg = dict(cfg)
-    cfg["has_ffmpeg"] = await app.encoder.has_ffmpeg()
+    if cfg_type == "encode":
+        cfg.keys["has_ffmpeg"] = await app.encoder.has_ffmpeg()
 
     return APIResponse(
         status=200,
-        result=cfg
+        result=cfg.keys
+    )
+
+
+@api_blueprint.route("/config/torrent/test", methods=["GET"])
+async def test_torrent_client() -> APIResponse:
+    res = await app.dl_client.test_client()
+    return APIResponse(
+        status=200,
+        result=res
     )
 
 

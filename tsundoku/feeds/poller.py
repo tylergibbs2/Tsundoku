@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Tuple
 
 import feedparser
 
-from tsundoku.config import get_config_value
+from tsundoku.config import FeedsConfig
 
 from .fuzzy import extract_one
 
@@ -53,25 +53,14 @@ class Poller:
         self.loop = asyncio.get_running_loop()
 
         self.current_parser: Any = None  # keeps track of the current parser
-        self.update_config()
 
-    def update_config(self) -> None:
+    async def update_config(self) -> None:
         """
         Updates the configuration for the task.
         """
-        interval = get_config_value("Tsundoku", "polling_interval", 900)
-        try:
-            self.interval = int(interval)
-        except ValueError:
-            logger.error(f"`{interval}` is an invalid polling interval, using default.")
-            self.interval = 900
-
-        fuzzy_match_cutoff = get_config_value("Tsundoku", "fuzzy_match_cutoff", 90)
-        try:
-            self.fuzzy_match_cutoff = int(fuzzy_match_cutoff)
-        except ValueError:
-            logger.error(f"`{fuzzy_match_cutoff}` is an invalid fuzzy match cutoff, using default.")
-            self.fuzzy_match_cutoff = 90
+        cfg = await FeedsConfig.retrieve()
+        self.interval = cfg["polling_interval"]
+        self.fuzzy_match_cutoff = cfg["fuzzy_cutoff"]
 
     async def start(self) -> None:
         """
@@ -83,6 +72,7 @@ class Poller:
             return
 
         while True:
+            await self.update_config()
             try:
                 await self.poll()
             except Exception:
@@ -90,7 +80,6 @@ class Poller:
                 traceback.print_exc()
 
             await asyncio.sleep(self.interval)
-            self.update_config()
 
     def reset_rss_cache(self) -> None:
         """

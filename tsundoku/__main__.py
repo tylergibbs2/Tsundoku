@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fluent.runtime import FluentBundle, FluentResource
 
-from tsundoku import app, database
+from tsundoku import database
 from tsundoku.fluent import get_injector
 
 fluent = get_injector(["cmdline"])
@@ -103,7 +103,12 @@ if __name__ == "__main__":
         loop = asyncio.get_event_loop()
 
         print(fluent._("creating-user"))
+        from tsundoku import app
         loop.run_until_complete(app.insert_user(username, password))
         print(fluent._("created-user"))
     else:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(database.migrate())
+
+        from tsundoku import app
         app.run()

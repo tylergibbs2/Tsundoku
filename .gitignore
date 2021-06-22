@@ -12,6 +12,7 @@ docs/_build
 
 # Local config
 config.ini
+config.old
 
 # Log file
 tsundoku.log

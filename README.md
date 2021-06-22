@@ -36,8 +36,6 @@ $ pip install -r requirements.txt
 $ python -m tsundoku --create-user   # Creates a user for logging in
 ```
 
-Copy `config.ini.example` to `config.ini` and then [configure](#Configuration).
-
 ## Updating
 
 ```sh
@@ -58,11 +56,9 @@ $ python -m tsundoku
 ## Installation (Docker)
 
 1. Copy the `docker-compose.yml` file from the repository.
-2. Copy the `config.ini.example` file and rename it `config.ini`.
-3. Copy any parsers that you want and put them in a new folder.
-4. [Configure](#Configuration) the configuration file.
-5. Replace the file paths.
-6. Run `docker-compose up -d`.
+2. Copy any parsers that you want and put them in a new folder.
+3. Replace the file paths.
+4. Run `docker-compose up -d`.
 
 I will not be providing an example on how to start the container using
 `docker run`.
@@ -95,8 +91,6 @@ services:
     restart: always
 ```
 
-`/opt/appdata/tsundoku/data` is the folder path where I put the `config.ini` file.
-
 `/opt/appdata/tsundoku/parsers` is the folder where I manually placed all the parsers I use.
 
 `/mediadrives/Downloaded` is the absolute path where Tsundoku will look for completed torrents.
@@ -106,31 +100,6 @@ services:
 
 And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like when adding a show using Docker.
 
-## Configuration
-
-```ini
-[Tsundoku]
-host = localhost             # IP that Tsundoku will be hosted at
-port = 6439                  # Port to use for hosting
-parsers = [                  # List of parsers in "parsers/"
-    "parsers.subsplease"
-    ]
-polling_interval = 900       # How often, in seconds, Tsundoku should check parsers
-complete_check_interval = 15 # How often, in seconds, Tsundoku will check for completed items
-fuzzy_match_cutoff = 90      # The cutoff percent for show titles when searching RSS feeds
-do_update_checks = true      # Will always be false regardless of setting if in Docker
-check_every_n_days = 1       # How often (in days) to perform update checks
-git_path = git               # Path to Git executable, only needed for update checks
-locale = en                  # Locale to use, see the "l10n" folder for valid locales
-
-[TorrentClient]              # Torrent client connection info
-client = deluge              # Can be either 'deluge' or 'qbittorrent'
-host = localhost
-port = 8112
-username = admin             # Only needed if using qBittorrent
-password = password
-secure = false               # Use HTTPS
-```
 
 ## Parsers
 

@@ -3,12 +3,12 @@ import hashlib
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import aiohttp
 import bencodepy
 
-from tsundoku.config import get_config_value
+from tsundoku.config import TorrentConfig
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
 
@@ -17,28 +17,47 @@ logger = logging.getLogger("tsundoku")
 
 class Manager:
     def __init__(self, session: aiohttp.ClientSession) -> None:
-        client = get_config_value("TorrentClient", "client")
-
-        host = get_config_value("TorrentClient", "host")
-        port = get_config_value("TorrentClient", "port")
-        secure = get_config_value("TorrentClient", "secure")
-
-        password = get_config_value("TorrentClient", "password")
+        self.session = session
+        self.__last_hash = None
 
         self._client: Union[DelugeClient, qBittorrentClient]
-        if client == "deluge":
-            self._client = DelugeClient(session, host=host, port=port, secure=secure, auth=password)
-        elif client == "qbittorrent":
-            username = get_config_value("TorrentClient", "username")
-            auth = {
-                "username": username,
-                "password": password
-            }
-            self._client = qBittorrentClient(session, auth=auth, host=host, port=port, secure=secure)
-        else:
-            logger.error("Invalid TorrentClient in Configuration")
 
-        self.session = session
+    async def update_config(self) -> None:
+        """
+        Updates the configuration for the
+        app's desired torrent client.
+        """
+        cfg = await TorrentConfig.retrieve()
+
+        hash_ = hash(cfg)
+        if self.__last_hash == hash_:
+            return
+
+        self.__last_hash = hash_
+
+        host = cfg["host"]
+        port = cfg["port"]
+        secure = cfg["secure"]
+
+        username = cfg["username"]
+        password = cfg["password"]
+
+        if cfg["client"] == "deluge":
+            self._client = DelugeClient(
+                self.session,
+                host=host,
+                port=port,
+                secure=secure,
+                auth=password
+            )
+        elif cfg["client"] == "qbittorrent":
+            self._client = qBittorrentClient(
+                self.session,
+                auth={"username": username, "password": password},
+                host=host,
+                port=port,
+                secure=secure
+            )
 
     async def get_magnet(self, location: str) -> str:
         """
@@ -74,7 +93,7 @@ class Manager:
         else:
             async with self.session.get(location) as resp:
                 torrent_bytes = await resp.read()
-                metadata = bencodepy.decode(torrent_bytes)
+                metadata: Any = bencodepy.decode(torrent_bytes)
 
         subject = metadata[b'info']
 
@@ -105,7 +124,7 @@ class Manager:
         """
         async with self.session.get(location) as resp:
             torrent_bytes = await resp.read()
-            metadata = bencodepy.decode(torrent_bytes)
+            metadata: Any = bencodepy.decode(torrent_bytes)
 
         is_folder = b"files" in metadata[b"info"]
 
@@ -122,6 +141,18 @@ class Manager:
 
         return file_names
 
+    async def test_client(self) -> bool:
+        """
+        Checks whether or not the torrent client is able
+        to connect.
+        """
+        await self.update_config()
+
+        try:
+            return await self._client.test_client()
+        except Exception:
+            return False
+
     async def check_torrent_completed(self, torrent_id: str) -> bool:
         """
         Checks whether a torrent is fully completed and ready
@@ -137,6 +168,8 @@ class Manager:
         bool:
             The torrent's completion status.
         """
+        await self.update_config()
+
         return await self._client.check_torrent_completed(torrent_id)
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
@@ -151,6 +184,8 @@ class Manager:
         with_files: bool
             Whether or not to delete the files downloaded.
         """
+        await self.update_config()
+
         await self._client.delete_torrent(torrent_id, with_files=with_files)
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
@@ -167,6 +202,8 @@ class Manager:
         Optional[Path]:
             The torrent Path object.
         """
+        await self.update_config()
+
         return await self._client.get_torrent_fp(torrent_id)
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
@@ -183,4 +220,6 @@ class Manager:
         Optional[str]:
             The torrent's hash.
         """
+        await self.update_config()
+
         return await self._client.add_torrent(magnet_url)

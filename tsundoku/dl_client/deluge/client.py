@@ -44,6 +44,13 @@ class DelugeClient:
 
         return f"{protocol}://{host}:{port}/json"
 
+    async def test_client(self) -> bool:
+        """
+        Checks whether or not the torrent client is able
+        to connect.
+        """
+        return await self.ensure_authorization() is not None
+
     async def check_torrent_completed(self, torrent_id: str) -> bool:
         """
         Checks whether a torrent is fully completed and ready
