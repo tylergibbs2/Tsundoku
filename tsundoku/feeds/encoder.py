@@ -8,23 +8,11 @@ from typing import Any, Dict, List
 
 from quart import request
 
-from tsundoku.config import get_config_value
+from tsundoku.config import GeneralConfig
+from tsundoku.constants import VALID_SPEEDS
 from tsundoku.feeds.downloader import move
 
 logger = logging.getLogger("tsundoku")
-
-
-VALID_SPEEDS = (
-    "ultrafast",
-    "superfast",
-    "veryfast",
-    "faster",
-    "fast",
-    "medium",
-    "slow",
-    "slower",
-    "veryslow"
-)
 
 
 def seconds_until(start: int, end: int) -> int:
@@ -69,7 +57,7 @@ class Encoder:
 
         self.ENABLED = False
         self.MAX_ENCODES = 2
-        self.CRF = 23
+        self.CRF = 21
         self.SPEED_PRESET = "medium"
         self.RETRY_ON_FAIL = False
 
@@ -150,7 +138,7 @@ class Encoder:
         for entry in leftovers:
             await self.encode(entry["entry_id"])
 
-    def build_cmd(self, entry_id: int, infile: Path) -> str:
+    async def build_cmd(self, entry_id: int, infile: Path) -> str:
         """
         Builds the ffmpeg command for encoding.
 
@@ -163,8 +151,9 @@ class Encoder:
         """
         route = f"api/v1/encode/{entry_id}"
         protocol = "http"
-        domain = get_config_value("Tsundoku", "host")
-        port = get_config_value("Tsundoku", "port")
+
+        cfg = await GeneralConfig.retrieve()
+        domain, port = cfg["host"], cfg["port"]
 
         url = f"{protocol}://{domain}:{port}/{route}"
 
@@ -302,7 +291,7 @@ class Encoder:
                 f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink")
             return False
 
-        cmd = self.build_cmd(entry_id, infile)
+        cmd = await self.build_cmd(entry_id, infile)
         try:
             await create_subprocess_shell(cmd)
         except Exception as e:

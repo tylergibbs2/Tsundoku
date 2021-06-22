@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 else:
     from quart import current_app as app
 
-from tsundoku.config import get_config_value
 from tsundoku.database import migrate
 
 # Git run command inspired by Tautulli's version check code!
@@ -20,11 +19,13 @@ logger = logging.getLogger("tsundoku")
 
 
 async def run(args: str) -> Tuple[str, Optional[bytes]]:
-    git_loc = get_config_value("Tsundoku", "git_path")
+    git_loc = "git"
     cmd = f"{git_loc} {args}"
 
     stdout: Optional[bytes] = None
     stderr: Optional[bytes] = None
+
+    output_text = ""
 
     try:
         logger.debug(f"Git: Trying to execute `{cmd}` with shell")

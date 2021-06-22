@@ -44,6 +44,13 @@ class qBittorrentClient:
 
         return f"{protocol}://{host}:{port}"
 
+    async def test_client(self) -> bool:
+        """
+        Checks whether or not the torrent client is able
+        to connect.
+        """
+        return await self.login()
+
     async def check_torrent_exists(self, torrent_id: str) -> bool:
         """
         Checks whether a torrent with the passed ID

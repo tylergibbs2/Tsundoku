@@ -154,96 +154,92 @@ const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) 
 
     return (
         <div class="box">
-            <form>
-                <div class="columns">
-                    <div class="column is-half">
-                        <h1 class="title is-5">{_("process-quality-title")}</h1>
-                        <h2 class="subtitle is-6">{_("process-quality-subtitle")}</h2>
-                        <div class="columns is-fullwidth mb-0">
-                            <div class="column">
-                                <strong title={`CRF 26 (${_("encode-quality-low-desc")})`}>{_("encode-quality-low")}</strong>
-                            </div>
-                            <div class="column has-text-centered">
-                                <strong title={`CRF 22 (${_("encode-quality-moderate-desc")})`}>{_("encode-quality-moderate")}</strong>
-                            </div>
-                            <div class="column" style={{ textAlign: "right" }}>
-                                <strong title={`CRF 18 (${_("encode-quality-high-desc")})`}>{_("encode-quality-high")}</strong>
+            <div class="columns">
+                <div class="column is-half">
+                    <h1 class="title is-5">{_("process-quality-title")}</h1>
+                    <h2 class="subtitle is-6">{_("process-quality-subtitle")}</h2>
+                    <div class="columns is-fullwidth mb-0">
+                        <div class="column">
+                            <strong title={`CRF 24 (${_("encode-quality-low-desc")})`}>{_("encode-quality-low")}</strong>
+                        </div>
+                        <div class="column has-text-centered">
+                            <strong title={`CRF 21 (${_("encode-quality-moderate-desc")})`}>{_("encode-quality-moderate")}</strong>
+                        </div>
+                        <div class="column" style={{ textAlign: "right" }}>
+                            <strong title={`CRF 18 (${_("encode-quality-high-desc")})`}>{_("encode-quality-high")}</strong>
+                        </div>
+                    </div>
+                    <input class="slider is-fullwidth is-info mt-0" step="1" min="0" max="2" type="range" disabled={disabled} value={getQualityValue()} onChange={inputQualityValue}></input>
+                </div>
+                <div class="column is-half">
+                    <h1 class="title is-5">{_("process-speed-title")}</h1>
+                    <h2 class="subtitle is-6">{_("process-speed-subtitle")}</h2>
+                    <div class="select is-fullwidth is-vcentered">
+                        <select onChange={inputSpeedPreset} disabled={disabled}>
+                            <option value="ultrafast" selected={config.speed_preset === "ultrafast"}>{_("encode-speed-ultrafast")}</option>
+                            <option value="superfast" selected={config.speed_preset === "superfast"}>{_("encode-speed-superfast")}</option>
+                            <option value="veryfast" selected={config.speed_preset === "veryfast"}>{_("encode-speed-veryfast")}</option>
+                            <option value="faster" selected={config.speed_preset === "faster"}>{_("encode-speed-faster")}</option>
+                            <option value="fast" selected={config.speed_preset === "fast"}>{_("encode-speed-fast")}</option>
+                            <option value="medium" selected={config.speed_preset === "medium"}>{_("encode-speed-medium")}</option>
+                            <option value="slow" selected={config.speed_preset === "slow"}>{_("encode-speed-slow")}</option>
+                            <option value="slower" selected={config.speed_preset === "slower"}>{_("encode-speed-slower")}</option>
+                            <option value="veryslow" selected={config.speed_preset === "veryslow"}>{_("encode-speed-veryslow")}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-one-third">
+                    <h1 class="title is-5">{_("process-max-encode-title")}</h1>
+                    <h2 class="subtitle is-6 mb-3">{_("process-max-encode-subtitle")}</h2>
+                    <input class="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} disabled={disabled}></input>
+                </div>
+                <div class="column is-one-third">
+                    <h1 class="title is-5">{_("encode-time-title")}</h1>
+                    <h2 class="subtitle is-6">{_("encode-time-subtitle")}</h2>
+                    <div class="columns is-vcentered">
+                        <div class="column">
+                            <div class="field is-vcentered">
+                                <input id="timeCheck" type="checkbox" class="switch" onChange={inputTimedEncoding} checked={config.timed_encoding} disabled={disabled} />
+                                <label for="timeCheck">{_("checkbox-enabled")}</label>
                             </div>
                         </div>
-                        <input class="slider is-fullwidth is-info mt-0" step="1" min="0" max="2" type="range" disabled={disabled} value={getQualityValue()} onChange={inputQualityValue}></input>
-                    </div>
-                    <div class="column is-half">
-                        <h1 class="title is-5">{_("process-speed-title")}</h1>
-                        <h2 class="subtitle is-6">{_("process-speed-subtitle")}</h2>
-                        <div class="select is-fullwidth is-vcentered">
-                            <select onChange={inputSpeedPreset} disabled={disabled}>
-                                <option value="ultrafast" selected={config.speed_preset === "ultrafast"}>{_("encode-speed-ultrafast")}</option>
-                                <option value="superfast" selected={config.speed_preset === "superfast"}>{_("encode-speed-superfast")}</option>
-                                <option value="veryfast" selected={config.speed_preset === "veryfast"}>{_("encode-speed-veryfast")}</option>
-                                <option value="faster" selected={config.speed_preset === "faster"}>{_("encode-speed-faster")}</option>
-                                <option value="fast" selected={config.speed_preset === "fast"}>{_("encode-speed-fast")}</option>
-                                <option value="medium" selected={config.speed_preset === "medium"}>{_("encode-speed-medium")}</option>
-                                <option value="slow" selected={config.speed_preset === "slow"}>{_("encode-speed-slow")}</option>
-                                <option value="slower" selected={config.speed_preset === "slower"}>{_("encode-speed-slower")}</option>
-                                <option value="veryslow" selected={config.speed_preset === "veryslow"}>{_("encode-speed-veryslow")}</option>
-                            </select>
+                        <div class="column">
+                            <div class="select is-fullwidth is-vcentered">
+                                <select onChange={inputHourStart} disabled={disabled}>
+                                    {
+                                        [...Array(24).keys()].map(hour => {
+                                            if (hour >= config.hour_end) return;
+                                            return <option value={hour.toString()} selected={config.hour_start === hour}>{_(`hour-${hour}`)}</option>
+                                        })
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="select is-fullwidth is-vcentered ml-1">
+                                <select onChange={inputHourEnd} disabled={disabled}>
+                                    {
+                                        [...Array(24).keys()].map(hour => {
+                                            if (hour <= config.hour_start) return;
+                                            return <option value={hour.toString()} selected={config.hour_end === hour}>{_(`hour-${hour}`)}</option>
+                                        })
+                                    }
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="columns">
-                    <div class="column is-one-third">
-                        <h1 class="title is-5">{_("process-max-encode-title")}</h1>
-                        <h2 class="subtitle is-6 mb-3">{_("process-max-encode-subtitle")}</h2>
-                        <input class="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} disabled={disabled}></input>
-                    </div>
-                    <div class="column is-one-third">
-                        <h1 class="title is-5">{_("encode-time-title")}</h1>
-                        <h2 class="subtitle is-6">{_("encode-time-subtitle")}</h2>
-                        <div class="columns is-vcentered">
-                            <div class="column">
-                                <div class="field is-vcentered">
-                                    <input id="timeCheck" type="checkbox" class="switch" onChange={inputTimedEncoding} checked={config.timed_encoding} disabled={disabled} />
-                                    <label for="timeCheck">{_("checkbox-enabled")}</label>
-                                </div>
-                            </div>
-                            <div class="column">
-                                <div class="select is-fullwidth is-vcentered">
-                                    <select onChange={inputHourStart} disabled={disabled}>
-                                        {
-                                            [...Array(24).keys()].map(hour => {
-                                                if (hour >= config.hour_end) return;
-                                                return <option value={hour.toString()} selected={config.hour_start === hour}>{_(`hour-${hour}`)}</option>
-                                            })
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="column">
-                                <div class="select is-fullwidth is-vcentered ml-1">
-                                    <select onChange={inputHourEnd} disabled={disabled}>
-                                        {
-                                            [...Array(24).keys()].map(hour => {
-                                                if (hour <= config.hour_start) return;
-                                                return <option value={hour.toString()} selected={config.hour_end === hour}>{_(`hour-${hour}`)}</option>
-                                            })
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-
-                    </div>
-                    <div class="column is-one-third">
-                        <h1 class="title is-5">{_("process-retry-title")}</h1>
-                        <h2 class="subtitle is-6">{_("process-retry-subtitle")}</h2>
-                        <div class="field">
-                            <input id="retryCheck" type="checkbox" class="switch" onChange={inputRetryFail} checked={config.retry_on_fail} disabled={disabled} />
-                            <label for="retryCheck">{_("checkbox-enabled")}</label>
-                        </div>
+                <div class="column is-one-third">
+                    <h1 class="title is-5">{_("process-retry-title")}</h1>
+                    <h2 class="subtitle is-6">{_("process-retry-subtitle")}</h2>
+                    <div class="field">
+                        <input id="retryCheck" type="checkbox" class="switch" onChange={inputRetryFail} checked={config.retry_on_fail} disabled={disabled} />
+                        <label for="retryCheck">{_("checkbox-enabled")}</label>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     )
 }

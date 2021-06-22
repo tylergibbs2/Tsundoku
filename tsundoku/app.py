@@ -7,7 +7,7 @@ import os
 import secrets
 from asyncio.events import AbstractEventLoop
 from asyncio.queues import Queue
-from typing import Any, Union
+from typing import Any, Tuple, Union
 from uuid import uuid4
 
 import aiohttp
@@ -21,8 +21,8 @@ import tsundoku.exceptions as exceptions
 import tsundoku.git as git
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
-from tsundoku.config import get_config_value
-from tsundoku.database import acquire, migrate
+from tsundoku.config import GeneralConfig
+from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Poller
 from tsundoku.feeds.encoder import Encoder
@@ -75,6 +75,29 @@ async def redirect_to_login(*_: Any) -> Response:
     return redirect(url_for("ux.login"))
 
 
+@app.before_serving
+async def setup_db() -> None:
+    """
+    Creates a database pool for PostgreSQL interaction.
+    """
+    await migrate()
+    app.acquire_db = acquire
+    app.sync_acquire_db = sync_acquire
+
+    async with app.acquire_db() as con:
+        await con.execute("""
+            SELECT
+                COUNT(*)
+            FROM
+                users;
+        """)
+        users = await con.fetchval()
+
+    if not users:
+        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
+
+
+
 @app.before_request
 async def update_check_needed() -> None:
     """
@@ -82,14 +105,11 @@ async def update_check_needed() -> None:
     last update check. If it has been more
     than 1 day, check for an update.
     """
-    should_we = get_config_value("Tsundoku", "do_update_checks")
-    if not should_we:
+    cfg = await GeneralConfig.retrieve(app)
+    if not cfg["update_do_check"]:
         return
 
-    every = get_config_value("Tsundoku", "check_every_n_days")
-    frequency = 24 * every
-
-    next_ = app.last_update_check + datetime.timedelta(hours=frequency)
+    next_ = app.last_update_check + datetime.timedelta(hours=24)
     if next_ < datetime.datetime.utcnow():
         await git.check_for_updates()
         app.last_update_check = datetime.datetime.utcnow()
@@ -116,27 +136,6 @@ async def setup_session() -> None:
     app.last_update_check = datetime.datetime.utcnow()
 
 
-@app.before_serving
-async def setup_db() -> None:
-    """
-    Creates a database pool for PostgreSQL interaction.
-    """
-    await migrate()
-    app.acquire_db = acquire
-
-    async with app.acquire_db() as con:
-        await con.execute("""
-            SELECT
-                COUNT(*)
-            FROM
-                users;
-        """)
-        users = await con.fetchval()
-
-    if not users:
-        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
-
-
 def _load_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
@@ -151,7 +150,7 @@ def _load_parsers() -> None:
         "get_episode_number"
     )
 
-    for parser in get_config_value("Tsundoku", "parsers"):
+    for parser in ("parsers.subsplease",):
         spec: Any = importlib.util.find_spec(parser)
 
         if spec is None:
@@ -247,18 +246,31 @@ async def cleanup() -> None:
 @ux_blueprint.context_processor
 async def insert_locale() -> dict:
     # Inserts the user's locale into jinja2 variables.
-    locale = get_config_value("Tsundoku", "locale", default="en")
+    cfg = await GeneralConfig.retrieve()
 
-    return {"LOCALE": locale}
+    return {"LOCALE": cfg["locale"]}
 
 
 app.register_blueprint(api_blueprint)
 app.register_blueprint(ux_blueprint)
 
 
+def get_bind() -> Tuple[str, int]:
+    """
+    Returns the host and port bindings
+    to run the app on.
+
+    Returns
+    -------
+    Tuple[str, int]
+        Address and port
+    """
+    cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
+    return cfg["host"], cfg["port"]
+
+
 def run() -> None:
-    host = get_config_value("Tsundoku", "host")
-    port = get_config_value("Tsundoku", "port")
+    host, port = get_bind()
 
     loop: Union[asyncio.ProactorEventLoop, AbstractEventLoop]
     try:

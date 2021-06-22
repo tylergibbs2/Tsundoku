@@ -1,8 +1,63 @@
 config-page-title = Configuration
 config-page-subtitle = Update app settings and general configuration
 
+config-test = Test
+config-test-success = Connected
+config-test-failure = Error connecting
+
 feedback-request = Request a Feature
 feedback-bug = Report a Bug
+
+section-general-title = General
+section-general-subtitle = General app settings and configuration
+
+general-host-title = Server Host
+general-host-tooltip = Changes require application restart
+general-host-subtitle = Address and port to bind to
+
+general-loglevel-title = Log Level
+general-loglevel-subtitle = Severity level at which to log
+
+general-locale-title = Locale
+general-locale-tooltip = Updates on page refresh
+general-locale-subtitle = The language that the app displays
+
+general-updatecheck-title = Update Check
+general-updatecheck-tooltip = Checks daily
+general-updatecheck-subtitle = Whether or not to periodically check for updates
+
+seconds-suffix = seconds
+
+section-feeds-title = Feeds
+section-feeds-subtitle = Polling intervals and cutoff for RSS feeds
+
+feeds-fuzzy-cutoff-title = Fuzzy Cutoff
+feeds-fuzzy-cutoff-subtitle = Cutoff for matching show names
+
+feeds-pollinginterval-title = Polling Interval
+feeds-pollinginterval-tooltip = Setting this to a low number may get you blocked from certain RSS feeds
+feeds-pollinginterval-subtitle = Frequency for checking RSS feeds
+
+feeds-completioncheck-title = Completion Check Interval
+feeds-completioncheck-subtitle = Frequency for checking completion status
+
+section-torrent-title = Torrent Client
+section-torrent-subtitle = For connecting to a download client
+
+torrent-client-title = Client
+torrent-client-subtitle = Which torrent client to use
+
+torrent-host-title = Client Host
+torrent-host-subtitle = The location the client is hosted at
+
+torrent-username-title = Username
+torrent-username-subtitle = Authentication username
+
+torrent-password-title = Password
+torrent-password-subtitle = Authentication password
+
+torrent-secure-title = Secure
+torrent-secure-subtitle = Connect on HTTPS
 
 section-api-title = API Key
 section-api-subtitle = For third-party integration with Tsundoku

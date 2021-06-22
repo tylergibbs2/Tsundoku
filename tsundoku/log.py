@@ -5,7 +5,7 @@ from asyncio import QueueFull
 from logging.config import dictConfig
 from typing import Any
 
-from tsundoku.config import get_config_value
+from tsundoku.config import GeneralConfig
 
 logger = logging.getLogger("tsundoku")
 
@@ -32,6 +32,9 @@ class SocketHandler(logging.Handler):
 def setup_logging(app: Any) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
+    cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
+    level = cfg.get("log_level", default="info")
+
     dictConfig({
         "version": 1,
         "disable_existing_loggers": False,
@@ -55,7 +58,7 @@ def setup_logging(app: Any) -> None:
         "loggers": {
             "tsundoku": {
                 "handlers": ["stream", "file"],
-                "level": get_config_value("Tsundoku", "log_level", default="info").upper(),
+                "level": level.upper(),
                 "propagate": True
             }
         }

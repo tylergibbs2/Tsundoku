@@ -1,21 +1,15 @@
+import json
 import logging
 import os
-from contextlib import asynccontextmanager
-from sqlite3 import OperationalError
-from typing import Any, AsyncGenerator
+import sqlite3
+from configparser import ConfigParser
+from contextlib import asynccontextmanager, contextmanager
+from pathlib import Path
+from typing import Any, AsyncGenerator, Generator
 
 from yoyo import get_backend, read_migrations
 
-from tsundoku.config import get_config_value
-
 from . import asqlite
-
-HAS_ASYNCPG = True
-try:
-    import asyncpg
-except ImportError:
-    HAS_ASYNCPG = False
-
 
 logger = logging.getLogger("tsundoku")
 
@@ -33,199 +27,138 @@ async def acquire() -> AsyncGenerator[Any, Any]:
             yield cur
 
 
-async def backport_psql() -> None:
-    if not HAS_ASYNCPG:
-        return
+@contextmanager
+def sync_acquire() -> Generator[sqlite3.Connection, None, None]:
+    with sqlite3.connect(fp) as con:
+        con.row_factory = sqlite3.Row
+        yield con
 
-    async with acquire() as con:
-        try:
-            await con.execute("""
-                SELECT
-                    *
-                FROM
-                    _yoyo_migration;
-            """)
-            rows = await con.fetchall()
-        except OperationalError:
-            rows = []
 
-    if rows:
-        return
-
-    host = get_config_value("PostgreSQL", "host")
-    port = get_config_value("PostgreSQL", "port")
-    user = get_config_value("PostgreSQL", "user")
-    db_password = get_config_value("PostgreSQL", "password")
-    database = get_config_value("PostgreSQL", "database")
+def get_cfg_value(parser: ConfigParser, key: str, value: str, default=None) -> Any:
+    try:
+        value = parser[key][value]
+    except Exception:
+        return default
 
     try:
-        con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database=database
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
+async def transfer_config() -> None:
+    cfg_fp = "data/config.ini" if os.getenv("IS_DOCKER") else "config.ini"
+    if not Path(cfg_fp).exists():
+        return
+
+    cfg = ConfigParser()
+    cfg.read(cfg_fp)
+
+    async with acquire() as con:
+        await con.execute(
+            """
+            INSERT INTO
+                general_config (
+                    id,
+                    host,
+                    port,
+                    update_do_check,
+                    locale,
+                    log_level
+                )
+            VALUES (
+                0,
+                :host,
+                :port,
+                :update_do_check,
+                :locale,
+                :log_level
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                host = :host,
+                port = :port,
+                update_do_check = :update_do_check,
+                locale = :locale,
+                log_level = :log_level;
+            """,
+            {
+                "host": get_cfg_value(cfg, "Tsundoku", "host", "localhost"),
+                "port": get_cfg_value(cfg, "Tsundoku", "port", 6439),
+                "update_do_check": get_cfg_value(cfg, "Tsundoku", "do_update_checks", True),
+                "locale": get_cfg_value(cfg, "Tsundoku", "locale", "en"),
+                "log_level": get_cfg_value(cfg, "Tsundoku", "log_level", "info")
+            }
         )
-    except asyncpg.InvalidCatalogNameError:
-        sys_con = await asyncpg.connect(
-            host=host,
-            user=user,
-            password=db_password,
-            port=port,
-            database="template1"
+        await con.execute(
+            """
+            INSERT INTO
+                feeds_config (
+                    id,
+                    polling_interval,
+                    complete_check_interval,
+                    fuzzy_cutoff
+                )
+            VALUES (
+                0,
+                :polling_interval,
+                :complete_check_interval,
+                :fuzzy_cutoff
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                polling_interval = :polling_interval,
+                complete_check_interval = :complete_check_interval,
+                fuzzy_cutoff = :fuzzy_cutoff;
+            """,
+            {
+                "polling_interval": get_cfg_value(cfg, "Tsundoku", "polling_interval", 900),
+                "complete_check_interval": get_cfg_value(cfg, "Tsundoku", "complete_check_interval", 15),
+                "fuzzy_cutoff": get_cfg_value(cfg, "Tsundoku", "fuzzy_match_cutoff", 90)
+            }
         )
-        await sys_con.execute(f"""
-            CREATE DATABASE "{database}" OWNER "{user}";
-        """)
-        await sys_con.close()
-
-    con = await asyncpg.connect(
-        host=host,
-        user=user,
-        password=db_password,
-        port=port,
-        database=database
-    )
-
-    backend = get_backend(f"postgres://{user}:{db_password}@{host}:{port}/{database}")
-    migrations = read_migrations("migrations")
-
-    first_sqlite = migrations.items[14:][0]
-    migrations.items = migrations.items[:14]
-
-    with backend.lock():
-        backend.apply_migrations(backend.to_apply(migrations))
-
-    migrations.items = [first_sqlite]
-    backend = get_backend(f"sqlite:///{fp}")
-    with backend.lock():
-        backend.apply_migrations(backend.to_apply(migrations))
-
-    users = await con.fetch("""
-        SELECT
-            id,
-            username,
-            password_hash,
-            created_at,
-            api_key::TEXT
-        FROM
-            users;
-    """)
-    shows = await con.fetch("""
-        SELECT
-            id,
-            title,
-            desired_format,
-            desired_folder,
-            season,
-            episode_offset,
-            created_at
-        FROM
-            shows;
-    """)
-    show_entry = await con.fetch("""
-        SELECT
-            id,
-            show_id,
-            episode,
-            current_state,
-            torrent_hash,
-            file_path,
-            last_update
-        FROM
-            show_entry;
-    """)
-    kitsu_info = await con.fetch("""
-        SELECT
-            show_id,
-            kitsu_id,
-            cached_poster_url,
-            show_status,
-            slug,
-            last_updated
-        FROM
-            kitsu_info;
-    """)
-    webhook_base = await con.fetch("""
-        SELECT
-            id,
-            name,
-            base_service,
-            base_url,
-            content_fmt
-        FROM
-            webhook_base;
-    """)
-    webhook = await con.fetch("""
-        SELECT
-            show_id,
-            base
-        FROM
-            webhook;
-    """)
-    webhook_trigger = await con.fetch("""
-        SELECT
-            show_id,
-            base,
-            trigger
-        FROM
-            webhook_trigger;
-    """)
-    await con.close()
-
-    async with acquire() as sqlite:
-        await sqlite.executemany("""
+        await con.execute(
+            """
             INSERT INTO
-                users
-            VALUES (:id, :username, :password_hash, :created_at, :api_key);
-        """, [dict(user) for user in users])
+                torrent_config (
+                    id,
+                    client,
+                    host,
+                    port,
+                    username,
+                    password,
+                    secure
+                )
+            VALUES (
+                0,
+                :client,
+                :host,
+                :port,
+                :username,
+                :password,
+                :secure
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                client = :client,
+                host = :host,
+                port = :port,
+                username = :username,
+                password = :password,
+                secure = :secure;
+            """,
+            {
+                "client": get_cfg_value(cfg, "TorrentClient", "client", "qbittorrent"),
+                "host": get_cfg_value(cfg, "TorrentClient", "host", "localhost"),
+                "port": get_cfg_value(cfg, "TorrentClient", "port", 8112),
+                "username": get_cfg_value(cfg, "TorrentClient", "username", "admin"),
+                "password": get_cfg_value(cfg, "TorrentClient", "password", "password"),
+                "secure": get_cfg_value(cfg, "TorrentClient", "secure", False)
+            }
+        )
 
-        await sqlite.executemany("""
-            INSERT INTO
-                shows
-            VALUES
-                (:id, :title, :desired_format, :desired_folder, :season, :episode_offset, :created_at);
-        """, [dict(show) for show in shows])
-
-        await sqlite.executemany("""
-            INSERT INTO
-                show_entry
-            VALUES
-                (:id, :show_id, :episode, :current_state, :torrent_hash, :file_path, :last_update);
-        """, [dict(entry) for entry in show_entry])
-
-        await sqlite.executemany("""
-            INSERT INTO
-                kitsu_info
-            VALUES
-                (:show_id, :kitsu_id, :cached_poster_url, :show_status, :slug, :last_updated);
-        """, [dict(info) for info in kitsu_info])
-
-        await sqlite.executemany("""
-            INSERT INTO
-                webhook_base
-            VALUES
-                (:id, :name, :base_service, :base_url, :content_fmt);
-        """, [dict(wh_base) for wh_base in webhook_base])
-
-        await sqlite.executemany("""
-            INSERT INTO
-                webhook
-            VALUES
-                (:show_id, :base);
-        """, [dict(wh) for wh in webhook])
-
-        await sqlite.executemany("""
-            INSERT INTO
-                webhook_trigger
-            VALUES
-                (:show_id, :base, :trigger);
-        """, [dict(trigger) for trigger in webhook_trigger])
+    path = Path(cfg_fp)
+    path.rename(path.with_suffix(".old"))
 
 
 async def migrate() -> None:
-    await backport_psql()
-
     backend = get_backend(f"sqlite:///{fp}")
     migrations = read_migrations("migrations")
     migrations.items = migrations.items[14:]
@@ -233,4 +166,10 @@ async def migrate() -> None:
     logger.info("Applying database migrations...")
     with backend.lock():
         backend.apply_migrations(backend.to_apply(migrations))
+
+    try:
+        await transfer_config()
+    except Exception as e:
+        logger.error(f"Error importing old configuration: {e}")
+
     logger.info("Database migrations applied.")
