@@ -21,34 +21,7 @@ status_html_map = {
 
 
 class ShowsAPI(views.MethodView):
-    def _doc_get_0(self) -> None:
-        """
-        Retrieves a list of all shows stored in the database.
-
-        .. :quickref: Shows; Retrieve all shows.
-
-        :status 200: shows found
-
-        :returns: List[:class:`dict`]
-        """
-
-    def _doc_get_1(self) -> None:
-        """
-        Retrieves a single show based on its ID.
-
-        .. :quickref: Shows; Retrieve a show.
-
-        :status 200: the show found
-        :status 404: show with passed id not found
-
-        :returns: :class:`dict`
-        """
-
     async def get(self, show_id: Optional[int]) -> APIResponse:
-        """
-        get_0: without the `show_id` argument.
-        get_1: with the `show_id` argument.
-        """
         if show_id is None:
             shows = await ShowCollection.all()
             await shows.gather_statuses()
@@ -57,30 +30,19 @@ class ShowsAPI(views.MethodView):
                 result=shows.to_list()
             )
         else:
-            show = await Show.from_id(show_id)
+            try:
+                show = await Show.from_id(show_id)
+            except Exception:
+                return APIResponse(
+                    status=404,
+                    error="Show with passed ID not found."
+                )
 
             return APIResponse(
                 result=show.to_dict()
             )
 
     async def post(self, show_id: None) -> APIResponse:
-        """
-        Adds a new show to the database.
-
-        .. :quickref: Shows; Add a new show.
-
-        :status 200: show added successfully
-        :status 400: bad or missing arguments
-        :status 500: unexpected server error
-
-        :form string title: the new show's title
-        :form string desired_format: the new show's desired file format
-        :form string desired_folder: the new show's target folder for moving
-        :form integer season: the season to use when naming the show
-        :form integer episode_offset: the episode offset to use when renaming (default :code:`0`)
-
-        :returns: :class:`dict`
-        """
         # show_id here will always be None. Having it as a parameter
         # is required due to how the defaults are handled with GET
         # and POST methods on the routing table.
@@ -149,36 +111,46 @@ class ShowsAPI(views.MethodView):
         )
 
     async def put(self, show_id: int) -> APIResponse:
-        """
-        Updates a specified show using the given parameters.
-
-        .. :quickref: Shows; Update an existing show.
-
-        :status 200: show updated successfully
-        :status 500: unexpected server error
-
-        :form string title: the new title
-        :form string desired_format: the new desired format
-        :form string desired_folder: the new desired folder
-        :form integer season: the new season
-        :form integer episode_offset: the new episode offset
-
-        :returns: :class:`dict`
-        """
         arguments = await request.get_json()
+
+        try:
+            show = await Show.from_id(show_id)
+        except Exception:
+            return APIResponse(
+                status=404,
+                error="Show with passed ID not found."
+            )
 
         desired_format = arguments.get("desired_format")
         if not desired_format:
-            desired_format = None
+            show.desired_format = ""
 
         desired_folder = arguments.get("desired_folder")
         if not desired_folder:
-            desired_folder = None
+            show.desired_folder = ""
 
-        season = int(arguments["season"])
-        episode_offset = int(arguments["episode_offset"])
+        if "season" in arguments:
+            try:
+                season = int(arguments["season"])
+            except Exception:
+                return APIResponse(
+                    status=400,
+                    error="Season is not a valid integer."
+                )
 
-        show = await Show.from_id(show_id)
+            show.season = season
+
+        if "episode_offset" in arguments:
+            try:
+                episode_offset = int(arguments["episode_offset"])
+            except Exception:
+                return APIResponse(
+                    status=400,
+                    error="Episode offset is not a valid integer."
+                )
+
+            show.episode_offset = episode_offset
+
         do_poll = False
 
         old_title = show.title
@@ -188,19 +160,29 @@ class ShowsAPI(views.MethodView):
             do_poll = True
             await show.metadata.fetch(show_id, arguments["title"])
 
-        try:
-            new_kitsu = int(arguments["kitsu_id"])
+        if "kitsu_id" in arguments:
+            try:
+                new_kitsu = int(arguments["kitsu_id"])
+            except Exception:
+                return APIResponse(
+                    status=400,
+                    error="Kitsu ID is not a valid integer."
+                )
+
             if old_kitsu != new_kitsu:
                 await show.metadata.fetch_by_kitsu(show_id, new_kitsu)
-        except (KeyError, ValueError):
-            pass
 
-        show.title = arguments["title"]
-        show.desired_format = desired_format
-        show.desired_folder = desired_folder
-        show.season = season
-        show.episode_offset = episode_offset
-        show.watch = arguments.get("watch", True)
+        if arguments.get("title"):
+            show.title = arguments["title"]
+
+        if "watch" in arguments:
+            if not isinstance(arguments["watch"], bool):
+                return APIResponse(
+                    status=400,
+                    error="Watch is not a valid boolean."
+                )
+
+            show.watch = arguments["watch"]
 
         await show.update()
 
