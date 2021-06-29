@@ -12,18 +12,6 @@ logger = logging.getLogger("tsundoku")
 
 class NyaaAPI(views.MethodView):
     async def get(self) -> APIResponse:
-        """
-        Search Nyaa with a specified query.
-
-        .. :quickref: Nyaa; Search for results
-
-        :status 200: search successful
-        :status 400: invalid parameters
-
-        :form string query: The search query.
-
-        :returns: List[:class:`dict`]
-        """
         query = request.args.get("query")
         if not query:
             return APIResponse(result=[])
@@ -39,20 +27,6 @@ class NyaaAPI(views.MethodView):
         )
 
     async def post(self) -> APIResponse:
-        """
-        Adds a search result to Tsundoku.
-
-        .. :quickref: Nyaa; Add search result
-
-        :status 200: task performed succesfully
-        :status 400: invalid parameters
-        :status 404: show id passed not found
-
-        :form integer show_id: The show to add the result to.
-        :form string torrent_link: A comma-separated list of webhook triggers.
-
-        :returns: :class:`dict`
-        """
         arguments = await request.get_json()
 
         show_id = arguments.get("show_id")

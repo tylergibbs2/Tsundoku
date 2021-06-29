@@ -12,40 +12,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class EntriesAPI(views.MethodView):
-    def _doc_get_0(self) -> None:
-        """
-        Retrieves all entries for a specified show.
-
-        .. :quickref: Entries; Retrieve all entries.
-
-        :status 200: entries found
-
-        :returns: List[:class:`dict`]
-        """
-
-    def _doc_get_1(self) -> None:
-        """
-        Retrieves a single entry based on its ID.
-
-        .. :quickref: Entries; Retrieve an entry.
-
-        :status 200: entry found
-        :status 404: entry with passed id not found
-
-        :returns: :class:`dict`
-        """
-
     async def get(self, show_id: int, entry_id: Optional[int]) -> APIResponse:
-        """
-        Retrieve all entries or a single entry
-        for a specified show.
-
-        Returns
-        -------
-        APIResponse
-            A dict or a list of dict containing
-            the requested entry information.
-        """
         if entry_id is None:
             async with app.acquire_db() as con:
                 await con.execute("""
@@ -88,23 +55,6 @@ class EntriesAPI(views.MethodView):
             )
 
     async def post(self, show_id: int, entry_id: int = None) -> APIResponse:
-        """
-        Manually begins handling of an entry for a specified show.
-        Handling involves downloading, moving, and renaming.
-
-        If an empty string is passed for a magnet URL, nothing will
-        be downloaded and the entry will be marked as complete.
-
-        .. :quickref: Entries; Add an entry.
-
-        :status 200: entry added successfully
-        :status 400: invalid arguments
-
-        :form integer episode: the entry's episode
-        :form string magnet: the entry's magnet url
-
-        :returns: :class:`dict`
-        """
         arguments = await request.get_json()
         required_arguments = {"episode", "magnet"}
 
@@ -167,16 +117,6 @@ class EntriesAPI(views.MethodView):
         )
 
     async def delete(self, show_id: int, entry_id: int) -> APIResponse:
-        """
-        Deletes a single entry from a show.
-
-        .. :quickref: Entries; Delete an entry.
-
-        :status 200: entry successfully deleted
-        :status 404: entry with passed id not found
-
-        :returns: :class:`bool`
-        """
         async with app.acquire_db() as con:
             await con.execute("""
                 DELETE FROM

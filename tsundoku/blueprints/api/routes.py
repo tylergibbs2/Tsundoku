@@ -138,7 +138,6 @@ async def config_route(cfg_type: str) -> APIResponse:
 async def test_torrent_client() -> APIResponse:
     res = await app.dl_client.test_client()
     return APIResponse(
-        status=200,
         result=res
     )
 
