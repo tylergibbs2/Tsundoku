@@ -1,9 +1,5 @@
 -r requirements.txt
 autopep8==1.5.5
 flake8==3.9.0
-git+https://github.com/tylergibbs2/httpdomain
 isort==5.7.0
 mypy==0.812
-sphinx==3.4.3
-sphinx-rtd-theme==0.5.1
-tusker==0.2.2
