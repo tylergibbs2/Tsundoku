@@ -24,8 +24,7 @@ from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import GeneralConfig
 from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
-from tsundoku.feeds import Downloader, Poller
-from tsundoku.feeds.encoder import Encoder
+from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.log import setup_logging
 from tsundoku.user import User
 
