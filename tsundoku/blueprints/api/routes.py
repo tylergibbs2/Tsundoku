@@ -24,6 +24,14 @@ api_blueprint = Blueprint('api', __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
 
 
+@api_blueprint.errorhandler(500)
+async def err_500(_) -> APIResponse:
+    return APIResponse(
+        status=500,
+        error="Server encountered an unexpected error."
+    )
+
+
 @api_blueprint.before_request
 async def ensure_auth() -> Optional[APIResponse]:
     authed = False
