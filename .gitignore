@@ -1,9 +1,6 @@
 # Python Cache Files
 *.pyc
 
-# Built docs
-docs/_build
-
 # VS code settings
 \.vscode/
 

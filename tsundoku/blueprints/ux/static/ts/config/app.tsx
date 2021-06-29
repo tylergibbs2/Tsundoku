@@ -47,7 +47,7 @@ const ConfigApp = () => {
                 <h2 class="subtitle is-6">{_("section-api-subtitle")}</h2>
                 <div class="box" style={{width: "50%"}}>
                     <APITokenComponent />
-                    <a href="https://tsundoku.readthedocs.io/en/latest/" class="button is-info mt-2">{_("config-api-documentation")}</a>
+                    <a href="https://tsundoku.moe/docs" class="button is-info mt-2">{_("config-api-documentation")}</a>
                 </div>
             </section>
             <section class="section">

@@ -1,6 +1,5 @@
 # Tsundoku (積ん読)
 
-[![Documentation Status](https://readthedocs.org/projects/tsundoku/badge/?version=latest)](https://tsundoku.readthedocs.io/en/latest/?badge=latest)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Discord Invite](https://img.shields.io/discord/801396820772257802)](https://discord.gg/thxN858gXm)
 
@@ -17,7 +16,7 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 * Import third-party RSS parsers to search other feeds
 * Send updates to Discord or Slack with webhooks
 * View airing status of shows
-* Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.readthedocs.io/en/latest/))
+* Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.moe/docs))
 
 ## Requirements
 
