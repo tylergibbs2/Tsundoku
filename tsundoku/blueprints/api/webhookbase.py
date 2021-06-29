@@ -9,43 +9,7 @@ from .response import APIResponse
 
 
 class WebhookBaseAPI(views.MethodView):
-    def _doc_get_0(self) -> None:
-        """
-        Retrieves all webhooks.
-
-        .. :quickref: Webhooks; Retrieve all webhooks.
-
-        :status 200: webhooks found
-
-        :returns: List[:class:`dict`]
-        """
-
-    def _doc_get_1(self) -> None:
-        """
-        Retrieves a single webhook based on a passed ID.
-
-        .. :quickref: Webhooks; Retrieve a webhook.
-
-        :status 200: webhook found
-        :status 404: webhook with passed id not found
-
-        :returns: :class:`dict`
-        """
-
     async def get(self, base_id: Optional[int] = None) -> APIResponse:
-        """
-        Retrieve all WebhookBases.
-
-        Parameters
-        ----------
-        base_id: Optional[int]
-            The specific WebhookBase to retrieve.
-
-        Returns
-        -------
-        List[dict]
-            A list of results.
-        """
         if not base_id:
             return APIResponse(
                 result=[base.to_dict() for base in await WebhookBase.all(app)]
@@ -63,21 +27,6 @@ class WebhookBaseAPI(views.MethodView):
         )
 
     async def post(self) -> APIResponse:
-        """
-        Adds a new base webhook.
-
-        .. :quickref: Webhooks; Add a webhook.
-
-        :status 200: webhook added successfully
-        :status 400: invalid parameters
-        :status 500: unexpected server error
-
-        :form string service: the webhook's service (:code:`discord` or :code:`slack`)
-        :form string url: the webhook's post url
-        :form string name: the display name of the webhook
-
-        :returns: :class:`dict`
-        """
         wh_services = ("discord", "slack", "custom")
         await request.get_data()
         arguments = await request.form
@@ -115,21 +64,6 @@ class WebhookBaseAPI(views.MethodView):
             )
 
     async def put(self, base_id: int) -> APIResponse:
-        """
-        Updates the webhook with the supplied ID.
-
-        .. :quickref: Webhooks; Update a webhook.
-
-        :status 200: webhook updated successfully
-        :status 400: invalid parameters
-        :status 404: webhook with passed if not found
-
-        :form string service: the webhook's service (:code:`discord` or :code:`slack`)
-        :form string url: the webhook's post url
-        :form string name: the display name of the webhook
-
-        :returns: :class:`dict`
-        """
         wh_services = ("discord", "slack", "custom")
         await request.get_data()
         arguments = await request.form
@@ -164,17 +98,6 @@ class WebhookBaseAPI(views.MethodView):
         )
 
     async def delete(self, base_id: int) -> APIResponse:
-        """
-        Deletes a single webhook based on a supplied ID.
-
-        .. :quickref: Webhooks; Delete a webhook.
-
-        :status 200: webhook successfully deleted
-        :status 404: webhook with passed id not found
-        :status 500: unexpected server error
-
-        :returns: :class:`dict`
-        """
         base = await WebhookBase.from_id(app, base_id)
         if not base:
             return APIResponse(

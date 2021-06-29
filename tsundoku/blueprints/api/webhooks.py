@@ -7,67 +7,13 @@ from .response import APIResponse
 
 
 class WebhooksAPI(views.MethodView):
-    def _doc_get_0(self) -> None:
-        """
-        Retrieve all show webhooks.
-
-        .. :quickref: Show Webhooks; Retrieve all show webhooks.
-
-        :status 200: found show webhooks
-
-        :returns: List[:class:`dict`]
-        """
-
-    def _doc_get_1(self) -> None:
-        """
-        Retrieve a single show webhook based on a supplied ID.
-
-        .. :quickref: Show Webhooks; Retrieve a show webhook.
-
-        :status 200: found show webhook
-        :status 404: show webhook with passed id not found
-
-        :returns: :class:`dict`
-        """
-
     async def get(self, show_id: int) -> APIResponse:
-        """
-        Retrieve all webhooks.
-
-        Parameters
-        ----------
-        show_id: int
-            The show to retrieve webhooks for.
-
-        Returns
-        -------
-        List[dict]
-            A list of results.
-        """
         webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
         return APIResponse(
             result=webhooks
         )
 
     async def put(self, show_id: int, base_id: int) -> APIResponse:
-        """
-        Updates a specific webhook.
-
-        Also for adding triggers.
-
-        .. note::
-            Valid triggers are: downloading, downloaded, renamed, moved, completed
-
-        .. :quickref: Show Webhooks; Update a show webhook
-
-        :status 200: show webhook updated successfully
-        :status 400: invalid parameters
-        :status 404: show webhook with passed base id not found, or show not found
-
-        :form string[,] triggers: A comma-separated list of webhook triggers.
-
-        :returns: :class:`dict`
-        """
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
         arguments = await request.get_json()
 

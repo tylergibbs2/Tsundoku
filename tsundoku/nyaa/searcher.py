@@ -123,7 +123,7 @@ class SearchResult:
                 logger.warn(f"Anitopy - Could not Parse `{file}`, skipping")
                 continue
 
-            if "anime_type" in parsed.keys():
+            if parsed is None or "anime_type" in parsed.keys():
                 continue
 
             try:
