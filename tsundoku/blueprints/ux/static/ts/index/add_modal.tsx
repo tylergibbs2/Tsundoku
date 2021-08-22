@@ -26,8 +26,8 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
 
     let defaultValues = {
         "title": "",
-        "desired_format": generalConfig.default_desired_folder,
-        "desired_folder": generalConfig.default_desired_format,
+        "desired_format": generalConfig.default_desired_format,
+        "desired_folder": generalConfig.default_desired_folder,
         "season": 1,
         "episode_offset": 0,
         "watch": true
