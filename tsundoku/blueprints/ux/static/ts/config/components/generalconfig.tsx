@@ -10,7 +10,7 @@ let resources = [
 const _ = getInjector(resources);
 
 
-interface GeneralConfig {
+export interface GeneralConfig {
     host?: string;
     port?: number;
     polling_interval?: number;
@@ -19,10 +19,13 @@ interface GeneralConfig {
     update_do_check?: boolean;
     locale?: string;
     log_level?: string;
+    default_desired_folder?: string;
+    default_desired_format?: string;
+    unwatch_when_finished?: boolean;
 }
 
 
-export const GeneralConfig = () => {
+export const GeneralConfigApp = () => {
     const [config, setConfig] = useState<GeneralConfig>({});
 
     const getConfig = async () => {
@@ -55,15 +58,15 @@ export const GeneralConfig = () => {
         getConfig();
     }, []);
 
-    const inputHost = async (e: Event) => {
+    const inputHost = (e: Event) => {
         updateConfig("host", (e.target as HTMLInputElement).value);
     }
 
-    const inputPort = async (e: Event) => {
+    const inputPort = (e: Event) => {
         updateConfig("port", (e.target as HTMLInputElement).value);
     }
 
-    const inputUpdateCheck = async (e: Event) => {
+    const inputUpdateCheck = (e: Event) => {
         if ((e.target as HTMLInputElement).checked)
             updateConfig("update_do_check", true);
         else
@@ -82,9 +85,24 @@ export const GeneralConfig = () => {
         updateConfig("log_level", target.options[target.selectedIndex].value);
     }
 
+    const inputDefaultDesiredFormat = (e: Event) => {
+        updateConfig("default_desired_format", (e.target as HTMLInputElement).value);
+    }
+
+    const inputDefaultDesiredFolder = (e: Event) => {
+        updateConfig("default_desired_folder", (e.target as HTMLInputElement).value);
+    }
+
+    const inputUnwatchWhenFinished = (e: Event) => {
+        if ((e.target as HTMLInputElement).checked)
+            updateConfig("unwatch_when_finished", true);
+        else
+            updateConfig("unwatch_when_finished", false);
+    }
+
     return (
         <div class="box">
-            <div class="columns">
+            <div class="columns is-multiline">
                 <div class="column is-3">
                     <h1 class="title is-5"><span class="has-tooltip-bottom" data-tooltip={_("general-host-tooltip")}>{_("general-host-title")}</span></h1>
                     <h2 class="subtitle is-6">{_("general-host-subtitle")}</h2>
@@ -125,6 +143,24 @@ export const GeneralConfig = () => {
                     <div class="field">
                         <input id="updateCheck" type="checkbox" class="switch" checked={config.update_do_check} onChange={inputUpdateCheck} />
                         <label for="updateCheck">{_("checkbox-enabled")}</label>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <h1 class="title is-5"><span class="has-tooltip-bottom">{_("general-defaultformat-title")}</span></h1>
+                    <h2 class="subtitle is-6">{_("general-defaultformat-subtitle")}</h2>
+                    <input class="input" type="text" value={config.default_desired_format} onChange={inputDefaultDesiredFormat} />
+                </div>
+                <div class="column is-4">
+                <h1 class="title is-5"><span class="has-tooltip-bottom">{_("general-defaultfolder-title")}</span></h1>
+                    <h2 class="subtitle is-6">{_("general-defaultfolder-subtitle")}</h2>
+                    <input class="input" type="text" value={config.default_desired_folder} onChange={inputDefaultDesiredFolder} />
+                </div>
+                <div class="column is-4">
+                    <h1 class="title is-5">{_("general-unwatchfinished-title")}</h1>
+                    <h2 class="subtitle is-6">{_("general-unwatchfinished-subtitle")}</h2>
+                    <div class="field">
+                        <input id="unwatchCheck" type="checkbox" class="switch" checked={config.unwatch_when_finished} onChange={inputUnwatchWhenFinished} />
+                        <label for="unwatchCheck">{_("checkbox-enabled")}</label>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
-import { useState, StateUpdater } from "preact/hooks";
+import { useState, StateUpdater, useEffect } from "preact/hooks";
 import { useForm } from "react-hook-form";
+import { GeneralConfig } from "../config/components/generalconfig";
 import { getInjector } from "../fluent";
 import { Show } from "../interfaces";
 import { WatchButton } from "./components/watch_button";
@@ -12,14 +13,15 @@ let resources = [
 const _ = getInjector(resources);
 
 
-interface DeleteModalParams {
+interface AddModalParams {
     currentModal?: string;
     setCurrentModal: StateUpdater<string | null>;
     addShow: any;
+    generalConfig: GeneralConfig;
 }
 
 
-export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModalParams) => {
+export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig }: AddModalParams) => {
     const [submitting, setSubmitting] = useState<boolean>(false);
 
     const { register, handleSubmit, reset, setValue } = useForm({
@@ -32,6 +34,13 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow }: DeleteModal
             "watch": true
         }
     });
+
+    useEffect(() => {
+        reset({
+            "desired_folder": generalConfig.default_desired_folder,
+            "desired_format": generalConfig.default_desired_format
+        });
+    }, [currentModal]);
 
     const finalize = (show: Show) => {
         addShow(show);

@@ -8,6 +8,7 @@ import aiohttp
 from quart import current_app as app
 from quart import url_for
 
+from tsundoku.config import GeneralConfig
 from tsundoku.fluent import get_injector
 
 API_URL = "https://kitsu.io/api/edge/anime"
@@ -375,6 +376,8 @@ class KitsuManager:
         if self.kitsu_id is None:
             return
 
+        cfg = await GeneralConfig.retrieve()
+
         self.status = status
         async with app.acquire_db() as con:
             await con.execute("""
@@ -385,3 +388,11 @@ class KitsuManager:
                     last_updated=CURRENT_TIMESTAMP
                 WHERE kitsu_id=?;
             """, status, self.kitsu_id)
+            if cfg["unwatch_when_finished"] and status == "finished":
+                await con.execute("""
+                    UPDATE
+                        shows
+                    SET
+                        watch=?
+                    WHERE id=?;
+                """, False, self.show_id)

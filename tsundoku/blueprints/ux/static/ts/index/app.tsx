@@ -9,6 +9,7 @@ import { Entry, Show } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
+import { GeneralConfig } from "../config/components/generalconfig";
 
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
@@ -35,9 +36,13 @@ const IndexApp = () => {
     const [currentModal, setCurrentModal] = useState<string | null>(null);
     const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || ["current", "finished", "tba", "unreleased", "upcoming"]);
     const [viewType, setViewType] = useState<string>(storedViewType || "cards");
+
     const [textFilter, setTextFilter] = useState<string>("");
+
     const [sortDirection, setSortDirection] = useState<string>(storedSortDirection || "+");
     const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
+
+    const [generalConfig, setGeneralConfig] = useState<GeneralConfig>({});
 
     const fetchShows = async () => {
         let request = {
@@ -55,6 +60,24 @@ const IndexApp = () => {
             return;
 
         setShows(getSortedShows(resp_json.result));
+    }
+
+    const fetchConfig = async () => {
+        let request = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        let resp = await fetch("/api/v1/config/general", request);
+        let resp_json: any;
+        if (resp.ok)
+            resp_json = await resp.json();
+        else
+            return;
+
+        setGeneralConfig(resp_json.result);
     }
 
     const addShow = (show: Show) => {
@@ -164,6 +187,7 @@ const IndexApp = () => {
 
     useEffect(() => {
         fetchShows();
+        fetchConfig();
     }, []);
 
     useEffect(() => {
@@ -195,6 +219,7 @@ const IndexApp = () => {
                 currentModal={currentModal}
                 setCurrentModal={setCurrentModal}
                 addShow={addShow}
+                generalConfig={generalConfig}
             />
 
             <DeleteModal

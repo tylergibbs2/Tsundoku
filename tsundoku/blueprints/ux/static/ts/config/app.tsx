@@ -1,7 +1,7 @@
 import { hydrate } from "preact";
 
 import { APITokenComponent } from "./components/apitoken";
-import { GeneralConfig } from "./components/generalconfig";
+import { GeneralConfigApp } from "./components/generalconfig";
 import { FeedbackBtns } from "./components/feedback_btns";
 import { TorrentConfig } from "./components/torrentclient";
 import { getInjector } from "../fluent";
@@ -30,7 +30,7 @@ const ConfigApp = () => {
             <section class="section">
                 <h1 class="title is-4">{_("section-general-title")}</h1>
                 <h2 class="subtitle is-6">{_("section-general-subtitle")}</h2>
-                <GeneralConfig />
+                <GeneralConfigApp />
             </section>
             <section class="section">
                 <h1 class="title is-4">{_("section-feeds-title")}</h1>

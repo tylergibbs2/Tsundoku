@@ -69,7 +69,10 @@ CREATE TABLE general_config (
     port INTEGER NOT NULL DEFAULT 6439,
     update_do_check BOOLEAN NOT NULL DEFAULT '0',
     locale TEXT NOT NULL DEFAULT 'en',
-    log_level TEXT NOT NULL DEFAULT 'info'
+    log_level TEXT NOT NULL DEFAULT 'info',
+    default_desired_format TEXT NOT NULL DEFAULT '{n} - {s00e00}',
+    default_desired_folder TEXT NOT NULL DEFAULT '{n}/Season {s00}',
+    unwatch_when_finished BOOLEAN NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE feeds_config (

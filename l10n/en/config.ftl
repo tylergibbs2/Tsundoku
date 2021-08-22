@@ -26,6 +26,15 @@ general-updatecheck-title = Update Check
 general-updatecheck-tooltip = Checks daily
 general-updatecheck-subtitle = Whether or not to periodically check for updates
 
+general-defaultformat-title = Default Desired Format
+general-defaultformat-subtitle = Default value for new show's desired format
+
+general-defaultfolder-title = Default Desired Folder
+general-defaultfolder-subtitle = Default value for new show's desired folder
+
+general-unwatchfinished-title = Unwatch When Finished
+general-unwatchfinished-subtitle = Unwatch shows after they are marked as finished
+
 seconds-suffix = seconds
 
 section-feeds-title = Feeds
