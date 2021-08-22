@@ -24,22 +24,21 @@ interface AddModalParams {
 export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig }: AddModalParams) => {
     const [submitting, setSubmitting] = useState<boolean>(false);
 
+    let defaultValues = {
+        "title": "",
+        "desired_format": generalConfig.default_desired_folder,
+        "desired_folder": generalConfig.default_desired_format,
+        "season": 1,
+        "episode_offset": 0,
+        "watch": true
+    }
+
     const { register, handleSubmit, reset, setValue } = useForm({
-        defaultValues: {
-            "title": "",
-            "desired_format": "",
-            "desired_folder": "",
-            "season": 1,
-            "episode_offset": 0,
-            "watch": true
-        }
+        defaultValues: defaultValues
     });
 
     useEffect(() => {
-        reset({
-            "desired_folder": generalConfig.default_desired_folder,
-            "desired_format": generalConfig.default_desired_format
-        });
+        reset(defaultValues);
     }, [currentModal]);
 
     const finalize = (show: Show) => {
