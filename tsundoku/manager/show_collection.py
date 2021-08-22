@@ -87,5 +87,5 @@ class ShowCollection:
                     status_map[show_id] = status
 
         for manager in managers:
-            if manager.kitsu_id in status_map:
+            if manager.kitsu_id is not None and manager.kitsu_id in status_map:
                 await manager.set_status(status_map[manager.kitsu_id])
