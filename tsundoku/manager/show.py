@@ -25,6 +25,7 @@ class Show:
     season: int
     episode_offset: int
     watch: bool
+    post_process: bool
     created_at: datetime
 
     metadata: KitsuManager
@@ -49,6 +50,7 @@ class Show:
             "season": self.season,
             "episode_offset": self.episode_offset,
             "watch": self.watch,
+            "post_process": self.post_process,
             "created_at": self.created_at.isoformat(),
             "entries": [e.to_dict() for e in self._entries],
             "metadata": self.metadata.to_dict(),
@@ -111,6 +113,7 @@ class Show:
                     season,
                     episode_offset,
                     watch,
+                    post_process,
                     created_at
                 FROM
                     shows
@@ -171,17 +174,19 @@ class Show:
                     desired_folder,
                     season,
                     episode_offset,
-                    watch
+                    watch,
+                    post_process
                 )
                 VALUES
-                    (?, ?, ?, ?, ?, ?);
+                    (?, ?, ?, ?, ?, ?, ?);
             """,
                 kwargs["title"],
                 kwargs["desired_format"],
                 kwargs["desired_folder"],
                 kwargs["season"],
                 kwargs["episode_offset"],
-                kwargs["watch"]
+                kwargs["watch"],
+                kwargs["post_process"]
             )
             new_id = con.lastrowid
 
@@ -203,7 +208,8 @@ class Show:
                     desired_folder=?,
                     season=?,
                     episode_offset=?,
-                    watch=?
+                    watch=?,
+                    post_process=?
                 WHERE
                     id=?
             """,
@@ -213,6 +219,7 @@ class Show:
                 self.season,
                 self.episode_offset,
                 self.watch,
+                self.post_process,
                 self.id_
             )
 

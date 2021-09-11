@@ -309,7 +309,8 @@ class KitsuManager:
                     break
 
         if to_cache is None:
-            return None
+            logger.info(f"Unable to find new poster for <s{self.show_id}>")
+            return url_for("ux.static", filename="img/missing.png")
 
         async with app.acquire_db() as con:
             await con.execute("""

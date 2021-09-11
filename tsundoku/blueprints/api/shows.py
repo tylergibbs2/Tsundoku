@@ -89,7 +89,8 @@ class ShowsAPI(views.MethodView):
             desired_folder=desired_folder,
             season=season,
             episode_offset=episode_offset,
-            watch=arguments.get("watch", True)
+            watch=arguments.get("watch", True),
+            post_process=arguments.get("post_process", True)
         )
 
         async with app.acquire_db() as con:
@@ -183,6 +184,15 @@ class ShowsAPI(views.MethodView):
                 )
 
             show.watch = arguments["watch"]
+
+        if "post_process" in arguments:
+            if not isinstance(arguments["post_process"], bool):
+                return APIResponse(
+                    status=400,
+                    error="Post process is not a valid boolean."
+                )
+
+            show.post_process = arguments["post_process"]
 
         await show.update()
 

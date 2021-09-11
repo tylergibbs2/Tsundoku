@@ -3,10 +3,11 @@ import { useForm } from "react-hook-form";
 import { GeneralConfig } from "../config/components/generalconfig";
 import { getInjector } from "../fluent";
 import { Show } from "../interfaces";
-import { WatchButton } from "./components/watch_button";
+import { ShowToggleButton } from "./components/show_toggle_button";
 
 
 let resources = [
+    "base",
     "index"
 ];
 
@@ -30,7 +31,8 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
         "desired_folder": generalConfig.default_desired_folder,
         "season": 1,
         "episode_offset": 0,
-        "watch": true
+        "watch": true,
+        "post_process": true
     }
 
     const { register, handleSubmit, reset, setValue } = useForm({
@@ -61,7 +63,24 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("add-modal-header")}</p>
                     <div class="buttons">
-                        <WatchButton setValue={setValue} />
+                        <ShowToggleButton
+                            setValue={setValue}
+                            attribute="post_process"
+                            onIcon="color-wand"
+                            offIcon="color-wand-outline"
+                            onTooltip={_("unprocess-button-title")}
+                            offTooltip={_("process-button-title")}
+                            additionalClasses="is-primary"
+                        />
+                        <ShowToggleButton
+                                setValue={setValue}
+                                attribute="watch"
+                                onIcon="bookmark"
+                                offIcon="bookmark-outline"
+                                onTooltip={_("unwatch-button-title")}
+                                offTooltip={_("watch-button-title")}
+                                additionalClasses="is-primary"
+                        />
                     </div>
                 </header>
 

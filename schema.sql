@@ -42,6 +42,7 @@ CREATE TABLE shows (
     season INTEGER NOT NULL,
     episode_offset INTEGER NOT NULL DEFAULT 0,
     watch BOOLEAN NOT NULL DEFAULT '1',
+    post_process BOOLEAN NOT NULL DEFAULT '1',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

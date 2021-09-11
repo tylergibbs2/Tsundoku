@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import * as humanizeDuration from "humanize-duration";
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
-import { WatchButton } from "./components/watch_button";
+import { ShowToggleButton } from "./components/show_toggle_button";
 import { Show, Entry, Webhook } from "../interfaces";
 import { IonIcon } from "../icon";
 
@@ -218,21 +218,6 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
         await submitHandler(getValues());
     }
 
-    const clearCache = async () => {
-        let request = {
-            method: "DELETE"
-        };
-
-        let resp = await fetch(`/api/v1/shows/${activeShow.id_}/cache`, request);
-        let resp_json: any;
-        if (resp.ok)
-            resp_json = await resp.json();
-        else
-            return;
-
-        updateShow(resp_json.result);
-    }
-
     const fixMatchDropdown = () => {
         setFixMatch(!fixMatch);
     }
@@ -244,7 +229,26 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("edit-modal-header")}</p>
                     <div class="buttons">
-                        <WatchButton show={activeShow} setValue={setValue} />
+                        <ShowToggleButton
+                            show={activeShow}
+                            setValue={setValue}
+                            attribute="post_process"
+                            onIcon="color-wand"
+                            offIcon="color-wand-outline"
+                            onTooltip={_("unprocess-button-title")}
+                            offTooltip={_("process-button-title")}
+                            additionalClasses="is-primary"
+                        />
+                        <ShowToggleButton
+                            show={activeShow}
+                            setValue={setValue}
+                            attribute="watch"
+                            onIcon="bookmark"
+                            offIcon="bookmark-outline"
+                            onTooltip={_("unwatch-button-title")}
+                            offTooltip={_("watch-button-title")}
+                            additionalClasses="is-primary"
+                        />
                         <div class={"dropdown is-right " + (fixMatch ? "is-active" : "")}>
                             <div class="dropdown-trigger">
                                 <button class="button is-link" onClick={fixMatchDropdown}>

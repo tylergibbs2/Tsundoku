@@ -97,6 +97,28 @@ class Entry:
 
         return ret
 
+    async def should_encode(self) -> bool:
+        """
+        Determines whether or not this entry
+        should be post-processed.
+
+        Returns
+        -------
+        bool
+            Whether to post-process or not.
+        """
+        async with self._app.acquire_db() as con:
+            await con.execute("""
+                SELECT
+                    post_process
+                FROM
+                    shows
+                WHERE id=?;
+            """, self.show_id)
+            encoding_enabled = await con.fetchval()
+
+        return self.state == "completed" and self.file_path is not None and encoding_enabled
+
     async def set_state(self, new_state: EntryState) -> None:
         """
         Updates the database and local object's state.
@@ -115,7 +137,7 @@ class Entry:
                 WHERE id=?;
             """, new_state.value, self.id)
 
-        if new_state == "completed" and self.file_path is not None:
+        if await self.should_encode():
             self._app.encoder.encode_task(self.id)
 
         await self._handle_webhooks()

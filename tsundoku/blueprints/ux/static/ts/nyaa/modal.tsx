@@ -5,10 +5,11 @@ import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { WatchButton } from "../index/components/watch_button";
+import { ShowToggleButton } from "../index/components/show_toggle_button";
 
 
 let resources = [
+    "base",
     "nyaa_search"
 ];
 
@@ -32,6 +33,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
     const [showId, setShowId] = useState<number>(null);
     const [doOverwrite, setDoOverwrite] = useState<boolean>(false);
     const [watch, setWatch] = useState<boolean>(false);
+    const [postProcess, setPostProcess] = useState<boolean>(false);
 
     const addToExisting = () => {
         setAddingToExisting(true);
@@ -93,13 +95,38 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
         setWatch(state);
     }
 
+    const receivePostProcess = (_: any, state: boolean) => {
+        setPostProcess(state);
+    }
+
     return (
         <div id="upsert-show-modal" class={"modal modal-fx-fadeInScale " + (choice ? "is-active" : "")}>
             <div class="modal-background" onClick={submitting ? null : closeModal}></div>
             <div class="modal-card">
                 <header class="modal-card-head">
                     <p class="modal-card-title">{_("modal-title")}</p>
-                    <WatchButton setValue={receiveWatch} disabled={addingToExisting} />
+                    <div class="buttons">
+                        <ShowToggleButton
+                                setValue={receivePostProcess}
+                                attribute="post_process"
+                                onIcon="color-wand"
+                                offIcon="color-wand-outline"
+                                onTooltip={_("unprocess-button-title")}
+                                offTooltip={_("process-button-title")}
+                                additionalClasses="is-primary"
+                                disabled={addingToExisting}
+                        />
+                        <ShowToggleButton
+                                setValue={receiveWatch}
+                                attribute="watch"
+                                onIcon="bookmark"
+                                offIcon="bookmark-outline"
+                                onTooltip={_("unwatch-button-title")}
+                                offTooltip={_("watch-button-title")}
+                                additionalClasses="is-primary"
+                                disabled={addingToExisting}
+                        />
+                    </div>
                 </header>
 
                 <section class="modal-card-body">
@@ -121,7 +148,14 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                             </li>
                         </ul>
                     </div>
-                    <ModalForm addingToExisting={addingToExisting} setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} watch={watch} />
+                    <ModalForm
+                        addingToExisting={addingToExisting}
+                        setSubmitting={setSubmitting}
+                        returnCallback={returnCallback}
+                        shows={shows}
+                        watch={watch}
+                        postProcess={postProcess}
+                    />
                 </section>
 
                 <footer class="modal-card-foot is-size-7">
@@ -140,14 +174,15 @@ interface ModalFormParams {
     setSubmitting: StateUpdater<boolean>;
     returnCallback?: any;
     watch: boolean;
+    postProcess: boolean;
 }
 
 
-const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback, watch }: ModalFormParams) => {
+const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback, watch, postProcess }: ModalFormParams) => {
     if (addingToExisting && shows.length)
         return (<AddToExistingShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />);
     else
-        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} watch={watch} />);
+        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} watch={watch} postProcess={postProcess} />);
 }
 
 
@@ -228,9 +263,10 @@ interface AddShowFormParams {
     setSubmitting: StateUpdater<boolean>;
     returnCallback?: any;
     watch: boolean;
+    postProcess: boolean;
 }
 
-const AddShowForm = ({ setSubmitting, returnCallback, watch }: AddShowFormParams) => {
+const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess }: AddShowFormParams) => {
     const { register, handleSubmit, setValue } = useForm({
         defaultValues: {
             "title": "",
@@ -238,13 +274,15 @@ const AddShowForm = ({ setSubmitting, returnCallback, watch }: AddShowFormParams
             "desired_folder": "",
             "season": 1,
             "episode_offset": 0,
-            "watch": true
+            "watch": true,
+            "post_process": true
         }
     });
 
     useEffect(() => {
         setValue("watch", watch);
-    }, [watch])
+        setValue("post_process", postProcess)
+    }, [watch, postProcess])
 
     const submitHandler = (data: AddShowFormInputs) => {
         setSubmitting(true);

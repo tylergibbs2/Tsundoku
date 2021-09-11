@@ -1,0 +1,4 @@
+ALTER TABLE
+    shows
+ADD COLUMN
+    post_process BOOLEAN NOT NULL DEFAULT '1';

@@ -39,3 +39,6 @@ update-close-button = No, not now
 
 watch-button-title = Watch
 unwatch-button-title = Unwatch
+
+process-button-title = Enable Post-Processing
+unprocess-button-title = Disable Post-Processing

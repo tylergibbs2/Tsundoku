@@ -47,6 +47,7 @@ class ShowCollection:
                     season,
                     episode_offset,
                     watch,
+                    post_process,
                     created_at
                 FROM
                     shows
