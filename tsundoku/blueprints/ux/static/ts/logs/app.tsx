@@ -24,6 +24,7 @@ const LogsApp = () => {
 
     let showAccessCache: Map<number, Show> = new Map();
     let entryAccessCache: Map<number, Entry> = new Map();
+    let ignoreList: number[] = [];
 
     let [shows, setShows] = useState<Show[] | null>(null);
 
@@ -73,6 +74,7 @@ const LogsApp = () => {
                             shows={shows}
                             showAccessCache={showAccessCache}
                             entryAccessCache={entryAccessCache}
+                            ignoreList={ignoreList}
                         />
                     ))}
                 </div>
@@ -93,9 +95,10 @@ interface LogRowParams {
     shows: Show[];
     showAccessCache: Map<number, Show>;
     entryAccessCache: Map<number, Entry>;
+    ignoreList: number[];
 }
 
-const LogRow = ({ row, shows, showAccessCache, entryAccessCache }: LogRowParams) => {
+const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: LogRowParams) => {
     if (!row || row.data === "ACCEPT")
         return (<></>);
 
@@ -133,6 +136,7 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache }: LogRowParams)
                     shows={shows}
                     showAccessCache={showAccessCache}
                     entryAccessCache={entryAccessCache}
+                    ignoreList={ignoreList}
                 />
             </div>
         </>
@@ -145,9 +149,10 @@ interface ContentParams {
     shows: Show[];
     showAccessCache: Map<number, Show>;
     entryAccessCache: Map<number, Entry>;
+    ignoreList: number[];
 }
 
-const Content = ({ raw_content, shows, showAccessCache, entryAccessCache }: ContentParams) => {
+const Content = ({ raw_content, shows, showAccessCache, entryAccessCache, ignoreList }: ContentParams) => {
     const [toJoin, setToJoin] = useState<any>([]);
 
     const fetchShow = async (id: number): Promise<Show> | null => {
@@ -170,11 +175,13 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache }: Cont
             showAccessCache.set(id, found);
             return found;
         } else {
+            if (ignoreList.includes(id)) return;
             found = await fetchShow(id);
             if (found) {
                 showAccessCache.set(id, found);
                 return found
             }
+            ignoreList.push(id);
         }
     }
 
