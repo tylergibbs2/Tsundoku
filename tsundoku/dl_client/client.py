@@ -9,6 +9,7 @@ import aiohttp
 import bencodepy
 
 from tsundoku.config import TorrentConfig
+from tsundoku.dl_client.abstract import TorrentClient
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
 
@@ -20,7 +21,7 @@ class Manager:
         self.session = session
         self.__last_hash = None
 
-        self._client: Union[DelugeClient, qBittorrentClient]
+        self._client: TorrentClient
 
     async def update_config(self) -> None:
         """

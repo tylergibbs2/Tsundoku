@@ -7,10 +7,12 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
+from tsundoku.dl_client.abstract import TorrentClient
+
 logger = logging.getLogger("tsundoku")
 
 
-class qBittorrentClient:
+class qBittorrentClient(TorrentClient):
     def __init__(self, session: aiohttp.ClientSession, auth: Dict[str, str], **kwargs: Any) -> None:
         self.session = session
 
@@ -23,67 +25,18 @@ class qBittorrentClient:
         self.url = self.build_api_url(host, port, secure)
 
     def build_api_url(self, host: str, port: int, secure: bool) -> str:
-        """
-        Builds the URL to make requests to the qBittorrent WebAPI.
-
-        Parameters
-        ----------
-        host: str
-            API host URL.
-        port: int
-            API port.
-        secure: bool
-            Use HTTPS.
-
-        Returns
-        -------
-        str
-            The API's URL.
-        """
         protocol = "https" if secure else "http"
 
         return f"{protocol}://{host}:{port}"
 
     async def test_client(self) -> bool:
-        """
-        Checks whether or not the torrent client is able
-        to connect.
-        """
         return await self.login()
 
     async def check_torrent_exists(self, torrent_id: str) -> bool:
-        """
-        Checks whether a torrent with the passed ID
-        exists in the download client.
-
-        Parameters
-        ----------
-        torrent_id: str
-            The torrent ID to check.
-
-        Returns
-        -------
-        bool:
-            The torrent's existence status.
-        """
         fp = await self.get_torrent_fp(torrent_id)
         return bool(fp)
 
     async def check_torrent_completed(self, torrent_id: str) -> bool:
-        """
-        Checks whether a torrent is fully completed and ready
-        for file I/O operations.
-
-        Parameters
-        ----------
-        torrent_id: str
-            The torrent ID to check.
-
-        Returns
-        -------
-        bool:
-            The torrent's completion status.
-        """
         payload = {
             "hashes": torrent_id
         }
@@ -98,17 +51,6 @@ class qBittorrentClient:
         return state in ("checkingUP", "completed", "forcedUP", "pausedUP", "queuedUP", "stalledUP", "uploading")
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
-        """
-        Sends a request to the client to delete the torrent,
-        optionally also delete the files.
-
-        Parameters
-        ----------
-        torrent_id: str
-            The torrent ID to delete.
-        with_files: bool
-            Whether or not to delete the files downloaded.
-        """
         payload = {
             "hashes": torrent_id,
             "deleteFiles": "true" if with_files else "false"
@@ -117,19 +59,6 @@ class qBittorrentClient:
         await self.request("get", "torrents", "delete", params=payload)
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
-        """
-        Returns information for a specified torrent.
-
-        Parameters
-        ----------
-        torrent_id: str
-            The torrent ID to return information for.
-
-        Returns
-        -------
-        Optional[Path]:
-            The torrent's downloaded file path.
-        """
         payload = {
             "hashes": torrent_id
         }
@@ -145,19 +74,6 @@ class qBittorrentClient:
         return Path(data["content_path"])
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
-        """
-        Adds a torrent to qBittorrent with the given magnet URL.
-
-        Parameters
-        ----------
-        magnet_url: str
-            The magnet URL of the torrent to add to qBittorrent.
-
-        Returns
-        -------
-        Optional[str]
-            The torrent ID if success, None if torrent not added.
-        """
         payload = {
             "urls": magnet_url
         }
@@ -171,14 +87,6 @@ class qBittorrentClient:
         return match.group(1).lower()
 
     async def login(self) -> bool:
-        """
-        Authorizes with the qBittorrent WebUI.
-
-        Returns
-        -------
-        bool
-            Auth status.
-        """
         headers = {
             "Referer": self.url
         }
