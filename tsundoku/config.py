@@ -154,7 +154,7 @@ class TorrentConfig(Config):
     TABLE_NAME = "torrent_config"
 
     def check_client(self, value: str) -> bool:
-        return value in ("deluge", "qbittorrent")
+        return value in ("deluge", "transmission", "qbittorrent")
 
     def check_port(self, value: str) -> bool:
         return 1 <= int(value) <= 65535

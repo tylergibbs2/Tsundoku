@@ -24,6 +24,7 @@ CREATE TABLE TorrentClient (
 
 INSERT INTO TorrentClient (Type) VALUES
     ('deluge'),
+    ('transmission'),
     ('qbittorrent');
 
 CREATE TABLE users (

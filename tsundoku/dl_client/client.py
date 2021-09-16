@@ -12,6 +12,7 @@ from tsundoku.config import TorrentConfig
 from tsundoku.dl_client.abstract import TorrentClient
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
+from tsundoku.dl_client.transmission import TransmissionClient
 
 logger = logging.getLogger("tsundoku")
 
@@ -53,6 +54,14 @@ class Manager:
             )
         elif cfg["client"] == "qbittorrent":
             self._client = qBittorrentClient(
+                self.session,
+                auth={"username": username, "password": password},
+                host=host,
+                port=port,
+                secure=secure
+            )
+        elif cfg["client"] == "transmission":
+            self._client = TransmissionClient(
                 self.session,
                 auth={"username": username, "password": password},
                 host=host,

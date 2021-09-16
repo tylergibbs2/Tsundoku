@@ -117,6 +117,7 @@ export const TorrentConfig = () => {
                     <div class="select is-fullwidth">
                         <select onChange={inputClient}>
                             <option value="deluge" selected={config.client === "deluge"}>Deluge</option>
+                            <option value="transmission" selected={config.client === "transmission"}>Transmission</option>
                             <option value="qbittorrent" selected={config.client === "qbittorrent"}>qBittorrent</option>
                         </select>
                     </div>
