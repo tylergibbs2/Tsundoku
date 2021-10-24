@@ -44,29 +44,29 @@ class Manager:
         username = cfg["username"]
         password = cfg["password"]
 
+        kwargs = {
+            "host": host,
+            "port": port,
+            "secure": secure
+        }
+
         if cfg["client"] == "deluge":
+            kwargs["auth"] = password
             self._client = DelugeClient(
                 self.session,
-                host=host,
-                port=port,
-                secure=secure,
-                auth=password
+                **kwargs
             )
         elif cfg["client"] == "qbittorrent":
+            kwargs["auth"] = {"username": username, "password": password}
             self._client = qBittorrentClient(
                 self.session,
-                auth={"username": username, "password": password},
-                host=host,
-                port=port,
-                secure=secure
+                **kwargs
             )
         elif cfg["client"] == "transmission":
+            kwargs["auth"] = {"username": username, "password": password}
             self._client = TransmissionClient(
                 self.session,
-                auth={"username": username, "password": password},
-                host=host,
-                port=port,
-                secure=secure
+                **kwargs
             )
 
     async def get_magnet(self, location: str) -> str:
