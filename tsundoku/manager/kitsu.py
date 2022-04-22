@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
 import aiohttp
 from quart import current_app as app
@@ -89,7 +89,7 @@ class KitsuManager:
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
             payload = {
                 "filter[text]": show_name,
-                "fields[anime]": "id,status,slug"
+                "fields[anime]": "id,status,slug,posterImage"
             }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
@@ -106,7 +106,7 @@ class KitsuManager:
         instance.slug = attributes.get("slug")
         instance.status = attributes.get("status")
 
-        instance.poster = await instance.get_poster_image()
+        instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
             await con.execute("""
@@ -169,7 +169,7 @@ class KitsuManager:
         instance.slug = attributes.get("slug")
         instance.status = attributes.get("status")
 
-        instance.poster = await instance.get_poster_image()
+        instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
             await con.execute("""
@@ -270,7 +270,7 @@ class KitsuManager:
                     show_id=?;
             """, self.show_id)
 
-    async def get_poster_image(self) -> Optional[str]:
+    async def get_poster_image(self, poster_images: Optional[Dict[str, str]]=None) -> Optional[str]:
         """
         Returns the link to the show's poster.
 
@@ -279,6 +279,22 @@ class KitsuManager:
         Optional[str]
             The desired poster.
         """
+        if poster_images is None and self.kitsu_id is not None:
+            async with aiohttp.ClientSession(headers=KitsuManager.HEADERS) as sess:
+                payload = {
+                    "filter[id]": self.kitsu_id,
+                    "fields[anime]": "posterImage"
+                }
+                async with sess.get(API_URL, params=payload) as resp:
+                    data = await resp.json()
+                    try:
+                        result = data["data"][0]
+                    except (IndexError, KeyError):
+                        result = {}
+
+            attributes = result.get("attributes", {})
+            poster_images = attributes.get("posterImage")
+
         if self.kitsu_id is None:
             return url_for("ux.static", filename="img/missing.png")
 
@@ -297,16 +313,11 @@ class KitsuManager:
         logger.info(f"Retrieving new poster URL for <s{self.show_id}> from Kitsu")
 
         to_cache = None
-        async with aiohttp.ClientSession() as sess:
-            for size in ["large", "medium", "small", "tiny", "original"]:
-                url = self.MEDIA_BASE.format(self.kitsu_id, size)
-                async with sess.head(url) as resp:
-                    if resp.status == 404:
-                        continue
-
-                    logger.info(f"New poster found for <s{self.show_id}> at [{size}] quality")
-                    to_cache = url
-                    break
+        for size in ["large", "medium", "small", "tiny", "original"]:
+            if poster_images.get(size) is not None:
+                logger.info(f"New poster found for <s{self.show_id}> at [{size}] quality")
+                to_cache = poster_images[size]
+                break
 
         if to_cache is None:
             logger.info(f"Unable to find new poster for <s{self.show_id}>")
