@@ -13,8 +13,8 @@ from uuid import uuid4
 import aiohttp
 from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
-from quart.wrappers.response import Response
 from quart_auth import AuthManager, Unauthorized
+from werkzeug import Response
 
 import tsundoku.asqlite
 import tsundoku.exceptions as exceptions
