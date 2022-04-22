@@ -467,7 +467,10 @@ class Encoder:
 
         stats = dict(stats)
         durations = [(t["ended_at"] - t["started_at"]).total_seconds() for t in times]
-        stats["median_time_spent_hours"] = statistics.median(durations) / 3600
+        try:
+            stats["median_time_spent_hours"] = statistics.median(durations) / 3600
+        except statistics.StatisticsError:
+            stats["median_time_spent_hours"] = 0
         stats["avg_time_spent_hours"] = (sum(durations) / len(durations)) / 3600
 
         return stats
