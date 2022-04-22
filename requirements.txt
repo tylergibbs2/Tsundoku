@@ -7,6 +7,6 @@ distro==1.5.0
 feedparser==6.0.2
 fluent.runtime==0.3.1
 user-agents==2.2.0
-quart-auth==0.4.0
-quart==0.13.0
+quart-auth==0.6.0
+quart==0.17.0
 yoyo-migrations==7.2.1
