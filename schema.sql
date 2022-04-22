@@ -81,7 +81,8 @@ CREATE TABLE feeds_config (
     id INTEGER PRIMARY KEY CHECK (id = 0),
     polling_interval INTEGER NOT NULL DEFAULT 900,
     complete_check_interval INTEGER NOT NULL DEFAULT 15,
-    fuzzy_cutoff INTEGER NOT NULL DEFAULT 90
+    fuzzy_cutoff INTEGER NOT NULL DEFAULT 90,
+    seed_ratio_limit REAL NOT NULL DEFAULT 0.0
 );
 
 CREATE TABLE torrent_config (

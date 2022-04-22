@@ -58,7 +58,9 @@ class Downloader:
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
+
         self.complete_check: int
+        self.seed_ratio_limit: float
 
     async def update_config(self) -> None:
         """
@@ -66,6 +68,7 @@ class Downloader:
         """
         cfg = await FeedsConfig.retrieve()
         self.complete_check = cfg["complete_check_interval"]
+        self.seed_ratio_limit = cfg["seed_ratio_limit"]
 
     async def start(self) -> None:
         while True:
@@ -345,12 +348,12 @@ class Downloader:
             except Exception:
                 logger.debug(
                     f"Anitopy - Could not parse `{subpath.name}`, skipping")
-                continue
+                continue  # TODO: maybe ask user on UI to match manually
 
             try:
                 found = int(parsed["episode_number"])
             except (KeyError, ValueError, TypeError):
-                continue
+                continue  # TODO: maybe handle this?
             if found == episode:
                 return subpath
 
@@ -413,6 +416,14 @@ class Downloader:
             logger.info(f"Release Marked as Downloaded - <e{entry.id}>")
 
         if entry.state == EntryState.downloaded:
+            seed_ratio = await self.app.dl_client.check_torrent_ratio(entry.torrent_hash)
+            if seed_ratio is None:
+                logger.error(f"<e{entry.id}> seed ratio could not be determined")
+                return
+            elif seed_ratio < self.seed_ratio_limit:
+                logger.info(f"<e{entry.id}> seed ratio is below limit ({self.seed_ratio_limit})")
+                return
+
             logger.info(f"Preparing to Rename Release - <e{entry.id}>")
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:

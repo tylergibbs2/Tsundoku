@@ -149,6 +149,9 @@ class FeedsConfig(Config):
     def check_fuzzy_cutoff(self, value: str) -> bool:
         return 0 <= int(value) <= 100
 
+    def check_seed_ratio_limit(self, value: str) -> bool:
+        return float(value) >= 0.0
+
 
 class TorrentConfig(Config):
     TABLE_NAME = "torrent_config"

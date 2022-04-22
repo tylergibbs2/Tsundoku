@@ -50,6 +50,9 @@ feeds-pollinginterval-subtitle = Frequency for checking RSS feeds
 feeds-completioncheck-title = Completion Check Interval
 feeds-completioncheck-subtitle = Frequency for checking completion status
 
+feeds-seedratio-title = Seed Ratio Limit
+feeds-seedratio-subtitle = Wait for this seed ratio before processing a download
+
 section-torrent-title = Torrent Client
 section-torrent-subtitle = For connecting to a download client
 

@@ -13,6 +13,7 @@ interface FeedsConfig {
     polling_interval?: number;
     complete_check_interval?: number;
     fuzzy_cutoff?: number;
+    seed_ratio_limit?: number;
 }
 
 
@@ -61,6 +62,12 @@ export const FeedsConfig = () => {
         updateConfig("fuzzy_cutoff", (e.target as HTMLInputElement).value);
     }
 
+    const inputSeedRatioLimit = async (e: Event) => {
+        (e.target as HTMLInputElement).value = parseFloat((e.target as HTMLInputElement).value).toFixed(2);
+
+        updateConfig("seed_ratio_limit", (e.target as HTMLInputElement).value);
+    }
+
     return (
         <div class="box">
             <div class="columns">
@@ -88,7 +95,7 @@ export const FeedsConfig = () => {
                         </div>
                     </div>
                 </div>
-                <div class="column is-4">
+                <div class="column is-3">
                     <h1 class="title is-5">{_("feeds-completioncheck-title")}</h1>
                     <h2 class="subtitle is-6">{_("feeds-completioncheck-subtitle")}</h2>
                     <div class="field has-addons">
@@ -97,6 +104,15 @@ export const FeedsConfig = () => {
                         </div>
                         <div class="control">
                             <a class="button is-static">{_("seconds-suffix")}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-3">
+                    <h1 class="title is-5">{_("feeds-seedratio-title")}</h1>
+                    <h2 class="subtitle is-6">{_("feeds-seedratio-subtitle")}</h2>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input" type="number" min="0.0" placeholder="0.0" step="0.1" value={config.seed_ratio_limit?.toFixed(2)} onChange={inputSeedRatioLimit} />
                         </div>
                     </div>
                 </div>
