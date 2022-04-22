@@ -67,6 +67,24 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
+    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+        """
+        Checks the seeding ratio of a specified torrent.
+
+        Can return None if the torrent does not exist.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to check.
+
+        Returns
+        -------
+        Optional[float]
+            The torrent's seed ratio.
+        """
+
+    @abstractmethod
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         """
         Sends a request to the client to delete the torrent,

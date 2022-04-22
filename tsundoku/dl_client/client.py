@@ -182,6 +182,24 @@ class Manager:
 
         return await self._client.check_torrent_completed(torrent_id)
 
+    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+        """
+        Checks whether a torrent has a ratio of at least 1.0.
+
+        Parameters
+        ----------
+        torrent_id: str
+            The torrent ID to check.
+
+        Returns
+        -------
+        Optional[float]:
+            The torrent's ratio.
+        """
+        await self.update_config()
+
+        return await self._client.check_torrent_ratio(torrent_id)
+
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         """
         Sends a request to the client to delete the torrent,

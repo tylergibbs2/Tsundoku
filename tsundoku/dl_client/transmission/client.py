@@ -88,6 +88,25 @@ class TransmissionClient(TorrentClient):
             status in (5, 6)
         )
 
+    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+        resp = await self.request("torrent-get", {
+            "ids": [torrent_id],
+            "fields": ["uploadRatio"]
+        })
+
+        if resp.get("result") != "success":
+            return None
+
+        root = resp["arguments"]["torrents"]
+        if not len(root):
+            return None
+
+        torrent = root[0]
+        if "uploadRatio" in torrent:
+            return torrent["uploadRatio"]
+
+        return None
+
     async def delete_torrent(self, torrent_id: str, with_files: bool) -> None:
         await self.request("torrent-remove", {
             "ids": [torrent_id],

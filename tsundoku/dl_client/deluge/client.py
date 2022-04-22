@@ -50,6 +50,21 @@ class DelugeClient(TorrentClient):
         logger.debug(f"Torrent `{torrent_id}` is `{data['state']}`")
         return data["state"] == "Seeding"
 
+    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+        ret = await self.request("webapi.get_torrents", [[torrent_id], ["ratio"]])
+
+        ret_list = ret["result"].get("torrents", [])
+
+        try:
+            data = ret_list[0]
+        except IndexError:
+            return None
+
+        if "ratio" in data:
+            return data["ratio"]
+
+        return None
+
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         await self.request("webapi.remove_torrent", [torrent_id, with_files])
 
