@@ -471,6 +471,9 @@ class Encoder:
             stats["median_time_spent_hours"] = statistics.median(durations) / 3600
         except statistics.StatisticsError:
             stats["median_time_spent_hours"] = 0
-        stats["avg_time_spent_hours"] = (sum(durations) / len(durations)) / 3600
+        if len(durations) != 0:
+            stats["avg_time_spent_hours"] = (sum(durations) / len(durations)) / 3600
+        else:
+            stats["avg_time_spent_hours"] = 0
 
         return stats
