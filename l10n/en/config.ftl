@@ -80,6 +80,12 @@ section-encode-subtitle = Encoding of completed downloads for lower file sizes
 process-quality-title = Quality Preset
 process-quality-subtitle = Higher quality will result in larger file sizes
 
+encode-stats-total-encoded = {$total_encoded} Completed Encodes
+encode-stats-total-saved-gb = {$total_saved_gb} Total GB Saved
+encode-stats-avg-saved-mb = {$avg_saved_mb} Average MB Saved
+encode-stats-median-time-hours = {$median_time_hours} Median Hours Spent
+encode-stats-avg-time-hours = {$avg_time_hours} Average Hours Spent
+
 encode-quality-low = Low
 encode-quality-moderate = Moderate
 encode-quality-high = High

@@ -4,6 +4,7 @@ import os
 from asyncio import create_subprocess_shell
 from datetime import datetime, timedelta
 from pathlib import Path
+import statistics
 from typing import Any, Dict, List
 
 from quart import request
@@ -403,6 +404,11 @@ class Encoder:
     async def has_ffmpeg(self) -> bool:
         """
         Checks if ffmpeg is available to use.
+
+        Returns
+        -------
+        bool
+            If ffmpeg is available.
         """
         if self.__has_ffmpeg:
             return self.__has_ffmpeg
@@ -417,3 +423,51 @@ class Encoder:
         output = stdout.decode("utf-8")
         self.__has_ffmpeg = "--enable-libx264" in output
         return self.__has_ffmpeg
+
+    async def get_stats(self) -> Dict[str, float]:
+        """
+        Returns global encoding statistics.
+
+        Keys:
+        total_encoded           - total number of encodes completed
+        total_saved_bytes       - total bytes saved across all encodes
+        avg_saved_bytes         - average amount of bytes saved per item
+        median_time_spent_hours - median time spent encoding one item in hours
+        avg_time_spent_hours    - average time spent encoding one item in hours
+
+        Returns
+        -------
+        Dict[str, float]
+            The global encoding statistics.
+        """
+        async with self.app.acquire_db() as con:
+            # initial_size and final_size are stored in bytes
+            await con.execute("""
+                SELECT
+                    COUNT(*) AS total_encoded,
+                    SUM(initial_size - final_size) AS total_saved_bytes,
+                    AVG(initial_size - final_size) AS avg_saved_bytes
+                FROM
+                    encode
+                WHERE
+                    ended_at IS NOT NULL;
+            """)
+            stats = await con.fetchone()
+
+            await con.execute("""
+                SELECT
+                    started_at,
+                    ended_at
+                FROM
+                    encode
+                WHERE
+                    ended_at IS NOT NULL;
+            """)
+            times = await con.fetchall()
+
+        stats = dict(stats)
+        durations = [(t["ended_at"] - t["started_at"]).total_seconds() for t in times]
+        stats["median_time_spent_hours"] = statistics.median(durations) / 3600
+        stats["avg_time_spent_hours"] = (sum(durations) / len(durations)) / 3600
+
+        return stats

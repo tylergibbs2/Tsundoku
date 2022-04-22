@@ -23,14 +23,32 @@ interface EncodeConfig {
 }
 
 
+interface EncodeStats {
+    total_encoded?: number;
+    total_saved_bytes?: number;
+    avg_saved_bytes?: number;
+    median_time_spent_hours?: number;
+    avg_time_spent_hours?: number;
+}
+
+
 export const PostProcessing = () => {
     const [config, setConfig] = useState<EncodeConfig>({});
+    const [encodeStats, setEncodeStats] = useState<EncodeStats>({});
 
     const getConfig = async () => {
         let resp = await fetch("/api/v1/config/encode");
         if (resp.ok) {
             let data = await resp.json();
             setConfig(data.result);
+        }
+    }
+
+    const getEncodingStats = async () => {
+        let resp = await fetch("/api/v1/config/encode/stats");
+        if (resp.ok) {
+            let data = await resp.json();
+            setEncodeStats(data.result);
         }
     }
 
@@ -54,6 +72,7 @@ export const PostProcessing = () => {
 
     useEffect(() => {
         getConfig();
+        getEncodingStats();
     }, []);
 
     const inputEnabled = (e: Event) => {
@@ -74,6 +93,7 @@ export const PostProcessing = () => {
             </div>
             <PostProcessingForm
                 config={config}
+                stats={encodeStats}
                 updateConfig={updateConfig}
             />
         </>
@@ -82,10 +102,11 @@ export const PostProcessing = () => {
 
 interface PostProcessingFormParams {
     config: EncodeConfig;
+    stats: EncodeStats;
     updateConfig: any;
 }
 
-const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) => {
+const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormParams) => {
     let disabled = !(config.enabled && config.has_ffmpeg);
 
     const inputMaxEncodes = (e: Event) => {
@@ -154,6 +175,25 @@ const PostProcessingForm = ({ config, updateConfig }: PostProcessingFormParams) 
 
     return (
         <div class="box">
+            {Object.keys(stats).length > 0 &&
+                <div class="columns">
+                    <div class="column is-one-fifth">
+                        <p>{_("encode-stats-total-encoded", { 'total_encoded': stats.total_encoded })}</p>
+                    </div>
+                    <div class="column is-one-fifth">
+                        <p>{_("encode-stats-total-saved-gb", { 'total_saved_gb': (stats.total_saved_bytes / (1024 ** 3)).toFixed(1) })}</p>
+                    </div>
+                    <div class="column is-one-fifth">
+                        <p>{_("encode-stats-avg-saved-mb", { 'avg_saved_mb': (stats.avg_saved_bytes / (1024 ** 2)).toFixed(1) })}</p>
+                    </div>
+                    <div class="column is-one-fifth">
+                        <p>{_("encode-stats-median-time-hours", { 'median_time_hours': stats.median_time_spent_hours.toFixed(2) })}</p>
+                    </div>
+                    <div class="column is-one-fifth">
+                        <p>{_("encode-stats-avg-time-hours", { 'avg_time_hours': stats.avg_time_spent_hours.toFixed(2) })}</p>
+                    </div>
+                </div>
+            }
             <div class="columns">
                 <div class="column is-half">
                     <h1 class="title is-5">{_("process-quality-title")}</h1>

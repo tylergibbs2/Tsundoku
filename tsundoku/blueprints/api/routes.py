@@ -142,6 +142,18 @@ async def test_torrent_client() -> APIResponse:
     )
 
 
+@api_blueprint.route("/config/encode/stats", methods=["GET"])
+async def get_encode_stats() -> APIResponse:
+    """
+    Returns a dictionary of encode statistics.
+
+    :returns: Dict[:class:`str`, :class:`float`]
+    """
+    return APIResponse(
+        result=await app.encoder.get_stats()
+    )
+
+
 @api_blueprint.route("/shows/seen", methods=["GET"])
 async def get_seen_shows() -> APIResponse:
     """
