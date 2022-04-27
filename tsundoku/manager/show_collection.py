@@ -40,17 +40,24 @@ class ShowCollection:
         async with app.acquire_db() as con:
             await con.execute("""
                 SELECT
-                    id as id_,
-                    title,
-                    desired_format,
-                    desired_folder,
-                    season,
-                    episode_offset,
-                    watch,
-                    post_process,
-                    created_at
+                    s.id as id_,
+                    s.title,
+                    s.desired_format,
+                    s.desired_folder,
+                    s.season,
+                    s.episode_offset,
+                    s.watch,
+                    s.post_process,
+                    s.created_at,
+                    ki.kitsu_id,
+                    ki.slug,
+                    ki.show_status,
+                    ki.cached_poster_url
                 FROM
-                    shows
+                    shows as s
+                LEFT JOIN
+                    kitsu_info as ki
+                ON s.id = ki.show_id
                 ORDER BY title;
             """)
             shows = await con.fetchall()

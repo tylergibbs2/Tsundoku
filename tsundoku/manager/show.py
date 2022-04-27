@@ -73,10 +73,18 @@ class Show:
         Show
             The created Show object.
         """
-        metadata = await KitsuManager.from_show_id(data["id_"])
+        data_dict = dict(data)
+        metadata_dict = {
+            "show_id": data_dict["id_"],
+            "kitsu_id": data_dict.pop("kitsu_id", None),
+            "slug": data_dict.pop("slug", None),
+            "show_status": data_dict.pop("show_status", None),
+            "cached_poster_url": data_dict.pop("cached_poster_url", None)
+        }
+        metadata = await KitsuManager.from_data(metadata_dict)
 
         instance = cls(
-            **dict(data),
+            **data_dict,
             metadata=metadata,
             _entries=[],
             _webhooks=[]

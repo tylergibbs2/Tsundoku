@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import aiohttp
 from quart import current_app as app
@@ -239,6 +239,50 @@ class KitsuManager:
         instance.status = row["show_status"]
 
         instance.poster = await instance.get_poster_image()
+
+        return instance
+
+    @classmethod
+    async def from_data(cls, data: Dict[str, str]) -> KitsuManager:
+        """
+        Creates a metadata object from already queried SQL
+        data.
+
+        Parameters
+        ----------
+        data: Dict[str, str]
+            The data to use to create the object.
+
+        Returns
+        -------
+        KitsuManager
+            A KitsuManager for the show.
+        """
+        show_id = int(data["show_id"])
+        logger.debug(f"Creating KitsuManager from data for show <s{show_id}>")
+
+        if data.get("kitsu_id") is None:
+            async with app.acquire() as con:
+                await con.execute("""
+                    SELECT
+                        title
+                    FROM
+                        shows
+                    WHERE id=?;
+                """, show_id)
+                show_name = await con.fetchval()
+                return await KitsuManager.fetch(show_id, show_name)
+
+        instance = cls()
+        instance.show_id = show_id
+        instance.kitsu_id = data.get("kitsu_id")
+        instance.slug = data.get("slug")
+        instance.status = data.get("show_status")
+
+        if data.get("cached_poster_url"):
+            instance.poster = data["cached_poster_url"]
+        else:
+            instance.poster = await instance.get_poster_image()
 
         return instance
 
