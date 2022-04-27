@@ -113,15 +113,16 @@ class Poller:
 
         found = []
 
-        for parser in self.app.rss_parsers:
-            self.current_parser = parser
-            items = await self.get_items_from_parser()
-            if not items:
-                continue
+        async with self.app.parser_lock:
+            for parser in self.app.rss_parsers:
+                self.current_parser = parser
+                items = await self.get_items_from_parser()
+                if not items:
+                    continue
 
-            logger.info(f"`{parser.name}` - Checking for New Releases...")
-            found += await self.check_feed(items)
-            logger.info(f"`{parser.name}` - Checked for New Releases")
+                logger.info(f"`{parser.name}` - Checking for New Releases...")
+                found += await self.check_feed(items)
+                logger.info(f"`{parser.name}` - Checked for New Releases")
 
         self.current_parser = None
 

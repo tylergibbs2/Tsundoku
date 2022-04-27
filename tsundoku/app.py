@@ -1,7 +1,5 @@
 import asyncio
 import datetime
-import importlib
-import importlib.util
 import logging
 import os
 import secrets
@@ -17,7 +15,6 @@ from quart_auth import AuthManager, Unauthorized
 from werkzeug import Response
 
 import tsundoku.asqlite
-import tsundoku.exceptions as exceptions
 import tsundoku.git as git
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
@@ -26,6 +23,7 @@ from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.log import setup_logging
+from tsundoku.parsers import load_parsers
 from tsundoku.user import User
 
 hasher = PasswordHasher()
@@ -96,7 +94,6 @@ async def setup_db() -> None:
         logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
 
 
-
 @app.before_request
 async def update_check_needed() -> None:
     """
@@ -135,65 +132,18 @@ async def setup_session() -> None:
     app.last_update_check = datetime.datetime.utcnow()
 
 
-def _load_parsers() -> None:
-    """
-    Load all of the custom RSS parsers into the app.
-    """
-    app.rss_parsers = []
-
-    required_attrs = (
-        "name",
-        "url",
-        "version",
-        "get_show_name",
-        "get_episode_number"
-    )
-
-    for parser in ("parsers.subsplease",):
-        spec: Any = importlib.util.find_spec(parser)
-
-        if spec is None:
-            logger.error(f"Parser `{parser}` Not Found")
-            raise exceptions.ParserNotFound(parser)
-
-        lib = importlib.util.module_from_spec(spec)
-
-        try:
-            spec.loader.exec_module(lib)
-        except Exception:
-            logger.error(f"Parser `{parser}` Failed")
-            continue
-
-        try:
-            setup = getattr(lib, "setup")
-        except AttributeError:
-            logger.error(f"Parser `{parser}` Missing Setup Function")
-            continue
-
-        try:
-            new_context = app.app_context()
-            parser_object = setup(new_context.app)
-            for func in required_attrs:
-                if not hasattr(parser_object, func):
-                    logger.error(f"Parser `{parser}` missing attr/function `{func}`")
-                    continue
-            app.rss_parsers.append(parser_object)
-        except Exception as e:
-            logger.error(f"Parser `{parser}` Failed: {e}")
-            continue
-
-        logger.info("Loaded Parser `{0.name} v{0.version}`".format(parser_object))
-
-
 @app.before_serving
-async def load_parsers() -> None:
+async def setup_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
     # It's okay if we're blocking here.
     # The webserver isn't intended to
     # be serving at this point in time.
-    _load_parsers()
+
+    app.parser_lock = asyncio.Lock()
+    async with app.parser_lock:
+        load_parsers(["parsers.subsplease"])
 
 
 @app.before_serving
@@ -204,7 +154,6 @@ async def setup_tasks() -> None:
 
     These tasks are added to the app's global task list.
     """
-
     async def poller() -> None:
         app.poller = Poller(app.app_context())
         await app.poller.start()

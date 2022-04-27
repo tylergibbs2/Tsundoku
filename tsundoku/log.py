@@ -33,7 +33,7 @@ def setup_logging(app: Any) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
-    level = cfg.get("log_level", default="info")
+    level = cfg.get("log_level") or "info"
 
     dictConfig({
         "version": 1,

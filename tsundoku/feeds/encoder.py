@@ -1,10 +1,10 @@
 import asyncio
 import logging
 import os
+import statistics
 from asyncio import create_subprocess_shell
 from datetime import datetime, timedelta
 from pathlib import Path
-import statistics
 from typing import Any, Dict, List
 
 from quart import request

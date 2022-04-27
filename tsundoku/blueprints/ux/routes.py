@@ -3,12 +3,17 @@ from __future__ import annotations
 import os
 from asyncio import Queue
 from functools import wraps
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from quart import Blueprint, Response
-from quart import current_app as app
+
+if TYPE_CHECKING:
+    app: Any
+else:
+    from quart import current_app as app
+
 from quart import (flash, redirect, render_template, request, send_file,
                    url_for, websocket)
 from quart_auth import current_user, login_required, login_user, logout_user

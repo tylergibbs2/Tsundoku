@@ -1,10 +1,15 @@
 import logging
 import sqlite3
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import uuid4
 
 from quart import Blueprint
-from quart import current_app as app
+
+if TYPE_CHECKING:
+    app: Any
+else:
+    from quart import current_app as app
+
 from quart import request
 from quart_auth import current_user
 
@@ -67,7 +72,7 @@ async def ensure_auth() -> Optional[APIResponse]:
 
 @api_blueprint.route("/config/token", methods=["GET", "POST"])
 async def config_token() -> APIResponse:
-    api_key = request.headers.get("Authorization") or await current_user.api_key
+    api_key = request.headers.get("Authorization") or await current_user.api_key  # type: ignore
     if request.method == "POST":
         async with app.acquire_db() as con:
             new_key = str(uuid4())
