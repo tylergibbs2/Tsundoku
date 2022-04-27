@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("tsundoku")
 
@@ -195,6 +195,42 @@ class WebhookBase:
         return instance
 
     @classmethod
+    async def from_data(cls, app: Any, data: Dict[str, str], with_validity: bool = True) -> WebhookBase:
+        """
+        Returns a WebhookBase object from passed data.
+
+        Parameters
+        ----------
+        app: Any
+            The app.
+        data: Dict[str, str]
+            The data.
+        with_validity: bool
+            Whether or not to grab the WebhookBase valid state.
+
+        Returns
+        -------
+        WebhookBase
+            The requested webhook base.
+        """
+        instance = cls()
+
+        instance._app = app
+
+        instance.base_id = int(data["id"])
+        instance.name = data["name"]
+        instance.service = data["base_service"]
+        instance.url = data["base_url"]
+        instance.content_fmt = data["content_fmt"]
+
+        if with_validity:
+            instance.valid = await instance.is_valid()
+        else:
+            instance.valid = None
+
+        return instance
+
+    @classmethod
     async def all(cls, app: Any, with_validity: bool = True) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
@@ -327,18 +363,38 @@ class Webhook:
         async with app.acquire_db() as con:
             await con.execute("""
                 SELECT
-                    base
+                    wh.base,
+                    wh_b.id,
+                    wh_b.name,
+                    wh_b.base_service,
+                    wh_b.base_url,
+                    wh_b.content_fmt
                 FROM
-                    webhook
+                    webhook as wh
+                LEFT JOIN
+                    webhook_base as wh_b
+                ON
+                    wh.base=wh_b.id
                 WHERE
                     show_id=?;
             """, show_id)
             webhooks = await con.fetchall()
 
+            await con.execute("""
+                SELECT
+                    base,
+                    trigger
+                FROM
+                    webhook_trigger
+                WHERE
+                    show_id=?;
+            """, show_id)
+            triggers = await con.fetchall()
+
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_id(app, wh["base"], with_validity=with_validity)
+            base = await WebhookBase.from_data(app, dict(wh), with_validity=with_validity)
             if not base:
                 continue
 
@@ -348,7 +404,7 @@ class Webhook:
 
             instance.show_id = show_id
             instance.base = base
-            instance.triggers = await instance.get_triggers()
+            instance.triggers = [t["trigger"] for t in triggers if t["base"] == base.base_id]
 
             instances.append(instance)
 

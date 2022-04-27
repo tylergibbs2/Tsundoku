@@ -86,16 +86,14 @@ class Entry:
                     last_update
                 FROM
                     show_entry
-                WHERE show_id=?
-                ORDER BY episode ASC;
+                WHERE
+                    show_id=?
+                ORDER BY
+                    episode ASC;
             """, show_id)
             entries = await con.fetchall()
 
-        ret: List[Entry] = []
-        for entry in entries:
-            ret.append(Entry(app, entry))
-
-        return ret
+        return [Entry(app, entry) for entry in entries]
 
     async def should_encode(self) -> bool:
         """

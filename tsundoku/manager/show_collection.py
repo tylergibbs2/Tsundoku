@@ -14,6 +14,9 @@ from .show import Show
 class ShowCollection:
     _shows: List[Show]
 
+    def __len__(self) -> int:
+        return len(self._shows)
+
     def to_list(self) -> List[dict]:
         """
         Serializes all of the Shows in the collection
@@ -66,6 +69,7 @@ class ShowCollection:
         instance = cls(
             _shows=_shows
         )
+
         return instance
 
     async def gather_statuses(self) -> None:
