@@ -1,5 +1,6 @@
 title = Tsundoku Command Line
 
+cmd-dbshell = Launch a sqlite shell into the Tsundoku database.
 cmd-migrate = Migrates the Tsundoku database to match any updates.
 cmd-create-user = Creates a new login user.
 cmd-l10n-compat = Compares two languages, will point out missing translations in the second one.

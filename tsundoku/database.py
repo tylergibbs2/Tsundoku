@@ -5,6 +5,7 @@ import sqlite3
 from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
+import subprocess
 from typing import Any, AsyncGenerator, Generator
 
 from yoyo import get_backend, read_migrations
@@ -32,6 +33,10 @@ def sync_acquire() -> Generator[sqlite3.Connection, None, None]:
     with sqlite3.connect(fp) as con:
         con.row_factory = sqlite3.Row
         yield con
+
+
+def spawn_shell() -> None:
+    subprocess.run(["sqlite3", fp, "-header", "-column"])
 
 
 def get_cfg_value(parser: ConfigParser, key: str, value: str, default=None) -> Any:
