@@ -63,7 +63,7 @@ class Config:
             await con.execute(f"""
                 SELECT * FROM {cls.TABLE_NAME};
             """)
-            row = await con.fetchone()
+            row: sqlite3.Row = await con.fetchone()
 
         return cls(
             {k: row[k] for k in row.keys()}
@@ -72,7 +72,6 @@ class Config:
     @classmethod
     def sync_retrieve(cls, ensure_exists: bool = True) -> Config:
         with sync_acquire() as con:
-            con: sqlite3.Connection
             if ensure_exists:
                 con.execute(f"""
                     INSERT OR IGNORE INTO
