@@ -1,5 +1,4 @@
 import { toast } from "bulma-toast";
-import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
 import { AddModal } from "./add_modal";
@@ -10,8 +9,7 @@ import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
 
-
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "../../css/index.css";
 
 
 let resources = [
@@ -22,7 +20,8 @@ let resources = [
 const _ = getInjector(resources);
 
 
-const IndexApp = () => {
+export const IndexApp = () => {
+    document.getElementById("navIndex").classList.add("is-active");
 
     let storedFilters = localStorage.getItem("showFilters");
     let storedViewType = localStorage.getItem("viewType");
@@ -265,5 +264,3 @@ const IndexApp = () => {
         </>
     )
 }
-
-hydrate(<IndexApp />, document.getElementById("index-main"));

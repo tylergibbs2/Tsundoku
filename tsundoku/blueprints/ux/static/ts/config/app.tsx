@@ -1,5 +1,3 @@
-import { hydrate } from "preact";
-
 import { APITokenComponent } from "./components/apitoken";
 import { GeneralConfigApp } from "./components/generalconfig";
 import { FeedbackBtns } from "./components/feedback_btns";
@@ -8,7 +6,7 @@ import { getInjector } from "../fluent";
 import { PostProcessing } from "./components/postprocessing";
 import { FeedsConfig } from "./components/feedsconfig"
 
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "../../css/config.css";
 
 let resources = [
     "config"
@@ -16,7 +14,8 @@ let resources = [
 
 const _ = getInjector(resources);
 
-const ConfigApp = () => {
+export const ConfigApp = () => {
+    document.getElementById("navConfig").classList.add("is-active");
 
     return (
         <>
@@ -58,6 +57,3 @@ const ConfigApp = () => {
         </>
     )
 }
-
-
-hydrate(<ConfigApp />, document.getElementById("config-main"));

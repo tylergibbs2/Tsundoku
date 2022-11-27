@@ -128,7 +128,7 @@ async def nyaa_search() -> str:
 
     ctx["seen_titles"] = list(app.seen_titles)
 
-    return await render_template("nyaa_search.html", **ctx)
+    return await render_template("index.html", **ctx)
 
 
 @ux_blueprint.route("/webhooks", methods=["GET"])
@@ -162,7 +162,7 @@ async def config() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    return await render_template("config.html", **ctx)
+    return await render_template("index.html", **ctx)
 
 
 @ux_blueprint.route("/logs", methods=["GET"])
@@ -183,7 +183,7 @@ async def logs() -> Union[str, Response]:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    return await render_template("logs.html", **ctx)
+    return await render_template("index.html", **ctx)
 
 
 @ux_blueprint.route("/login", methods=["GET", "POST"])

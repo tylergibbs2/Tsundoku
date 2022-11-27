@@ -1,4 +1,3 @@
-import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
 import { NyaaIndividualResult, Show, GeneralConfig } from "../interfaces";
@@ -6,7 +5,7 @@ import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
 import { getInjector } from "../fluent";
 
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "../../css/nyaa_search.css";
 
 let resources = [
     "nyaa_search"
@@ -14,7 +13,9 @@ let resources = [
 
 const _ = getInjector(resources);
 
-const NyaaSearchApp = () => {
+export const NyaaSearchApp = () => {
+    document.getElementById("navNyaa").classList.add("is-active");
+
     const [userShows, setUserShows] = useState<Show[]>([]);
     const [results, setResults] = useState<NyaaIndividualResult[]>([]);
     const [choice, setChoice] = useState<NyaaIndividualResult>(null);
@@ -80,5 +81,3 @@ const NyaaSearchApp = () => {
         </div>
     )
 }
-
-hydrate(<NyaaSearchApp />, document.getElementById("nyaa-main"));

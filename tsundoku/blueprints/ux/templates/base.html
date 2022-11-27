@@ -54,16 +54,16 @@
                         {{ _("category-general") }}
                     </p>
                     <ul class="menu-list">
-                        <li><a href="{{ url_for('ux.index') }}" class="{% block nav_index %}{% endblock %}">{{ _("page-shows") }}</a></li>
-                        <li><a href="{{ url_for('ux.nyaa_search') }}" class="{% block nav_nyaa %}{% endblock %}">{{ _("page-nyaa") }}</a></li>
+                        <li><a id="navIndex" href="{{ url_for('ux.index') }}">{{ _("page-shows") }}</a></li>
+                        <li><a id="navNyaa" href="{{ url_for('ux.nyaa_search') }}">{{ _("page-nyaa") }}</a></li>
                     </ul>
                     <p class="menu-label">
                         {{ _("category-settings") }}
                     </p>
                     <ul class="menu-list">
-                        <li><a href="{{ url_for('ux.webhooks') }}" class="{% block nav_webhooks %}{% endblock %}">{{ _("page-webhooks") }}</a></li>
-                        <li><a href="{{ url_for('ux.config') }}" class="{% block nav_config %}{% endblock %}">{{ _("page-config") }}</a></li>
-                        <li><a href="{{ url_for('ux.logs') }}" class="{% block nav_logs %}{% endblock %}">{{ _("page-logs") }}</a></li>
+                        <li><a id="navWebhooks" href="{{ url_for('ux.webhooks') }}">{{ _("page-webhooks") }}</a></li>
+                        <li><a id="navConfig" href="{{ url_for('ux.config') }}">{{ _("page-config") }}</a></li>
+                        <li><a id="navLogs" href="{{ url_for('ux.logs') }}">{{ _("page-logs") }}</a></li>
                     </ul>
                 </aside>
             </div>

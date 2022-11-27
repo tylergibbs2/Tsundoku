@@ -3,11 +3,8 @@ const WebpackFluentPlugin = require('./l10n/WebpackFluentPlugin.js');
 
 module.exports = {
   entry: {
-    index: './tsundoku/blueprints/ux/static/ts/index/app.tsx',
-    nyaa: './tsundoku/blueprints/ux/static/ts/nyaa/app.tsx',
+    root: './tsundoku/blueprints/ux/static/ts/App.tsx',
     webhooks: './tsundoku/blueprints/ux/static/ts/webhooks/app.tsx',
-    config: './tsundoku/blueprints/ux/static/ts/config/app.tsx',
-    logs: './tsundoku/blueprints/ux/static/ts/logs/app.tsx'
   },
   module: {
     rules: [

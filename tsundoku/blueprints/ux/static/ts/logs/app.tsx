@@ -1,11 +1,11 @@
-import { hydrate } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
 import { Entry, Show } from "../interfaces";
+
+import "../../css/logs.css";
 
 let resources = [
     "logs"
@@ -18,7 +18,9 @@ const codeRe = /`[^`]+`/g;
 const contextRe = /<[es]\d+>/g;
 
 
-const LogsApp = () => {
+export const LogsApp = () => {
+    document.getElementById("navLogs").classList.add("is-active");
+
     let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
     let protocol = location.protocol === "https:" ? "wss:" : "ws:";
 
@@ -357,6 +359,3 @@ const ConnectionTag = ({ readyState }: ConnectionTagParams) => {
     else
         return (<span class="ml-3 tag is-danger is-medium">{_("websocket-state-disconnected")}</span>);
 }
-
-
-hydrate(<LogsApp />, document.getElementById("logs-main"));

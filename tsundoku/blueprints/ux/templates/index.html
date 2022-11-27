@@ -1,25 +1,13 @@
 {% extends "base.html" %}
 
-{% block nav_index %}is-active{% endblock %}
-
-{% block extralib %}
-<!-- CSS -->
-<link rel="stylesheet" href="{{ url_for('ux.static', filename='css/index.css') }}">
-{% endblock %}
-
 {% block webpack %}
-<script src="{{ url_for('ux.static', filename='js/index.js') }}"></script>
+<script src="{{ url_for('ux.static', filename='js/root.js') }}"></script>
 {% endblock %}
 
 {% block content %}
 
-{% include "modals/update_modal.html" %}
-
 {% include "messages.html" %}
 
-<section id="index-main" class="section">
-
-
-</section>
+<section id="root" class="section"></section>
 
 {% endblock %}

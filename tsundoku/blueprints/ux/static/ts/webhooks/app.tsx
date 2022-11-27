@@ -3,8 +3,6 @@ import { WebhookBase } from "../interfaces";
 import { getInjector } from "../fluent";
 
 
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
-
 let resources = [
     "webhooks"
 ];
@@ -96,6 +94,8 @@ $(function () {
             $(this).parent().remove();
         })
     });
+
+    $("#navWebhooks").addClass("is-active");
 });
 
 // PATCHES
