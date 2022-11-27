@@ -1,7 +1,7 @@
 import { hydrate } from "preact";
 import { useState, useEffect } from "preact/hooks";
 
-import { NyaaIndividualResult, Show } from "../interfaces";
+import { NyaaIndividualResult, Show, GeneralConfig } from "../interfaces";
 import { NyaaShowModal } from "./modal";
 import { SearchBox, SearchTable, SpaceHolder } from "./search";
 import { getInjector } from "../fluent";
@@ -18,8 +18,9 @@ const NyaaSearchApp = () => {
     const [userShows, setUserShows] = useState<Show[]>([]);
     const [results, setResults] = useState<NyaaIndividualResult[]>([]);
     const [choice, setChoice] = useState<NyaaIndividualResult>(null);
+    const [generalConfig, setGeneralConfig] = useState<GeneralConfig>({});
 
-    useEffect(() => {
+    const fetchConfig = async () => {
         let request = {
             method: "GET",
             headers: {
@@ -27,20 +28,40 @@ const NyaaSearchApp = () => {
             }
         };
 
-        fetch("/api/v1/shows", request)
-            .then((res) => {
-                if (res.ok)
-                    return res.json();
-                else { }
-            })
-            .then((res: any) => {
-                setUserShows(res.result);
-            })
+        let resp = await fetch("/api/v1/config/general", request);
+        let resp_json: any;
+        if (resp.ok)
+            resp_json = await resp.json();
+        else
+            return;
+
+        setGeneralConfig(resp_json.result);
+    }
+
+    const fetchUserShows = async () => {
+        let request = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        };
+
+        let response = await fetch("/api/v1/shows", request);
+        if (!response.ok)
+            return;
+
+        let data = await response.json();
+        setUserShows(data.result);
+    }
+
+    useEffect(() => {
+        fetchConfig();
+        fetchUserShows();
     }, [])
 
     return (
         <div class={choice ? "is-clipped" : ""}>
-            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows} />
+            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows} generalConfig={generalConfig} />
             <div class="columns is-vcentered">
                 <div class="column is-4">
                     <div class="container">

@@ -1,8 +1,7 @@
 import { useState, StateUpdater, useEffect } from "preact/hooks";
 import { useForm } from "react-hook-form";
-import { GeneralConfig } from "../config/components/generalconfig";
 import { getInjector } from "../fluent";
-import { Show } from "../interfaces";
+import { Show, GeneralConfig } from "../interfaces";
 import { ShowToggleButton } from "./components/show_toggle_button";
 
 

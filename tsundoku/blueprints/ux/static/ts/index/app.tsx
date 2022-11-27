@@ -5,11 +5,10 @@ import { useState, useEffect } from "preact/hooks";
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
-import { Entry, Show } from "../interfaces";
+import { Entry, Show, GeneralConfig } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
-import { GeneralConfig } from "../config/components/generalconfig";
 
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";

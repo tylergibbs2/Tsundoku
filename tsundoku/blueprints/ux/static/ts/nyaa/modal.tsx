@@ -1,4 +1,4 @@
-import { NyaaIndividualResult, Show } from "../interfaces";
+import { GeneralConfig, NyaaIndividualResult, Show } from "../interfaces";
 
 import { toast } from "bulma-toast";
 import { useState, useEffect, StateUpdater } from "preact/hooks";
@@ -20,9 +20,10 @@ interface NyaaShowModalParams {
     shows: Show[];
     setChoice: StateUpdater<NyaaIndividualResult>;
     choice?: NyaaIndividualResult;
+    generalConfig: GeneralConfig;
 }
 
-export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams) => {
+export const NyaaShowModal = ({ setChoice, choice, shows, generalConfig }: NyaaShowModalParams) => {
 
     let addingDefaultState = false;
     if (shows.length)
@@ -43,10 +44,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
         setAddingToExisting(false);
     }
 
-    useEffect(() => {
-        if (showId === null)
-            return;
-
+    const addNyaaResult = async () => {
         let request = {
             method: "POST",
             headers: {
@@ -55,29 +53,35 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
             body: JSON.stringify({ "show_id": showId, "torrent_link": choice.torrent_link, "overwrite": doOverwrite })
         }
 
-        fetch("/api/v1/nyaa", request)
-            .then((res: any) => {
-                if (res.ok)
-                    return res.json();
-                else
-                    setSubmitting(false);
-            })
-            .then((res: any) => {
-                let addedCount: number = res.result.length;
-                setSubmitting(false);
-                setChoice(null);
-                setAddingToExisting(true);
-                setShowId(null);
-                toast({
-                    message: _("entry-add-success", { "count": addedCount }),
-                    duration: 5000,
-                    position: "bottom-right",
-                    type: "is-success",
-                    dismissible: true,
-                    animate: { in: "fadeIn", out: "fadeOut" }
-                })
-            });
+        let response = await fetch("/api/v1/nyaa", request);
+        if (!response.ok) {
+            setSubmitting(false);
+            return;
+        }
 
+        let data = await response.json();
+
+        let addedCount: number = data.result.length;
+        setSubmitting(false);
+        setChoice(null);
+        setAddingToExisting(true);
+        setShowId(null);
+
+        toast({
+            message: _("entry-add-success", { "count": addedCount }),
+            duration: 5000,
+            position: "bottom-right",
+            type: "is-success",
+            dismissible: true,
+            animate: { in: "fadeIn", out: "fadeOut" }
+        });
+    }
+
+    useEffect(() => {
+        if (showId === null)
+            return;
+
+        addNyaaResult();
     }, [showId]);
 
     const returnCallback = (data: any) => {
@@ -107,24 +111,24 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                     <p class="modal-card-title">{_("modal-title")}</p>
                     <div class="buttons">
                         <ShowToggleButton
-                                setValue={receivePostProcess}
-                                attribute="post_process"
-                                onIcon="color-wand"
-                                offIcon="color-wand-outline"
-                                onTooltip={_("unprocess-button-title")}
-                                offTooltip={_("process-button-title")}
-                                additionalClasses="is-primary"
-                                disabled={addingToExisting}
+                            setValue={receivePostProcess}
+                            attribute="post_process"
+                            onIcon="color-wand"
+                            offIcon="color-wand-outline"
+                            onTooltip={_("unprocess-button-title")}
+                            offTooltip={_("process-button-title")}
+                            additionalClasses="is-primary"
+                            disabled={addingToExisting}
                         />
                         <ShowToggleButton
-                                setValue={receiveWatch}
-                                attribute="watch"
-                                onIcon="bookmark"
-                                offIcon="bookmark-outline"
-                                onTooltip={_("unwatch-button-title")}
-                                offTooltip={_("watch-button-title")}
-                                additionalClasses="is-primary"
-                                disabled={addingToExisting}
+                            setValue={receiveWatch}
+                            attribute="watch"
+                            onIcon="bookmark"
+                            offIcon="bookmark-outline"
+                            onTooltip={_("unwatch-button-title")}
+                            offTooltip={_("watch-button-title")}
+                            additionalClasses="is-primary"
+                            disabled={addingToExisting}
                         />
                     </div>
                 </header>
@@ -155,6 +159,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows }: NyaaShowModalParams)
                         shows={shows}
                         watch={watch}
                         postProcess={postProcess}
+                        generalConfig={generalConfig}
                     />
                 </section>
 
@@ -175,14 +180,15 @@ interface ModalFormParams {
     returnCallback?: any;
     watch: boolean;
     postProcess: boolean;
+    generalConfig: GeneralConfig;
 }
 
 
-const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback, watch, postProcess }: ModalFormParams) => {
+const ModalForm = ({ addingToExisting, shows, setSubmitting, returnCallback, watch, postProcess, generalConfig }: ModalFormParams) => {
     if (addingToExisting && shows.length)
         return (<AddToExistingShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} shows={shows} />);
     else
-        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} watch={watch} postProcess={postProcess} />);
+        return (<AddShowForm setSubmitting={setSubmitting} returnCallback={returnCallback} watch={watch} postProcess={postProcess} generalConfig={generalConfig} />);
 }
 
 
@@ -264,27 +270,34 @@ interface AddShowFormParams {
     returnCallback?: any;
     watch: boolean;
     postProcess: boolean;
+    generalConfig: GeneralConfig;
 }
 
-const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess }: AddShowFormParams) => {
-    const { register, handleSubmit, setValue } = useForm({
-        defaultValues: {
-            "title": "",
-            "desired_format": "",
-            "desired_folder": "",
-            "season": 1,
-            "episode_offset": 0,
-            "watch": true,
-            "post_process": true
-        }
+const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess, generalConfig }: AddShowFormParams) => {
+    let defaultValues = {
+        "title": "",
+        "desired_format": generalConfig.default_desired_format,
+        "desired_folder": generalConfig.default_desired_folder,
+        "season": 1,
+        "episode_offset": 0,
+        "watch": true,
+        "post_process": true
+    }
+
+    const { register, handleSubmit, setValue, reset } = useForm({
+        defaultValues: defaultValues
     });
+
+    useEffect(() => {
+        reset(defaultValues);
+    }, [generalConfig])
 
     useEffect(() => {
         setValue("watch", watch);
         setValue("post_process", postProcess)
     }, [watch, postProcess])
 
-    const submitHandler = (data: AddShowFormInputs) => {
+    const submitHandler = async (inputs: AddShowFormInputs) => {
         setSubmitting(true);
 
         let request = {
@@ -292,25 +305,23 @@ const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess }: AddS
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(inputs)
         };
 
-        fetch("/api/v1/shows", request)
-            .then((res) => {
-                if (res.ok)
-                    return res.json();
-                else
-                    setSubmitting(false);
-            })
-            .then((res: any) => {
-                if (typeof returnCallback !== 'undefined')
-                    returnCallback({
-                        showId: res.result.id_
-                    });
-                else
-                    setSubmitting(false);
-            })
+        let response = await fetch("/api/v1/shows", request);
+        if (!response.ok) {
+            setSubmitting(false);
+            return;
+        }
 
+        let data = await response.json();
+        if (typeof returnCallback !== "undefined") {
+            returnCallback({
+                showId: data.result.id_
+            });
+        }
+        else
+            setSubmitting(false);
     }
 
     return (

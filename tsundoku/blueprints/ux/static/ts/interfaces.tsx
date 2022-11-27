@@ -64,3 +64,17 @@ export interface NyaaSearchResult {
     status: number;
     result: NyaaIndividualResult[];
 }
+
+export interface GeneralConfig {
+    host?: string;
+    port?: number;
+    polling_interval?: number;
+    complete_check_interval?: number;
+    fuzzy_cutoff?: number;
+    update_do_check?: boolean;
+    locale?: string;
+    log_level?: string;
+    default_desired_folder?: string;
+    default_desired_format?: string;
+    unwatch_when_finished?: boolean;
+}

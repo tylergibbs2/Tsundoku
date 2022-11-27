@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
+import { GeneralConfig } from "../../interfaces";
 import { getInjector } from "../../fluent";
 
 
@@ -8,21 +9,6 @@ let resources = [
 ];
 
 const _ = getInjector(resources);
-
-
-export interface GeneralConfig {
-    host?: string;
-    port?: number;
-    polling_interval?: number;
-    complete_check_interval?: number;
-    fuzzy_cutoff?: number;
-    update_do_check?: boolean;
-    locale?: string;
-    log_level?: string;
-    default_desired_folder?: string;
-    default_desired_format?: string;
-    unwatch_when_finished?: boolean;
-}
 
 
 export const GeneralConfigApp = () => {
