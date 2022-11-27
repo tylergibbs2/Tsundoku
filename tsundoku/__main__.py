@@ -17,6 +17,37 @@ from tsundoku.fluent import get_injector
 fluent = get_injector(["cmdline"])
 
 
+def find_locale_duplicates(lang: str) -> None:
+    """
+    Finds duplicate keys in a given locale.
+
+    Parameters
+    ----------
+    lang: str
+        Locale to check.
+    """
+    locale_files = Path().rglob(f"l10n/{lang}/*.ftl")
+
+    seen_keys = set()
+    duplicates = set()
+    for fp in locale_files:
+        bundle = FluentBundle([lang])
+
+        with open(str(fp), "r", encoding="utf-8") as text:
+            bundle.add_resource(FluentResource(text.read()))
+
+        for key in bundle._messages.keys():
+            if key in seen_keys:
+                duplicates.add(key)
+            else:
+                seen_keys.add(key)
+
+    if not duplicates:
+        print("No duplicates found.")
+    else:
+        print(f"Found {len(duplicates)} duplicate keys:\n{', '.join(duplicates)}")
+
+
 def compare_locales(from_lang: str, to_lang: str) -> None:
     """
     Compares two whole languages in the Tsundoku
@@ -43,8 +74,8 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
 
     conflicts = 0
 
-    from_files = {Path(*fp.parts[2:]) for fp in from_path.rglob("*")}
-    to_files = {Path(*fp.parts[2:]) for fp in to_path.rglob("*")}
+    from_files = {Path(*fp.parts[2:]) for fp in from_path.rglob("*.ftl")}
+    to_files = {Path(*fp.parts[2:]) for fp in to_path.rglob("*.ftl")}
 
     for fp in from_files.difference(to_files):
         conflicts += 1
@@ -82,6 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
     parser.add_argument("--create-user", action="store_true", help=fluent._("cmd-create-user"))
     parser.add_argument("--l10n-compat", type=str, nargs=2, help=fluent._("cmd-l10n-compat"))
+    parser.add_argument("--l10n-duplicates", type=str, nargs=1, help=fluent._("cmd-l10n-duplicates"))
     args = parser.parse_args()
 
     if args.dbshell:
@@ -90,6 +122,8 @@ if __name__ == "__main__":
     elif args.l10n_compat:
         from_lang, to_lang = args.l10n_compat
         compare_locales(from_lang, to_lang)
+    elif args.l10n_duplicates:
+        find_locale_duplicates(args.l10n_duplicates[0])
     elif args.migrate:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(database.migrate())
