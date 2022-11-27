@@ -1,4 +1,4 @@
-interface WebhookBase {
+export interface WebhookBase {
     name: string;
     base_id: number;
     service: string;
@@ -7,7 +7,7 @@ interface WebhookBase {
     valid: boolean;
 }
 
-interface Entry {
+export interface Entry {
     id: number;
     show_id: number;
     state: string;
@@ -17,14 +17,14 @@ interface Entry {
     last_update: string;
 }
 
-interface Webhook {
+export interface Webhook {
     show_id: number;
     triggers: string[];
     base: WebhookBase;
 }
 
 
-interface Metadata {
+export interface Metadata {
     show_id: number;
     kitsu_id?: number;
     slug?: string;
@@ -35,7 +35,7 @@ interface Metadata {
 }
 
 
-interface Show {
+export interface Show {
     id_: number;
     title: string;
     desired_format: string;
@@ -49,7 +49,7 @@ interface Show {
     webhooks: Webhook[];
 }
 
-interface NyaaIndividualResult {
+export interface NyaaIndividualResult {
     show_id?: number;
     title: string;
     post_link: string;
@@ -60,16 +60,7 @@ interface NyaaIndividualResult {
     leechers: number;
 }
 
-interface NyaaSearchResult {
+export interface NyaaSearchResult {
     status: number;
     result: NyaaIndividualResult[];
-}
-
-export {
-    Show,
-    Entry,
-    Webhook,
-    WebhookBase,
-    NyaaIndividualResult,
-    NyaaSearchResult
 }
