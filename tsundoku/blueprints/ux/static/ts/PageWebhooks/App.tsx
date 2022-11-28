@@ -2,6 +2,9 @@ import {} from "../patch";
 import { WebhookBase } from "../interfaces";
 import { getInjector } from "../fluent";
 
+import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "../../css/webhooks.css";
+
 
 let resources = [
     "webhooks"
