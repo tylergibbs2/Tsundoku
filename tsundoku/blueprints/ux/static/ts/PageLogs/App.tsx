@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useQuery } from "react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
 import { Entry, Show } from "../interfaces";
 
 import "../../css/logs.css";
+import { fetchShows } from "../queries";
 
 let resources = [
     "logs"
@@ -28,20 +30,7 @@ export const LogsApp = () => {
     let entryAccessCache: Map<number, Entry> = new Map();
     let ignoreList: number[] = [];
 
-    let [shows, setShows] = useState<Show[] | null>(null);
-
-    const getShows = async () => {
-        let resp = await fetch("/api/v1/shows");
-        if (resp.ok) {
-            let data = await resp.json();
-            setShows(data.result);
-        } else
-            setShows([]);
-    }
-
-    useEffect(() => {
-        getShows();
-    }, []);
+    const shows = useQuery(["shows"], fetchShows);
 
     let ws_url = `${protocol}//${ws_host}/ws/logs`;
 
@@ -51,6 +40,9 @@ export const LogsApp = () => {
     messageHistory.current = useMemo(() =>
         messageHistory.current.concat(lastMessage), [lastMessage]
     );
+
+    if (shows.isLoading)
+        return <progress className="progress is-large is-primary" style={{transform: "translateY(33vh)"}} max="100" />;
 
     return (
         <>
@@ -66,14 +58,14 @@ export const LogsApp = () => {
             <div className="box mb-0" style={{
                 display: "flex",
                 overflow: "hidden",
-                height: "83%"
+                height: "73%"
             }}>
                 <div className="logrow-container">
                     {messageHistory.current.map((msg, idx) => (
                         <LogRow
                             key={idx}
                             row={msg}
-                            shows={shows}
+                            shows={shows.data}
                             showAccessCache={showAccessCache}
                             entryAccessCache={entryAccessCache}
                             ignoreList={ignoreList}

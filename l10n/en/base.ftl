@@ -2,6 +2,7 @@ page-title = 積ん読 ANIME
 
 category-general = General
 page-shows = Shows
+page-discover = Discover
 page-nyaa = Nyaa Search
 
 category-settings = Settings

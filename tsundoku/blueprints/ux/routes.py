@@ -105,6 +105,19 @@ async def index() -> str:
     return await render_template("index.html", **ctx)
 
 
+@ux_blueprint.route("/discover", methods=["GET"])
+@login_required
+async def discover() -> str:
+    ctx = {}
+
+    resources = ["base"]
+
+    fluent = get_injector(resources)
+    ctx["_"] = fluent.format_value
+
+    return await render_template("index.html", **ctx)
+
+
 @ux_blueprint.route("/nyaa", methods=["GET"])
 @login_required
 async def nyaa_search() -> str:

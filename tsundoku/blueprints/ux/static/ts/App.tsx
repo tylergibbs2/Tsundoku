@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import { IndexApp } from "./PageIndex/App";
+import { DiscoverApp } from "./PageDiscover/App";
 import { NyaaSearchApp } from "./PageNyaaSearch/App";
 import { ConfigApp } from "./PageConfig/App";
 import { LogsApp } from "./PageLogs/App";
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <IndexApp />
+    },
+    {
+        path: "/discover",
+        element: <DiscoverApp />
     },
     {
         path: "/nyaa",

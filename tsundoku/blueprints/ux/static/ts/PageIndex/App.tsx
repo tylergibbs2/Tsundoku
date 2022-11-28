@@ -1,11 +1,10 @@
-import { toast } from "bulma-toast";
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useQuery } from "react-query";
 
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
-import { Entry, Show, GeneralConfig } from "../interfaces";
+import { Show, GeneralConfig } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
