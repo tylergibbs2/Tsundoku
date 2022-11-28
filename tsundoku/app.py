@@ -127,6 +127,8 @@ async def setup_session() -> None:
     )
     app.dl_client = Manager(app.session)
 
+    app.logging_queue = Queue(maxsize=50)
+
     app.update_info = []
     await git.check_for_updates()
     app.last_update_check = datetime.datetime.utcnow()
@@ -220,18 +222,9 @@ def get_bind() -> Tuple[str, int]:
 def run() -> None:
     host, port = get_bind()
 
-    loop: Union[asyncio.ProactorEventLoop, AbstractEventLoop]
-    try:
-        loop = asyncio.ProactorEventLoop()
-        asyncio.set_event_loop(loop)
-    except AttributeError:
-        loop = asyncio.get_event_loop()
-
-    app.logging_queue = Queue(loop=loop, maxsize=50)
     auth.init_app(app)
     app.run(
         host=host,
         port=port,
-        use_reloader=True,
-        loop=loop
+        use_reloader=True
     )

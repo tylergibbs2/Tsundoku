@@ -125,8 +125,7 @@ if __name__ == "__main__":
     elif args.l10n_duplicates:
         find_locale_duplicates(args.l10n_duplicates[0])
     elif args.migrate:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(database.migrate())
+        asyncio.run(database.migrate())
     elif args.create_user:
         username = input(fluent._("username") + " ")
         match = False
@@ -138,15 +137,12 @@ if __name__ == "__main__":
             if not match:
                 print("Password Mismatch")
 
-        loop = asyncio.get_event_loop()
-
         print(fluent._("creating-user"))
         from tsundoku import app
-        loop.run_until_complete(app.insert_user(username, password))
+        asyncio.run(app.insert_user(username, password))
         print(fluent._("created-user"))
     else:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(database.migrate())
+        asyncio.run(database.migrate())
 
         from tsundoku import app
         app.run()
