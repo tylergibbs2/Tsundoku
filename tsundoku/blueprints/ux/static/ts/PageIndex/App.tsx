@@ -1,6 +1,6 @@
 import { toast } from "bulma-toast";
 import { useState, useEffect } from "react";
-import { useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
@@ -9,7 +9,7 @@ import { Entry, Show, GeneralConfig } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
-import { fetchConfig } from "../queries";
+import { fetchConfig, fetchShows } from "../queries";
 
 import "../../css/index.css";
 
@@ -31,7 +31,6 @@ export const IndexApp = () => {
     let storedSortDirection = localStorage.getItem("sortDirection");
     let storedSortKey = localStorage.getItem("sortKey");
 
-    const [shows, setShows] = useState<Show[]>([]);
     const [activeShow, setActiveShow] = useState<Show | null>(null);
     const [currentModal, setCurrentModal] = useState<string | null>(null);
     const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || ["current", "finished", "tba", "unreleased", "upcoming"]);
@@ -46,132 +45,7 @@ export const IndexApp = () => {
         return await fetchConfig<GeneralConfig>("general");
     });
 
-    const fetchShows = async () => {
-        let request = {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-
-        let resp = await fetch("/api/v1/shows", request);
-        let resp_json: any;
-        if (resp.ok)
-            resp_json = await resp.json();
-        else
-            return;
-
-        setShows(getSortedShows(resp_json.result));
-    }
-
-    const addShow = (show: Show) => {
-        let newShows: Show[] = [show, ...shows].sort((a, b) => {
-            return a.title > b.title ? 1 : -1;
-        });
-
-        setShows(getSortedShows(newShows));
-        toast({
-            message: _("show-add-success"),
-            duration: 5000,
-            position: "bottom-right",
-            type: "is-success",
-            dismissible: true,
-            animate: { in: "fadeIn", out: "fadeOut" }
-        })
-    }
-
-    const updateShow = (show: Show) => {
-        let newShows = [...shows];
-        let toReplace = newShows.findIndex((existing) => existing.id_ === show.id_);
-        if (toReplace !== -1)
-            newShows[toReplace] = show;
-
-        setShows(getSortedShows(newShows));
-        toast({
-            message: _("show-update-success"),
-            duration: 5000,
-            position: "bottom-right",
-            type: "is-success",
-            dismissible: true,
-            animate: { in: "fadeIn", out: "fadeOut" }
-        })
-    }
-
-    const removeShow = (show: Show) => {
-        let newShows: Show[] = [];
-        for (const existing of shows) {
-            if (existing.id_ !== show.id_)
-                newShows.push(existing);
-        }
-
-        setShows(getSortedShows(newShows));
-        toast({
-            message: _("show-delete-success"),
-            duration: 5000,
-            position: "bottom-right",
-            type: "is-success",
-            dismissible: true,
-            animate: { in: "fadeIn", out: "fadeOut" }
-        })
-    }
-
-    const getSortedShows = (toSort: Show[]) => {
-        let first = 1;
-        let second = -1;
-        if (sortDirection === "-") {
-            first = -1;
-            second = 1;
-        }
-
-        let newShows = [...toSort];
-        let sortFunc: any;
-        switch (sortKey) {
-            case "title":
-                sortFunc = (a: Show, b: Show) => {
-                    return a.title > b.title ? first : second;
-                }
-                newShows.sort(sortFunc);
-                break;
-            case "update":
-                let entrySortFunc = (a: Entry, b: Entry) => {
-                    let dateA = new Date(a.last_update);
-                    let dateB = new Date(b.last_update);
-                    return dateB > dateA ? 1 : -1;
-                }
-                sortFunc = (a: Show, b: Show) => {
-                    let aEntries = [...a.entries].sort(entrySortFunc);
-                    let bEntries = [...b.entries].sort(entrySortFunc);
-                    let dateA, dateB;
-                    try {
-                        dateA = new Date(aEntries[0].last_update);
-                    } catch {
-                        dateA = new Date(null);
-                    }
-                    try {
-                        dateB = new Date(bEntries[0].last_update);
-                    } catch {
-                        dateB = new Date(null);
-                    }
-                    return dateA > dateB ? first : second;
-                }
-                newShows.sort(sortFunc);
-                break;
-            case "dateAdded":
-                sortFunc = (a: Show, b: Show) => {
-                    let dateA = new Date(a.created_at);
-                    let dateB = new Date(b.created_at);
-                    return dateA > dateB ? first : second;
-                }
-                newShows.sort(sortFunc);
-                break;
-        }
-
-        return newShows;
-    }
-
-    useEffect(() => {
-        fetchShows();
-    }, []);
+    const shows = useQuery(["shows"], fetchShows);
 
     useEffect(() => {
         localStorage.setItem("showFilters", JSON.stringify(filters));
@@ -184,10 +58,7 @@ export const IndexApp = () => {
     useEffect(() => {
         localStorage.setItem("sortDirection", sortDirection);
         localStorage.setItem("sortKey", sortKey);
-
-        setShows(getSortedShows(shows));
     }, [sortDirection, sortKey]);
-
 
     useEffect(() => {
         if (currentModal)
@@ -196,12 +67,14 @@ export const IndexApp = () => {
             document.body.classList.remove("is-clipped");
     }, [currentModal]);
 
+    if (shows.isLoading)
+        return <div>loading...</div>
+
     return (
         <>
             <AddModal
                 currentModal={currentModal}
                 setCurrentModal={setCurrentModal}
-                addShow={addShow}
                 generalConfig={generalConfig.data}
             />
 
@@ -210,7 +83,6 @@ export const IndexApp = () => {
                 setActiveShow={setActiveShow}
                 currentModal={currentModal}
                 setCurrentModal={setCurrentModal}
-                removeShow={removeShow}
             />
 
             <EditModal
@@ -218,7 +90,6 @@ export const IndexApp = () => {
                 setActiveShow={setActiveShow}
                 currentModal={currentModal}
                 setCurrentModal={setCurrentModal}
-                updateShow={updateShow}
             />
 
             <div className="columns">
@@ -239,10 +110,12 @@ export const IndexApp = () => {
                 setSortDirection={setSortDirection}
             />
             <Shows
-                shows={shows}
+                shows={shows.data}
                 setActiveShow={setActiveShow}
                 filters={filters}
                 textFilter={textFilter}
+                sortDirection={sortDirection}
+                sortKey={sortKey}
                 setCurrentModal={setCurrentModal}
                 viewType={viewType}
             />

@@ -1,7 +1,10 @@
+import { toast } from "bulma-toast";
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "react-query";
 import { getInjector } from "../fluent";
 import { Show, GeneralConfig } from "../interfaces";
+import { addNewShow } from "../queries";
 import { ShowToggleButton } from "./components/show_toggle_button";
 
 
@@ -16,13 +19,41 @@ const _ = getInjector(resources);
 interface AddModalParams {
     currentModal?: string;
     setCurrentModal: Dispatch<SetStateAction<string | null>>;
-    addShow: any;
     generalConfig: GeneralConfig;
 }
 
 
-export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig }: AddModalParams) => {
-    const [submitting, setSubmitting] = useState<boolean>(false);
+type AddShowFormValues = {
+    title: string;
+    desired_format: string;
+    desired_folder: string;
+    season: number;
+    episode_offset: number;
+    watch: boolean;
+    post_process: boolean;
+};
+
+
+export const AddModal = ({ currentModal, setCurrentModal, generalConfig }: AddModalParams) => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation(addNewShow,
+        {
+            onSuccess: (newShow) => {
+                queryClient.setQueryData(["shows"], (oldShows: Show[]) => [...oldShows, newShow]);
+                toast({
+                    message: _("show-add-success"),
+                    duration: 5000,
+                    position: "bottom-right",
+                    type: "is-success",
+                    dismissible: true,
+                    animate: { in: "fadeIn", out: "fadeOut" }
+                });
+
+                setCurrentModal(null);
+             }
+        }
+    );
 
     let defaultValues = {
         "title": "",
@@ -42,14 +73,12 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
         reset(defaultValues);
     }, [currentModal]);
 
-    const finalize = (show: Show) => {
-        addShow(show);
-        setSubmitting(false);
-        setCurrentModal(null);
+    const submitHandler: SubmitHandler<AddShowFormValues> = (formData: AddShowFormValues) => {
+        mutation.mutate(formData);
     }
 
     const cancel = () => {
-        if (submitting)
+        if (mutation.isLoading)
             return;
 
         setCurrentModal(null);
@@ -85,67 +114,7 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
 
                 <section className="modal-card-body">
 
-                    <AddShowForm
-                        setSubmitting={setSubmitting}
-                        returnCallback={finalize}
-                        register={register}
-                        handleSubmit={handleSubmit}
-                        reset={reset}
-                    />
-
-                </section>
-
-                <footer className="modal-card-foot">
-                    <progress className="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
-                    <button className={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="add-show-form">{_("add-form-add-button")}</button>
-                    <button className="button closes-modals" onClick={cancel}>{_("add-form-cancel-button")}</button>
-                </footer>
-            </div>
-        </div>
-    )
-}
-
-interface AddShowFormParams {
-    setSubmitting: Dispatch<SetStateAction<boolean>>;
-    returnCallback: any;
-    register: any;
-    handleSubmit: any;
-    reset: any;
-}
-
-const AddShowForm = ({ setSubmitting, returnCallback, register, handleSubmit, reset }: AddShowFormParams) => {
-
-    const submitHandler = (data: any) => {
-        setSubmitting(true);
-
-        let request = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        };
-
-        fetch("/api/v1/shows", request)
-            .then((res) => {
-                if (res.ok)
-                    return res.json();
-                else
-                    setSubmitting(false);
-            })
-            .then((res: any) => {
-                if (typeof returnCallback !== 'undefined') {
-                    returnCallback(res.result);
-                    reset();
-                }
-                else
-                    setSubmitting(false);
-            })
-
-    }
-
-    return (
-        <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
+                <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
             <div className="form-columns columns is-multiline">
                 <div className="column is-full">
                     <div className="field">
@@ -209,5 +178,15 @@ const AddShowForm = ({ setSubmitting, returnCallback, register, handleSubmit, re
                 </div>
             </div>
         </form>
-    );
+
+                </section>
+
+                <footer className="modal-card-foot">
+                    <progress className="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
+                    <button className={"button is-success " + (mutation.isLoading ? "is-loading" : "")} type="submit" form="add-show-form">{_("add-form-add-button")}</button>
+                    <button className="button closes-modals" onClick={cancel}>{_("add-form-cancel-button")}</button>
+                </footer>
+            </div>
+        </div>
+    )
 }

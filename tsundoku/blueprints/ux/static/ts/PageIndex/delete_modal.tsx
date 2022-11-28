@@ -1,7 +1,10 @@
 import { getInjector } from "../fluent";
-import { useState, Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Show } from "../interfaces";
 import ReactHtmlParser from "react-html-parser";
+import { useMutation, useQueryClient } from "react-query";
+import { deleteShowById } from "../queries";
+import { toast } from "bulma-toast";
 
 
 let resources = [
@@ -16,37 +19,37 @@ interface DeleteModalParams {
     setActiveShow: Dispatch<SetStateAction<Show | null>>;
     currentModal?: string;
     setCurrentModal: Dispatch<SetStateAction<string | null>>;
-    removeShow: any;
 }
 
 
-export const DeleteModal = ({ show, setActiveShow, currentModal, setCurrentModal, removeShow }: DeleteModalParams) => {
+export const DeleteModal = ({ show, setActiveShow, currentModal, setCurrentModal }: DeleteModalParams) => {
+    const queryClient = useQueryClient();
 
-    const [submitting, setSubmitting] = useState<boolean>(false);
+    const mutation = useMutation(deleteShowById,
+        {
+            onSuccess: () => {
+                queryClient.setQueryData(["shows"], (oldShows: Show[]) => oldShows.filter((s) => s.id_ !== show?.id_));
+                toast({
+                    message: _("show-delete-success"),
+                    duration: 5000,
+                    position: "bottom-right",
+                    type: "is-success",
+                    dismissible: true,
+                    animate: { in: "fadeIn", out: "fadeOut" }
+                })
+
+                setCurrentModal(null);
+                setActiveShow(null);
+             }
+        }
+    );
 
     const performDelete = () => {
-        setSubmitting(true);
-
-        let request = {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-
-        fetch(`/api/v1/shows/${show.id_}`, request)
-            .then((res) => {
-                if (res.ok) {
-                    removeShow(show);
-                    setSubmitting(false);
-                    setActiveShow(null);
-                    setCurrentModal(null);
-                }
-            })
+        mutation.mutate(show.id_);
     }
 
     const cancel = () => {
-        if (submitting)
+        if (mutation.isLoading)
             return;
 
         setActiveShow(null);

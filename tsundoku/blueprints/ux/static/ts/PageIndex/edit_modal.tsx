@@ -7,6 +7,9 @@ import humanizeDuration from "humanize-duration";
 import { ShowToggleButton } from "./components/show_toggle_button";
 import { Show, Entry, Webhook } from "../interfaces";
 import { IonIcon } from "../icon";
+import { useMutation, useQueryClient } from "react-query";
+import { updateShowById } from "../queries";
+import { toast } from "bulma-toast";
 
 let resources = [
     "base",
@@ -21,13 +24,11 @@ interface EditModalParams {
     setActiveShow: Dispatch<SetStateAction<Show | null>>;
     currentModal?: string;
     setCurrentModal: Dispatch<SetStateAction<string | null>>;
-    updateShow: any;
 }
 
 
-export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentModal, updateShow }: EditModalParams) => {
+export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentModal }: EditModalParams) => {
 
-    const [submitting, setSubmitting] = useState<boolean>(false);
     const [tab, setTab] = useState<string>("info");
     const [fixMatch, setFixMatch] = useState<boolean>(false);
 
@@ -37,7 +38,27 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
     const { register, reset, trigger, getValues, setValue } = useForm();
 
+    const queryClient = useQueryClient();
+
+    const showMutation = useMutation(updateShowById, {
+        onSuccess: (updatedShow) => {
+            queryClient.setQueryData(["shows"], (oldShows: Show[]) => [...oldShows.filter((show) => show.id_ !== updatedShow.id_), updatedShow]);
+
+            toast({
+                message: _("show-update-success"),
+                duration: 5000,
+                position: "bottom-right",
+                type: "is-success",
+                dismissible: true,
+                animate: { in: "fadeIn", out: "fadeOut" }
+            })
+
+            setCurrentModal(null);
+            setActiveShow(null);
+    }});
+
     register("watch", { required: true });
+    register("post_process", { required: true });
 
     useEffect(() => {
         if (activeShow) {
@@ -50,6 +71,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 "season": activeShow.season,
                 "episode_offset": activeShow.episode_offset,
                 "watch": activeShow.watch,
+                "post_process": activeShow.post_process,
                 "kitsu_id": activeShow.metadata.kitsu_id
             })
         }
@@ -154,70 +176,25 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
         return newShow;
     }
 
+    const anyMutationIsLoading = (): boolean => {
+        return showMutation.isLoading;
+    }
+
     const cancel = () => {
-        if (submitting)
+        if (anyMutationIsLoading())
             return;
 
         setActiveShow(null);
         setCurrentModal(null);
     }
 
-    const tabInfo = () => {
-        setTab("info");
-    }
-
-    const tabEntries = () => {
-        setTab("entries");
-    }
-
-    const tabWebhooks = () => {
-        setTab("webhooks");
-    }
-
-    const submitHandler = async (data: any) => {
-        setSubmitting(true);
-
-        let newShow: Show;
-        if (Object.keys(data).length !== 0) {
-            let request = {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            };
-
-            const resp = await fetch(`/api/v1/shows/${activeShow.id_}`, request);
-            let resp_json: any;
-            if (resp.ok)
-                resp_json = await resp.json();
-            else {
-                setSubmitting(false);
-                return;
-            }
-
-            newShow = resp_json.result;
-        } else
-            newShow = JSON.parse(JSON.stringify(activeShow));
-
-        newShow = await finalizeWebhooks(newShow);
-        newShow = await finalizeEntries(newShow);
-
-        updateShow(newShow);
-
-        setSubmitting(false);
-        setActiveShow(null);
-        setCurrentModal(null);
-        setSubmitting(false);
+    const submitHandler = (data: any) => {
+        showMutation.mutate({id_: activeShow.id_, ...data});
     }
 
     const triggerForm = async () => {
         await trigger();
         await submitHandler(getValues());
-    }
-
-    const fixMatchDropdown = () => {
-        setFixMatch(!fixMatch);
     }
 
     return (
@@ -249,7 +226,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                         />
                         <div className={"dropdown is-right " + (fixMatch ? "is-active" : "")}>
                             <div className="dropdown-trigger">
-                                <button className="button is-link" onClick={fixMatchDropdown}>
+                                <button className="button is-link" onClick={() => setFixMatch(!fixMatch)}>
                                     {_("edit-fix-match")}
                                 </button>
                             </div>
@@ -269,9 +246,9 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 <section className="modal-card-body">
                     <div className="tabs">
                         <ul>
-                            <li className={tab === "info" ? "is-active" : ""}><a onClick={tabInfo}>{_("edit-tab-info")}</a></li>
-                            <li className={tab === "entries" ? "is-active" : ""}><a onClick={tabEntries}>{_("edit-tab-entries")}</a></li>
-                            <li className={tab === "webhooks" ? "is-active" : ""}><a onClick={tabWebhooks}>{_("edit-tab-webhooks")}</a></li>
+                            <li className={tab === "info" ? "is-active" : ""}><a onClick={() => setTab("info")}>{_("edit-tab-info")}</a></li>
+                            <li className={tab === "entries" ? "is-active" : ""}><a onClick={() => setTab("enries")}>{_("edit-tab-entries")}</a></li>
+                            <li className={tab === "webhooks" ? "is-active" : ""}><a onClick={() => setTab("webhooks")}>{_("edit-tab-webhooks")}</a></li>
                         </ul>
                     </div>
 
@@ -298,7 +275,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                 </section>
 
                 <footer className="modal-card-foot">
-                    <button className={"button is-success " + (submitting ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
+                    <button className={"button is-success " + (anyMutationIsLoading() ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
                     <button className="button closes-modals" onClick={cancel}>{_('edit-form-cancel-button')}</button>
                 </footer>
             </div>

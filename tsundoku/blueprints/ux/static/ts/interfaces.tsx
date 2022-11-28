@@ -54,6 +54,7 @@ export interface Show {
     season: number;
     episode_offset: number;
     watch: boolean;
+    post_process: boolean;
     created_at: string;
     metadata: Metadata;
     entries: Entry[];
