@@ -2,7 +2,11 @@ import {} from "../patch";
 import { WebhookBase } from "../interfaces";
 import { getInjector } from "../fluent";
 
+import "bulma/css/bulma.min.css";
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "bulma-extensions/dist/css/bulma-extensions.min.css";
+
+import "../../css/styles.scss";
 import "../../css/webhooks.css";
 
 

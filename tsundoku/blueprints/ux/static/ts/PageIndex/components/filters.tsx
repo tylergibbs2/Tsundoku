@@ -98,11 +98,10 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
     }
 
     return (
-        <div className="columns pb-3" style={{
+        <div className="columns pb-3 background-gradient" style={{
             position: "sticky",
             top: "0",
-            zIndex: "5",
-            backgroundImage: "linear-gradient(rgba(255, 255, 255, 1) 80%, rgba(255, 255, 255, 0) 100%)"
+            zIndex: "5"
         }}>
             <div className="column is-7">
                 <div className="tags are-medium">

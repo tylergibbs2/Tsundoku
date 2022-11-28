@@ -9,8 +9,11 @@ import { NyaaSearchApp } from "./PageNyaaSearch/App";
 import { ConfigApp } from "./PageConfig/App";
 import { LogsApp } from "./PageLogs/App";
 
+import "bulma/css/bulma.min.css";
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
+
+import "../css/styles.scss";
 
 
 const router = createBrowserRouter([

@@ -9,8 +9,6 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('ux.static', filename='css/base.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
-        integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tooltip@1.0.2/dist/bulma-tooltip.min.css"
         integrity="sha384-EBGMr0LJD7tRVfxRKCHIGWo0kMW1fseE7eFCIZFyF/nzdZMxZ1/u6DBSuyrXdBCP" crossorigin="anonymous" />
@@ -20,6 +18,25 @@
 
     <script>
         window["LOCALE"] = "{{LOCALE}}";
+
+        const toggleTheme = () => {
+            const isDark = document.body.classList.contains("dark");
+            if (isDark) {
+                document.body.classList.remove("dark");
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.add("dark");
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        window.onload = () => {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.body.classList.add("dark");
+                document.getElementById("darkModeSwitch").checked = true;
+            }
+        }
     </script>
 
     <!-- JS -->
@@ -40,7 +57,7 @@
 
 <body>
     <div class="dashboard is-full-height">
-        <div class="dashboard-panel is-small dpy-special-white">
+        <div class="dashboard-panel is-small">
             <header class="dashboard-panel-header">
                 <div class="has-text-centered">
                     <img src="{{ url_for('ux.static', filename='img/logo.png') }}" width="112" height="28">
@@ -68,6 +85,11 @@
             </div>
 
             <div class="menu-panel-footer has-text-centered is-size-7">
+                <div class="field">
+                    <input id="darkModeSwitch" type="checkbox" class="switch" onChange="toggleTheme();" />
+                    <label for="darkModeSwitch">Dark Mode</label>
+                </div>
+
                 <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small">{{ _("logout-button") }}</a>
                 <p class="mt-4">Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}</p>
                 <p><b>Tsundoku</b> is an <a href="https://github.com/tylergibbs2/Tsundoku">open-source project.</a></p>

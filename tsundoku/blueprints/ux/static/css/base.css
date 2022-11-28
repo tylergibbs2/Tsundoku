@@ -1,7 +1,3 @@
-:root {
-    --light-grey: hsl(0, 0%, 93%);
-}
-
 html::-webkit-scrollbar {
     display: none;
 }
@@ -12,10 +8,6 @@ html, body {
     /* IE and Edge */
     scrollbar-width: none;
     /* Firefox */
-}
-
-.dpy-special-white {
-    background-color: hsl(0, 0%, 92%);
 }
 
 .menu-panel-footer {
