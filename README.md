@@ -23,9 +23,25 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 * Python 3.7+
 * One of: [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi), [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled, [Transmission](https://transmissionbt.com/)
 
-## Installation
+## Docker Installation (Recommended)
 
-```sh
+1. Copy the `docker-compose.yml` file from the repository.
+2. Replace the file paths.
+3. Run `docker compose up -d`.
+
+Updating is as simple as running `docker compose pull` and `docker compose up -d`.
+
+I will not be providing an example on how to start the container using
+`docker run`.
+
+To create a login user, you need to run the following command:
+```bash
+$ docker container exec -it tsundoku python -m tsundoku --create-user
+```
+
+## Source Installation
+
+```bash
 $ git clone https://github.com/tylergibbs2/Tsundoku
 $ cd Tsundoku
 $ python -m venv .venv
@@ -37,7 +53,7 @@ $ python -m tsundoku --create-user   # Creates a user for logging in
 
 ## Updating
 
-```sh
+```bash
 $ git pull
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
@@ -46,24 +62,10 @@ $ pip install -r requirements.txt
 
 ## Usage
 
-```sh
+```bash
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ python -m tsundoku
-```
-
-## Installation (Docker)
-
-1. Copy the `docker-compose.yml` file from the repository.
-2. Replace the file paths.
-3. Run `docker-compose up -d`.
-
-I will not be providing an example on how to start the container using
-`docker run`.
-
-You will then need to perform the following commands:
-```sh
-$ docker container exec -it tsundoku python -m tsundoku --create-user
 ```
 
 ## Parsers
