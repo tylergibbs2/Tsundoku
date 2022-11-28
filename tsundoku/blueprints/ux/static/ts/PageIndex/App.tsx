@@ -9,7 +9,7 @@ import { Entry, Show, GeneralConfig } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
-import { fetchConfigGeneral } from "../queries";
+import { fetchConfig } from "../queries";
 
 import "../../css/index.css";
 
@@ -42,7 +42,9 @@ export const IndexApp = () => {
     const [sortDirection, setSortDirection] = useState<string>(storedSortDirection || "+");
     const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 
-    const generalConfig = useQuery("configGeneral", fetchConfigGeneral);
+    const generalConfig = useQuery(["config", "general"], async () => {
+        return await fetchConfig<GeneralConfig>("general");
+    });
 
     const fetchShows = async () => {
         let request = {

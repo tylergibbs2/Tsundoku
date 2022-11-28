@@ -14,6 +14,10 @@ html, body {
     /* Firefox */
 }
 
+section {
+    overflow-y: auto;
+}
+
 .dpy-special-white {
     background-color: hsl(0, 0%, 92%);
 }

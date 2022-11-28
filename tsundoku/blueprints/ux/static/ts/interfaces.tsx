@@ -4,6 +4,11 @@ export interface APIResponse<T> {
     result?: T;
 }
 
+export interface MutateConfigVars {
+    key: string;
+    value: any;
+}
+
 export interface WebhookBase {
     name: string;
     base_id: number;

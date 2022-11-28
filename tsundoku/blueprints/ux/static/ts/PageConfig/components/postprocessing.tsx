@@ -1,7 +1,10 @@
-import "bulma-extensions/dist/css/bulma-extensions.min.css";
-import React, { ChangeEvent, EventHandler, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import { UseMutateFunction, useMutation, useQuery, useQueryClient } from "react-query";
 import { getInjector } from "../../fluent";
+import { MutateConfigVars } from "../../interfaces";
+import { fetchConfig, setConfig } from "../../queries";
 
+import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
 let resources = [
     "config"
@@ -33,16 +36,21 @@ interface EncodeStats {
 
 
 export const PostProcessing = () => {
-    const [config, setConfig] = useState<EncodeConfig>({});
-    const [encodeStats, setEncodeStats] = useState<EncodeStats>({});
+    const queryClient = useQueryClient();
 
-    const getConfig = async () => {
-        let resp = await fetch("/api/v1/config/encode");
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
+    const config = useQuery(["config", "encode"], async () => {
+        return await fetchConfig<EncodeConfig>("encode");
+    });
+
+    const mutation = useMutation(async ({ key, value }: MutateConfigVars) => {
+        return await setConfig<EncodeConfig>("encode", key, value);
+    },
+        {
+            onSuccess: (newConfig) => { queryClient.setQueryData(["config", "encode"], newConfig); }
         }
-    }
+    );
+
+    const [encodeStats, setEncodeStats] = useState<EncodeStats>({});
 
     const getEncodingStats = async () => {
         let resp = await fetch("/api/v1/config/encode/stats");
@@ -52,49 +60,33 @@ export const PostProcessing = () => {
         }
     }
 
-    const updateConfig = async (key: string, value: any) => {
-        let request = {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                [key]: value
-            })
-        };
-
-        let resp = await fetch("/api/v1/config/encode", request);
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
-        }
-    }
-
     useEffect(() => {
-        getConfig();
         getEncodingStats();
     }, []);
 
+    if (config.isLoading)
+        return <div>loading...</div>;
+
     const inputEnabled = (e: React.MouseEvent<HTMLInputElement>): void => {
         if (e.currentTarget.checked)
-            updateConfig("enabled", true);
+            mutation.mutate({ key: "enabled", value: true });
         else
-            updateConfig("enabled", false);
+            mutation.mutate({ key: "enabled", value: false });
     }
 
     return (
         <>
             <div className="field">
-                <input id="enableEncode" type="checkbox" className="switch" onClick={inputEnabled} checked={config.enabled && config.has_ffmpeg} disabled={!config.has_ffmpeg} />
+                <input id="enableEncode" type="checkbox" className="switch" onClick={inputEnabled} defaultChecked={config.data?.enabled && config.data?.has_ffmpeg} disabled={!config.data?.has_ffmpeg} />
                 <label htmlFor="enableEncode">{_("checkbox-enabled")}</label>
-                {!config.has_ffmpeg &&
+                {!config.data?.has_ffmpeg &&
                     <span className="tag is-danger ml-1">{_("ffmpeg-missing")}</span>
                 }
             </div>
             <PostProcessingForm
-                config={config}
+                config={config.data}
                 stats={encodeStats}
-                updateConfig={updateConfig}
+                updateConfig={mutation.mutate}
             />
         </>
     )
@@ -103,14 +95,14 @@ export const PostProcessing = () => {
 interface PostProcessingFormParams {
     config: EncodeConfig;
     stats: EncodeStats;
-    updateConfig: any;
+    updateConfig: UseMutateFunction<EncodeConfig, any, MutateConfigVars, any>;
 }
 
 const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormParams) => {
     let disabled = !(config.enabled && config.has_ffmpeg);
 
     const inputMaxEncodes = (e: ChangeEvent<HTMLInputElement>) => {
-        updateConfig("maximum_encodes", e.target.value);
+        updateConfig({ key: "maximum_encodes", value: e.target.value });
     }
 
     const inputQualityValue = (e: ChangeEvent<HTMLInputElement>) => {
@@ -127,33 +119,33 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                 preset = "low";
         }
 
-        updateConfig("quality_preset", preset);
+        updateConfig({ key: "quality_preset", value: preset });
     }
 
     const inputRetryFail = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked)
-            updateConfig("retry_on_fail", true);
+            updateConfig({ key: "retry_on_fail", value: true});
         else
-            updateConfig("retry_on_fail", false);
+            updateConfig({ key: "retry_on_fail", value: false});
     }
 
     const inputSpeedPreset = (e: ChangeEvent<HTMLSelectElement>) => {
-        updateConfig("speed_preset", e.target.options[e.target.selectedIndex].value);
+        updateConfig({ key: "speed_preset", value: e.target.options[e.target.selectedIndex].value });
     }
 
     const inputHourStart = (e: ChangeEvent<HTMLSelectElement>) => {
-        updateConfig("hour_start", e.target.options[e.target.selectedIndex].value);
+        updateConfig({ key: "hour_start", value: e.target.options[e.target.selectedIndex].value });
     }
 
     const inputHourEnd = (e: ChangeEvent<HTMLSelectElement>) => {
-        updateConfig("hour_end", e.target.options[e.target.selectedIndex].value);
+        updateConfig({ key: "hour_end", value: e.target.options[e.target.selectedIndex].value });
     }
 
     const inputTimedEncoding = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked)
-            updateConfig("timed_encoding", true);
+            updateConfig({ key: "timed_encoding", value: true});
         else
-            updateConfig("timed_encoding", false);
+            updateConfig({ key: "timed_encoding", value: false});
     }
 
     const getQualityValue = () => {
@@ -209,16 +201,16 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                     <h1 className="title is-5">{_("process-speed-title")}</h1>
                     <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
                     <div className="select is-fullwidth is-vcentered">
-                        <select onChange={inputSpeedPreset} disabled={disabled}>
-                            <option value="ultrafast" selected={config.speed_preset === "ultrafast"}>{_("encode-speed-ultrafast")}</option>
-                            <option value="superfast" selected={config.speed_preset === "superfast"}>{_("encode-speed-superfast")}</option>
-                            <option value="veryfast" selected={config.speed_preset === "veryfast"}>{_("encode-speed-veryfast")}</option>
-                            <option value="faster" selected={config.speed_preset === "faster"}>{_("encode-speed-faster")}</option>
-                            <option value="fast" selected={config.speed_preset === "fast"}>{_("encode-speed-fast")}</option>
-                            <option value="medium" selected={config.speed_preset === "medium"}>{_("encode-speed-medium")}</option>
-                            <option value="slow" selected={config.speed_preset === "slow"}>{_("encode-speed-slow")}</option>
-                            <option value="slower" selected={config.speed_preset === "slower"}>{_("encode-speed-slower")}</option>
-                            <option value="veryslow" selected={config.speed_preset === "veryslow"}>{_("encode-speed-veryslow")}</option>
+                        <select onChange={inputSpeedPreset} disabled={disabled} defaultValue={config?.speed_preset}>
+                            <option value="ultrafast">{_("encode-speed-ultrafast")}</option>
+                            <option value="superfast">{_("encode-speed-superfast")}</option>
+                            <option value="veryfast">{_("encode-speed-veryfast")}</option>
+                            <option value="faster">{_("encode-speed-faster")}</option>
+                            <option value="fast">{_("encode-speed-fast")}</option>
+                            <option value="medium">{_("encode-speed-medium")}</option>
+                            <option value="slow">{_("encode-speed-slow")}</option>
+                            <option value="slower">{_("encode-speed-slower")}</option>
+                            <option value="veryslow">{_("encode-speed-veryslow")}</option>
                         </select>
                     </div>
                 </div>
@@ -241,11 +233,11 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                         </div>
                         <div className="column">
                             <div className="select is-fullwidth is-vcentered">
-                                <select onChange={inputHourStart} disabled={disabled}>
+                                <select onChange={inputHourStart} disabled={disabled} defaultValue={config?.hour_start?.toString()}>
                                     {
                                         [...Array(24).keys()].map(hour => {
                                             if (hour >= config.hour_end) return;
-                                            return <option value={hour.toString()} selected={config.hour_start === hour}>{_(`hour-${hour}`)}</option>
+                                            return <option key={hour} value={hour.toString()}>{_(`hour-${hour}`)}</option>
                                         })
                                     }
                                 </select>
@@ -253,11 +245,11 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                         </div>
                         <div className="column">
                             <div className="select is-fullwidth is-vcentered ml-1">
-                                <select onChange={inputHourEnd} disabled={disabled}>
+                                <select onChange={inputHourEnd} disabled={disabled} defaultValue={config?.hour_end?.toString()}>
                                     {
                                         [...Array(24).keys()].map(hour => {
                                             if (hour <= config.hour_start) return;
-                                            return <option value={hour.toString()} selected={config.hour_end === hour}>{_(`hour-${hour}`)}</option>
+                                            return <option key={hour} value={hour.toString()}>{_(`hour-${hour}`)}</option>
                                         })
                                     }
                                 </select>

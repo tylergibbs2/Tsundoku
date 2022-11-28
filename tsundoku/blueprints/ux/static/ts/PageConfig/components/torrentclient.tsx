@@ -1,5 +1,8 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import { getInjector } from "../../fluent";
+import { MutateConfigVars } from "../../interfaces";
+import { fetchConfig, setConfig } from "../../queries";
 
 
 let resources = [
@@ -21,7 +24,19 @@ interface TorrentConfig {
 
 
 export const TorrentConfig = () => {
-    const [config, setConfig] = useState<TorrentConfig>({});
+    const queryClient = useQueryClient();
+
+    const config = useQuery(["config", "torrent"], async () => {
+        return await fetchConfig<TorrentConfig>("torrent");
+    });
+
+    const mutation = useMutation(async ({ key, value }: MutateConfigVars) => {
+        return await setConfig<TorrentConfig>("torrent", key, value);
+    },
+        {
+            onSuccess: (newConfig) => { queryClient.setQueryData(["config", "torrent"], newConfig); }
+        }
+    );
 
     const [fetchingStatus, setFetchingStatus] = useState<boolean>(false);
     const [clientStatus, setClientStatus] = useState<boolean>(null);
@@ -43,67 +58,40 @@ export const TorrentConfig = () => {
         setFetchingStatus(false);
     }
 
-    const getConfig = async () => {
-        let resp = await fetch("/api/v1/config/torrent");
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
-        }
-    }
-
-    const updateConfig = async (key: string, value: any) => {
-        let request = {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                [key]: value
-            })
-        };
-
-        let resp = await fetch("/api/v1/config/torrent", request);
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
-        }
-    }
-
-    useEffect(() => {
-        getConfig();
-    }, []);
+    if (config.isLoading)
+        return <div>loading...</div>
 
     const inputClient = (e: ChangeEvent<HTMLSelectElement>) => {
         setClientStatus(null);
-        updateConfig("client", e.target.options[e.target.selectedIndex].value);
+        mutation.mutate({ key: "client", value: e.target.options[e.target.selectedIndex].value });
     }
 
     const inputHost = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("host", e.target.value);
+        mutation.mutate({ key: "host", value: e.target.value });
     }
 
     const inputPort = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("port", e.target.value);
+        mutation.mutate({ key: "port", value: e.target.value });
     }
 
     const inputUsername = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("username", e.target.value);
+        mutation.mutate({ key: "username", value: e.target.value });
     }
 
     const inputPassword = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("password", e.target.value);
+        mutation.mutate({ key: "password", value: e.target.value });
     }
 
     const inputSecure = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
         if (e.target.checked)
-            updateConfig("secure", true);
+            mutation.mutate({ key: "secure", value: true });
         else
-            updateConfig("secure", false);
+            mutation.mutate({ key: "secure", value: false });
     }
 
     return (
@@ -113,10 +101,10 @@ export const TorrentConfig = () => {
                     <h1 className="title is-5">{_("torrent-client-title")}</h1>
                     <h2 className="subtitle is-6">{_("torrent-client-subtitle")}</h2>
                     <div className="select is-fullwidth">
-                        <select onChange={inputClient}>
-                            <option value="deluge" selected={config.client === "deluge"}>Deluge</option>
-                            <option value="transmission" selected={config.client === "transmission"}>Transmission</option>
-                            <option value="qbittorrent" selected={config.client === "qbittorrent"}>qBittorrent</option>
+                        <select onChange={inputClient} defaultValue={config?.data?.client}>
+                            <option value="deluge">Deluge</option>
+                            <option value="transmission">Transmission</option>
+                            <option value="qbittorrent">qBittorrent</option>
                         </select>
                     </div>
                 </div>
@@ -125,28 +113,28 @@ export const TorrentConfig = () => {
                     <h2 className="subtitle is-6">{_("torrent-host-subtitle")}</h2>
                     <div className="field has-addons">
                         <div className="control is-expanded">
-                            <input className="input" type="text" placeholder="localhost" value={config.host} onChange={inputHost} />
+                            <input className="input" type="text" placeholder="localhost" value={config?.data?.host} onChange={inputHost} />
                         </div>
                         <div className="control">
-                            <input className="input" type="number" placeholder="8080" min="1" max="65535" value={config.port} onChange={inputPort} />
+                            <input className="input" type="number" placeholder="8080" min="1" max="65535" value={config?.data?.port} onChange={inputPort} />
                         </div>
                     </div>
                 </div>
                 <div className="column is-2">
                     <h1 className="title is-5">{_("torrent-username-title")}</h1>
                     <h2 className="subtitle is-6">{_("torrent-username-subtitle")}</h2>
-                    <input className="input" type="text" value={config.username} onChange={inputUsername} placeholder="admin" name="disableAuto" autoComplete="off" />
+                    <input className="input" type="text" value={config?.data?.username} onChange={inputUsername} placeholder="admin" name="disableAuto" autoComplete="off" />
                 </div>
                 <div className="column is-2">
                     <h1 className="title is-5">{_("torrent-password-title")}</h1>
                     <h2 className="subtitle is-6">{_("torrent-password-subtitle")}</h2>
-                    <input className="input" type="password" value={config.password} onChange={inputPassword} placeholder="********" name="disableAuto" autoComplete="off" />
+                    <input className="input" type="password" value={config?.data?.password} onChange={inputPassword} placeholder="********" name="disableAuto" autoComplete="off" />
                 </div>
                 <div className="column is-3">
                     <h1 className="title is-5">{_("torrent-secure-title")}</h1>
                     <h2 className="subtitle is-6">{_("torrent-secure-subtitle")}</h2>
                     <div className="field">
-                        <input id="secureCheck" type="checkbox" className="switch" onChange={inputSecure} checked={config.secure} />
+                        <input id="secureCheck" type="checkbox" className="switch" onChange={inputSecure} checked={config?.data?.secure} />
                         <label htmlFor="secureCheck">{_("checkbox-enabled")}</label>
                     </div>
                 </div>

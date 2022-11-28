@@ -1,5 +1,8 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import { getInjector } from "../../fluent";
+import { MutateConfigVars } from "../../interfaces";
+import { fetchConfig, setConfig } from "../../queries";
 
 
 let resources = [
@@ -18,54 +21,39 @@ interface FeedsConfig {
 
 
 export const FeedsConfig = () => {
-    const [config, setConfig] = useState<FeedsConfig>({});
+    const queryClient = useQueryClient();
 
-    const getConfig = async () => {
-        let resp = await fetch("/api/v1/config/feeds");
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
+    const config = useQuery(["config", "feeds"], async () => {
+        return await fetchConfig<FeedsConfig>("feeds");
+    });
+
+    const mutation = useMutation(async ({ key, value }: MutateConfigVars) => {
+        return await setConfig<FeedsConfig>("feeds", key, value);
+    },
+        {
+            onSuccess: (newConfig) => { queryClient.setQueryData(["config", "feeds"], newConfig); }
         }
-    }
+    );
 
-    const updateConfig = async (key: string, value: any) => {
-        let request = {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                [key]: value
-            })
-        };
-
-        let resp = await fetch("/api/v1/config/feeds", request);
-        if (resp.ok) {
-            let data = await resp.json();
-            setConfig(data.result);
-        }
-    }
-
-    useEffect(() => {
-        getConfig();
-    }, []);
+    if (config.isLoading)
+        return <div>loading...</div>
 
     const inputPollingInterval = async (e: ChangeEvent<HTMLInputElement>) => {
-        updateConfig("polling_interval", e.target.value);
+        mutation.mutate({ key: "polling_interval", value: e.target.value });
     }
 
     const inputCompleteCheck = async (e: ChangeEvent<HTMLInputElement>) => {
-        updateConfig("complete_check_interval", e.target.value);
+        mutation.mutate({ key: "complete_check_interval", value: e.target.value });
     }
 
     const inputFuzzyCutoff = async (e: ChangeEvent<HTMLInputElement>) => {
-        updateConfig("fuzzy_cutoff", e.target.value);
+        mutation.mutate({ key: "fuzzy_cutoff", value: e.target.value });
     }
 
     const inputSeedRatioLimit = async (e: ChangeEvent<HTMLInputElement>) => {
         e.target.value = parseFloat(e.target.value).toFixed(2);
 
-        updateConfig("seed_ratio_limit", e.target.value);
+        mutation.mutate({ key: "seed_ratio_limit", value: e.target.value });
     }
 
     return (
@@ -76,7 +64,7 @@ export const FeedsConfig = () => {
                     <h2 className="subtitle is-6">{_("feeds-fuzzy-cutoff-subtitle")}</h2>
                     <div className="field has-addons">
                         <div className="control">
-                            <input className="input" type="number" min="0" max="100" placeholder="90" value={config.fuzzy_cutoff} onChange={inputFuzzyCutoff} />
+                            <input className="input" type="number" min="0" max="100" placeholder="90" value={config.data?.fuzzy_cutoff} onChange={inputFuzzyCutoff} />
                         </div>
                         <div className="control">
                             <a className="button is-static">%</a>
@@ -88,7 +76,7 @@ export const FeedsConfig = () => {
                     <h2 className="subtitle is-6">{_("feeds-pollinginterval-subtitle")}</h2>
                     <div className="field has-addons">
                         <div className="control">
-                            <input className="input" type="number" min="30" placeholder="900" value={config.polling_interval} onChange={inputPollingInterval} />
+                            <input className="input" type="number" min="30" placeholder="900" value={config.data?.polling_interval} onChange={inputPollingInterval} />
                         </div>
                         <div className="control">
                             <a className="button is-static">{_("seconds-suffix")}</a>
@@ -100,7 +88,7 @@ export const FeedsConfig = () => {
                     <h2 className="subtitle is-6">{_("feeds-completioncheck-subtitle")}</h2>
                     <div className="field has-addons">
                         <div className="control">
-                            <input className="input" type="number" min="1" placeholder="15" value={config.complete_check_interval} onChange={inputCompleteCheck} />
+                            <input className="input" type="number" min="1" placeholder="15" value={config.data?.complete_check_interval} onChange={inputCompleteCheck} />
                         </div>
                         <div className="control">
                             <a className="button is-static">{_("seconds-suffix")}</a>
@@ -112,7 +100,7 @@ export const FeedsConfig = () => {
                     <h2 className="subtitle is-6">{_("feeds-seedratio-subtitle")}</h2>
                     <div className="field">
                         <div className="control">
-                            <input className="input" type="number" min="0.0" placeholder="0.0" step="0.1" value={config.seed_ratio_limit?.toFixed(2)} onChange={inputSeedRatioLimit} />
+                            <input className="input" type="number" min="0.0" placeholder="0.0" step="0.1" value={config.data?.seed_ratio_limit?.toFixed(2)} onChange={inputSeedRatioLimit} />
                         </div>
                     </div>
                 </div>

@@ -11,7 +11,7 @@ let resources = [
 const _ = getInjector(resources);
 
 export const APITokenComponent = () => {
-    const [localToken, setLocalToken] = useState<string | null>(null);
+    const [localToken, setLocalToken] = useState<string>("");
     const [isFetching, setIsFetching] = useState<boolean>(false);
 
     const getToken = async () => {

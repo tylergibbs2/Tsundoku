@@ -6,6 +6,8 @@ import { SearchBox, SearchTable, SpaceHolder } from "./search";
 import { getInjector } from "../fluent";
 
 import "../../css/nyaa_search.css";
+import { useQuery } from "react-query";
+import { fetchConfig } from "../queries";
 
 let resources = [
     "nyaa_search"
@@ -19,25 +21,10 @@ export const NyaaSearchApp = () => {
     const [userShows, setUserShows] = useState<Show[]>([]);
     const [results, setResults] = useState<NyaaIndividualResult[]>([]);
     const [choice, setChoice] = useState<NyaaIndividualResult>(null);
-    const [generalConfig, setGeneralConfig] = useState<GeneralConfig>({});
 
-    const fetchConfig = async () => {
-        let request = {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-
-        let resp = await fetch("/api/v1/config/general", request);
-        let resp_json: any;
-        if (resp.ok)
-            resp_json = await resp.json();
-        else
-            return;
-
-        setGeneralConfig(resp_json.result);
-    }
+    const generalConfig = useQuery(["config", "general"], async () => {
+        return await fetchConfig<GeneralConfig>("general");
+    });
 
     const fetchUserShows = async () => {
         let request = {
@@ -56,13 +43,12 @@ export const NyaaSearchApp = () => {
     }
 
     useEffect(() => {
-        fetchConfig();
         fetchUserShows();
     }, [])
 
     return (
         <div className={choice ? "is-clipped" : ""}>
-            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows} generalConfig={generalConfig} />
+            <NyaaShowModal setChoice={setChoice} choice={choice} shows={userShows} generalConfig={generalConfig.data} />
             <div className="columns is-vcentered">
                 <div className="column is-4">
                     <div className="container">
