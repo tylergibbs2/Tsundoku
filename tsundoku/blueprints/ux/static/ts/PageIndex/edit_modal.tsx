@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import humanizeDuration from "humanize-duration";
 
 import { ShowToggleButton } from "./components/show_toggle_button";
-import { Show, Entry, Webhook } from "../interfaces";
+import { Show, Entry, Webhook, APIResponse } from "../interfaces";
 import { IonIcon } from "../icon";
 import { useMutation, useQueryClient } from "react-query";
 import { updateShowById } from "../queries";
@@ -41,7 +41,10 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
     const queryClient = useQueryClient();
 
     const showMutation = useMutation(updateShowById, {
-        onSuccess: (updatedShow) => {
+        onSuccess: async (updatedShow) => {
+            updatedShow = await finalizeEntries(updatedShow);
+            updatedShow = await finalizeWebhooks(updatedShow);
+
             queryClient.setQueryData(["shows"], (oldShows: Show[]) => [...oldShows.filter((show) => show.id_ !== updatedShow.id_), updatedShow]);
 
             toast({
@@ -55,7 +58,8 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
             setCurrentModal(null);
             setActiveShow(null);
-    }});
+        }
+    });
 
     register("watch", { required: true });
     register("post_process", { required: true });
@@ -82,24 +86,23 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
         let removedEntries: Entry[] = [];
 
         let request: Object;
-        for (const entry of entriesToAdd) {
+        if (entriesToAdd.length > 0) {
             request = {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(entry)
+                body: JSON.stringify([
+                    ...entriesToAdd.filter(
+                        (entry) => entriesToDelete.findIndex((toRemove: Entry) => toRemove.id === entry.id) === -1
+                    )
+                ])
             };
 
-            let idx = entriesToDelete.findIndex((toRemove: Entry) => toRemove.id === entry.id);
-            if (idx !== -1)
-                continue;
-
-            let resp = await fetch(`/api/v1/shows/${activeShow.id_}/entries`, request);
-            let resp_json: any;
-            if (resp.ok) {
-                resp_json = await resp.json();
-                addedEntries.push(resp_json.result);
+            let response = await fetch(`/api/v1/shows/${activeShow.id_}/entries`, request);
+            if (response.ok) {
+                let data: APIResponse<Entry[]> = await response.json();
+                addedEntries = data.result;
             }
         }
 
@@ -113,10 +116,9 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
         for (const entry of entriesToDelete) {
             if (entry.id < 0)
                 continue;
-            let resp = await fetch(`/api/v1/shows/${activeShow.id_}/entries/${entry.id}`, request);
-            if (resp.ok) {
+            let response = await fetch(`/api/v1/shows/${activeShow.id_}/entries/${entry.id}`, request);
+            if (response.ok)
                 removedEntries.push(entry);
-            }
         }
 
         setEntriesToAdd([]);
@@ -189,12 +191,12 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
     }
 
     const submitHandler = (data: any) => {
-        showMutation.mutate({id_: activeShow.id_, ...data});
+        showMutation.mutate({ id_: activeShow.id_, ...data });
     }
 
     const triggerForm = async () => {
         await trigger();
-        await submitHandler(getValues());
+        submitHandler(getValues());
     }
 
     return (
@@ -247,7 +249,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                     <div className="tabs">
                         <ul>
                             <li className={tab === "info" ? "is-active" : ""}><a onClick={() => setTab("info")}>{_("edit-tab-info")}</a></li>
-                            <li className={tab === "entries" ? "is-active" : ""}><a onClick={() => setTab("enries")}>{_("edit-tab-entries")}</a></li>
+                            <li className={tab === "entries" ? "is-active" : ""}><a onClick={() => setTab("entries")}>{_("edit-tab-entries")}</a></li>
                             <li className={tab === "webhooks" ? "is-active" : ""}><a onClick={() => setTab("webhooks")}>{_("edit-tab-webhooks")}</a></li>
                         </ul>
                     </div>
@@ -512,17 +514,20 @@ interface EditShowEntriesParams {
 
 
 const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entriesToAdd, entriesToDelete }: EditShowEntriesParams) => {
-    if (show === null)
-        return (<></>)
+    let previousEntries: Entry[] = show?.entries ?? [];
 
-    const [entries, setEntries] = useState<any[]>(show.entries);
+    const [entries, setEntries] = useState<Entry[]>(previousEntries);
     const [fakeId, setFakeId] = useState<number>(-1);
 
     const { register, handleSubmit, reset } = useForm();
 
     useEffect(() => {
-        setEntries(show.entries);
+        if (show)
+            setEntries(show.entries);
     }, [show]);
+
+    if (show === null)
+        return (<></>)
 
     const bufferAddEntry = (data: any) => {
         let newEpNum = parseInt(data.episode);
@@ -598,7 +603,6 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                     <h2 className="subtitle">{_("edit-entries-is-empty")}</h2>
                 </div>
             }
-            {/*@ts-ignore */}
             <form onSubmit={handleSubmit(bufferAddEntry)}>
                 <div className="field is-horizontal">
                     <div className="field-body">
@@ -606,7 +610,7 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                             <label className="label">{_('edit-entries-form-episode')}</label>
                         </div>
                         <div className="field">
-                            <input {...register('episode')} min="0" className="input" type="number" value="0" required />
+                            <input {...register('episode')} min="0" className="input" type="number" defaultValue="0" required />
                             <p className="help is-danger is-hidden">{_("edit-entries-form-exists")}</p>
                         </div>
                         <div className="field">

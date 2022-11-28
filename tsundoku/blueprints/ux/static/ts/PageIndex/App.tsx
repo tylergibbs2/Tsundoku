@@ -33,9 +33,10 @@ export const IndexApp = () => {
 
     const [activeShow, setActiveShow] = useState<Show | null>(null);
     const [currentModal, setCurrentModal] = useState<string | null>(null);
-    const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || ["current", "finished", "tba", "unreleased", "upcoming"]);
+
     const [viewType, setViewType] = useState<string>(storedViewType || "cards");
 
+    const [filters, setFilters] = useState<string[]>(JSON.parse(storedFilters) || ["current", "finished", "tba", "unreleased", "upcoming"]);
     const [textFilter, setTextFilter] = useState<string>("");
 
     const [sortDirection, setSortDirection] = useState<string>(storedSortDirection || "+");
@@ -49,16 +50,10 @@ export const IndexApp = () => {
 
     useEffect(() => {
         localStorage.setItem("showFilters", JSON.stringify(filters));
-    }, [filters]);
-
-    useEffect(() => {
         localStorage.setItem("viewType", viewType);
-    }, [viewType]);
-
-    useEffect(() => {
         localStorage.setItem("sortDirection", sortDirection);
         localStorage.setItem("sortKey", sortKey);
-    }, [sortDirection, sortKey]);
+    }, [filters, viewType, sortDirection, sortKey]);
 
     useEffect(() => {
         if (currentModal)
@@ -68,7 +63,9 @@ export const IndexApp = () => {
     }, [currentModal]);
 
     if (shows.isLoading)
-        return <div>loading...</div>
+        return (
+            <progress className="progress is-large is-primary" style={{transform: "translateY(33vh)"}} max="100" />
+        )
 
     return (
         <>

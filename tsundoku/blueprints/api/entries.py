@@ -1,7 +1,12 @@
 import logging
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
 from quart import request, views
 
 from tsundoku.manager import Entry
@@ -54,26 +59,18 @@ class EntriesAPI(views.MethodView):
                 result=dict(entry)
             )
 
-    async def post(self, show_id: int, entry_id: int = None) -> APIResponse:
-        arguments = await request.get_json()
+    async def add_single_entry(self, show_id: int, entry: dict) -> Entry:
         required_arguments = {"episode", "magnet"}
-
-        if all(arg not in arguments.keys() for arg in required_arguments):
-            return APIResponse(
-                status=400,
-                error="Too many arguments or missing required argument."
-            )
+        if all(arg not in entry.keys() for arg in required_arguments):
+            raise Exception(f"Too many arguments or missing required arguments ({', '.join(required_arguments)}).")
 
         try:
-            episode = int(arguments["episode"])
+            episode = int(entry["episode"])
         except ValueError:
-            return APIResponse(
-                status=400,
-                error="Episode argument must be an integer."
-            )
+            raise Exception("Episode must be an integer.")
 
-        if arguments["magnet"]:
-            magnet = await app.dl_client.get_magnet(arguments["magnet"])
+        if entry["magnet"]:
+            magnet = await app.dl_client.get_magnet(entry["magnet"])
             entry_id = await app.downloader.begin_handling(show_id, episode, magnet)
         else:
             async with app.acquire_db() as con:
@@ -106,14 +103,35 @@ class EntriesAPI(views.MethodView):
             """, entry_id)
             new_entry = await con.fetchone()
 
-        entry = Entry(app, new_entry)
+        new_entry_obj = Entry(app, new_entry)
+        logger.info(f"Entry Manually Added - <e{new_entry_obj.id}>")
+        await new_entry_obj._handle_webhooks()
+        return new_entry_obj
 
-        logger.info(f"Entry Manually Added - <e{entry.id}>")
 
-        await entry._handle_webhooks()
+    async def post(self, show_id: int, entry_id: Optional[int] = None) -> APIResponse:
+        body = await request.get_json()
+
+        try:
+            if isinstance(body, dict):
+                entry = await self.add_single_entry(show_id, body)
+                return APIResponse(
+                    result=entry.to_dict()
+                )
+            elif isinstance(body, list):
+                entries = [await self.add_single_entry(show_id, entry) for entry in body]
+                return APIResponse(
+                    result=[entry.to_dict() for entry in entries]
+                )
+        except Exception as e:
+            return APIResponse(
+                status=400,
+                error=str(e)
+            )
 
         return APIResponse(
-            result=entry.to_dict()
+            status=400,
+            error="Invalid request body."
         )
 
     async def delete(self, show_id: int, entry_id: int) -> APIResponse:
