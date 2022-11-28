@@ -142,7 +142,5 @@ if __name__ == "__main__":
         asyncio.run(app.insert_user(username, password))
         print(fluent._("created-user"))
     else:
-        asyncio.run(database.migrate())
-
         from tsundoku import app
-        app.run()
+        asyncio.run(app.run())

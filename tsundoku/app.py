@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import asyncio
-import datetime
+from asyncio.queues import Queue
+from contextlib import _AsyncGeneratorContextManager
 import logging
 import os
 import secrets
-from asyncio.events import AbstractEventLoop
-from asyncio.queues import Queue
-from typing import Any, Tuple, Union
+from sqlite3 import Connection
+from typing import Any, AsyncGenerator, Generator, Tuple, MutableSet, List
 from uuid import uuid4
 
 import aiohttp
@@ -15,7 +17,6 @@ from quart_auth import AuthManager, Unauthorized
 from werkzeug import Response
 
 import tsundoku.asqlite
-import tsundoku.git as git
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import GeneralConfig
@@ -23,7 +24,7 @@ from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.log import setup_logging
-from tsundoku.parsers import load_parsers
+from tsundoku.parsers import load_parsers, ParserStub
 from tsundoku.user import User
 
 hasher = PasswordHasher()
@@ -31,16 +32,37 @@ hasher = PasswordHasher()
 auth = AuthManager()
 auth.user_class = User
 
-app: Any = Quart("Tsundoku", static_folder=None)
 
-app.seen_titles = set()
-app.connected_websockets = set()
-app._tasks = []
+class TsundokuApp(Quart):
+    seen_titles: MutableSet[str] = set()
+    connected_websockets: MutableSet[Queue[str]] = set()
+    logging_queue: Queue[str]
+    session: aiohttp.ClientSession
+    dl_client: Manager
+
+    rss_parsers: List[ParserStub]
+    parser_lock: asyncio.Lock
+
+    poller: Poller
+    downloader: Downloader
+    encoder: Encoder
+
+    acquire_db: Any
+    sync_acquire_db: Any
+
+    _tasks: List[asyncio.Task] = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
+
 logger = logging.getLogger("tsundoku")
 
 
 class QuartConfig:
-    SECRET_KEY = secrets.token_urlsafe(16)
+    SECRET_KEY = "1"  # secrets.token_urlsafe(16)
     QUART_AUTH_COOKIE_SECURE = False
 
 
@@ -79,7 +101,7 @@ async def setup_db() -> None:
     """
     await migrate()
     app.acquire_db = acquire
-    app.sync_acquire_db = sync_acquire
+    app.sync_acquire_db = sync_acquire  # type: ignore
 
     async with app.acquire_db() as con:
         await con.execute("""
@@ -92,23 +114,6 @@ async def setup_db() -> None:
 
     if not users:
         logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
-
-
-@app.before_request
-async def update_check_needed() -> None:
-    """
-    Compares the time between now and the
-    last update check. If it has been more
-    than 1 day, check for an update.
-    """
-    cfg = await GeneralConfig.retrieve(app)
-    if not cfg["update_do_check"]:
-        return
-
-    next_ = app.last_update_check + datetime.timedelta(hours=24)
-    if next_ < datetime.datetime.utcnow():
-        await git.check_for_updates()
-        app.last_update_check = datetime.datetime.utcnow()
 
 
 @app.before_serving
@@ -127,12 +132,6 @@ async def setup_session() -> None:
     )
     app.dl_client = Manager(app.session)
 
-    app.logging_queue = Queue(maxsize=50)
-
-    app.update_info = []
-    await git.check_for_updates()
-    app.last_update_check = datetime.datetime.utcnow()
-
 
 @app.before_serving
 async def setup_parsers() -> None:
@@ -142,7 +141,6 @@ async def setup_parsers() -> None:
     # It's okay if we're blocking here.
     # The webserver isn't intended to
     # be serving at this point in time.
-
     app.parser_lock = asyncio.Lock()
     async with app.parser_lock:
         load_parsers(["parsers.subsplease"])
@@ -171,6 +169,8 @@ async def setup_tasks() -> None:
     app._tasks.append(asyncio.create_task(poller()))
     app._tasks.append(asyncio.create_task(downloader()))
     app._tasks.append(asyncio.create_task(encoder()))
+
+    app.logging_queue = Queue(maxsize=50)
 
 
 @app.after_serving
@@ -219,12 +219,14 @@ def get_bind() -> Tuple[str, int]:
     return cfg["host"], cfg["port"]
 
 
-def run() -> None:
+async def run() -> None:
+    await migrate()
+
     host, port = get_bind()
 
     auth.init_app(app)
-    app.run(
+
+    await app.run_task(
         host=host,
-        port=port,
-        use_reloader=True
+        port=port
     )

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -6,7 +8,10 @@ from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import subprocess
-from typing import Any, AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, AsyncContextManager, Generator, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.asqlite import Cursor
 
 from yoyo import get_backend, read_migrations
 
@@ -22,7 +27,7 @@ else:
 
 
 @asynccontextmanager
-async def acquire() -> AsyncGenerator[Any, Any]:
+async def acquire() -> AsyncGenerator[Cursor, None]:
     async with asqlite.connect(fp) as con:
         async with con.cursor() as cur:
             yield cur

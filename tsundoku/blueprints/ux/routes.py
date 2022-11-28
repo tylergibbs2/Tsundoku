@@ -10,7 +10,8 @@ from argon2.exceptions import VerifyMismatchError
 from quart import Blueprint, Response
 
 if TYPE_CHECKING:
-    app: Any
+    import tsundoku.app
+    app: tsundoku.app.TsundokuApp
 else:
     from quart import current_app as app
 
@@ -63,7 +64,6 @@ async def update_context() -> dict:
 
     return {
         "stats": stats,
-        "updates": app.update_info,
         "docker": os.environ.get("IS_DOCKER", False)
     }
 

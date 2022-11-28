@@ -1,13 +1,47 @@
+from __future__ import annotations
+
 import importlib
 import importlib.util
 import logging
-from typing import Any, List
+from typing import Any, List, Optional, TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
 
 import tsundoku.exceptions as exceptions
 
 logger = logging.getLogger("tsundoku")
+
+
+class ParserStub:
+    name: str
+    url: str
+    version: str
+    app: TsundokuApp
+
+    _last_etag: Optional[str]
+    _last_modified: Optional[str]
+    _most_recent_hash: Optional[str]
+
+    def get_show_name(self, file_name: str) -> str:
+        return ""
+
+    def get_episode_number(self, file_name: str) -> Optional[int]:
+        ...
+
+    def get_link_location(self, item: dict) -> str:
+        return ""
+
+    def get_file_name(self, item: dict) -> str:
+        return ""
+
+    def ignore_logic(self, item: dict) -> bool:
+        return True
+
 
 
 def load_parsers(parsers: List[str]) -> None:

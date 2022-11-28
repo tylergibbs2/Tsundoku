@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import logging
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    from tsundoku.parsers import ParserStub
 
 import feedparser
 
 from tsundoku.config import FeedsConfig
-
 from .fuzzy import extract_one
 
 logger = logging.getLogger("tsundoku")
@@ -47,12 +52,13 @@ class Poller:
     be then passed onto the download manager for downloading,
     renaming, and moving.
     """
+    app: TsundokuApp
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 
-        self.current_parser: Any = None  # keeps track of the current parser
+        self.current_parser: Optional[ParserStub] = None  # keeps track of the current parser
 
     async def update_config(self) -> None:
         """
@@ -251,6 +257,9 @@ class Poller:
         Optional[Tuple[int, int]]
             A tuple with (show_id, episode)
         """
+        if self.current_parser is None:
+            return None
+
         # In case there are any errors with the user-defined parsing
         # functions, this try-except block will prevent the whole
         # poller task from crashing.
@@ -335,6 +344,9 @@ class Poller:
         List[dict]
             New items in the RSS feed.
         """
+        if self.current_parser is None:
+            return []
+
         if not hasattr(self.current_parser, "_last_etag"):
             self.current_parser._last_etag = None
 
@@ -422,6 +434,9 @@ class Poller:
         str
             The found magnet URL.
         """
+        if self.current_parser is None:
+            return ""
+
         client = self.app.dl_client
 
         if hasattr(self.current_parser, "get_link_location"):
