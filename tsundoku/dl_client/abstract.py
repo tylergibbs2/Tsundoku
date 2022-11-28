@@ -4,7 +4,6 @@ from typing import Optional
 
 
 class TorrentClient(ABC):
-
     @abstractmethod
     def build_api_url(self, host: str, port: int, secure: bool) -> str:
         """

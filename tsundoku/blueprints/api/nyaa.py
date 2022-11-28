@@ -20,11 +20,11 @@ class NyaaAPI(views.MethodView):
             results = await NyaaSearcher.search(app, query)
         except Exception as e:
             logger.error(f"Nyaa API - Search Error: {e}")
-            return APIResponse(status=400, error="Error searching for the specified query.")
+            return APIResponse(
+                status=400, error="Error searching for the specified query."
+            )
 
-        return APIResponse(
-            result=[sr.to_dict() for sr in results]
-        )
+        return APIResponse(result=[sr.to_dict() for sr in results])
 
     async def post(self) -> APIResponse:
         arguments = await request.get_json()
@@ -34,45 +34,35 @@ class NyaaAPI(views.MethodView):
         overwrite = arguments.get("overwrite")
 
         if not show_id or not torrent_link:
-            return APIResponse(
-                status=400,
-                error="Missing required parameters."
-            )
+            return APIResponse(status=400, error="Missing required parameters.")
 
         try:
             show_id = int(show_id)
         except ValueError:
-            return APIResponse(
-                status=400,
-                error="Show ID passed is not an integer."
-            )
+            return APIResponse(status=400, error="Show ID passed is not an integer.")
 
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id
                 FROM
                     shows
                 WHERE id=?;
-            """, show_id)
+            """,
+                show_id,
+            )
             show_id = await con.fetchval()
 
         if not show_id:
             return APIResponse(
-                status=404,
-                error="Show ID does not exist in the database."
+                status=404, error="Show ID does not exist in the database."
             )
 
-        search_result = SearchResult.from_necessary(
-            app,
-            show_id,
-            torrent_link
-        )
+        search_result = SearchResult.from_necessary(app, show_id, torrent_link)
 
         logger.info(f"Processing new search result for Show <s{show_id}>")
 
         entries = await search_result.process(overwrite=overwrite)
 
-        return APIResponse(
-            result=[e.to_dict() for e in entries]
-        )
+        return APIResponse(result=[e.to_dict() for e in entries])

@@ -34,6 +34,7 @@ class EntryMatch:
     match_percent: int
         The percent match the two names are on a scale of 0 to 100.
     """
+
     passed_name: str
     matched_id: int
     match_percent: int
@@ -52,13 +53,16 @@ class Poller:
     be then passed onto the download manager for downloading,
     renaming, and moving.
     """
+
     app: TsundokuApp
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 
-        self.current_parser: Optional[ParserStub] = None  # keeps track of the current parser
+        self.current_parser: Optional[
+            ParserStub
+        ] = None  # keeps track of the current parser
 
     async def update_config(self) -> None:
         """
@@ -83,6 +87,7 @@ class Poller:
                 await self.poll()
             except Exception:
                 import traceback
+
                 traceback.print_exc()
 
             await asyncio.sleep(self.interval)
@@ -184,13 +189,17 @@ class Poller:
             True if the episode has been parsed, False otherwise.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id
                 FROM
                     show_entry
                 WHERE show_id=? AND episode=?;
-            """, show_id, episode)
+            """,
+                show_id,
+                episode,
+            )
             show_entry = await con.fetchval()
 
         return bool(show_entry)
@@ -215,16 +224,20 @@ class Poller:
             Could be None if no shows are desired.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     title,
                     watch
                 FROM
                     shows;
-            """)
+            """
+            )
             desired_shows = await con.fetchall()
-        show_list = {show["title"]: show["id"] for show in desired_shows if show["watch"]}
+        show_list = {
+            show["title"]: show["id"] for show in desired_shows if show["watch"]
+        }
 
         if not show_list:
             return None
@@ -233,11 +246,7 @@ class Poller:
         match = extract_one(show_name, list(show_list.keys()))
 
         if match:
-            return EntryMatch(
-                show_name,
-                show_list[match[0]],
-                match[1]
-            )
+            return EntryMatch(show_name, show_list[match[0]], match[1])
 
         return None
 
@@ -280,7 +289,8 @@ class Poller:
             show_episode = self.current_parser.get_episode_number(torrent_name)
         except Exception as e:
             logger.error(
-                f"Parsing Error - `{self.current_parser.name}@{self.current_parser.version}`: {e}")
+                f"Parsing Error - `{self.current_parser.name}@{self.current_parser.version}`: {e}"
+            )
             return None
 
         if show_episode is None:
@@ -298,13 +308,12 @@ class Poller:
             return None
 
         logger.info(
-            f"{self.current_parser.name} - Release Found for <s{match.matched_id}>, episode {show_episode}")
+            f"{self.current_parser.name} - Release Found for <s{match.matched_id}>, episode {show_episode}"
+        )
 
         magnet_url = await self.get_torrent_link(item)
         await self.app.downloader.begin_handling(
-            match.matched_id,
-            show_episode,
-            magnet_url
+            match.matched_id, show_episode, magnet_url
         )
 
         return (match.matched_id, show_episode)
@@ -330,9 +339,7 @@ class Poller:
         # attributes. See link in docstring for more details.
         to_hash = item.get("title", "") + item.get("description", "")
 
-        return hashlib.sha256(
-            to_hash.encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(to_hash.encode("utf-8")).hexdigest()
 
     async def get_items_from_parser(self) -> List[dict]:
         """
@@ -358,12 +365,15 @@ class Poller:
         # a user-defined class and there's an off-chance they could
         # use these names.
 
-        feed = await self.loop.run_in_executor(None, partial(
-            feedparser.parse,
-            self.current_parser.url,
-            etag=self.current_parser._last_etag,
-            modified=self.current_parser._last_modified
-        ))
+        feed = await self.loop.run_in_executor(
+            None,
+            partial(
+                feedparser.parse,
+                self.current_parser.url,
+                etag=self.current_parser._last_etag,
+                modified=self.current_parser._last_modified,
+            ),
+        )
 
         # None of the RSS URLs that I provide with this software out-of-the-box
         # provide etag or modified headers, but it's entirely possible a user-provided
@@ -382,7 +392,10 @@ class Poller:
         if hasattr(feed, "status") and feed.status == 304:
             return []
 
-        if self.current_parser._last_etag is not None or self.current_parser._last_modified is not None:
+        if (
+            self.current_parser._last_etag is not None
+            or self.current_parser._last_modified is not None
+        ):
             return feed["items"]
 
         # Worst-case scenario, etag header and modified header weren't

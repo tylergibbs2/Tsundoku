@@ -13,7 +13,9 @@ logger = logging.getLogger("tsundoku")
 
 
 class qBittorrentClient(TorrentClient):
-    def __init__(self, session: aiohttp.ClientSession, auth: Dict[str, str], **kwargs: Any) -> None:
+    def __init__(
+        self, session: aiohttp.ClientSession, auth: Dict[str, str], **kwargs: Any
+    ) -> None:
         self.session = session
 
         host: str = kwargs.pop("host")
@@ -37,9 +39,7 @@ class qBittorrentClient(TorrentClient):
         return bool(fp)
 
     async def check_torrent_completed(self, torrent_id: str) -> bool:
-        payload = {
-            "hashes": torrent_id
-        }
+        payload = {"hashes": torrent_id}
 
         logger.debug(f"Retrieving torrent state for hash `{torrent_id}`")
         data = await self.request("get", "torrents", "info", params=payload)
@@ -48,12 +48,18 @@ class qBittorrentClient(TorrentClient):
 
         state = data[0].get("state")
         logger.debug(f"Torrent `{torrent_id}` is `{state}`")
-        return state in ("checkingUP", "completed", "forcedUP", "pausedUP", "queuedUP", "stalledUP", "uploading")
+        return state in (
+            "checkingUP",
+            "completed",
+            "forcedUP",
+            "pausedUP",
+            "queuedUP",
+            "stalledUP",
+            "uploading",
+        )
 
     async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
-        payload = {
-            "hashes": torrent_id
-        }
+        payload = {"hashes": torrent_id}
 
         logger.debug(f"Retrieving torrent state for hash `{torrent_id}`")
         data = await self.request("get", "torrents", "info", params=payload)
@@ -69,15 +75,13 @@ class qBittorrentClient(TorrentClient):
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         payload = {
             "hashes": torrent_id,
-            "deleteFiles": "true" if with_files else "false"
+            "deleteFiles": "true" if with_files else "false",
         }
 
         await self.request("get", "torrents", "delete", params=payload)
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
-        payload = {
-            "hashes": torrent_id
-        }
+        payload = {"hashes": torrent_id}
 
         data = await self.request("get", "torrents", "info", params=payload)
         if not data:
@@ -90,9 +94,7 @@ class qBittorrentClient(TorrentClient):
         return Path(data["content_path"])
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
-        payload = {
-            "urls": magnet_url
-        }
+        payload = {"urls": magnet_url}
 
         await self.request("post", "torrents", "add", payload=payload)
 
@@ -103,18 +105,15 @@ class qBittorrentClient(TorrentClient):
         return match.group(1).lower()
 
     async def login(self) -> bool:
-        headers = {
-            "Referer": self.url
-        }
+        headers = {"Referer": self.url}
 
-        params = {
-            "username": self.auth["username"],
-            "password": self.auth["password"]
-        }
+        params = {"username": self.auth["username"], "password": self.auth["password"]}
 
         request_url = f"{self.url}/api/v2/auth/login"
 
-        async with self.session.get(request_url, headers=headers, params=params) as resp:
+        async with self.session.get(
+            request_url, headers=headers, params=params
+        ) as resp:
             status = resp.status
             if status == 200:
                 logger.info("qBittorrent - Successfully Authenticated")
@@ -123,8 +122,14 @@ class qBittorrentClient(TorrentClient):
 
         return status == 200
 
-    async def request(self, http_method: str, location: str, method: str,
-                      payload: dict = {}, params: dict = {}) -> dict:
+    async def request(
+        self,
+        http_method: str,
+        location: str,
+        method: str,
+        payload: dict = {},
+        params: dict = {},
+    ) -> dict:
         """
         Makes a request to qBittorrent.
 
@@ -151,7 +156,9 @@ class qBittorrentClient(TorrentClient):
         retries = 5
 
         while retries:
-            async with self.session.request(http_method, request_url, data=payload, params=params) as r:
+            async with self.session.request(
+                http_method, request_url, data=payload, params=params
+            ) as r:
                 data: Any = await r.text(encoding="utf-8")
                 if r.headers.get("Content-Type") == "application/json":
                     data = json.loads(data)

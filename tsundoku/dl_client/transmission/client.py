@@ -52,7 +52,9 @@ class TransmissionClient(TorrentClient):
         str
             Encoded credentials.
         """
-        return base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("utf-8")
+        return base64.b64encode(f"{username}:{password}".encode("utf-8")).decode(
+            "utf-8"
+        )
 
     async def test_client(self) -> bool:
         try:
@@ -67,10 +69,9 @@ class TransmissionClient(TorrentClient):
         return fp is not None
 
     async def check_torrent_completed(self, torrent_id: str) -> bool:
-        resp = await self.request("torrent-get", {
-            "ids": [torrent_id],
-            "fields": ["isFinished", "status"]
-        })
+        resp = await self.request(
+            "torrent-get", {"ids": [torrent_id], "fields": ["isFinished", "status"]}
+        )
 
         if resp.get("result") != "success":
             return False
@@ -83,16 +84,12 @@ class TransmissionClient(TorrentClient):
 
         status = torrent["status"]
         finished = torrent["isFinished"]
-        return (
-            (status == 0 and finished) or
-            status in (5, 6)
-        )
+        return (status == 0 and finished) or status in (5, 6)
 
     async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
-        resp = await self.request("torrent-get", {
-            "ids": [torrent_id],
-            "fields": ["uploadRatio"]
-        })
+        resp = await self.request(
+            "torrent-get", {"ids": [torrent_id], "fields": ["uploadRatio"]}
+        )
 
         if resp.get("result") != "success":
             return None
@@ -108,16 +105,14 @@ class TransmissionClient(TorrentClient):
         return None
 
     async def delete_torrent(self, torrent_id: str, with_files: bool) -> None:
-        await self.request("torrent-remove", {
-            "ids": [torrent_id],
-            "delete-local-data": with_files
-        })
+        await self.request(
+            "torrent-remove", {"ids": [torrent_id], "delete-local-data": with_files}
+        )
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
-        resp = await self.request("torrent-get", {
-            "ids": [torrent_id],
-            "fields": ["downloadDir", "name"]
-        })
+        resp = await self.request(
+            "torrent-get", {"ids": [torrent_id], "fields": ["downloadDir", "name"]}
+        )
 
         if resp.get("result") != "success":
             return None
@@ -130,9 +125,7 @@ class TransmissionClient(TorrentClient):
         return Path(torrent["downloadDir"]) / torrent["name"]
 
     async def add_torrent(self, magnet_url: str) -> Optional[str]:
-        resp = await self.request("torrent-add", {
-            "filename": magnet_url
-        })
+        resp = await self.request("torrent-add", {"filename": magnet_url})
 
         if resp.get("result") != "success":
             return None
@@ -162,24 +155,25 @@ class TransmissionClient(TorrentClient):
         request_url = f"{self.url}/transmission/rpc"
         retries = 5
 
-        body = {
-            "method": method,
-            "arguments": arguments
-        }
+        body = {"method": method, "arguments": arguments}
 
         while retries:
             headers = {
                 "X-Transmission-Session-Id": self.session_id,
-                "Authorization": f"Basic {self.credentials}"
+                "Authorization": f"Basic {self.credentials}",
             }
 
-            async with self.session.post(request_url, json=body, headers=headers) as resp:
+            async with self.session.post(
+                request_url, json=body, headers=headers
+            ) as resp:
                 data: Any = await resp.text(encoding="utf-8")
                 if resp.status == 200:
                     return json.loads(data)
                 elif resp.status == 409:
                     retries -= 1
-                    logger.warn(f"Transmission - Invalid session ID, retrying {retries}")
+                    logger.warn(
+                        f"Transmission - Invalid session ID, retrying {retries}"
+                    )
                     self.session_id = resp.headers.get("X-Transmission-Session-Id", "")
                     continue
                 elif resp.status == 400:

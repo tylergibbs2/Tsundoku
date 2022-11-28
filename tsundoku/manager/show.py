@@ -54,7 +54,7 @@ class Show:
             "created_at": self.created_at.isoformat(),
             "entries": [e.to_dict() for e in self._entries],
             "metadata": self.metadata.to_dict(),
-            "webhooks": [wh.to_dict() for wh in self._webhooks]
+            "webhooks": [wh.to_dict() for wh in self._webhooks],
         }
 
     @classmethod
@@ -79,16 +79,11 @@ class Show:
             "kitsu_id": data_dict.pop("kitsu_id", None),
             "slug": data_dict.pop("slug", None),
             "show_status": data_dict.pop("show_status", None),
-            "cached_poster_url": data_dict.pop("cached_poster_url", None)
+            "cached_poster_url": data_dict.pop("cached_poster_url", None),
         }
         metadata = await KitsuManager.from_data(metadata_dict)
 
-        instance = cls(
-            **data_dict,
-            metadata=metadata,
-            _entries=[],
-            _webhooks=[]
-        )
+        instance = cls(**data_dict, metadata=metadata, _entries=[], _webhooks=[])
 
         await instance.entries()
         await instance.webhooks()
@@ -112,7 +107,8 @@ class Show:
             The retrieved Show's object.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id as id_,
                     title,
@@ -126,7 +122,9 @@ class Show:
                 FROM
                     shows
                 WHERE id=?;
-            """, id_)
+            """,
+                id_,
+            )
             show = await con.fetchone()
 
         if not show:
@@ -135,12 +133,7 @@ class Show:
 
         metadata = await KitsuManager.from_show_id(show["id_"])
 
-        instance = cls(
-            **show,
-            metadata=metadata,
-            _entries=[],
-            _webhooks=[]
-        )
+        instance = cls(**show, metadata=metadata, _entries=[], _webhooks=[])
 
         await instance.entries()
         await instance.webhooks()
@@ -194,7 +187,7 @@ class Show:
                 kwargs["season"],
                 kwargs["episode_offset"],
                 kwargs["watch"],
-                kwargs["post_process"]
+                kwargs["post_process"],
             )
             new_id = con.lastrowid
 
@@ -228,7 +221,7 @@ class Show:
                 self.episode_offset,
                 self.watch,
                 self.post_process,
-                self.id_
+                self.id_,
             )
 
     async def entries(self) -> List[Entry]:

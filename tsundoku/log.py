@@ -19,7 +19,9 @@ class SocketHandler(logging.Handler):
         if not hasattr(self.app, "logging_queue"):
             return
 
-        if hasattr(self.app, "connected_websockets") and not len(self.app.connected_websockets):
+        if hasattr(self.app, "connected_websockets") and not len(
+            self.app.connected_websockets
+        ):
             return
 
         for queue in self.app.connected_websockets:
@@ -35,34 +37,33 @@ def setup_logging(app: Any) -> None:
     cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
     level = cfg.get("log_level") or "info"
 
-    dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "default": {
-                "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-            }
-        },
-        "handlers": {
-            "stream": {
-                "class": "logging.StreamHandler",
-                "formatter": "default"
+    dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "default": {
+                    "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+                }
             },
-            "file": {
-                "filename": "tsundoku.log",
-                "class": "logging.FileHandler",
-                "formatter": "default",
-                "encoding": "utf-8"
-            }
-        },
-        "loggers": {
-            "tsundoku": {
-                "handlers": ["stream", "file"],
-                "level": level.upper(),
-                "propagate": True
-            }
+            "handlers": {
+                "stream": {"class": "logging.StreamHandler", "formatter": "default"},
+                "file": {
+                    "filename": "tsundoku.log",
+                    "class": "logging.FileHandler",
+                    "formatter": "default",
+                    "encoding": "utf-8",
+                },
+            },
+            "loggers": {
+                "tsundoku": {
+                    "handlers": ["stream", "file"],
+                    "level": level.upper(),
+                    "propagate": True,
+                }
+            },
         }
-    })
+    )
 
     handler = SocketHandler(app)
     handler.setFormatter(formatter)

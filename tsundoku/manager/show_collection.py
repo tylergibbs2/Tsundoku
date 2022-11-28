@@ -41,7 +41,8 @@ class ShowCollection:
             Collection of all shows.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     s.id as id_,
                     s.title,
@@ -62,13 +63,12 @@ class ShowCollection:
                     kitsu_info as ki
                 ON s.id = ki.show_id
                 ORDER BY title;
-            """)
+            """
+            )
             shows = await con.fetchall()
 
         _shows = [await Show.from_data(show) for show in shows]
-        instance = cls(
-            _shows=_shows
-        )
+        instance = cls(_shows=_shows)
 
         return instance
 
@@ -80,7 +80,9 @@ class ShowCollection:
         The status is an attribute that is assigned
         on each Show's metadata object.
         """
-        managers = [s.metadata for s in self._shows if await s.metadata.should_update_status()]
+        managers = [
+            s.metadata for s in self._shows if await s.metadata.should_update_status()
+        ]
 
         if not managers:
             return
@@ -89,7 +91,7 @@ class ShowCollection:
         async with aiohttp.ClientSession() as sess:
             payload = {
                 "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
-                "fields[anime]": "status"
+                "fields[anime]": "status",
             }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()

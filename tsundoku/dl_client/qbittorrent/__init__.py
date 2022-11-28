@@ -1,3 +1,3 @@
 from .client import qBittorrentClient
 
-__all__ = ['qBittorrentClient']
+__all__ = ["qBittorrentClient"]

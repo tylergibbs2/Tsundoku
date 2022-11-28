@@ -17,13 +17,10 @@ class WebhookBaseAPI(views.MethodView):
 
         base = await WebhookBase.from_id(app, base_id)
         if base:
-            return APIResponse(
-                result=[base.to_dict()]
-            )
+            return APIResponse(result=[base.to_dict()])
 
         return APIResponse(
-            status=404,
-            error="BaseWebhook with specified ID does not exist."
+            status=404, error="BaseWebhook with specified ID does not exist."
         )
 
     async def post(self) -> APIResponse:
@@ -45,22 +42,13 @@ class WebhookBaseAPI(views.MethodView):
         elif content_fmt == "":
             content_fmt = None
 
-        base = await WebhookBase.new(
-            app,
-            name,
-            service,
-            url,
-            content_fmt
-        )
+        base = await WebhookBase.new(app, name, service, url, content_fmt)
 
         if base:
-            return APIResponse(
-                result=base.to_dict()
-            )
+            return APIResponse(result=base.to_dict())
         else:
             return APIResponse(
-                status=500,
-                error="The server failed to create the new WebhookBase."
+                status=500, error="The server failed to create the new WebhookBase."
             )
 
     async def put(self, base_id: int) -> APIResponse:
@@ -76,7 +64,9 @@ class WebhookBaseAPI(views.MethodView):
         base = await WebhookBase.from_id(app, base_id)
 
         if not base:
-            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
+            return APIResponse(
+                status=404, error="WebhookBase with specified ID does not exist."
+            )
         elif service not in wh_services:
             return APIResponse(status=400, error="Invalid webhook service.")
         elif not url:
@@ -93,19 +83,14 @@ class WebhookBaseAPI(views.MethodView):
 
         await base.save()
 
-        return APIResponse(
-            result=base.to_dict()
-        )
+        return APIResponse(result=base.to_dict())
 
     async def delete(self, base_id: int) -> APIResponse:
         base = await WebhookBase.from_id(app, base_id)
         if not base:
             return APIResponse(
-                status=404,
-                error="WebhookBase with specified ID does not exist."
+                status=404, error="WebhookBase with specified ID does not exist."
             )
 
         await base.delete()
-        return APIResponse(
-            result=base.to_dict()
-        )
+        return APIResponse(result=base.to_dict())

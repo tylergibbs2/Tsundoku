@@ -10,8 +10,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import re
 from difflib import SequenceMatcher
-from typing import (Callable, Collection, Generator, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Callable,
+    Collection,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 SortableCollection = Union[Collection[str], Sequence[str]]
 
@@ -46,12 +54,12 @@ def partial_ratio(a: str, b: str) -> int:
     return int(round(100 * max(scores)))
 
 
-_word_regex = re.compile(r'\W', re.IGNORECASE)
+_word_regex = re.compile(r"\W", re.IGNORECASE)
 
 
 def _sort_tokens(a: str) -> str:
-    a = _word_regex.sub(' ', a).lower().strip()
-    return ' '.join(sorted(a.split()))
+    a = _word_regex.sub(" ", a).lower().strip()
+    return " ".join(sorted(a.split()))
 
 
 def token_sort_ratio(a: str, b: str) -> int:
@@ -72,16 +80,25 @@ def partial_token_sort_ratio(a: str, b: str) -> int:
     return partial_ratio(a, b)
 
 
-def _extraction_generator(query: str, choices: List[str],
-                          scorer: Callable = quick_ratio, score_cutoff: int = 0) -> Generator:
+def _extraction_generator(
+    query: str,
+    choices: List[str],
+    scorer: Callable = quick_ratio,
+    score_cutoff: int = 0,
+) -> Generator:
     for choice in choices:
         score = scorer(query, choice)
         if score >= score_cutoff:
             yield (choice, score)
 
 
-def extract_one(query: str, choices: List[str], *,
-                scorer: Callable = quick_ratio, score_cutoff: int = 0) -> Optional[Tuple[str, int]]:
+def extract_one(
+    query: str,
+    choices: List[str],
+    *,
+    scorer: Callable = quick_ratio,
+    score_cutoff: int = 0
+) -> Optional[Tuple[str, int]]:
     it = _extraction_generator(query, choices, scorer, score_cutoff)
 
     def key(t: Tuple[str, int]) -> int:

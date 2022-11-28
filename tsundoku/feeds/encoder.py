@@ -21,12 +21,7 @@ def seconds_until(start: int, end: int) -> int:
     if start <= now.hour <= end - 1:
         return 0
 
-    start_dt = datetime(
-        now.year,
-        now.month,
-        now.day,
-        start
-    )
+    start_dt = datetime(now.year, now.month, now.day, start)
     if now.hour > end - 1:
         start_dt += timedelta(days=1)
 
@@ -51,7 +46,7 @@ class Encoder:
         self.app.add_url_rule(
             "/api/v1/encode/<int:entry_id>",
             view_func=self.encode_progress,
-            methods=["POST"]
+            methods=["POST"],
         )
 
         self.TEMP_SUFFIX = ".encoded.mkv"
@@ -76,15 +71,18 @@ class Encoder:
         is in the database.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT OR IGNORE INTO
                     encode_config (
                         id
                     )
                 VALUES
                     (0);
-            """)
-            await con.execute("""
+            """
+            )
+            await con.execute(
+                """
                 SELECT
                     enabled,
                     quality_preset,
@@ -96,14 +94,13 @@ class Encoder:
                     hour_end
                 FROM
                     encode_config;
-            """)
+            """
+            )
             cfg = await con.fetchone()
 
-        self.CRF = {
-            "high": 18,
-            "moderate": 21,
-            "low": 24
-        }.get(cfg["quality_preset"], 21)
+        self.CRF = {"high": 18, "moderate": 21, "low": 24}.get(
+            cfg["quality_preset"], 21
+        )
 
         if cfg["speed_preset"] not in VALID_SPEEDS:
             self.SPEED_PRESET = "medium"
@@ -125,7 +122,8 @@ class Encoder:
         and also starts the encoding process.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     entry_id
                 FROM
@@ -133,7 +131,8 @@ class Encoder:
                 WHERE
                     ended_at IS NULL
                 ORDER BY started_at ASC;
-            """)
+            """
+            )
             leftovers = await con.fetchall()
 
         for entry in leftovers:
@@ -161,8 +160,10 @@ class Encoder:
         encoder = "libx264"
 
         outfile = infile.with_suffix(self.TEMP_SUFFIX)
-        return (f"ffmpeg -hide_banner -loglevel error -i \"{infile}\" -map 0 -c copy -c:v {encoder} -crf {self.CRF}"
-                f" -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y \"{outfile}\"")
+        return (
+            f'ffmpeg -hide_banner -loglevel error -i "{infile}" -map 0 -c copy -c:v {encoder} -crf {self.CRF}'
+            f' -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y "{outfile}"'
+        )
 
     def encode_task(self, entry_id: int) -> None:
         """
@@ -196,17 +197,22 @@ class Encoder:
             return
 
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT OR IGNORE INTO
                     encode (
                         entry_id
                     )
                 VALUES (?);
-            """, entry_id)
+            """,
+                entry_id,
+            )
 
         if self.TIMED_ENCODING:
             to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
-            logger.debug(f"Timed encoding enabled, sleeping '{to_sleep:,}' seconds before encoding...")
+            logger.debug(
+                f"Timed encoding enabled, sleeping '{to_sleep:,}' seconds before encoding..."
+            )
             await asyncio.sleep(to_sleep)
 
         if self.__active_encodes >= self.MAX_ENCODES:
@@ -224,12 +230,15 @@ class Encoder:
             await self.encode(entry_id)
         elif not ret and not self.RETRY_ON_FAIL:
             async with self.app.acquire_db() as con:
-                await con.execute("""
+                await con.execute(
+                    """
                     DELETE FROM
                         encode
                     WHERE
                         entry_id = ?;
-                """, entry_id)
+                """,
+                    entry_id,
+                )
         elif not ret:
             await self.encode_next()
 
@@ -263,7 +272,8 @@ class Encoder:
             True if successfully started, False if error occurred.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     file_path,
                     current_state
@@ -271,25 +281,34 @@ class Encoder:
                     show_entry
                 WHERE
                     id=?;
-            """, entry_id)
+            """,
+                entry_id,
+            )
             entry = await con.fetchone()
 
         if entry["file_path"] is None:
-            logger.warn(f"Error when attempting to encode entry <e{entry_id}>: file path is None")
+            logger.warn(
+                f"Error when attempting to encode entry <e{entry_id}>: file path is None"
+            )
             return False
         elif entry["current_state"] != "completed":
-            logger.warn(f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry")
+            logger.warn(
+                f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry"
+            )
             return False
 
         logger.debug(f"Starting new encode process for entry <e{entry_id}>...")
 
         infile = Path(entry["file_path"])
         if not infile.exists():
-            logger.warn(f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist")
+            logger.warn(
+                f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist"
+            )
             return False
         elif not infile.is_file() or infile.is_symlink():
             logger.warn(
-                f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink")
+                f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
+            )
             return False
 
         cmd = await self.build_cmd(entry_id, infile)
@@ -301,14 +320,18 @@ class Encoder:
             self.__active_encodes += 1
             file_size = os.path.getsize(str(infile))
             async with self.app.acquire_db() as con:
-                await con.execute("""
+                await con.execute(
+                    """
                     UPDATE
                         encode
                     SET
                         initial_size = ?
                     WHERE
                         entry_id = ?;
-                """, file_size, entry_id)
+                """,
+                    file_size,
+                    entry_id,
+                )
             return True
 
         return False
@@ -358,7 +381,9 @@ class Encoder:
         last_received = {}
         async for data in request.body:
             last_received = self.process_progress_data(data)
-            logger.debug(f"Encode progress entry <e{entry_id}>: `{last_received.get('out_time')}`")
+            logger.debug(
+                f"Encode progress entry <e{entry_id}>: `{last_received.get('out_time')}`"
+            )
 
         self.__active_encodes -= 1
         await self.encode_next()
@@ -370,25 +395,31 @@ class Encoder:
     async def handle_finished(self, entry_id: int) -> None:
         logger.debug(f"Encode finished for entry <e{entry_id}>")
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     file_path
                 FROM
                     show_entry
                 WHERE
                     id=?;
-            """, entry_id)
+            """,
+                entry_id,
+            )
             entry_path = await con.fetchval()
 
             if entry_path is None:
-                logger.warn(f"Error when finalizing encode for entry <e{entry_id}>: file path is None")
+                logger.warn(
+                    f"Error when finalizing encode for entry <e{entry_id}>: file path is None"
+                )
                 return
 
             original = Path(entry_path)
             encoded = original.with_suffix(self.TEMP_SUFFIX)
 
             encoded_size = os.path.getsize(str(encoded))
-            await con.execute("""
+            await con.execute(
+                """
                 UPDATE
                     encode
                 SET
@@ -396,7 +427,10 @@ class Encoder:
                     final_size = ?
                 WHERE
                     entry_id = ?;
-            """, encoded_size, entry_id)
+            """,
+                encoded_size,
+                entry_id,
+            )
 
         await move(encoded, original)
         logger.debug(f"Encode moved for entry <e{entry_id}>")
@@ -416,7 +450,7 @@ class Encoder:
         proc = await asyncio.create_subprocess_shell(
             "ffmpeg -buildconf",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL
+            stderr=asyncio.subprocess.DEVNULL,
         )
         stdout, _ = await proc.communicate()
 
@@ -442,7 +476,8 @@ class Encoder:
         """
         async with self.app.acquire_db() as con:
             # initial_size and final_size are stored in bytes
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     COUNT(*) AS total_encoded,
                     SUM(initial_size - final_size) AS total_saved_bytes,
@@ -451,10 +486,12 @@ class Encoder:
                     encode
                 WHERE
                     ended_at IS NOT NULL;
-            """)
+            """
+            )
             stats = await con.fetchone()
 
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     started_at,
                     ended_at
@@ -462,7 +499,8 @@ class Encoder:
                     encode
                 WHERE
                     ended_at IS NOT NULL;
-            """)
+            """
+            )
             times = await con.fetchall()
 
         stats = dict(stats)

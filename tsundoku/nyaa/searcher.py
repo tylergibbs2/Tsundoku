@@ -53,7 +53,9 @@ class SearchResult:
 
         unparsed_date = _from.pop("published")
 
-        instance.published = datetime.datetime.strptime(unparsed_date, "%a, %d %b %Y %H:%M:%S %z")
+        instance.published = datetime.datetime.strptime(
+            unparsed_date, "%a, %d %b %Y %H:%M:%S %z"
+        )
         instance.torrent_link = _from.pop("link")
         instance.post_link = _from.pop("id")
         instance.size = _from.pop("nyaa_size")
@@ -101,7 +103,7 @@ class SearchResult:
             "post_link": self.post_link,
             "size": self.size,
             "seeders": self.seeders,
-            "leechers": self.leechers
+            "leechers": self.leechers,
         }
 
     async def get_episodes(self) -> List[int]:
@@ -158,7 +160,8 @@ class SearchResult:
         existing_torrents = set()
         async with self._app.acquire_db() as con:
             for episode in await self.get_episodes():
-                await con.execute("""
+                await con.execute(
+                    """
                     SELECT
                         torrent_hash
                     FROM
@@ -167,7 +170,10 @@ class SearchResult:
                         show_id=?
                     AND
                         episode=?;
-                """, self.show_id, episode)
+                """,
+                    self.show_id,
+                    episode,
+                )
                 exists = await con.fetchval()
                 if exists and overwrite:
                     existing_torrents.add(exists)
@@ -181,12 +187,15 @@ class SearchResult:
         if overwrite:
             async with self._app.acquire_db() as con:
                 for hash_ in existing_torrents:
-                    await con.execute("""
+                    await con.execute(
+                        """
                         DELETE FROM
                             show_entry
                         WHERE
                             torrent_hash=?;
-                    """, hash_)
+                    """,
+                        hash_,
+                    )
                     await self._app.dl_client.delete_torrent(hash_)
 
         magnet = await self._app.dl_client.get_magnet(self.torrent_link)
@@ -198,14 +207,20 @@ class SearchResult:
 
         async with self._app.acquire_db() as con:
             for episode in episodes_to_process:
-                await con.execute("""
+                await con.execute(
+                    """
                     INSERT INTO
                         show_entry
                         (show_id, episode, torrent_hash)
                     VALUES
                         (?, ?, ?);
-                """, self.show_id, episode, torrent_hash)
-                await con.execute("""
+                """,
+                    self.show_id,
+                    episode,
+                    torrent_hash,
+                )
+                await con.execute(
+                    """
                     SELECT
                         id,
                         show_id,
@@ -217,7 +232,9 @@ class SearchResult:
                     FROM
                         show_entry
                     WHERE id = ?;
-                """, con.lastrowid)
+                """,
+                    con.lastrowid,
+                )
                 entry = await con.fetchone()
 
                 entry = Entry(self._app, entry)

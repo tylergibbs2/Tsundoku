@@ -69,7 +69,9 @@ class DelugeClient(TorrentClient):
         await self.request("webapi.remove_torrent", [torrent_id, with_files])
 
     async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
-        ret = await self.request("webapi.get_torrents", [[torrent_id], ["name", "move_completed_path"]])
+        ret = await self.request(
+            "webapi.get_torrents", [[torrent_id], ["name", "move_completed_path"]]
+        )
 
         ret_list = ret["result"].get("torrents", [])
 
@@ -88,19 +90,14 @@ class DelugeClient(TorrentClient):
         payload = {
             "id": self._request_counter,
             "method": "auth.check_session",
-            "params": []
+            "params": [],
         }
 
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
         try:
             auth_status = await self.session.post(
-                self.url,
-                json=payload,
-                headers=headers
+                self.url, json=payload, headers=headers
             )
         except aiohttp.ClientConnectionError:
             logger.error("Deluge - Failed to Connect")
@@ -114,12 +111,10 @@ class DelugeClient(TorrentClient):
             payload = {
                 "id": self._request_counter,
                 "method": "auth.login",
-                "params": [self.password]
+                "params": [self.password],
             }
             auth_request = await self.session.post(
-                self.url,
-                json=payload,
-                headers=headers
+                self.url, json=payload, headers=headers
             )
             resp = await auth_request.json(content_type=None)
 
@@ -159,22 +154,11 @@ class DelugeClient(TorrentClient):
 
         logger.info("Deluge - Successfully Authenticated")
 
-        payload = {
-            "id": self._request_counter,
-            "method": method,
-            "params": data
-        }
+        payload = {"id": self._request_counter, "method": method, "params": data}
 
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-        resp = await self.session.post(
-            self.url,
-            json=payload,
-            headers=headers
-        )
+        resp = await self.session.post(self.url, json=payload, headers=headers)
 
         self._request_counter += 1
 

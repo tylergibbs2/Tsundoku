@@ -17,7 +17,9 @@ logger = logging.getLogger("tsundoku")
 
 def wrap(func: Any) -> Any:
     @wraps(func)
-    async def run(*args: Any, loop: Any = None, executor: Any = None, **kwargs: Any) -> Any:
+    async def run(
+        *args: Any, loop: Any = None, executor: Any = None, **kwargs: Any
+    ) -> Any:
         if loop is None:
             loop = asyncio.get_event_loop()
         pfunc = partial(func, *args, **kwargs)
@@ -78,11 +80,14 @@ class Downloader:
                 await self.check_show_entries()
             except Exception:
                 import traceback
+
                 traceback.print_exc()
 
             await asyncio.sleep(self.complete_check)
 
-    def get_expression_mapping(self, title: str, season: str, episode: str, **kwargs: str) -> ExprDict:
+    def get_expression_mapping(
+        self, title: str, season: str, episode: str, **kwargs: str
+    ) -> ExprDict:
         """
         Creates an ExprDict of specific expressions to use
         when formatting strings.
@@ -113,10 +118,12 @@ class Downloader:
             s00e00=f"s{season.zfill(2)}e{episode.zfill(2)}",
             S00E00=f"S{season.zfill(2)}E{episode.zfill(2)}",
             sxe=f"{season}x{episode.zfill(2)}",
-            **kwargs
+            **kwargs,
         )
 
-    async def begin_handling(self, show_id: int, episode: int, magnet_url: str) -> Optional[int]:
+    async def begin_handling(
+        self, show_id: int, episode: int, magnet_url: str
+    ) -> Optional[int]:
         """
         Begins downloading an episode of a show
         using the passed magnet URL.
@@ -141,13 +148,13 @@ class Downloader:
         torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
 
         if torrent_hash is None:
-            logger.warn(
-                f"Failed to add Magnet URL {magnet_url} to download client")
+            logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")
             return None
 
         # TODO: handle entry insertion in the Entry class
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT INTO
                     show_entry (
                         show_id,
@@ -156,8 +163,13 @@ class Downloader:
                     )
                 VALUES
                     (?, ?, ?);
-            """, show_id, episode, torrent_hash)
-            await con.execute("""
+            """,
+                show_id,
+                episode,
+                torrent_hash,
+            )
+            await con.execute(
+                """
                 SELECT
                     id,
                     show_id,
@@ -170,7 +182,9 @@ class Downloader:
                     show_entry
                 WHERE
                     id = ?;
-            """, con.lastrowid)
+            """,
+                con.lastrowid,
+            )
             entry = await con.fetchone()
 
         entry = Entry(self.app, entry)
@@ -200,7 +214,8 @@ class Downloader:
             return None
 
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     title,
                     desired_folder,
@@ -209,14 +224,15 @@ class Downloader:
                 FROM
                     shows
                 WHERE id=?;
-            """, entry.show_id)
+            """,
+                entry.show_id,
+            )
             show_info = await con.fetchone()
 
         season = str(show_info["season"])
         episode = str(entry.episode + show_info["episode_offset"])
 
-        expressions = self.get_expression_mapping(
-            show_info["title"], season, episode)
+        expressions = self.get_expression_mapping(show_info["title"], season, episode)
 
         desired_folder = show_info["desired_folder"]
         if desired_folder is None:
@@ -249,8 +265,7 @@ class Downloader:
                 except Exception as e:
                     logger.warn(f"Failed to Create Trailing Symlink - {e}")
             else:
-                logger.debug(
-                    "Not creating trailing symlink, Docker environment")
+                logger.debug("Not creating trailing symlink, Docker environment")
 
             return moved_file
 
@@ -278,7 +293,8 @@ class Downloader:
             return None
 
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     title,
                     desired_format,
@@ -287,7 +303,9 @@ class Downloader:
                 FROM
                     shows
                 WHERE id=?;
-            """, entry.show_id)
+            """,
+                entry.show_id,
+            )
             show_info = await con.fetchone()
 
         if show_info["desired_format"]:
@@ -300,10 +318,7 @@ class Downloader:
         episode = str(entry.episode + show_info["episode_offset"])
 
         expressions = self.get_expression_mapping(
-            show_info["title"],
-            str(show_info["season"]),
-            episode,
-            ext=suffix
+            show_info["title"], str(show_info["season"]), episode, ext=suffix
         )
         name = file_fmt.format_map(expressions)
 
@@ -346,8 +361,7 @@ class Downloader:
             try:
                 parsed = anitopy.parse(subpath.name)
             except Exception:
-                logger.debug(
-                    f"Anitopy - Could not parse `{subpath.name}`, skipping")
+                logger.debug(f"Anitopy - Could not parse `{subpath.name}`, skipping")
                 continue  # TODO: maybe ask user on UI to match manually
 
             try:
@@ -391,7 +405,9 @@ class Downloader:
 
         # Sometimes the file path may exist on disk, but it isn't fully
         # downloaded by the torrent client at this point in time.
-        is_completed = await self.app.dl_client.check_torrent_completed(entry.torrent_hash)
+        is_completed = await self.app.dl_client.check_torrent_completed(
+            entry.torrent_hash
+        )
         if not is_completed:
             logger.info(f"<e{entry.id}> torrent state is not completed")
             return
@@ -416,12 +432,16 @@ class Downloader:
             logger.info(f"Release Marked as Downloaded - <e{entry.id}>")
 
         if entry.state == EntryState.downloaded:
-            seed_ratio = await self.app.dl_client.check_torrent_ratio(entry.torrent_hash)
+            seed_ratio = await self.app.dl_client.check_torrent_ratio(
+                entry.torrent_hash
+            )
             if seed_ratio is None:
                 logger.error(f"<e{entry.id}> seed ratio could not be determined")
                 return
             elif seed_ratio < self.seed_ratio_limit:
-                logger.info(f"<e{entry.id}> seed ratio is below limit ({self.seed_ratio_limit})")
+                logger.info(
+                    f"<e{entry.id}> seed ratio is below limit ({self.seed_ratio_limit})"
+                )
                 return
 
             logger.info(f"Preparing to Rename Release - <e{entry.id}>")
@@ -453,7 +473,8 @@ class Downloader:
         to check for completion.
         """
         async with self.app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     show_id,
@@ -465,7 +486,8 @@ class Downloader:
                 FROM
                     show_entry
                 WHERE current_state != 'completed';
-            """)
+            """
+            )
             entries = await con.fetchall()
 
         for entry in entries:

@@ -15,6 +15,7 @@ class EntryState(str, Enum):
 
     Matches exactly with the Postgres enum.
     """
+
     downloading = "downloading"
     downloaded = "downloaded"
     renamed = "renamed"
@@ -53,7 +54,7 @@ class Entry:
             "state": self.state.value,
             "torrent_hash": self.torrent_hash,
             "file_path": str(self.file_path),
-            "last_update": self.last_update.isoformat()
+            "last_update": self.last_update.isoformat(),
         }
 
     @classmethod
@@ -75,7 +76,8 @@ class Entry:
             A list of associated Show Entries.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     show_id,
@@ -90,7 +92,9 @@ class Entry:
                     show_id=?
                 ORDER BY
                     episode ASC;
-            """, show_id)
+            """,
+                show_id,
+            )
             entries = await con.fetchall()
 
         return [Entry(app, entry) for entry in entries]
@@ -106,16 +110,23 @@ class Entry:
             Whether to post-process or not.
         """
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     post_process
                 FROM
                     shows
                 WHERE id=?;
-            """, self.show_id)
+            """,
+                self.show_id,
+            )
             encoding_enabled = await con.fetchval()
 
-        return self.state == "completed" and self.file_path is not None and encoding_enabled
+        return (
+            self.state == "completed"
+            and self.file_path is not None
+            and encoding_enabled
+        )
 
     async def set_state(self, new_state: EntryState) -> None:
         """
@@ -128,12 +139,16 @@ class Entry:
         """
         self.state = new_state
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 UPDATE show_entry SET
                     current_state = ?,
                     last_update = CURRENT_TIMESTAMP
                 WHERE id=?;
-            """, new_state.value, self.id)
+            """,
+                new_state.value,
+                self.id,
+            )
 
         if await self.should_encode():
             self._app.encoder.encode_task(self.id)
@@ -151,11 +166,15 @@ class Entry:
         """
         self.file_path = new_path
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 UPDATE show_entry SET
                     file_path = ?
                 WHERE id=?;
-            """, str(new_path), self.id)
+            """,
+                str(new_path),
+                self.id,
+            )
 
     async def _handle_webhooks(self) -> None:
         """
@@ -169,7 +188,9 @@ class Entry:
         Uses the `self.state` attribute, so call this after
         that is updated.
         """
-        webhooks = await Webhook.from_show_id(self._app, self.show_id, with_validity=True)
+        webhooks = await Webhook.from_show_id(
+            self._app, self.show_id, with_validity=True
+        )
 
         for wh in webhooks:
             triggers = await wh.get_triggers()
@@ -177,5 +198,7 @@ class Entry:
                 await wh.send(self.episode, self.state)
 
     def __repr__(self) -> str:
-        return f"<Entry id={self.id} show_id={self.show_id} episode={self.episode}" \
-               f" state={self.state} hash={self.torrent_hash}>"
+        return (
+            f"<Entry id={self.id} show_id={self.show_id} episode={self.episode}"
+            f" state={self.state} hash={self.torrent_hash}>"
+        )

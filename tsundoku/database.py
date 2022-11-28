@@ -94,10 +94,12 @@ async def transfer_config() -> None:
             {
                 "host": get_cfg_value(cfg, "Tsundoku", "host", "localhost"),
                 "port": get_cfg_value(cfg, "Tsundoku", "port", 6439),
-                "update_do_check": get_cfg_value(cfg, "Tsundoku", "do_update_checks", True),
+                "update_do_check": get_cfg_value(
+                    cfg, "Tsundoku", "do_update_checks", True
+                ),
                 "locale": get_cfg_value(cfg, "Tsundoku", "locale", "en"),
-                "log_level": get_cfg_value(cfg, "Tsundoku", "log_level", "info")
-            }
+                "log_level": get_cfg_value(cfg, "Tsundoku", "log_level", "info"),
+            },
         )
         await con.execute(
             """
@@ -120,10 +122,16 @@ async def transfer_config() -> None:
                 fuzzy_cutoff = :fuzzy_cutoff;
             """,
             {
-                "polling_interval": get_cfg_value(cfg, "Tsundoku", "polling_interval", 900),
-                "complete_check_interval": get_cfg_value(cfg, "Tsundoku", "complete_check_interval", 15),
-                "fuzzy_cutoff": get_cfg_value(cfg, "Tsundoku", "fuzzy_match_cutoff", 90)
-            }
+                "polling_interval": get_cfg_value(
+                    cfg, "Tsundoku", "polling_interval", 900
+                ),
+                "complete_check_interval": get_cfg_value(
+                    cfg, "Tsundoku", "complete_check_interval", 15
+                ),
+                "fuzzy_cutoff": get_cfg_value(
+                    cfg, "Tsundoku", "fuzzy_match_cutoff", 90
+                ),
+            },
         )
         await con.execute(
             """
@@ -160,8 +168,8 @@ async def transfer_config() -> None:
                 "port": get_cfg_value(cfg, "TorrentClient", "port", 8112),
                 "username": get_cfg_value(cfg, "TorrentClient", "username", "admin"),
                 "password": get_cfg_value(cfg, "TorrentClient", "password", "password"),
-                "secure": get_cfg_value(cfg, "TorrentClient", "secure", False)
-            }
+                "secure": get_cfg_value(cfg, "TorrentClient", "secure", False),
+            },
         )
 
     path = Path(cfg_fp)

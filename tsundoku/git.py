@@ -42,7 +42,10 @@ async def run(args: str) -> Tuple[str, Optional[bytes]]:
     except OSError:
         logger.debug(f"Git: command failed: {cmd}")
     else:
-        if "not found" in output_text or "not recognized as an internal or external command" in output_text:
+        if (
+            "not found" in output_text
+            or "not recognized as an internal or external command" in output_text
+        ):
             logger.debug(f"Git: Unable to find executable with command {cmd}")
         elif "fatal: " in output_text or stderr:
             logger.error("Git: Returned bad info. Bad installation?")

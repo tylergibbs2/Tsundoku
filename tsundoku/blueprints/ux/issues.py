@@ -50,11 +50,14 @@ def get_issue_url(issue_type: str, useragent: str) -> str:
             "python_version": platform.python_version(),
             "host_system": linux_version or platform.platform(),
             "version": __version__,
-            "ua": parsed_ua
+            "ua": parsed_ua,
         }
 
         body = quote(BUG_REPORT.format(**ctx))
 
-        return "https://github.com/tylergibbs2/Tsundoku/issues/new?labels=bug&title=&body=" + body
+        return (
+            "https://github.com/tylergibbs2/Tsundoku/issues/new?labels=bug&title=&body="
+            + body
+        )
 
     return "https://github.com/tylergibbs2/Tsundoku/issues/new?labels=feature%20request&template=feature_request.md"

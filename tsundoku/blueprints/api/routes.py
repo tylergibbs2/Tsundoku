@@ -13,9 +13,14 @@ else:
 from quart import request
 from quart_auth import current_user
 
-from tsundoku.config import (ConfigCheckFailure, ConfigInvalidKey,
-                             EncodeConfig, FeedsConfig, GeneralConfig,
-                             TorrentConfig)
+from tsundoku.config import (
+    ConfigCheckFailure,
+    ConfigInvalidKey,
+    EncodeConfig,
+    FeedsConfig,
+    GeneralConfig,
+    TorrentConfig,
+)
 from tsundoku.manager import Show
 
 from .entries import EntriesAPI
@@ -25,16 +30,13 @@ from .shows import ShowsAPI
 from .webhookbase import WebhookBaseAPI
 from .webhooks import WebhooksAPI
 
-api_blueprint = Blueprint('api', __name__, url_prefix="/api/v1")
+api_blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.errorhandler(500)
 async def err_500(_) -> APIResponse:
-    return APIResponse(
-        status=500,
-        error="Server encountered an unexpected error."
-    )
+    return APIResponse(status=500, error="Server encountered an unexpected error.")
 
 
 @api_blueprint.before_request
@@ -44,14 +46,17 @@ async def ensure_auth() -> Optional[APIResponse]:
         token = request.headers["Authorization"]
         async with app.acquire_db() as con:
             try:
-                await con.execute("""
+                await con.execute(
+                    """
                     SELECT
                         id
                     FROM
                         users
                     WHERE
                         api_key=?;
-                """, token)
+                """,
+                    token,
+                )
                 user = await con.fetchval()
 
                 if user:
@@ -63,8 +68,7 @@ async def ensure_auth() -> Optional[APIResponse]:
 
     if not authed:
         return APIResponse(
-            status=401,
-            result="You are not authorized to access this resource."
+            status=401, result="You are not authorized to access this resource."
         )
 
     return None
@@ -76,21 +80,22 @@ async def config_token() -> APIResponse:
     if request.method == "POST":
         async with app.acquire_db() as con:
             new_key = str(uuid4())
-            await con.execute("""
+            await con.execute(
+                """
                 UPDATE
                     users
                 SET
                     api_key = ?
                 WHERE
                     api_key = ?;
-            """, new_key, api_key)
+            """,
+                new_key,
+                api_key,
+            )
     else:
         new_key = api_key
 
-    return APIResponse(
-        status=200,
-        result=str(new_key)
-    )
+    return APIResponse(status=200, result=str(new_key))
 
 
 @api_blueprint.route("/config/<string:cfg_type>", methods=["GET", "PATCH"])
@@ -104,10 +109,7 @@ async def config_route(cfg_type: str) -> APIResponse:
     elif cfg_type == "torrent":
         cfg_class = TorrentConfig
     else:
-        return APIResponse(
-            status=400,
-            error="Invalid configuration type."
-        )
+        return APIResponse(status=400, error="Invalid configuration type.")
 
     cfg = await cfg_class.retrieve()
 
@@ -118,33 +120,26 @@ async def config_route(cfg_type: str) -> APIResponse:
             cfg.update(arguments)
         except ConfigInvalidKey:
             return APIResponse(
-                status=400,
-                error="Invalid key contained in new configuration settings."
+                status=400, error="Invalid key contained in new configuration settings."
             )
 
         try:
             await cfg.save()
         except (ConfigCheckFailure, sqlite3.IntegrityError):
             return APIResponse(
-                status=400,
-                error="Error inserting new configuration data."
+                status=400, error="Error inserting new configuration data."
             )
 
     if cfg_type == "encode":
         cfg.keys["has_ffmpeg"] = await app.encoder.has_ffmpeg()
 
-    return APIResponse(
-        status=200,
-        result=cfg.keys
-    )
+    return APIResponse(status=200, result=cfg.keys)
 
 
 @api_blueprint.route("/config/torrent/test", methods=["GET"])
 async def test_torrent_client() -> APIResponse:
     res = await app.dl_client.test_client()
-    return APIResponse(
-        result=res
-    )
+    return APIResponse(result=res)
 
 
 @api_blueprint.route("/config/encode/stats", methods=["GET"])
@@ -154,9 +149,7 @@ async def get_encode_stats() -> APIResponse:
 
     :returns: Dict[:class:`str`, :class:`float`]
     """
-    return APIResponse(
-        result=await app.encoder.get_stats()
-    )
+    return APIResponse(result=await app.encoder.get_stats())
 
 
 @api_blueprint.route("/shows/seen", methods=["GET"])
@@ -169,9 +162,7 @@ async def get_seen_shows() -> APIResponse:
 
     :returns: List[:class:`str`]
     """
-    return APIResponse(
-        result=list(app.seen_titles)
-    )
+    return APIResponse(result=list(app.seen_titles))
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
@@ -193,9 +184,7 @@ async def check_for_releases() -> APIResponse:
     app.poller.reset_rss_cache()
     found_items = await app.poller.poll()
 
-    return APIResponse(
-        result=found_items
-    )
+    return APIResponse(result=found_items)
 
 
 @api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
@@ -211,9 +200,7 @@ async def delete_show_cache(show_id: int) -> APIResponse:
     await show.metadata.clear_cache()
     await show.refetch()
 
-    return APIResponse(
-        result=show.to_dict()
-    )
+    return APIResponse(result=show.to_dict())
 
 
 def setup_views() -> None:
@@ -222,16 +209,12 @@ def setup_views() -> None:
 
     api_blueprint.add_url_rule(
         "/shows",
-        defaults={
-            "show_id": None
-        },
+        defaults={"show_id": None},
         view_func=shows_view,
-        methods=["GET", "POST"]
+        methods=["GET", "POST"],
     )
     api_blueprint.add_url_rule(
-        "/shows/<int:show_id>",
-        view_func=shows_view,
-        methods=["GET", "PUT", "DELETE"]
+        "/shows/<int:show_id>", view_func=shows_view, methods=["GET", "PUT", "DELETE"]
     )
 
     # Setup EntriesAPI URL rules.
@@ -239,54 +222,44 @@ def setup_views() -> None:
 
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/entries",
-        defaults={
-            "entry_id": None
-        },
+        defaults={"entry_id": None},
         view_func=entries_view,
-        methods=["GET", "POST"]
+        methods=["GET", "POST"],
     )
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/entries/<int:entry_id>",
         view_func=entries_view,
-        methods=["GET", "DELETE"]
+        methods=["GET", "DELETE"],
     )
 
     # Setup WebhooksAPI URL rules.
     webhooks_view = WebhooksAPI.as_view("webhooks_api")
 
     api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/webhooks",
-        view_func=webhooks_view,
-        methods=["GET"]
+        "/shows/<int:show_id>/webhooks", view_func=webhooks_view, methods=["GET"]
     )
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/webhooks/<int:base_id>",
         view_func=webhooks_view,
-        methods=["PUT"]
+        methods=["PUT"],
     )
 
     # Setup WebhookBaseAPI URL rules.
     webhookbase_view = WebhookBaseAPI.as_view("webhookbase_api")
 
     api_blueprint.add_url_rule(
-        "/webhooks",
-        view_func=webhookbase_view,
-        methods=["GET", "POST"]
+        "/webhooks", view_func=webhookbase_view, methods=["GET", "POST"]
     )
     api_blueprint.add_url_rule(
         "/webhooks/<int:base_id>",
         view_func=webhookbase_view,
-        methods=["GET", "PUT", "DELETE"]
+        methods=["GET", "PUT", "DELETE"],
     )
 
     # Setup NyaaAPI URL rules.
     nyaa_view = NyaaAPI.as_view("nyaa_api")
 
-    api_blueprint.add_url_rule(
-        "/nyaa",
-        view_func=nyaa_view,
-        methods=["GET", "POST"]
-    )
+    api_blueprint.add_url_rule("/nyaa", view_func=nyaa_view, methods=["GET", "POST"])
 
 
 setup_views()

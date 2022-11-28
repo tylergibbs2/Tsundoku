@@ -99,7 +99,12 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
         missing_keys = set(from_keys).difference(set(to_keys))
         for key in missing_keys:
             conflicts += 1
-            print(fluent._("compare-missing-key", {"lang": to_lang, "file": str(fp), "key": key}))
+            print(
+                fluent._(
+                    "compare-missing-key",
+                    {"lang": to_lang, "file": str(fp), "key": key},
+                )
+            )
 
     if conflicts:
         print(fluent._("compare-conflict-count", {"count": conflicts, "to": to_lang}))
@@ -111,13 +116,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=fluent._("title"))
     parser.add_argument("--dbshell", action="store_true", help=fluent._("cmd-dbshell"))
     parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
-    parser.add_argument("--create-user", action="store_true", help=fluent._("cmd-create-user"))
-    parser.add_argument("--l10n-compat", type=str, nargs=2, help=fluent._("cmd-l10n-compat"))
-    parser.add_argument("--l10n-duplicates", type=str, nargs=1, help=fluent._("cmd-l10n-duplicates"))
+    parser.add_argument(
+        "--create-user", action="store_true", help=fluent._("cmd-create-user")
+    )
+    parser.add_argument(
+        "--l10n-compat", type=str, nargs=2, help=fluent._("cmd-l10n-compat")
+    )
+    parser.add_argument(
+        "--l10n-duplicates", type=str, nargs=1, help=fluent._("cmd-l10n-duplicates")
+    )
     args = parser.parse_args()
 
     if args.dbshell:
         from tsundoku.database import spawn_shell
+
         spawn_shell()
     elif args.l10n_compat:
         from_lang, to_lang = args.l10n_compat
@@ -139,8 +151,10 @@ if __name__ == "__main__":
 
         print(fluent._("creating-user"))
         from tsundoku import app
+
         asyncio.run(app.insert_user(username, password))
         print(fluent._("created-user"))
     else:
         from tsundoku import app
+
         asyncio.run(app.run())

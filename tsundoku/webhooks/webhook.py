@@ -41,12 +41,18 @@ class WebhookBase:
             "service": self.service,
             "url": self.url,
             "content_fmt": self.content_fmt,
-            "valid": self.valid
+            "valid": self.valid,
         }
 
     @classmethod
-    async def new(cls, app: Any, name: str, service: str, url: str,
-                  content_fmt: Optional[str] = None) -> Optional[WebhookBase]:
+    async def new(
+        cls,
+        app: Any,
+        name: str,
+        service: str,
+        url: str,
+        content_fmt: Optional[str] = None,
+    ) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
         returns an instance.
@@ -97,7 +103,8 @@ class WebhookBase:
 
         async with app.acquire_db() as con:
             await con.execute(query, *args)
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     content_fmt
@@ -105,19 +112,24 @@ class WebhookBase:
                     webhook_base
                 WHERE
                     id = ?;
-            """, con.lastrowid)
+            """,
+                con.lastrowid,
+            )
             new_base = await con.fetchone()
 
         if not new_base:
             return None
 
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
                 SELECT id, (?) FROM shows;
-            """, new_base["id"])
+            """,
+                new_base["id"],
+            )
 
         instance = cls()
 
@@ -133,7 +145,9 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: Any, base_id: int, with_validity: bool = True) -> Optional[WebhookBase]:
+    async def from_id(
+        cls, app: Any, base_id: int, with_validity: bool = True
+    ) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -152,7 +166,8 @@ class WebhookBase:
             The requested webhook base.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     name,
@@ -163,19 +178,24 @@ class WebhookBase:
                     webhook_base
                 WHERE
                     id=?;
-            """, base_id)
+            """,
+                base_id,
+            )
             base = await con.fetchone()
 
         if not base:
             return None
 
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
                 SELECT id, (?) FROM shows;
-            """, base_id)
+            """,
+                base_id,
+            )
 
         instance = cls()
 
@@ -195,7 +215,9 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_data(cls, app: Any, data: Dict[str, str], with_validity: bool = True) -> WebhookBase:
+    async def from_data(
+        cls, app: Any, data: Dict[str, str], with_validity: bool = True
+    ) -> WebhookBase:
         """
         Returns a WebhookBase object from passed data.
 
@@ -249,19 +271,23 @@ class WebhookBase:
             All rows.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id
                 FROM
                     webhook_base
                 ORDER BY
                     id ASC;
-            """)
+            """
+            )
             ids = await con.fetchall()
 
         instances: List[WebhookBase] = []
         for id_ in ids:
-            wh_base = await WebhookBase.from_id(app, id_["id"], with_validity=with_validity)
+            wh_base = await WebhookBase.from_id(
+                app, id_["id"], with_validity=with_validity
+            )
             if wh_base:
                 instances.append(wh_base)
 
@@ -276,7 +302,8 @@ class WebhookBase:
             return
 
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 UPDATE
                     webhook_base
                 SET
@@ -286,19 +313,28 @@ class WebhookBase:
                     content_fmt=?
                 WHERE
                     id=?;
-            """, self.name, self.service, self.url, self.content_fmt, self.base_id)
+            """,
+                self.name,
+                self.service,
+                self.url,
+                self.content_fmt,
+                self.base_id,
+            )
 
     async def delete(self) -> None:
         """
         Deletes a WebhookBase from the database.
         """
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 DELETE FROM
                     webhook_base
                 WHERE
                     id=?;
-            """, self.base_id)
+            """,
+                self.base_id,
+            )
 
     async def is_valid(self) -> bool:
         """
@@ -338,11 +374,13 @@ class Webhook:
         return {
             "show_id": self.show_id,
             "base": self.base.to_dict(),
-            "triggers": self.triggers
+            "triggers": self.triggers,
         }
 
     @classmethod
-    async def from_show_id(cls, app: Any, show_id: int, with_validity: bool = False) -> List[Webhook]:
+    async def from_show_id(
+        cls, app: Any, show_id: int, with_validity: bool = False
+    ) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -361,7 +399,8 @@ class Webhook:
             All found webhooks.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     wh.base,
                     wh_b.id,
@@ -377,10 +416,13 @@ class Webhook:
                     wh.base=wh_b.id
                 WHERE
                     show_id=?;
-            """, show_id)
+            """,
+                show_id,
+            )
             webhooks = await con.fetchall()
 
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     base,
                     trigger
@@ -388,13 +430,17 @@ class Webhook:
                     webhook_trigger
                 WHERE
                     show_id=?;
-            """, show_id)
+            """,
+                show_id,
+            )
             triggers = await con.fetchall()
 
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_data(app, dict(wh), with_validity=with_validity)
+            base = await WebhookBase.from_data(
+                app, dict(wh), with_validity=with_validity
+            )
             if not base:
                 continue
 
@@ -404,14 +450,18 @@ class Webhook:
 
             instance.show_id = show_id
             instance.base = base
-            instance.triggers = [t["trigger"] for t in triggers if t["base"] == base.base_id]
+            instance.triggers = [
+                t["trigger"] for t in triggers if t["base"] == base.base_id
+            ]
 
             instances.append(instance)
 
         return instances
 
     @classmethod
-    async def from_composite(cls, app: Any, show_id: int, base_id: int) -> Optional[Webhook]:
+    async def from_composite(
+        cls, app: Any, show_id: int, base_id: int
+    ) -> Optional[Webhook]:
         """
         Returns a webhook from its composite key.
 
@@ -430,14 +480,18 @@ class Webhook:
             The found webhook.
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     base
                 FROM
                     webhook
                 WHERE
                     show_id=? AND base=?;
-            """, show_id, base_id)
+            """,
+                show_id,
+                base_id,
+            )
             webhook = await con.fetchone()
 
         base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
@@ -464,14 +518,18 @@ class Webhook:
             All valid triggers.
         """
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
                 WHERE
                     show_id=? AND base=?;
-            """, self.show_id, self.base.base_id)
+            """,
+                self.show_id,
+                self.base.base_id,
+            )
             triggers = await con.fetchall()
 
         self.triggers = [r["trigger"] for r in triggers]
@@ -496,25 +554,35 @@ class Webhook:
             return await self.get_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
                 WHERE show_id=? AND base=? AND trigger=?;
-            """, self.show_id, self.base.base_id, trigger)
+            """,
+                self.show_id,
+                self.base.base_id,
+                trigger,
+            )
             exists = await con.fetchval()
 
             if exists:
                 return await self.get_triggers()
 
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT INTO
                     webhook_trigger
                     (show_id, base, trigger)
                 VALUES
                     (?, ?, ?);
-            """, self.show_id, self.base.base_id, trigger)
+            """,
+                self.show_id,
+                self.base.base_id,
+                trigger,
+            )
 
         return await self.get_triggers()
 
@@ -536,23 +604,33 @@ class Webhook:
             return await self.get_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     trigger
                 FROM
                     webhook_trigger
                 WHERE show_id=? AND base=? AND trigger=?;
-            """, self.show_id, self.base.base_id, trigger)
+            """,
+                self.show_id,
+                self.base.base_id,
+                trigger,
+            )
             exists = await con.fetchval()
 
             if not exists:
                 return await self.get_triggers()
 
-            await con.execute("""
+            await con.execute(
+                """
                 DELETE FROM
                     webhook_trigger
                 WHERE show_id=? AND base=? AND trigger=?;
-            """, self.show_id, self.base.base_id, trigger)
+            """,
+                self.show_id,
+                self.base.base_id,
+                trigger,
+            )
 
         return await self.get_triggers()
 
@@ -572,7 +650,7 @@ class Webhook:
         return {
             "title": "Tsundoku Progress Event",
             "color": 370725,
-            "description": content
+            "description": content,
         }
 
     def generate_slack_blocks(self, content: str) -> List[dict]:
@@ -590,18 +668,12 @@ class Webhook:
         """
         title_block = {
             "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": "Tsundoku Progress Event"
-            }
+            "text": {"type": "plain_text", "text": "Tsundoku Progress Event"},
         }
 
         content_block = {
             "type": "section",
-            "text": {
-                "type": "plain_text",
-                "text": content
-            }
+            "text": {"type": "plain_text", "text": content},
         }
 
         return [title_block, content_block]
@@ -624,13 +696,16 @@ class Webhook:
             The generated payload.
         """
         async with self._app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     title
                 FROM
                     shows
                 WHERE id=?;
-            """, self.show_id)
+            """,
+                self.show_id,
+            )
             show_name = await con.fetchval()
 
         if not show_name:
@@ -638,11 +713,7 @@ class Webhook:
 
         payload: Any = {}
 
-        expr = ExprDict(
-            name=show_name,
-            episode=episode,
-            state=event
-        )
+        expr = ExprDict(name=show_name, episode=episode, state=event)
 
         content = self.base.content_fmt.format_map(expr)
 
@@ -669,19 +740,25 @@ class Webhook:
             The event that occurred, can be any `show_state`.
         """
         if not self.base.valid:
-            logger.warn("Webhooks - Attempted to send webhook, but the base webhook was invalid")
+            logger.warn(
+                "Webhooks - Attempted to send webhook, but the base webhook was invalid"
+            )
             return None
 
         logger.debug(f"Webhooks - Generating payload for webhook for <s{self.show_id}>")
         payload = await self.generate_payload(episode, event)
 
         if not payload:
-            logger.warn(f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>")
+            logger.warn(
+                f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>"
+            )
             return None
 
         logger.debug(f"Webhooks - Payload generated for webhook for <s{self.show_id}>")
 
-        logger.debug(f"Webhooks - Webhook for show <s{self.show_id}> sending payload...")
+        logger.debug(
+            f"Webhooks - Webhook for show <s{self.show_id}> sending payload..."
+        )
 
         try:
             await self._app.session.post(self.base.url, json=payload)

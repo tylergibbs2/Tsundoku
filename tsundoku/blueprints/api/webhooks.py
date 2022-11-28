@@ -9,9 +9,7 @@ from .response import APIResponse
 class WebhooksAPI(views.MethodView):
     async def get(self, show_id: int) -> APIResponse:
         webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
-        return APIResponse(
-            result=webhooks
-        )
+        return APIResponse(result=webhooks)
 
     async def put(self, show_id: int, base_id: int) -> APIResponse:
         valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
@@ -26,7 +24,9 @@ class WebhooksAPI(views.MethodView):
         wh = await Webhook.from_composite(app, show_id, base_id)
 
         if not wh:
-            return APIResponse(status=404, error="Webhook with specified ID does not exist.")
+            return APIResponse(
+                status=404, error="Webhook with specified ID does not exist."
+            )
         elif any(t not in valid_triggers for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
 
@@ -38,6 +38,4 @@ class WebhooksAPI(views.MethodView):
         for trigger in triggers:
             await wh.add_trigger(trigger)
 
-        return APIResponse(
-            result=wh.to_dict()
-        )
+        return APIResponse(result=wh.to_dict())

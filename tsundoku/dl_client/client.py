@@ -44,30 +44,17 @@ class Manager:
         username = cfg["username"]
         password = cfg["password"]
 
-        kwargs = {
-            "host": host,
-            "port": port,
-            "secure": secure
-        }
+        kwargs = {"host": host, "port": port, "secure": secure}
 
         if cfg["client"] == "deluge":
             kwargs["auth"] = password
-            self._client = DelugeClient(
-                self.session,
-                **kwargs
-            )
+            self._client = DelugeClient(self.session, **kwargs)
         elif cfg["client"] == "qbittorrent":
             kwargs["auth"] = {"username": username, "password": password}
-            self._client = qBittorrentClient(
-                self.session,
-                **kwargs
-            )
+            self._client = qBittorrentClient(self.session, **kwargs)
         elif cfg["client"] == "transmission":
             kwargs["auth"] = {"username": username, "password": password}
-            self._client = TransmissionClient(
-                self.session,
-                **kwargs
-            )
+            self._client = TransmissionClient(self.session, **kwargs)
 
     async def get_magnet(self, location: str) -> str:
         """
@@ -105,15 +92,17 @@ class Manager:
                 torrent_bytes = await resp.read()
                 metadata: Any = bencodepy.decode(torrent_bytes)
 
-        subject = metadata[b'info']
+        subject = metadata[b"info"]
 
         hash_data = bencodepy.encode(subject)
         digest = hashlib.sha1(hash_data).hexdigest()
 
-        magnet_url = ("magnet:?"
-                      f"xt=urn:btih:{digest}"
-                      f"&dn={metadata[b'info'][b'name'].decode()}"
-                      f"&tr={metadata[b'announce'].decode()}")
+        magnet_url = (
+            "magnet:?"
+            f"xt=urn:btih:{digest}"
+            f"&dn={metadata[b'info'][b'name'].decode()}"
+            f"&tr={metadata[b'announce'].decode()}"
+        )
 
         return re.sub(pattern, b32_to_sha1, magnet_url)
 

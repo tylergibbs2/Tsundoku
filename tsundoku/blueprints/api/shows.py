@@ -16,7 +16,7 @@ status_html_map = {
     "finished": "<span class='img-overlay-span tag is-danger'>Finished</span>",
     "tba": "<span class='img-overlay-span tag is-warning'>TBA</span>",
     "unreleased": "<span class='img-overlay-span tag is-info'>Unreleased</span>",
-    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>"
+    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>",
 }
 
 
@@ -26,21 +26,14 @@ class ShowsAPI(views.MethodView):
             shows = await ShowCollection.all()
             await shows.gather_statuses()
 
-            return APIResponse(
-                result=shows.to_list()
-            )
+            return APIResponse(result=shows.to_list())
         else:
             try:
                 show = await Show.from_id(show_id)
             except Exception:
-                return APIResponse(
-                    status=404,
-                    error="Show with passed ID not found."
-                )
+                return APIResponse(status=404, error="Show with passed ID not found.")
 
-            return APIResponse(
-                result=show.to_dict()
-            )
+            return APIResponse(result=show.to_dict())
 
     async def post(self, show_id: None) -> APIResponse:
         # show_id here will always be None. Having it as a parameter
@@ -58,18 +51,12 @@ class ShowsAPI(views.MethodView):
 
         season = arguments.get("season")
         if season is None:
-            return APIResponse(
-                status=400,
-                error="Missing season argument."
-            )
+            return APIResponse(status=400, error="Missing season argument.")
 
         try:
             season = int(season)
         except ValueError:
-            return APIResponse(
-                status=400,
-                error="Season is not an integer."
-            )
+            return APIResponse(status=400, error="Season is not an integer.")
 
         episode_offset = arguments.get("episode_offset")
         if episode_offset is None:
@@ -79,8 +66,7 @@ class ShowsAPI(views.MethodView):
                 episode_offset = int(episode_offset)
             except ValueError:
                 return APIResponse(
-                    status=400,
-                    error="Episode offset is not an integer."
+                    status=400, error="Episode offset is not an integer."
                 )
 
         show = await Show.insert(
@@ -90,26 +76,29 @@ class ShowsAPI(views.MethodView):
             season=season,
             episode_offset=episode_offset,
             watch=arguments.get("watch", True),
-            post_process=arguments.get("post_process", True)
+            post_process=arguments.get("post_process", True),
         )
 
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 INSERT OR IGNORE INTO
                     webhook
                     (show_id, base)
                 SELECT (?), id FROM webhook_base;
-            """, show.id_)
+            """,
+                show.id_,
+            )
 
-        logger.info(f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases")
+        logger.info(
+            f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
+        )
         app.poller.reset_rss_cache()
         await app.poller.poll()
 
         show = await Show.from_id(show.id_)
 
-        return APIResponse(
-            result=show.to_dict()
-        )
+        return APIResponse(result=show.to_dict())
 
     async def put(self, show_id: int) -> APIResponse:
         arguments = await request.get_json()
@@ -117,10 +106,7 @@ class ShowsAPI(views.MethodView):
         try:
             show = await Show.from_id(show_id)
         except Exception:
-            return APIResponse(
-                status=404,
-                error="Show with passed ID not found."
-            )
+            return APIResponse(status=404, error="Show with passed ID not found.")
 
         desired_format = arguments.get("desired_format")
         if not desired_format:
@@ -138,10 +124,7 @@ class ShowsAPI(views.MethodView):
             try:
                 season = int(arguments["season"])
             except Exception:
-                return APIResponse(
-                    status=400,
-                    error="Season is not a valid integer."
-                )
+                return APIResponse(status=400, error="Season is not a valid integer.")
 
             show.season = season
 
@@ -150,8 +133,7 @@ class ShowsAPI(views.MethodView):
                 episode_offset = int(arguments["episode_offset"])
             except Exception:
                 return APIResponse(
-                    status=400,
-                    error="Episode offset is not a valid integer."
+                    status=400, error="Episode offset is not a valid integer."
                 )
 
             show.episode_offset = episode_offset
@@ -169,10 +151,7 @@ class ShowsAPI(views.MethodView):
             try:
                 new_kitsu = int(arguments["kitsu_id"])
             except Exception:
-                return APIResponse(
-                    status=400,
-                    error="Kitsu ID is not a valid integer."
-                )
+                return APIResponse(status=400, error="Kitsu ID is not a valid integer.")
 
             if old_kitsu != new_kitsu:
                 await show.metadata.fetch_by_kitsu(show_id, new_kitsu)
@@ -182,18 +161,14 @@ class ShowsAPI(views.MethodView):
 
         if "watch" in arguments:
             if not isinstance(arguments["watch"], bool):
-                return APIResponse(
-                    status=400,
-                    error="Watch is not a valid boolean."
-                )
+                return APIResponse(status=400, error="Watch is not a valid boolean.")
 
             show.watch = arguments["watch"]
 
         if "post_process" in arguments:
             if not isinstance(arguments["post_process"], bool):
                 return APIResponse(
-                    status=400,
-                    error="Post process is not a valid boolean."
+                    status=400, error="Post process is not a valid boolean."
                 )
 
             show.post_process = arguments["post_process"]
@@ -201,15 +176,15 @@ class ShowsAPI(views.MethodView):
         await show.update()
 
         if do_poll:
-            logger.info(f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases")
+            logger.info(
+                f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases"
+            )
             app.poller.reset_rss_cache()
             await app.poller.poll()
 
         show = await Show.from_id(show_id)
 
-        return APIResponse(
-            result=show.to_dict()
-        )
+        return APIResponse(result=show.to_dict())
 
     async def delete(self, show_id: int) -> APIResponse:
         """
@@ -224,14 +199,15 @@ class ShowsAPI(views.MethodView):
         :returns: :class:`bool`
         """
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 DELETE FROM
                     shows
                 WHERE id=?;
-            """, show_id)
+            """,
+                show_id,
+            )
 
         logger.info(f"Show Deleted - <s{show_id}>")
 
-        return APIResponse(
-            result=True
-        )
+        return APIResponse(result=True)

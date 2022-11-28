@@ -52,46 +52,50 @@ class Config:
     async def retrieve(cls, ensure_exists: bool = True) -> Config:
         async with acquire() as con:
             if ensure_exists:
-                await con.execute(f"""
+                await con.execute(
+                    f"""
                     INSERT OR IGNORE INTO
                         {cls.TABLE_NAME} (
                             id
                         )
                     VALUES (0);
-                """)
+                """
+                )
 
-            await con.execute(f"""
+            await con.execute(
+                f"""
                 SELECT * FROM {cls.TABLE_NAME};
-            """)
+            """
+            )
             row: sqlite3.Row = await con.fetchone()
 
-        return cls(
-            {k: row[k] for k in row.keys()}
-        )
+        return cls({k: row[k] for k in row.keys()})
 
     @classmethod
     def sync_retrieve(cls, ensure_exists: bool = True) -> Config:
         with sync_acquire() as con:
             if ensure_exists:
-                con.execute(f"""
+                con.execute(
+                    f"""
                     INSERT OR IGNORE INTO
                         {cls.TABLE_NAME} (
                             id
                         )
                     VALUES (0);
-                """)
+                """
+                )
 
-            cur = con.execute(f"""
+            cur = con.execute(
+                f"""
                 SELECT * FROM {cls.TABLE_NAME};
-            """)
+            """
+            )
             row: sqlite3.Row = cur.fetchone()
 
         if row is None:
             return cls({})
 
-        return cls(
-            {k: row[k] for k in row.keys()}
-        )
+        return cls({k: row[k] for k in row.keys()})
 
     async def save(self) -> None:
         for key, value in self.keys.items():
@@ -112,13 +116,16 @@ class Config:
 
         sets = ", ".join(f"{col} = ?" for col in self.keys)
         async with acquire() as con:
-            await con.execute(f"""
+            await con.execute(
+                f"""
                 UPDATE
                     {self.TABLE_NAME}
                 SET
                     {sets}
                 WHERE id = 0;
-            """, *self.keys.values())
+            """,
+                *self.keys.values(),
+            )
 
 
 class GeneralConfig(Config):

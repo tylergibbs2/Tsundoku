@@ -11,12 +11,20 @@ from quart import Blueprint, Response
 
 if TYPE_CHECKING:
     import tsundoku.app
+
     app: tsundoku.app.TsundokuApp
 else:
     from quart import current_app as app
 
-from quart import (flash, redirect, render_template, request, send_file,
-                   url_for, websocket)
+from quart import (
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+    websocket,
+)
 from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
@@ -28,11 +36,11 @@ from tsundoku.webhooks import WebhookBase
 from .issues import get_issue_url
 
 ux_blueprint = Blueprint(
-    'ux',
+    "ux",
     __name__,
     template_folder="templates",
     static_folder="static",
-    static_url_path="/ux/static"
+    static_url_path="/ux/static",
 )
 hasher = PasswordHasher()
 
@@ -40,32 +48,33 @@ hasher = PasswordHasher()
 @ux_blueprint.context_processor
 async def update_context() -> dict:
     async with app.acquire_db() as con:
-        await con.execute("""
+        await con.execute(
+            """
             SELECT
                 COUNT(*)
             FROM
                 shows;
-        """)
+        """
+        )
         shows = await con.fetchval()
-        await con.execute("""
+        await con.execute(
+            """
             SELECT
                 COUNT(*)
             FROM
                 show_entry;
-        """)
+        """
+        )
         entries = await con.fetchval()
 
     stats = {
         "shows": shows,
         "entries": entries,
         "seen": len(app.seen_titles),
-        "version": version
+        "version": version,
     }
 
-    return {
-        "stats": stats,
-        "docker": os.environ.get("IS_DOCKER", False)
-    }
+    return {"stats": stats, "docker": os.environ.get("IS_DOCKER", False)}
 
 
 @ux_blueprint.route("/issue", methods=["POST"])
@@ -75,9 +84,7 @@ async def issue() -> APIResponse:
     issue_type = data.get("issue_type")
     user_agent = data.get("user_agent")
 
-    return APIResponse(
-        result=get_issue_url(issue_type, user_agent)
-    )
+    return APIResponse(result=get_issue_url(issue_type, user_agent))
 
 
 @ux_blueprint.route("/", methods=["GET"])
@@ -85,11 +92,7 @@ async def issue() -> APIResponse:
 async def index() -> str:
     ctx = {}
 
-    resources = [
-        "base",
-        "errors",
-        "index"
-    ]
+    resources = ["base", "errors", "index"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
@@ -107,22 +110,22 @@ async def index() -> str:
 async def nyaa_search() -> str:
     ctx = {}
 
-    resources = [
-        "base"
-    ]
+    resources = ["base"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
     async with app.acquire_db() as con:
-        await con.execute("""
+        await con.execute(
+            """
             SELECT
                 id,
                 title
             FROM
                 shows
             ORDER BY title;
-        """)
+        """
+        )
         shows = await con.fetchall()
         ctx["shows"] = [dict(s) for s in shows]
 
@@ -136,10 +139,7 @@ async def nyaa_search() -> str:
 async def webhooks() -> str:
     ctx = {}
 
-    resources = [
-        "base",
-        "webhooks"
-    ]
+    resources = ["base", "webhooks"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
@@ -155,9 +155,7 @@ async def webhooks() -> str:
 async def config() -> str:
     ctx = {}
 
-    resources = [
-        "base"
-    ]
+    resources = ["base"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
@@ -169,16 +167,11 @@ async def config() -> str:
 @login_required
 async def logs() -> Union[str, Response]:
     if request.args.get("dl"):
-        return await send_file(
-            "tsundoku.log",
-            as_attachment=True
-        )
+        return await send_file("tsundoku.log", as_attachment=True)
 
     ctx = {}
 
-    resources = [
-        "base"
-    ]
+    resources = ["base"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
@@ -195,9 +188,7 @@ async def login() -> Any:
         fluent = get_injector(["login"])
         return await render_template("login.html", **{"_": fluent.format_value})
     else:
-        resources = [
-            "login"
-        ]
+        resources = ["login"]
         fluent = get_injector(resources)
 
         form = await request.form
@@ -209,14 +200,17 @@ async def login() -> Any:
             return redirect(url_for("ux.login"))
 
         async with app.acquire_db() as con:
-            await con.execute("""
+            await con.execute(
+                """
                 SELECT
                     id,
                     password_hash
                 FROM
                     users
                 WHERE LOWER(username) = ?;
-            """, username.lower())
+            """,
+                username.lower(),
+            )
             user_data = await con.fetchone()
 
         if not user_data:
@@ -231,13 +225,17 @@ async def login() -> Any:
 
         if hasher.check_needs_rehash(user_data["password_hash"]):
             async with app.acquire_db() as con:
-                await con.execute("""
+                await con.execute(
+                    """
                     UPDATE
                         users
                     SET
                         password_hash=?
                     WHERE username=?;
-                """, hasher.hash(password), username)
+                """,
+                    hasher.hash(password),
+                    username,
+                )
 
         remember = form.get("remember", False)
 
@@ -262,6 +260,7 @@ def collect_websocket(func):  # type: ignore
             return await func(queue, *args, **kwargs)
         finally:
             app.connected_websockets.remove(queue)
+
     return wrapper
 
 

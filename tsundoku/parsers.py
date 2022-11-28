@@ -7,6 +7,7 @@ from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
+
     app: TsundokuApp
 else:
     from quart import current_app as app
@@ -43,20 +44,13 @@ class ParserStub:
         return True
 
 
-
 def load_parsers(parsers: List[str]) -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
     app.rss_parsers = []
 
-    required_attrs = (
-        "name",
-        "url",
-        "version",
-        "get_show_name",
-        "get_episode_number"
-    )
+    required_attrs = ("name", "url", "version", "get_show_name", "get_episode_number")
 
     for parser in parsers:
         spec: Any = importlib.util.find_spec(parser)

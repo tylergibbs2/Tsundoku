@@ -7,5 +7,5 @@ VALID_SPEEDS = (
     "medium",
     "slow",
     "slower",
-    "veryslow"
+    "veryslow",
 )

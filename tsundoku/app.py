@@ -81,13 +81,18 @@ async def insert_user(username: str, password: str) -> None:
 
     pw_hash = hasher.hash(password)
     async with tsundoku.asqlite.connect(fp) as con:
-        await con.execute("""
+        await con.execute(
+            """
             INSERT INTO
                 users
                 (username, password_hash, api_key)
             VALUES
                 (?, ?, ?);
-        """, username, pw_hash, str(uuid4()))
+        """,
+            username,
+            pw_hash,
+            str(uuid4()),
+        )
 
 
 @app.errorhandler(Unauthorized)
@@ -105,16 +110,20 @@ async def setup_db() -> None:
     app.sync_acquire_db = sync_acquire  # type: ignore
 
     async with app.acquire_db() as con:
-        await con.execute("""
+        await con.execute(
+            """
             SELECT
                 COUNT(*)
             FROM
                 users;
-        """)
+        """
+        )
         users = await con.fetchval()
 
     if not users:
-        logger.error("No existing users! Run `tsundoku --create-user` to create a new user.")
+        logger.error(
+            "No existing users! Run `tsundoku --create-user` to create a new user."
+        )
 
 
 @app.before_serving
@@ -124,12 +133,12 @@ async def setup_session() -> None:
     """
     loop = asyncio.get_event_loop()
 
-    jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
+    jar = aiohttp.CookieJar(
+        unsafe=True
+    )  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
     app.session = aiohttp.ClientSession(
-        loop=loop,
-        cookie_jar=jar,
-        timeout=aiohttp.ClientTimeout(total=15.0)
+        loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0)
     )
     app.dl_client = Manager(app.session)
 
@@ -152,7 +161,9 @@ async def setup_parsers() -> None:
         for parser in default_parsers:
             if not (parser_path / f"{parser}.py").exists():
                 async with aiofiles.open(parser_path / f"{parser}.py", "wb") as fp:
-                    async with aiofiles.open(Path.cwd() / "default_parsers" / f"{parser}.py", "rb") as default_fp:
+                    async with aiofiles.open(
+                        Path.cwd() / "default_parsers" / f"{parser}.py", "rb"
+                    ) as default_fp:
                         await fp.write(await default_fp.read())
 
         async with aiofiles.open(parser_path / "COPIED", "wb") as fp:
@@ -176,6 +187,7 @@ async def setup_tasks() -> None:
 
     These tasks are added to the app's global task list.
     """
+
     async def poller() -> None:
         app.poller = Poller(app.app_context())
         await app.poller.start()
@@ -248,7 +260,4 @@ async def run() -> None:
 
     auth.init_app(app)
 
-    await app.run_task(
-        host=host,
-        port=port
-    )
+    await app.run_task(host=host, port=port)
