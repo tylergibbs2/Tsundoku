@@ -4,7 +4,13 @@
         "jsx": "react-jsx",
         "jsxImportSource": "preact",
         "module": "commonjs",
-        "lib": ["ES2020", "ES2016", "DOM"]
+        "lib": ["ES2020", "ES2016", "DOM"],
+        "skipLibCheck": true,
+        "baseUrl": "./",
+        "paths": {
+            "react": ["./node_modules/preact/compat/"],
+            "react-dom": ["./node_modules/preact/compat/"]
+        }
     },
     "include": [
         "tsundoku/blueprints/ux/static/ts/App.tsx",
