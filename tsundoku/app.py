@@ -143,7 +143,7 @@ async def setup_parsers() -> None:
     # be serving at this point in time.
     app.parser_lock = asyncio.Lock()
     async with app.parser_lock:
-        load_parsers(["parsers.subsplease"])
+        load_parsers(["parsers.subsplease", "parsers.nyaa"])
 
 
 @app.before_serving
