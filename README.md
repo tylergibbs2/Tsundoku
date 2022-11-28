@@ -55,50 +55,16 @@ $ python -m tsundoku
 ## Installation (Docker)
 
 1. Copy the `docker-compose.yml` file from the repository.
-2. Copy any parsers that you want and put them in a new folder.
-3. Replace the file paths.
-4. Run `docker-compose up -d`.
+2. Replace the file paths.
+3. Run `docker-compose up -d`.
 
 I will not be providing an example on how to start the container using
 `docker run`.
 
 You will then need to perform the following commands:
 ```sh
-docker container exec -it tsundoku python -m tsundoku --create-user
+$ docker container exec -it tsundoku python -m tsundoku --create-user
 ```
-
-When pointing to directories within Tsundoku, make sure that you begin
-your target directory with `/target/...`.
-
-For the sake of example, here is my personal entry for Tsundoku in `docker-compose.yml`:
-```yml
-version: "3.8"
-services:
-  tsundoku:
-    image: tylergibbs2/tsundoku
-    container_name: tsundoku
-    environment:
-      - PUID=1000
-      - PGID=1000
-    volumes:
-      - /opt/appdata/tsundoku/data:/app/data
-      - /opt/appdata/tsundoku/parsers:/app/parsers
-      - /mediadrives/Downloaded:/downloaded
-      - /mediadrives/Anime:/target
-    ports:
-      - "6439:6439"
-    restart: always
-```
-
-`/opt/appdata/tsundoku/parsers` is the folder where I manually placed all the parsers I use.
-
-`/mediadrives/Downloaded` is the absolute path where Tsundoku will look for completed torrents.
-
-`/mediadrives/Anime` is the absolute path where Tsundoku will move completed torrents.
-
-
-And [here](https://i.imgur.com/BkNz7P4.png) is an example of what it looks like when adding a show using Docker.
-
 
 ## Parsers
 
