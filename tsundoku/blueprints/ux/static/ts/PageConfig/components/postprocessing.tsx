@@ -1,5 +1,5 @@
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
-import { useEffect, useState } from "preact/hooks";
+import React, { ChangeEvent, EventHandler, useEffect, useState } from "react";
 import { getInjector } from "../../fluent";
 
 
@@ -75,8 +75,8 @@ export const PostProcessing = () => {
         getEncodingStats();
     }, []);
 
-    const inputEnabled = (e: Event) => {
-        if ((e.target as HTMLInputElement).checked)
+    const inputEnabled = (e: React.MouseEvent<HTMLInputElement>): void => {
+        if (e.currentTarget.checked)
             updateConfig("enabled", true);
         else
             updateConfig("enabled", false);
@@ -84,11 +84,11 @@ export const PostProcessing = () => {
 
     return (
         <>
-            <div class="field">
-                <input id="enableEncode" type="checkbox" class="switch" onClick={inputEnabled} checked={config.enabled && config.has_ffmpeg} disabled={!config.has_ffmpeg} />
-                <label for="enableEncode">{_("checkbox-enabled")}</label>
+            <div className="field">
+                <input id="enableEncode" type="checkbox" className="switch" onClick={inputEnabled} checked={config.enabled && config.has_ffmpeg} disabled={!config.has_ffmpeg} />
+                <label htmlFor="enableEncode">{_("checkbox-enabled")}</label>
                 {!config.has_ffmpeg &&
-                    <span class="tag is-danger ml-1">{_("ffmpeg-missing")}</span>
+                    <span className="tag is-danger ml-1">{_("ffmpeg-missing")}</span>
                 }
             </div>
             <PostProcessingForm
@@ -109,12 +109,12 @@ interface PostProcessingFormParams {
 const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormParams) => {
     let disabled = !(config.enabled && config.has_ffmpeg);
 
-    const inputMaxEncodes = (e: Event) => {
-        updateConfig("maximum_encodes", (e.target as HTMLInputElement).value);
+    const inputMaxEncodes = (e: ChangeEvent<HTMLInputElement>) => {
+        updateConfig("maximum_encodes", e.target.value);
     }
 
-    const inputQualityValue = (e: Event) => {
-        let value = parseInt((e.target as HTMLInputElement).value);
+    const inputQualityValue = (e: ChangeEvent<HTMLInputElement>) => {
+        let value = parseInt(e.target.value);
         let preset: string;
         switch (value) {
             case 2:
@@ -130,33 +130,27 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
         updateConfig("quality_preset", preset);
     }
 
-    const inputRetryFail = (e: Event) => {
-        if ((e.target as HTMLInputElement).checked)
+    const inputRetryFail = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked)
             updateConfig("retry_on_fail", true);
         else
             updateConfig("retry_on_fail", false);
     }
 
-    const inputSpeedPreset = (e: Event) => {
-        let target = e.target as HTMLSelectElement;
-
-        updateConfig("speed_preset", target.options[target.selectedIndex].value);
+    const inputSpeedPreset = (e: ChangeEvent<HTMLSelectElement>) => {
+        updateConfig("speed_preset", e.target.options[e.target.selectedIndex].value);
     }
 
-    const inputHourStart = (e: Event) => {
-        let target = e.target as HTMLSelectElement;
-
-        updateConfig("hour_start", target.options[target.selectedIndex].value);
+    const inputHourStart = (e: ChangeEvent<HTMLSelectElement>) => {
+        updateConfig("hour_start", e.target.options[e.target.selectedIndex].value);
     }
 
-    const inputHourEnd = (e: Event) => {
-        let target = e.target as HTMLSelectElement;
-
-        updateConfig("hour_end", target.options[target.selectedIndex].value);
+    const inputHourEnd = (e: ChangeEvent<HTMLSelectElement>) => {
+        updateConfig("hour_end", e.target.options[e.target.selectedIndex].value);
     }
 
-    const inputTimedEncoding = (e: Event) => {
-        if ((e.target as HTMLInputElement).checked)
+    const inputTimedEncoding = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked)
             updateConfig("timed_encoding", true);
         else
             updateConfig("timed_encoding", false);
@@ -174,47 +168,47 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
     }
 
     return (
-        <div class="box">
+        <div className="box">
             {Object.keys(stats).length > 0 &&
-                <div class="columns">
-                    <div class="column is-one-fifth">
+                <div className="columns">
+                    <div className="column is-one-fifth">
                         <p>{_("encode-stats-total-encoded", { 'total_encoded': stats.total_encoded })}</p>
                     </div>
-                    <div class="column is-one-fifth">
+                    <div className="column is-one-fifth">
                         <p>{_("encode-stats-total-saved-gb", { 'total_saved_gb': (stats.total_saved_bytes / (1024 ** 3)).toFixed(1) })}</p>
                     </div>
-                    <div class="column is-one-fifth">
+                    <div className="column is-one-fifth">
                         <p>{_("encode-stats-avg-saved-mb", { 'avg_saved_mb': (stats.avg_saved_bytes / (1024 ** 2)).toFixed(1) })}</p>
                     </div>
-                    <div class="column is-one-fifth">
+                    <div className="column is-one-fifth">
                         <p>{_("encode-stats-median-time-hours", { 'median_time_hours': stats.median_time_spent_hours.toFixed(2) })}</p>
                     </div>
-                    <div class="column is-one-fifth">
+                    <div className="column is-one-fifth">
                         <p>{_("encode-stats-avg-time-hours", { 'avg_time_hours': stats.avg_time_spent_hours.toFixed(2) })}</p>
                     </div>
                 </div>
             }
-            <div class="columns">
-                <div class="column is-half">
-                    <h1 class="title is-5">{_("process-quality-title")}</h1>
-                    <h2 class="subtitle is-6">{_("process-quality-subtitle")}</h2>
-                    <div class="columns is-fullwidth mb-0">
-                        <div class="column">
+            <div className="columns">
+                <div className="column is-half">
+                    <h1 className="title is-5">{_("process-quality-title")}</h1>
+                    <h2 className="subtitle is-6">{_("process-quality-subtitle")}</h2>
+                    <div className="columns is-fullwidth mb-0">
+                        <div className="column">
                             <strong title={`CRF 24 (${_("encode-quality-low-desc")})`}>{_("encode-quality-low")}</strong>
                         </div>
-                        <div class="column has-text-centered">
+                        <div className="column has-text-centered">
                             <strong title={`CRF 21 (${_("encode-quality-moderate-desc")})`}>{_("encode-quality-moderate")}</strong>
                         </div>
-                        <div class="column" style={{ textAlign: "right" }}>
+                        <div className="column" style={{ textAlign: "right" }}>
                             <strong title={`CRF 18 (${_("encode-quality-high-desc")})`}>{_("encode-quality-high")}</strong>
                         </div>
                     </div>
-                    <input class="slider is-fullwidth is-info mt-0" step="1" min="0" max="2" type="range" disabled={disabled} value={getQualityValue()} onChange={inputQualityValue}></input>
+                    <input className="slider is-fullwidth is-info mt-0" step="1" min="0" max="2" type="range" disabled={disabled} value={getQualityValue()} onChange={inputQualityValue}></input>
                 </div>
-                <div class="column is-half">
-                    <h1 class="title is-5">{_("process-speed-title")}</h1>
-                    <h2 class="subtitle is-6">{_("process-speed-subtitle")}</h2>
-                    <div class="select is-fullwidth is-vcentered">
+                <div className="column is-half">
+                    <h1 className="title is-5">{_("process-speed-title")}</h1>
+                    <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
+                    <div className="select is-fullwidth is-vcentered">
                         <select onChange={inputSpeedPreset} disabled={disabled}>
                             <option value="ultrafast" selected={config.speed_preset === "ultrafast"}>{_("encode-speed-ultrafast")}</option>
                             <option value="superfast" selected={config.speed_preset === "superfast"}>{_("encode-speed-superfast")}</option>
@@ -229,24 +223,24 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                     </div>
                 </div>
             </div>
-            <div class="columns">
-                <div class="column is-one-third">
-                    <h1 class="title is-5">{_("process-max-encode-title")}</h1>
-                    <h2 class="subtitle is-6 mb-3">{_("process-max-encode-subtitle")}</h2>
-                    <input class="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} disabled={disabled}></input>
+            <div className="columns">
+                <div className="column is-one-third">
+                    <h1 className="title is-5">{_("process-max-encode-title")}</h1>
+                    <h2 className="subtitle is-6 mb-3">{_("process-max-encode-subtitle")}</h2>
+                    <input className="input" type="number" min="1" value={config.maximum_encodes} onChange={inputMaxEncodes} disabled={disabled}></input>
                 </div>
-                <div class="column is-one-third">
-                    <h1 class="title is-5">{_("encode-time-title")}</h1>
-                    <h2 class="subtitle is-6">{_("encode-time-subtitle")}</h2>
-                    <div class="columns is-vcentered">
-                        <div class="column">
-                            <div class="field is-vcentered">
-                                <input id="timeCheck" type="checkbox" class="switch" onChange={inputTimedEncoding} checked={config.timed_encoding} disabled={disabled} />
-                                <label for="timeCheck">{_("checkbox-enabled")}</label>
+                <div className="column is-one-third">
+                    <h1 className="title is-5">{_("encode-time-title")}</h1>
+                    <h2 className="subtitle is-6">{_("encode-time-subtitle")}</h2>
+                    <div className="columns is-vcentered">
+                        <div className="column">
+                            <div className="field is-vcentered">
+                                <input id="timeCheck" type="checkbox" className="switch" onChange={inputTimedEncoding} checked={config.timed_encoding} disabled={disabled} />
+                                <label htmlFor="timeCheck">{_("checkbox-enabled")}</label>
                             </div>
                         </div>
-                        <div class="column">
-                            <div class="select is-fullwidth is-vcentered">
+                        <div className="column">
+                            <div className="select is-fullwidth is-vcentered">
                                 <select onChange={inputHourStart} disabled={disabled}>
                                     {
                                         [...Array(24).keys()].map(hour => {
@@ -257,8 +251,8 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                                 </select>
                             </div>
                         </div>
-                        <div class="column">
-                            <div class="select is-fullwidth is-vcentered ml-1">
+                        <div className="column">
+                            <div className="select is-fullwidth is-vcentered ml-1">
                                 <select onChange={inputHourEnd} disabled={disabled}>
                                     {
                                         [...Array(24).keys()].map(hour => {
@@ -271,12 +265,12 @@ const PostProcessingForm = ({ config, stats, updateConfig }: PostProcessingFormP
                         </div>
                     </div>
                 </div>
-                <div class="column is-one-third">
-                    <h1 class="title is-5">{_("process-retry-title")}</h1>
-                    <h2 class="subtitle is-6">{_("process-retry-subtitle")}</h2>
-                    <div class="field">
-                        <input id="retryCheck" type="checkbox" class="switch" onChange={inputRetryFail} checked={config.retry_on_fail} disabled={disabled} />
-                        <label for="retryCheck">{_("checkbox-enabled")}</label>
+                <div className="column is-one-third">
+                    <h1 className="title is-5">{_("process-retry-title")}</h1>
+                    <h2 className="subtitle is-6">{_("process-retry-subtitle")}</h2>
+                    <div className="field">
+                        <input id="retryCheck" type="checkbox" className="switch" onChange={inputRetryFail} checked={config.retry_on_fail} disabled={disabled} />
+                        <label htmlFor="retryCheck">{_("checkbox-enabled")}</label>
                     </div>
                 </div>
             </div>

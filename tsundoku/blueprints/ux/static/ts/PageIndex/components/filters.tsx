@@ -1,4 +1,4 @@
-import { StateUpdater } from "preact/hooks";
+import { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
@@ -12,14 +12,14 @@ const _ = getInjector(resources);
 
 interface FiltersParams {
     filters: string[];
-    setFilters: StateUpdater<string[]>;
-    setTextFilter: StateUpdater<string>;
+    setFilters: Dispatch<SetStateAction<string[]>>;
+    setTextFilter: Dispatch<SetStateAction<string>>;
     viewType: string;
-    setViewType: StateUpdater<string>;
+    setViewType: Dispatch<SetStateAction<string>>;
     sortDirection: string;
-    setSortDirection: StateUpdater<string>;
+    setSortDirection: Dispatch<SetStateAction<string>>;
     sortKey: string;
-    setSortKey: StateUpdater<string>;
+    setSortKey: Dispatch<SetStateAction<string>>;
 }
 
 export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewType, sortDirection, setSortDirection, sortKey, setSortKey }: FiltersParams) => {
@@ -82,8 +82,8 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
             setFilters(["upcoming", ...filters]);
     }
 
-    const filterSearch = (e: Event) => {
-        let query = (e.target as HTMLInputElement).value;
+    const filterSearch = (e: ChangeEvent<HTMLInputElement>) => {
+        let query = e.target.value;
         setTextFilter(query);
     }
 
@@ -98,25 +98,25 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
     }
 
     return (
-        <div class="columns pb-3" style={{
+        <div className="columns pb-3" style={{
             position: "sticky",
             top: "0",
             zIndex: "5",
             backgroundImage: "linear-gradient(rgba(255, 255, 255, 1) 80%, rgba(255, 255, 255, 0) 100%)"
         }}>
-            <div class="column is-7">
-                <div class="tags are-medium">
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
-                    <span class={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
-                    <span class={"noselect tag is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
+            <div className="column is-7">
+                <div className="tags are-medium">
+                    <span className={"noselect tag mr-1 is-clickable " + (isFilter("current") ? "is-success" : "")} onClick={filterAiring}>{_('status-airing')}</span>
+                    <span className={"noselect tag mr-1 is-clickable " + (isFilter("finished") ? "is-danger" : "")} onClick={filterFinished}>{_('status-finished')}</span>
+                    <span className={"noselect tag mr-1 is-clickable " + (isFilter("tba") ? "is-warning" : "")} onClick={filterTba}>{_('status-tba')}</span>
+                    <span className={"noselect tag mr-1 is-clickable " + (isFilter("unreleased") ? "is-info" : "")} onClick={filterUnreleased}>{_('status-unreleased')}</span>
+                    <span className={"noselect tag is-clickable " + (isFilter("upcoming") ? "is-primary" : "")} onClick={filterUpcoming}>{_('status-upcoming')}</span>
                 </div>
             </div>
-            <div class="column is-5 is-offset-">
-                <div class="field is-horizontal">
-                    <div class="field-body">
-                        <div class="field is-narrow">
+            <div className="column is-5 is-offset-">
+                <div className="field is-horizontal">
+                    <div className="field-body">
+                        <div className="field is-narrow">
                             <SortDropdown
                                 sortKey={sortKey}
                                 setSortKey={setSortKey}
@@ -124,22 +124,22 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
                                 setSortDirection={setSortDirection}
                             />
                         </div>
-                        <div class="field has-addons is-narrow">
-                            <div class="control">
-                                <a class={"button " + (viewType === "cards" ? "is-info" : "")} onClick={cardView}>
-                                    <span class="icon"><IonIcon name="images" /></span>
+                        <div className="field has-addons is-narrow">
+                            <div className="control">
+                                <a className={"button " + (viewType === "cards" ? "is-info" : "")} onClick={cardView}>
+                                    <span className="icon"><IonIcon name="images" /></span>
                                 </a>
                             </div>
-                            <div class="control">
-                                <a class={"button " + (viewType === "list" ? "is-info" : "")} onClick={listView}>
-                                    <span class="icon"><IonIcon name="list" /></span>
+                            <div className="control">
+                                <a className={"button " + (viewType === "list" ? "is-info" : "")} onClick={listView}>
+                                    <span className="icon"><IonIcon name="list" /></span>
                                 </a>
                             </div>
                         </div>
-                        <div class="field">
-                            <div class="control has-icons-left">
-                                <input type="text" class="input is-pulled-right" onInput={filterSearch} placeholder="Attack on Titan"></input>
-                                <span class="icon is-small is-left">
+                        <div className="field">
+                            <div className="control has-icons-left">
+                                <input type="text" className="input is-pulled-right" onInput={filterSearch} placeholder="Attack on Titan"></input>
+                                <span className="icon is-small is-left">
                                     <IonIcon name="search" />
                                 </span>
                             </div>
@@ -153,9 +153,9 @@ export const Filters = ({ filters, setFilters, setTextFilter, viewType, setViewT
 
 interface SortDropdownParams {
     sortDirection: string;
-    setSortDirection: StateUpdater<string>;
+    setSortDirection: Dispatch<SetStateAction<string>>;
     sortKey: string;
-    setSortKey: StateUpdater<string>;
+    setSortKey: Dispatch<SetStateAction<string>>;
 }
 
 const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: SortDropdownParams) => {
@@ -199,56 +199,56 @@ const SortDropdown = ({ sortDirection, setSortDirection, sortKey, setSortKey }: 
 
     let sortDisplayArrow: any;
     if (sortDirection === "+")
-        sortDisplayArrow = <span class="icon"><IonIcon name="arrow-up" /></span>
+        sortDisplayArrow = <span className="icon"><IonIcon name="arrow-up" /></span>
     else
-        sortDisplayArrow = <span class="icon"><IonIcon name="arrow-down" /></span>
+        sortDisplayArrow = <span className="icon"><IonIcon name="arrow-down" /></span>
 
     return (
-        <div class="dropdown is-hoverable">
-            <div class="dropdown-trigger">
-                <button class="button">
+        <div className="dropdown is-hoverable">
+            <div className="dropdown-trigger">
+                <button className="button">
                     {sortDisplayText}
                     {sortDisplayArrow}
-                    <span class="icon is-small">
+                    <span className="icon is-small">
                         <IonIcon name="chevron-down" />
                     </span>
                 </button>
             </div>
-            <div class="dropdown-menu">
-                <div class="dropdown-content">
-                    <div class="dropdown-item has-text-centered">
+            <div className="dropdown-menu">
+                <div className="dropdown-content">
+                    <div className="dropdown-item has-text-centered">
                         <b>{_("sort-by-header")}</b>
                     </div>
-                    <hr class="dropdown-divider"></hr>
-                    <a onClick={sortKeyTitle} class={"dropdown-item " + (sortKey === "title" ? "is-active" : "")}>
+                    <hr className="dropdown-divider"></hr>
+                    <a onClick={sortKeyTitle} className={"dropdown-item " + (sortKey === "title" ? "is-active" : "")}>
                         {_("sort-key-title")}
                     </a>
-                    <a onClick={sortKeyUpdate} class={"dropdown-item " + (sortKey === "update" ? "is-active" : "")}>
+                    <a onClick={sortKeyUpdate} className={"dropdown-item " + (sortKey === "update" ? "is-active" : "")}>
                         {_("sort-key-update")}
                     </a>
-                    <a onClick={sortKeyAdded} class={"dropdown-item " + (sortKey === "dateAdded" ? "is-active" : "")}>
+                    <a onClick={sortKeyAdded} className={"dropdown-item " + (sortKey === "dateAdded" ? "is-active" : "")}>
                         {_("sort-key-date-added")}
                     </a>
-                    <hr class="dropdown-divider"></hr>
-                    <a onClick={sortDirAsc} class={"dropdown-item has-text-centered " + (sortDirection === "+" ? "is-active" : "")}>
-                        <div class="columns">
-                            <div class="column is-2">
+                    <hr className="dropdown-divider"></hr>
+                    <a onClick={sortDirAsc} className={"dropdown-item has-text-centered " + (sortDirection === "+" ? "is-active" : "")}>
+                        <div className="columns">
+                            <div className="column is-2">
                                 {_("sort-dir-asc")}
                             </div>
-                            <div class="column is-2 is-offset-8">
-                                <span class="icon is-small">
+                            <div className="column is-2 is-offset-8">
+                                <span className="icon is-small">
                                     <IonIcon name="arrow-up" />
                                 </span>
                             </div>
                         </div>
                     </a>
-                    <a onClick={sortDirDesc} class={"dropdown-item has-text-centered " + (sortDirection === "-" ? "is-active" : "")}>
-                        <div class="columns">
-                            <div class="column is-2">
+                    <a onClick={sortDirDesc} className={"dropdown-item has-text-centered " + (sortDirection === "-" ? "is-active" : "")}>
+                        <div className="columns">
+                            <div className="column is-2">
                                 {_("sort-dir-desc")}
                             </div>
-                            <div class="column is-2 is-offset-8">
-                                <span class="icon is-small">
+                            <div className="column is-2 is-offset-8">
+                                <span className="icon is-small">
                                     <IonIcon name="arrow-down" />
                                 </span>
                             </div>

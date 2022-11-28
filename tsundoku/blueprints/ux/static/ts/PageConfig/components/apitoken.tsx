@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "react";
 
 import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
@@ -55,13 +55,13 @@ export const APITokenComponent = () => {
     }, [])
 
     return (
-        <div class="field has-addons">
-            <div class="control is-expanded">
-                <input class="input" type="text" readonly={true} value={localToken} />
+        <div className="field has-addons">
+            <div className="control is-expanded">
+                <input className="input" type="text" readOnly={true} value={localToken} />
             </div>
-            <div class="control">
-                <button onClick={setToken} title={_("api-key-refresh")} class={"button is-danger " + (isFetching ? "is-loading" : "")}>
-                    <span class="icon">
+            <div className="control">
+                <button onClick={setToken} title={_("api-key-refresh")} className={"button is-danger " + (isFetching ? "is-loading" : "")}>
+                    <span className="icon">
                         <IonIcon name="refresh" />
                     </span>
                 </button>

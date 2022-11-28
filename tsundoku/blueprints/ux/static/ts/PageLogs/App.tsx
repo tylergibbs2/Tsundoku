@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getInjector } from "../fluent";
@@ -54,21 +54,21 @@ export const LogsApp = () => {
 
     return (
         <>
-            <div class="columns" style={{
+            <div className="columns" style={{
                 height: "12%"
             }}>
-                <div class="column is-full">
-                    <h1 class="title is-inline">{_("logs-page-title")}</h1>
+                <div className="column is-full">
+                    <h1 className="title is-inline">{_("logs-page-title")}</h1>
                     <ConnectionTag readyState={readyState} />
-                    <h2 class="subtitle">{_("logs-page-subtitle")}</h2>
+                    <h2 className="subtitle">{_("logs-page-subtitle")}</h2>
                 </div>
             </div>
-            <div class="box mb-0" style={{
+            <div className="box mb-0" style={{
                 display: "flex",
                 overflow: "hidden",
                 height: "83%"
             }}>
-                <div class="logrow-container">
+                <div className="logrow-container">
                     {messageHistory.current.map((msg, idx) => (
                         <LogRow
                             key={idx}
@@ -81,11 +81,11 @@ export const LogsApp = () => {
                     ))}
                 </div>
             </div>
-            <div class="columns is-vcentered" style={{
+            <div className="columns is-vcentered" style={{
                 height: "15%"
             }}>
-                <div class="column is-full">
-                    <a class="button is-info is-fullwidth" href="/logs?dl=1">{_("logs-download")}</a>
+                <div className="column is-full">
+                    <a className="button is-info is-fullwidth" href="/logs?dl=1">{_("logs-download")}</a>
                 </div>
             </div>
         </>
@@ -109,16 +109,16 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: L
     let logLevel: JSX.Element;
     switch (match.groups.level) {
         case "[INFO]":
-            logLevel = <span class="tag is-info">{_("log-level-info")}</span>
+            logLevel = <span className="tag is-info">{_("log-level-info")}</span>
             break;
         case "[WARNING]":
-            logLevel = <span class="tag is-warning">{_("log-level-warning")}</span>
+            logLevel = <span className="tag is-warning">{_("log-level-warning")}</span>
             break;
         case "[ERROR]":
-            logLevel = <span class="tag is-danger">{_("log-level-error")}</span>
+            logLevel = <span className="tag is-danger">{_("log-level-error")}</span>
             break;
         case "[DEBUG]":
-            logLevel = <span class="tag is-primary">{_("log-level-debug")}</span>
+            logLevel = <span className="tag is-primary">{_("log-level-debug")}</span>
             break;
     }
 
@@ -132,7 +132,7 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: L
     return (
         <>
             <div></div>
-            <div class="is-size-5">
+            <div className="is-size-5">
                 {localized} {logLevel} <b>{match.groups.name}</b>: <Content
                     raw_content={match.groups.content}
                     shows={shows}
@@ -298,8 +298,8 @@ const Context = ({ show, entry }: ContextParams) => {
     }
 
     return (
-        <div onMouseOver={calcPos} onMouseOut={makeUp} class={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
-            <div class="dropdown-trigger">
+        <div onMouseOver={calcPos} onMouseOut={makeUp} className={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
+            <div className="dropdown-trigger">
                 <a>
                     {!entry &&
                         <span>{show.title}</span>
@@ -312,28 +312,28 @@ const Context = ({ show, entry }: ContextParams) => {
                     }
                 </a>
             </div>
-            <div ref={ref} class="dropdown-menu" style={{
+            <div ref={ref} className="dropdown-menu" style={{
                 width: "20rem"
             }}>
-                <div class="dropdown-content">
-                    <div class="dropdown-item has-text-centered">
-                        <div class="columns is-vcentered">
-                            <div class="column is-4">
-                                <figure class="image is-3by4">
+                <div className="dropdown-content">
+                    <div className="dropdown-item has-text-centered">
+                        <div className="columns is-vcentered">
+                            <div className="column is-4">
+                                <figure className="image is-3by4">
                                     <img loading="lazy" src={show.metadata.poster} />
                                 </figure>
                             </div>
-                            <div class="column is-8">
+                            <div className="column is-8">
                                 <b>{show.title}</b>
                             </div>
                         </div>
                     </div>
-                    <div class="dropdown-item has-text-centered">
+                    <div className="dropdown-item has-text-centered">
                         {ReactHtmlParser(show.metadata.html_status)}
                     </div>
 
                     {entry &&
-                        <div class="dropdown-item has-text-centered">
+                        <div className="dropdown-item has-text-centered">
                             <b>{_("episode-prefix-state", {
                                 episode: entry.episode,
                                 state: entry.state
@@ -353,9 +353,9 @@ interface ConnectionTagParams {
 
 const ConnectionTag = ({ readyState }: ConnectionTagParams) => {
     if (readyState === ReadyState.CONNECTING)
-        return (<span class="ml-3 tag is-link is-medium">{_("websocket-state-connecting")}</span>);
+        return (<span className="ml-3 tag is-link is-medium">{_("websocket-state-connecting")}</span>);
     else if (readyState === ReadyState.OPEN)
-        return (<span class="ml-3 tag is-success is-medium">{_("websocket-state-connected")}</span>);
+        return (<span className="ml-3 tag is-success is-medium">{_("websocket-state-connected")}</span>);
     else
-        return (<span class="ml-3 tag is-danger is-medium">{_("websocket-state-disconnected")}</span>);
+        return (<span className="ml-3 tag is-danger is-medium">{_("websocket-state-disconnected")}</span>);
 }

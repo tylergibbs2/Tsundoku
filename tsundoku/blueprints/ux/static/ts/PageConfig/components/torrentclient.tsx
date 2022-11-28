@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { ChangeEvent, useEffect, useState } from "react";
 import { getInjector } from "../../fluent";
 
 
@@ -73,48 +73,46 @@ export const TorrentConfig = () => {
         getConfig();
     }, []);
 
-    const inputClient = (e: Event) => {
-        let target = e.target as HTMLSelectElement;
-
+    const inputClient = (e: ChangeEvent<HTMLSelectElement>) => {
         setClientStatus(null);
-        updateConfig("client", target.options[target.selectedIndex].value);
+        updateConfig("client", e.target.options[e.target.selectedIndex].value);
     }
 
-    const inputHost = async (e: Event) => {
+    const inputHost = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("host", (e.target as HTMLInputElement).value);
+        updateConfig("host", e.target.value);
     }
 
-    const inputPort = async (e: Event) => {
+    const inputPort = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("port", (e.target as HTMLInputElement).value);
+        updateConfig("port", e.target.value);
     }
 
-    const inputUsername = async (e: Event) => {
+    const inputUsername = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("username", (e.target as HTMLInputElement).value);
+        updateConfig("username", e.target.value);
     }
 
-    const inputPassword = async (e: Event) => {
+    const inputPassword = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        updateConfig("password", (e.target as HTMLInputElement).value);
+        updateConfig("password", e.target.value);
     }
 
-    const inputSecure = async (e: Event) => {
+    const inputSecure = async (e: ChangeEvent<HTMLInputElement>) => {
         setClientStatus(null);
-        if ((e.target as HTMLInputElement).checked)
+        if (e.target.checked)
             updateConfig("secure", true);
         else
             updateConfig("secure", false);
     }
 
     return (
-        <div class="box">
-            <div class="columns">
-                <div class="column is-2">
-                    <h1 class="title is-5">{_("torrent-client-title")}</h1>
-                    <h2 class="subtitle is-6">{_("torrent-client-subtitle")}</h2>
-                    <div class="select is-fullwidth">
+        <div className="box">
+            <div className="columns">
+                <div className="column is-2">
+                    <h1 className="title is-5">{_("torrent-client-title")}</h1>
+                    <h2 className="subtitle is-6">{_("torrent-client-subtitle")}</h2>
+                    <div className="select is-fullwidth">
                         <select onChange={inputClient}>
                             <option value="deluge" selected={config.client === "deluge"}>Deluge</option>
                             <option value="transmission" selected={config.client === "transmission"}>Transmission</option>
@@ -122,39 +120,39 @@ export const TorrentConfig = () => {
                         </select>
                     </div>
                 </div>
-                <div class="column is-3">
-                    <h1 class="title is-5">{_("torrent-host-title")}</h1>
-                    <h2 class="subtitle is-6">{_("torrent-host-subtitle")}</h2>
-                    <div class="field has-addons">
-                        <div class="control is-expanded">
-                            <input class="input" type="text" placeholder="localhost" value={config.host} onChange={inputHost} />
+                <div className="column is-3">
+                    <h1 className="title is-5">{_("torrent-host-title")}</h1>
+                    <h2 className="subtitle is-6">{_("torrent-host-subtitle")}</h2>
+                    <div className="field has-addons">
+                        <div className="control is-expanded">
+                            <input className="input" type="text" placeholder="localhost" value={config.host} onChange={inputHost} />
                         </div>
-                        <div class="control">
-                            <input class="input" type="number" placeholder="8080" min="1" max="65535" value={config.port} onChange={inputPort} />
+                        <div className="control">
+                            <input className="input" type="number" placeholder="8080" min="1" max="65535" value={config.port} onChange={inputPort} />
                         </div>
                     </div>
                 </div>
-                <div class="column is-2">
-                    <h1 class="title is-5">{_("torrent-username-title")}</h1>
-                    <h2 class="subtitle is-6">{_("torrent-username-subtitle")}</h2>
-                    <input class="input" type="text" value={config.username} onChange={inputUsername} placeholder="admin" name="disableAuto" autoComplete="off" />
+                <div className="column is-2">
+                    <h1 className="title is-5">{_("torrent-username-title")}</h1>
+                    <h2 className="subtitle is-6">{_("torrent-username-subtitle")}</h2>
+                    <input className="input" type="text" value={config.username} onChange={inputUsername} placeholder="admin" name="disableAuto" autoComplete="off" />
                 </div>
-                <div class="column is-2">
-                    <h1 class="title is-5">{_("torrent-password-title")}</h1>
-                    <h2 class="subtitle is-6">{_("torrent-password-subtitle")}</h2>
-                    <input class="input" type="password" value={config.password} onChange={inputPassword} placeholder="********" name="disableAuto" autoComplete="off" />
+                <div className="column is-2">
+                    <h1 className="title is-5">{_("torrent-password-title")}</h1>
+                    <h2 className="subtitle is-6">{_("torrent-password-subtitle")}</h2>
+                    <input className="input" type="password" value={config.password} onChange={inputPassword} placeholder="********" name="disableAuto" autoComplete="off" />
                 </div>
-                <div class="column is-3">
-                    <h1 class="title is-5">{_("torrent-secure-title")}</h1>
-                    <h2 class="subtitle is-6">{_("torrent-secure-subtitle")}</h2>
-                    <div class="field">
-                        <input id="secureCheck" type="checkbox" class="switch" onChange={inputSecure} checked={config.secure} />
-                        <label for="secureCheck">{_("checkbox-enabled")}</label>
+                <div className="column is-3">
+                    <h1 className="title is-5">{_("torrent-secure-title")}</h1>
+                    <h2 className="subtitle is-6">{_("torrent-secure-subtitle")}</h2>
+                    <div className="field">
+                        <input id="secureCheck" type="checkbox" className="switch" onChange={inputSecure} checked={config.secure} />
+                        <label htmlFor="secureCheck">{_("checkbox-enabled")}</label>
                     </div>
                 </div>
             </div>
             <div>
-                <a onClick={testTorrentConnection} class={"button is-info " + (fetchingStatus ? "is-loading" : "")}>{_("config-test")}</a>
+                <a onClick={testTorrentConnection} className={"button is-info " + (fetchingStatus ? "is-loading" : "")}>{_("config-test")}</a>
                 <ConnectionStatus status={clientStatus} />
             </div>
 
@@ -170,9 +168,9 @@ interface ConnectionStatusParams {
 
 const ConnectionStatus = ({ status }: ConnectionStatusParams) => {
     if (status)
-        return <span class="tag is-success mt-2 ml-2">{_("config-test-success")}</span>;
+        return <span className="tag is-success mt-2 ml-2">{_("config-test-success")}</span>;
     else if (status === false)
-        return <span class="tag is-danger mt-2 ml-2">{_("config-test-failure")}</span>;
+        return <span className="tag is-danger mt-2 ml-2">{_("config-test-failure")}</span>;
     else
         return <></>;
 }

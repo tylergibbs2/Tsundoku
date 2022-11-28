@@ -27,8 +27,6 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      'react': 'preact/compat',
-      'react-dom': 'preact/compat',
       '~': path.resolve('./node_modules')
     },
     fallback: {

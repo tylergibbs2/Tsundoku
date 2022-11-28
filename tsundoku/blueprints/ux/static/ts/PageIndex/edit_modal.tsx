@@ -1,14 +1,14 @@
 import { getInjector } from "../fluent";
-import { useState, StateUpdater, useEffect } from "preact/hooks";
+import { useState, useEffect, Dispatch, SetStateAction, ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 
-import * as humanizeDuration from "humanize-duration";
-import "bulma-extensions/dist/css/bulma-extensions.min.css";
+import humanizeDuration from "humanize-duration";
 
 import { ShowToggleButton } from "./components/show_toggle_button";
 import { Show, Entry, Webhook } from "../interfaces";
 import { IonIcon } from "../icon";
 
+import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
 let resources = [
     "base",
@@ -20,9 +20,9 @@ const _ = getInjector(resources);
 
 interface EditModalParams {
     activeShow?: Show;
-    setActiveShow: StateUpdater<Show | null>;
+    setActiveShow: Dispatch<SetStateAction<Show | null>>;
     currentModal?: string;
-    setCurrentModal: StateUpdater<string | null>;
+    setCurrentModal: Dispatch<SetStateAction<string | null>>;
     updateShow: any;
 }
 
@@ -223,12 +223,12 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
     }
 
     return (
-        <div class={"modal modal-fx-fadeInScale " + (activeShow && currentModal === "edit" ? "is-active" : "")}>
-            <div class="modal-background" onClick={cancel}></div>
-            <div class="modal-card">
-                <header class="modal-card-head">
-                    <p class="modal-card-title">{_("edit-modal-header")}</p>
-                    <div class="buttons">
+        <div className={"modal modal-fx-fadeInScale " + (activeShow && currentModal === "edit" ? "is-active" : "")}>
+            <div className="modal-background" onClick={cancel}></div>
+            <div className="modal-card">
+                <header className="modal-card-head">
+                    <p className="modal-card-title">{_("edit-modal-header")}</p>
+                    <div className="buttons">
                         <ShowToggleButton
                             show={activeShow}
                             setValue={setValue}
@@ -249,14 +249,14 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                             offTooltip={_("watch-button-title")}
                             additionalClasses="is-primary"
                         />
-                        <div class={"dropdown is-right " + (fixMatch ? "is-active" : "")}>
-                            <div class="dropdown-trigger">
-                                <button class="button is-link" onClick={fixMatchDropdown}>
+                        <div className={"dropdown is-right " + (fixMatch ? "is-active" : "")}>
+                            <div className="dropdown-trigger">
+                                <button className="button is-link" onClick={fixMatchDropdown}>
                                     {_("edit-fix-match")}
                                 </button>
                             </div>
-                            <div class="dropdown-menu" style={{ minWidth: "20rem" }}>
-                                <div class="dropdown-content">
+                            <div className="dropdown-menu" style={{ minWidth: "20rem" }}>
+                                <div className="dropdown-content">
                                     <FixMatchDropdown
                                         show={activeShow}
                                         register={register}
@@ -268,12 +268,12 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
                     </div>
                 </header>
 
-                <section class="modal-card-body">
-                    <div class="tabs">
+                <section className="modal-card-body">
+                    <div className="tabs">
                         <ul>
-                            <li class={tab === "info" ? "is-active" : ""}><a onClick={tabInfo}>{_("edit-tab-info")}</a></li>
-                            <li class={tab === "entries" ? "is-active" : ""}><a onClick={tabEntries}>{_("edit-tab-entries")}</a></li>
-                            <li class={tab === "webhooks" ? "is-active" : ""}><a onClick={tabWebhooks}>{_("edit-tab-webhooks")}</a></li>
+                            <li className={tab === "info" ? "is-active" : ""}><a onClick={tabInfo}>{_("edit-tab-info")}</a></li>
+                            <li className={tab === "entries" ? "is-active" : ""}><a onClick={tabEntries}>{_("edit-tab-entries")}</a></li>
+                            <li className={tab === "webhooks" ? "is-active" : ""}><a onClick={tabWebhooks}>{_("edit-tab-webhooks")}</a></li>
                         </ul>
                     </div>
 
@@ -299,9 +299,9 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
                 </section>
 
-                <footer class="modal-card-foot">
-                    <button class={"button is-success " + (submitting ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
-                    <button class="button closes-modals" onClick={cancel}>{_('edit-form-cancel-button')}</button>
+                <footer className="modal-card-foot">
+                    <button className={"button is-success " + (submitting ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
+                    <button className="button closes-modals" onClick={cancel}>{_('edit-form-cancel-button')}</button>
                 </footer>
             </div>
         </div>
@@ -331,7 +331,7 @@ interface KitsuAPIResult {
 interface FixMatchRowParams {
     result: KitsuAPIResultItem;
     selectedId: string;
-    setSelectedId: StateUpdater<string>;
+    setSelectedId: Dispatch<SetStateAction<string>>;
 }
 
 
@@ -344,7 +344,7 @@ const FixMatchRow = ({ result, selectedId, setSelectedId }: FixMatchRowParams) =
     }
 
     return (
-        <tr onClick={setSelf} class={"is-clickable " + (result.id === selectedId ? "is-selected" : "")}>
+        <tr onClick={setSelf} className={"is-clickable " + (result.id === selectedId ? "is-selected" : "")}>
             <td>{result.attributes.titles["en_jp"]}</td>
         </tr>
     )
@@ -402,8 +402,8 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
         setSearchingState(false);
     };
 
-    const updateQuery = (e: Event) => {
-        query = (e.target as HTMLInputElement).value;
+    const updateQuery = (e: ChangeEvent<HTMLInputElement>) => {
+        query = e.target.value;
 
         setSearchingState(false);
         window.clearTimeout(queryTimer);
@@ -413,17 +413,17 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
     return (
         <>
             <input type="hidden" {...register("kitsu_id")} />
-            <div class="dropdown-item">
-                <div class={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
-                    <input type="text" class="input is-small" onInput={updateQuery} placeholder="Attack on Titan" disabled={isSearching} />
-                    <span class="icon is-small is-left">
+            <div className="dropdown-item">
+                <div className={"control has-icons-left " + (isSearching ? "is-loading" : "")}>
+                    <input type="text" className="input is-small" onInput={updateQuery} placeholder="Attack on Titan" disabled={isSearching} />
+                    <span className="icon is-small is-left">
                         <IonIcon name="search" />
                     </span>
                 </div>
             </div>
             {results.length !== 0 &&
-                <div class="dropdown-item">
-                    <table class="table is-fullwidth is-hoverable">
+                <div className="dropdown-item">
+                    <table className="table is-fullwidth is-hoverable">
                         <tbody>
                             {
                                 results.slice(0, 5).map((result) => (
@@ -455,67 +455,67 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
         return (<></>)
 
     return (
-        <form class={tab !== "info" ? "is-hidden" : ""} style={{
+        <form className={tab !== "info" ? "is-hidden" : ""} style={{
             overflow: "hidden auto"
         }}>
-            <div class="form-columns columns is-multiline">
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+            <div className="form-columns columns is-multiline">
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("edit-form-name-tt")}>{_("edit-form-name-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("title", { required: true })} class="input" type="text"
+                        <div className="control">
+                            <input {...register("title", { required: true })} className="input" type="text"
                                 placeholder={_("edit-form-name-placeholder")} />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("edit-form-desired-format-tt")}>{_("edit-form-desired-format-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        <div className="control">
+                            <input {...register("desired_format")} className="input" type="text" placeholder="{n} - {s00e00}" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("edit-form-desired-folder-tt")}>{_("edit-form-desired-folder-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_folder")} class="input" type="text" />
+                        <div className="control">
+                            <input {...register("desired_folder")} className="input" type="text" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("edit-form-season-tt")}>{_("edit-form-season-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("season", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input {...register("season", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
                                 data-tooltip={_("edit-form-episode-offset-tt")}>{_("edit-form-episode-offset-field")}</span>
                         </label>
-                        <div class="control">
-                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input{...register("episode_offset", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>
@@ -528,8 +528,8 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
 interface EditShowEntriesParams {
     tab: string;
     show: Show;
-    setEntriesToAdd: StateUpdater<Entry[]>;
-    setEntriesToDelete: StateUpdater<Entry[]>;
+    setEntriesToAdd: Dispatch<SetStateAction<Entry[]>>;
+    setEntriesToDelete: Dispatch<SetStateAction<Entry[]>>;
     entriesToAdd: Entry[];
     entriesToDelete: Entry[];
 }
@@ -594,9 +594,9 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
     }
 
     return (
-        <div class={tab !== "entries" ? "is-hidden" : ""}>
+        <div className={tab !== "entries" ? "is-hidden" : ""}>
             {entries.length > 0 &&
-                <table class="table is-fullwidth is-hoverable">
+                <table className="table is-fullwidth is-hoverable">
                     <thead>
                         <tr>
                             <th>{_("edit-entries-th-episode")}</th>
@@ -618,29 +618,29 @@ const EditShowEntries = ({ tab, show, setEntriesToAdd, setEntriesToDelete, entri
                 </table>
             }
             {entries.length === 0 &&
-                <div class="container has-text-centered mb-5">
-                    <h2 class="subtitle">{_("edit-entries-is-empty")}</h2>
+                <div className="container has-text-centered mb-5">
+                    <h2 className="subtitle">{_("edit-entries-is-empty")}</h2>
                 </div>
             }
             {/*@ts-ignore */}
             <form onSubmit={handleSubmit(bufferAddEntry)}>
-                <div class="field is-horizontal">
-                    <div class="field-body">
-                        <div class="field-label is-normal">
-                            <label class="label">{_('edit-entries-form-episode')}</label>
+                <div className="field is-horizontal">
+                    <div className="field-body">
+                        <div className="field-label is-normal">
+                            <label className="label">{_('edit-entries-form-episode')}</label>
                         </div>
-                        <div class="field">
-                            <input {...register('episode')} min="0" class="input" type="number" value="0" required />
-                            <p class="help is-danger is-hidden">{_("edit-entries-form-exists")}</p>
+                        <div className="field">
+                            <input {...register('episode')} min="0" className="input" type="number" value="0" required />
+                            <p className="help is-danger is-hidden">{_("edit-entries-form-exists")}</p>
                         </div>
-                        <div class="field">
+                        <div className="field">
                             <input
                                 {...register('magnet')}
-                                class="input"
+                                className="input"
                                 type="text"
                                 placeholder={_('edit-entries-form-magnet')} />
                         </div>
-                        <input class="button is-success" type="submit" value={_('edit-entries-form-add-button')} />
+                        <input className="button is-success" type="submit" value={_('edit-entries-form-add-button')} />
                     </div>
                 </div>
             </form>
@@ -683,7 +683,7 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
             <td>{_(`entry-status-${entry.state}`)}</td>
             <td title={localizedTitle}>{_("edit-entries-last-update", { time: localized })}</td>
             <td>
-                <button class="delete" onClick={bufferDelete}></button>
+                <button className="delete" onClick={bufferDelete}></button>
             </td>
         </tr>
     )
@@ -694,7 +694,7 @@ interface EditShowWebhooksParams {
     tab: string;
     show: Show;
     webhooksToUpdate: Webhook[];
-    setWebhooksToUpdate: StateUpdater<Webhook[]>;
+    setWebhooksToUpdate: Dispatch<SetStateAction<Webhook[]>>;
 }
 
 
@@ -703,38 +703,38 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
         return (<></>)
 
     return (
-        <div class={tab !== "webhooks" ? "is-hidden" : ""}>
+        <div className={tab !== "webhooks" ? "is-hidden" : ""}>
             {show.webhooks.length !== 0 &&
-                <table class="table is-fullwidth is-hoverable">
+                <table className="table is-fullwidth is-hoverable">
                     <thead>
-                        <tr class="has-text-centered">
+                        <tr className="has-text-centered">
                             <th>{_("edit-webhooks-th-webhook")}</th>
                             <td>
-                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-downloading')}>
                                     <IonIcon name="download" />
                                 </span>
                             </td>
                             <td>
-                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-downloaded')}>
                                     <IonIcon name="save" />
                                 </span>
                             </td>
                             <td>
-                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-renamed')}>
                                     <IonIcon name="pencil-sharp" />
                                 </span>
                             </td>
                             <td>
-                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-moved')}>
                                     <IonIcon name="arrow-forward-circle" />
                                 </span>
                             </td>
                             <td>
-                                <span class="icon has-tooltip-arrow has-tooltip-up"
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-completed')}>
                                     <IonIcon name="checkmark-circle" />
                                 </span>
@@ -755,8 +755,8 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
                 </table>
             }
             {show.webhooks.length === 0 &&
-                <div class="container has-text-centered mb-5">
-                    <h2 class="subtitle">{_("edit-webhooks-is-empty")}</h2>
+                <div className="container has-text-centered mb-5">
+                    <h2 className="subtitle">{_("edit-webhooks-is-empty")}</h2>
                 </div>
             }
         </div>
@@ -767,7 +767,7 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
 interface EditWebhookTableRowParams {
     webhook: Webhook;
     webhooksToUpdate: Webhook[];
-    setWebhooksToUpdate: StateUpdater<Webhook[]>;
+    setWebhooksToUpdate: Dispatch<SetStateAction<Webhook[]>>;
 }
 
 
@@ -810,21 +810,21 @@ const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }:
     }
 
     return (
-        <tr class="has-text-centered">
-            <td class="is-vcentered">{webhook.base.name}</td>
-            <td class="is-vcentered">
+        <tr className="has-text-centered">
+            <td className="is-vcentered">{webhook.base.name}</td>
+            <td className="is-vcentered">
                 <input type="checkbox" {...register('downloading')} onChange={update}></input>
             </td>
-            <td class="is-vcentered">
+            <td className="is-vcentered">
                 <input type="checkbox" {...register('downloaded')} onChange={update}></input>
             </td>
-            <td class="is-vcentered">
+            <td className="is-vcentered">
                 <input type="checkbox" {...register('renamed')} onChange={update}></input>
             </td>
-            <td class="is-vcentered">
+            <td className="is-vcentered">
                 <input type="checkbox" {...register('moved')} onChange={update}></input>
             </td>
-            <td class="is-vcentered">
+            <td className="is-vcentered">
                 <input type="checkbox" {...register('completed')} onChange={update}></input>
             </td>
         </tr>

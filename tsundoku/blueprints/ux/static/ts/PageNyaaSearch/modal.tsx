@@ -1,7 +1,7 @@
 import { GeneralConfig, NyaaIndividualResult, Show } from "../interfaces";
 
 import { toast } from "bulma-toast";
-import { useState, useEffect, StateUpdater } from "preact/hooks";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
@@ -18,7 +18,7 @@ const _ = getInjector(resources);
 
 interface NyaaShowModalParams {
     shows: Show[];
-    setChoice: StateUpdater<NyaaIndividualResult>;
+    setChoice: Dispatch<SetStateAction<NyaaIndividualResult>>;
     choice?: NyaaIndividualResult;
     generalConfig: GeneralConfig;
 }
@@ -104,12 +104,12 @@ export const NyaaShowModal = ({ setChoice, choice, shows, generalConfig }: NyaaS
     }
 
     return (
-        <div id="upsert-show-modal" class={"modal modal-fx-fadeInScale " + (choice ? "is-active" : "")}>
-            <div class="modal-background" onClick={submitting ? null : closeModal}></div>
-            <div class="modal-card">
-                <header class="modal-card-head">
-                    <p class="modal-card-title">{_("modal-title")}</p>
-                    <div class="buttons">
+        <div id="upsert-show-modal" className={"modal modal-fx-fadeInScale " + (choice ? "is-active" : "")}>
+            <div className="modal-background" onClick={submitting ? null : closeModal}></div>
+            <div className="modal-card">
+                <header className="modal-card-head">
+                    <p className="modal-card-title">{_("modal-title")}</p>
+                    <div className="buttons">
                         <ShowToggleButton
                             setValue={receivePostProcess}
                             attribute="post_process"
@@ -133,20 +133,20 @@ export const NyaaShowModal = ({ setChoice, choice, shows, generalConfig }: NyaaS
                     </div>
                 </header>
 
-                <section class="modal-card-body">
-                    <div class="tabs is-centered is-toggle is-toggle-rounded">
+                <section className="modal-card-body">
+                    <div className="tabs is-centered is-toggle is-toggle-rounded">
                         <ul>
-                            <li class={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>
-                                <span class="icon is-small"><IonIcon name="add-circle" /></span>
+                            <li className={addingToExisting ? "" : "is-active"}><a onClick={addNewShow}>
+                                <span className="icon is-small"><IonIcon name="add-circle" /></span>
                                 <span>{_("modal-tab-new")}</span>
                             </a></li>
-                            <li class={addingToExisting ? "is-active" : ""}>
+                            <li className={addingToExisting ? "is-active" : ""}>
                                 <a
                                     onClick={shows.length ? addToExisting : null}
                                     style={shows.length ? {} : { cursor: "auto" }}
-                                    class={shows.length ? "" : "has-text-grey-light"}
+                                    className={shows.length ? "" : "has-text-grey-light"}
                                 >
-                                    <span class="icon is-small"><IonIcon name="pencil-sharp" /></span>
+                                    <span className="icon is-small"><IonIcon name="pencil-sharp" /></span>
                                     <span>{_("modal-tab-existing")}</span>
                                 </a>
                             </li>
@@ -163,9 +163,9 @@ export const NyaaShowModal = ({ setChoice, choice, shows, generalConfig }: NyaaS
                     />
                 </section>
 
-                <footer class="modal-card-foot is-size-7">
-                    <button class={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="nyaa-result-form">{_("add-button")}</button>
-                    <button onClick={submitting ? null : closeModal} class="button">{_("cancel-button")}</button>
+                <footer className="modal-card-foot is-size-7">
+                    <button className={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="nyaa-result-form">{_("add-button")}</button>
+                    <button onClick={submitting ? null : closeModal} className="button">{_("cancel-button")}</button>
                 </footer>
             </div>
         </div>
@@ -176,7 +176,7 @@ export const NyaaShowModal = ({ setChoice, choice, shows, generalConfig }: NyaaS
 interface ModalFormParams {
     addingToExisting: boolean;
     shows: Show[];
-    setSubmitting: StateUpdater<boolean>;
+    setSubmitting: Dispatch<SetStateAction<boolean>>;
     returnCallback?: any;
     watch: boolean;
     postProcess: boolean;
@@ -212,7 +212,7 @@ const ExistingShowSelect = ({ register, name, shows }: ExistingShowSelectInputs)
 
 interface AddToExistingShowFormParams {
     shows: Show[];
-    setSubmitting: StateUpdater<boolean>;
+    setSubmitting: Dispatch<SetStateAction<boolean>>;
     returnCallback?: any;
 }
 
@@ -238,19 +238,19 @@ const AddToExistingShowForm = ({ setSubmitting, returnCallback, shows }: AddToEx
 
     return (
         // @ts-ignore
-        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form" class="has-text-centered">
-            <div class="field">
-                <label class="label">
-                    <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+        <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form" className="has-text-centered">
+            <div className="field">
+                <label className="label">
+                    <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                         data-tooltip={_("existing-show-tt")}>{_("existing-show-field")}</span>
                 </label>
-                <div class="select is-fullwidth">
+                <div className="select is-fullwidth">
                     <ExistingShowSelect register={register} name="existingShow" shows={shows} />
                 </div>
             </div>
-            <label class="checkbox">
+            <label className="checkbox">
                 <input {...register('overwrite')} type="checkbox" />
-                <span class="ml-1">Overwrite existing entries?</span>
+                <span className="ml-1">Overwrite existing entries?</span>
             </label>
         </form>
     );
@@ -266,7 +266,7 @@ interface AddShowFormInputs {
 }
 
 interface AddShowFormParams {
-    setSubmitting: StateUpdater<boolean>;
+    setSubmitting: Dispatch<SetStateAction<boolean>>;
     returnCallback?: any;
     watch: boolean;
     postProcess: boolean;
@@ -276,8 +276,8 @@ interface AddShowFormParams {
 const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess, generalConfig }: AddShowFormParams) => {
     let defaultValues = {
         "title": "",
-        "desired_format": generalConfig.default_desired_format,
-        "desired_folder": generalConfig.default_desired_folder,
+        "desired_format": generalConfig?.default_desired_format,
+        "desired_folder": generalConfig?.default_desired_folder,
         "season": 1,
         "episode_offset": 0,
         "watch": true,
@@ -327,64 +327,64 @@ const AddShowForm = ({ setSubmitting, returnCallback, watch, postProcess, genera
     return (
         // @ts-ignore
         <form onSubmit={handleSubmit(submitHandler)} id="nyaa-result-form">
-            <div class="form-columns columns is-multiline">
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+            <div className="form-columns columns is-multiline">
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("name-tt")}>{_("name-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("title", { required: true })} class="input" type="text"
+                        <div className="control">
+                            <input {...register("title", { required: true })} className="input" type="text"
                                 placeholder={_("name-placeholder")} />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("desired-format-tt")}>{_("desired-format-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        <div className="control">
+                            <input {...register("desired_format")} className="input" type="text" placeholder="{n} - {s00e00}" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("desired-folder-tt")}>{_("desired-folder-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_folder")} class="input" type="text" />
+                        <div className="control">
+                            <input {...register("desired_folder")} className="input" type="text" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("season-tt")}>{_("season-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("season", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input {...register("season", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
                                 data-tooltip={_("episode-offset-tt")}>{_("episode-offset-field")}</span>
                         </label>
-                        <div class="control">
-                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input{...register("episode_offset", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>

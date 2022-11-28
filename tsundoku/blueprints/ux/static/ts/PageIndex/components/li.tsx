@@ -1,7 +1,7 @@
-import { StateUpdater } from "preact/hooks";
+import { Dispatch, SetStateAction } from "react";
 import ReactHtmlParser from "react-html-parser";
 import { getInjector } from "../../fluent";
-import * as humanizeDuration from "humanize-duration";
+import humanizeDuration from "humanize-duration";
 
 import { Entry, Show } from "../../interfaces";
 import { IonIcon } from "../../icon";
@@ -26,17 +26,17 @@ interface ListItemParams {
     textFilter: string;
     filters: string[];
     show: Show;
-    setCurrentModal: StateUpdater<string | null>;
-    setActiveShow: StateUpdater<Show | null>;
+    setCurrentModal: Dispatch<SetStateAction<string | null>>;
+    setActiveShow: Dispatch<SetStateAction<Show | null>>;
 }
 
 
 export const ListItem = ({ textFilter, filters, show, setCurrentModal, setActiveShow }: ListItemParams) => {
     let title: any;
     if (show.metadata.link)
-        title = <a class="ml-1" title={show.title} href={show.metadata.link}><b>{show.title}</b></a>
+        title = <a className="ml-1" title={show.title} href={show.metadata.link}><b>{show.title}</b></a>
     else
-        title = <b class="ml-1" title={show.title}>{show.title}</b>
+        title = <b className="ml-1" title={show.title}>{show.title}</b>
 
     let shouldShow: boolean = true;
     if (show.metadata.kitsu_id !== null) {
@@ -82,24 +82,24 @@ export const ListItem = ({ textFilter, filters, show, setCurrentModal, setActive
     }
 
     return (
-        <tr class={shouldShow ? "" : "is-hidden"}>
-            <td class="is-vcentered">
+        <tr className={shouldShow ? "" : "is-hidden"}>
+            <td className="is-vcentered">
                 <a href={show.metadata.link}>
-                    <figure class="image is-3by4">
+                    <figure className="image is-3by4">
                         <img src={show.metadata.poster} loading="lazy" />
                     </figure>
                 </a>
             </td>
-            <td class="is-vcentered" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <td className="is-vcentered" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {show.metadata.html_status && ReactHtmlParser(show.metadata.html_status)} {title}
             </td>
-            <td class="is-vcentered">{timeDisplay}</td>
-            <td class="is-vcentered">
-                <a class="button is-info mr-1" onClick={openEditModal} title={_("show-edit-link")}>
-                    <span class="icon"><IonIcon name="pencil-sharp" /></span>
+            <td className="is-vcentered">{timeDisplay}</td>
+            <td className="is-vcentered">
+                <a className="button is-info mr-1" onClick={openEditModal} title={_("show-edit-link")}>
+                    <span className="icon"><IonIcon name="pencil-sharp" /></span>
                 </a>
-                <a class="button is-danger" onClick={openDeleteModal} title={_("show-delete-link")}>
-                    <span class="icon"><IonIcon name="trash" /></span>
+                <a className="button is-danger" onClick={openDeleteModal} title={_("show-delete-link")}>
+                    <span className="icon"><IonIcon name="trash" /></span>
                 </a>
             </td>
         </tr>
@@ -107,7 +107,7 @@ export const ListItem = ({ textFilter, filters, show, setCurrentModal, setActive
 }
 
 interface AddShowLIParams {
-    setCurrentModal: StateUpdater<string>;
+    setCurrentModal: Dispatch<SetStateAction<string>>;
 }
 
 export const AddShowLI = ({ setCurrentModal }: AddShowLIParams) => {
@@ -118,8 +118,8 @@ export const AddShowLI = ({ setCurrentModal }: AddShowLIParams) => {
     return (
         <tr>
             <td colSpan={4}>
-                <button onClick={openModal} style={{ height: "100%" }} class="button is-outlined is-success is-large is-fullwidth">
-                    <span class="icon">
+                <button onClick={openModal} style={{ height: "100%" }} className="button is-outlined is-success is-large is-fullwidth">
+                    <span className="icon">
                         <IonIcon name="add-circle" />
                     </span>
                 </button>

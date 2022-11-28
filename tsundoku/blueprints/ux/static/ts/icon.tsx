@@ -13,7 +13,7 @@ export const IonIcon = ({ name, className, src, ios, md, size }: IonIconParams) 
             {/* @ts-ignore */}
             <ion-icon
                 name={name}
-                class={className}
+                className={className}
                 src={src}
                 ios={ios}
                 md={md}

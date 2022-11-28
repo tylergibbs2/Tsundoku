@@ -2,15 +2,11 @@
     "compilerOptions": {
         "target": "es2020",
         "jsx": "react-jsx",
-        "jsxImportSource": "preact",
         "module": "commonjs",
         "lib": ["ES2020", "ES2016", "DOM"],
-        "skipLibCheck": true,
-        "baseUrl": "./",
-        "paths": {
-            "react": ["./node_modules/preact/compat/"],
-            "react-dom": ["./node_modules/preact/compat/"]
-        }
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node"
     },
     "include": [
         "tsundoku/blueprints/ux/static/ts/App.tsx",

@@ -1,3 +1,9 @@
+export interface APIResponse<T> {
+    status: number;
+    error?: string;
+    result?: T;
+}
+
 export interface WebhookBase {
     name: string;
     base_id: number;

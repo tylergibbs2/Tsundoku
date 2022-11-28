@@ -1,4 +1,4 @@
-import { StateUpdater } from "preact/hooks";
+import { Dispatch, SetStateAction } from "react";
 import { AddShowCard, Card } from "./card";
 import { ListItem, AddShowLI } from "./li";
 import { getInjector } from "../../fluent";
@@ -14,10 +14,10 @@ const _ = getInjector(resources);
 
 interface ShowsParams {
     shows: Show[];
-    setActiveShow: StateUpdater<Show>;
+    setActiveShow: Dispatch<SetStateAction<Show>>;
     filters: string[];
     textFilter: string;
-    setCurrentModal: StateUpdater<string>;
+    setCurrentModal: Dispatch<SetStateAction<string>>;
     viewType: string;
 }
 
@@ -47,15 +47,15 @@ export const Shows = ({ shows, setActiveShow, filters, textFilter, setCurrentMod
 
 interface ViewTypeParams {
     shows: Show[];
-    setActiveShow: StateUpdater<Show>;
+    setActiveShow: Dispatch<SetStateAction<Show>>;
     filters: string[];
     textFilter: string;
-    setCurrentModal: StateUpdater<string>;
+    setCurrentModal: Dispatch<SetStateAction<string>>;
 }
 
 const CardView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }: ViewTypeParams) => {
     return (
-        <div class="columns is-multiline">
+        <div className="columns is-multiline">
             {
                 shows.map((show: Show) => (
                     <Card
@@ -76,7 +76,7 @@ const CardView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }
 
 const ListView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }: ViewTypeParams) => {
     return (
-        <table class="table is-fullwidth is-striped is-hoverable" style={{tableLayout: "fixed"}}>
+        <table className="table is-fullwidth is-striped is-hoverable" style={{tableLayout: "fixed"}}>
             <thead>
                 <tr>
                     <th style={{width: "5%" }}></th>
@@ -89,6 +89,7 @@ const ListView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }
                 {
                     shows.map((show: Show) => (
                         <ListItem
+                        key={show.id_}
                         textFilter={textFilter}
                         filters={filters}
                         show={show}

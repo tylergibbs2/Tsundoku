@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "preact/hooks";
+import { useRef, useState, useEffect } from "react";
 
 import { Show } from "../../interfaces";
 import { IonIcon } from "../../icon";
@@ -59,13 +59,13 @@ export const ShowToggleButton = ({ show, setValue, attribute, onIcon, offIcon, o
 
     if (state) {
         return (
-            <button ref={btn} class={"button " + additionalClasses} title={onTooltip} onClick={setStateOff} disabled={disabled}>
+            <button ref={btn} className={"button " + additionalClasses} title={onTooltip} onClick={setStateOff} disabled={disabled}>
                 <IonIcon name={onIcon} />
             </button>
         )
     } else {
         return (
-            <button ref={btn} class={"button is-outlined " + additionalClasses} title={offTooltip} onClick={setStateOn} disabled={disabled}>
+            <button ref={btn} className={"button is-outlined " + additionalClasses} title={offTooltip} onClick={setStateOn} disabled={disabled}>
                 <IonIcon name={offIcon} />
             </button>
         )

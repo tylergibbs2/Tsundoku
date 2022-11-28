@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect } from "react";
 
 import { getInjector } from "../../fluent";
 
@@ -45,9 +45,9 @@ export const FeedbackBtns = () => {
     }
 
     return (
-        <div class="columns">
-            <button class="button is-link is-fullwidth mx-3" onClick={featureRequest}>{_("feedback-request")}</button>
-            <button class="button is-danger is-fullwidth mx-3" onClick={bugReport}>{_("feedback-bug")}</button>
+        <div className="columns">
+            <button className="button is-link is-fullwidth mx-3" onClick={featureRequest}>{_("feedback-request")}</button>
+            <button className="button is-danger is-fullwidth mx-3" onClick={bugReport}>{_("feedback-bug")}</button>
         </div>
     )
 }

@@ -1,5 +1,5 @@
 import { getInjector } from "../fluent";
-import { useState, StateUpdater } from "preact/hooks";
+import { useState, Dispatch, SetStateAction } from "react";
 import { Show } from "../interfaces";
 import ReactHtmlParser from "react-html-parser";
 
@@ -13,9 +13,9 @@ const _ = getInjector(resources);
 
 interface DeleteModalParams {
     show?: Show;
-    setActiveShow: StateUpdater<Show | null>;
+    setActiveShow: Dispatch<SetStateAction<Show | null>>;
     currentModal?: string;
-    setCurrentModal: StateUpdater<string | null>;
+    setCurrentModal: Dispatch<SetStateAction<string | null>>;
     removeShow: any;
 }
 
@@ -54,21 +54,21 @@ export const DeleteModal = ({ show, setActiveShow, currentModal, setCurrentModal
     }
 
     return (
-        <div class={"modal modal-fx-fadeInScale " + (show && currentModal === "delete" ? "is-active" : "")}>
-            <div class="modal-background" onClick={cancel}></div>
-            <div class="modal-card">
-                <header class="modal-card-head">
-                    <p class="modal-card-title">{_("delete-modal-header")}</p>
-                    <button class="delete" onClick={cancel} aria-label="close"></button>
+        <div className={"modal modal-fx-fadeInScale " + (show && currentModal === "delete" ? "is-active" : "")}>
+            <div className="modal-background" onClick={cancel}></div>
+            <div className="modal-card">
+                <header className="modal-card-head">
+                    <p className="modal-card-title">{_("delete-modal-header")}</p>
+                    <button className="delete" onClick={cancel} aria-label="close"></button>
                 </header>
 
-                <section class="modal-card-body">
+                <section className="modal-card-body">
                     <p>{show && ReactHtmlParser(_("delete-confirm-text", { "name": show.title }))}</p>
                 </section>
 
-                <footer class="modal-card-foot">
-                    <button class="button is-danger" onClick={performDelete}>{_("delete-confirm-button")}</button>
-                    <button class="button" onClick={cancel}>{_("delete-cancel")}</button>
+                <footer className="modal-card-foot">
+                    <button className="button is-danger" onClick={performDelete}>{_("delete-confirm-button")}</button>
+                    <button className="button" onClick={cancel}>{_("delete-cancel")}</button>
                 </footer>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, StateUpdater, useEffect } from "preact/hooks";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { Show, GeneralConfig } from "../interfaces";
@@ -15,7 +15,7 @@ const _ = getInjector(resources);
 
 interface AddModalParams {
     currentModal?: string;
-    setCurrentModal: StateUpdater<string | null>;
+    setCurrentModal: Dispatch<SetStateAction<string | null>>;
     addShow: any;
     generalConfig: GeneralConfig;
 }
@@ -26,8 +26,8 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
 
     let defaultValues = {
         "title": "",
-        "desired_format": generalConfig.default_desired_format,
-        "desired_folder": generalConfig.default_desired_folder,
+        "desired_format": generalConfig?.default_desired_format,
+        "desired_folder": generalConfig?.default_desired_folder,
         "season": 1,
         "episode_offset": 0,
         "watch": true,
@@ -56,12 +56,12 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
     }
 
     return (
-        <div class={"modal modal-fx-fadeInScale " + (currentModal === "add" ? "is-active" : "")}>
-            <div class="modal-background" onClick={cancel}></div>
-            <div class="modal-card">
-                <header class="modal-card-head">
-                    <p class="modal-card-title">{_("add-modal-header")}</p>
-                    <div class="buttons">
+        <div className={"modal modal-fx-fadeInScale " + (currentModal === "add" ? "is-active" : "")}>
+            <div className="modal-background" onClick={cancel}></div>
+            <div className="modal-card">
+                <header className="modal-card-head">
+                    <p className="modal-card-title">{_("add-modal-header")}</p>
+                    <div className="buttons">
                         <ShowToggleButton
                             setValue={setValue}
                             attribute="post_process"
@@ -83,7 +83,7 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
                     </div>
                 </header>
 
-                <section class="modal-card-body">
+                <section className="modal-card-body">
 
                     <AddShowForm
                         setSubmitting={setSubmitting}
@@ -95,10 +95,10 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
 
                 </section>
 
-                <footer class="modal-card-foot">
-                    <progress class="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
-                    <button class={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="add-show-form">{_("add-form-add-button")}</button>
-                    <button class="button closes-modals" onClick={cancel}>{_("add-form-cancel-button")}</button>
+                <footer className="modal-card-foot">
+                    <progress className="progress is-primary is-small mt-2 is-hidden" max="100"></progress>
+                    <button className={"button is-success " + (submitting ? "is-loading" : "")} type="submit" form="add-show-form">{_("add-form-add-button")}</button>
+                    <button className="button closes-modals" onClick={cancel}>{_("add-form-cancel-button")}</button>
                 </footer>
             </div>
         </div>
@@ -106,7 +106,7 @@ export const AddModal = ({ currentModal, setCurrentModal, addShow, generalConfig
 }
 
 interface AddShowFormParams {
-    setSubmitting: StateUpdater<boolean>;
+    setSubmitting: Dispatch<SetStateAction<boolean>>;
     returnCallback: any;
     register: any;
     handleSubmit: any;
@@ -146,64 +146,64 @@ const AddShowForm = ({ setSubmitting, returnCallback, register, handleSubmit, re
 
     return (
         <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
-            <div class="form-columns columns is-multiline">
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+            <div className="form-columns columns is-multiline">
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("add-form-name-tt")}>{_("add-form-name-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("title", { required: true })} class="input" type="text"
+                        <div className="control">
+                            <input {...register("title", { required: true })} className="input" type="text"
                                 placeholder={_("add-form-name-placeholder")} />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("add-form-desired-format-tt")}>{_("add-form-desired-format-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_format")} class="input" type="text" placeholder="{n} - {s00e00}" />
+                        <div className="control">
+                            <input {...register("desired_format")} className="input" type="text" placeholder="{n} - {s00e00}" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-full">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-full">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("add-form-desired-folder-tt")}>{_("add-form-desired-folder-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("desired_folder")} class="input" type="text" />
+                        <div className="control">
+                            <input {...register("desired_folder")} className="input" type="text" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                                 data-tooltip={_("add-form-season-tt")}>{_("add-form-season-field")}</span>
                         </label>
-                        <div class="control">
-                            <input {...register("season", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input {...register("season", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-half">
-                    <div class="field">
-                        <label class="label">
-                            <span class="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
+                <div className="column is-half">
+                    <div className="field">
+                        <label className="label">
+                            <span className="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
                                 data-tooltip={_("add-form-episode-offset-tt")}>{_("add-form-episode-offset-field")}</span>
                         </label>
-                        <div class="control">
-                            <input{...register("episode_offset", { required: true })} class="input" type="number" />
+                        <div className="control">
+                            <input{...register("episode_offset", { required: true })} className="input" type="number" />
                         </div>
                     </div>
                 </div>

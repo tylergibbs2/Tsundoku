@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { ChangeEvent, useEffect, useState } from "react";
 import { getInjector } from "../../fluent";
 
 
@@ -50,69 +50,69 @@ export const FeedsConfig = () => {
         getConfig();
     }, []);
 
-    const inputPollingInterval = async (e: Event) => {
-        updateConfig("polling_interval", (e.target as HTMLInputElement).value);
+    const inputPollingInterval = async (e: ChangeEvent<HTMLInputElement>) => {
+        updateConfig("polling_interval", e.target.value);
     }
 
-    const inputCompleteCheck = async (e: Event) => {
-        updateConfig("complete_check_interval", (e.target as HTMLInputElement).value);
+    const inputCompleteCheck = async (e: ChangeEvent<HTMLInputElement>) => {
+        updateConfig("complete_check_interval", e.target.value);
     }
 
-    const inputFuzzyCutoff = async (e: Event) => {
-        updateConfig("fuzzy_cutoff", (e.target as HTMLInputElement).value);
+    const inputFuzzyCutoff = async (e: ChangeEvent<HTMLInputElement>) => {
+        updateConfig("fuzzy_cutoff", e.target.value);
     }
 
-    const inputSeedRatioLimit = async (e: Event) => {
-        (e.target as HTMLInputElement).value = parseFloat((e.target as HTMLInputElement).value).toFixed(2);
+    const inputSeedRatioLimit = async (e: ChangeEvent<HTMLInputElement>) => {
+        e.target.value = parseFloat(e.target.value).toFixed(2);
 
-        updateConfig("seed_ratio_limit", (e.target as HTMLInputElement).value);
+        updateConfig("seed_ratio_limit", e.target.value);
     }
 
     return (
-        <div class="box">
-            <div class="columns">
-                <div class="column is-3">
-                    <h1 class="title is-5">{_("feeds-fuzzy-cutoff-title")}</h1>
-                    <h2 class="subtitle is-6">{_("feeds-fuzzy-cutoff-subtitle")}</h2>
-                    <div class="field has-addons">
-                        <div class="control">
-                            <input class="input" type="number" min="0" max="100" placeholder="90" value={config.fuzzy_cutoff} onChange={inputFuzzyCutoff} />
+        <div className="box">
+            <div className="columns">
+                <div className="column is-3">
+                    <h1 className="title is-5">{_("feeds-fuzzy-cutoff-title")}</h1>
+                    <h2 className="subtitle is-6">{_("feeds-fuzzy-cutoff-subtitle")}</h2>
+                    <div className="field has-addons">
+                        <div className="control">
+                            <input className="input" type="number" min="0" max="100" placeholder="90" value={config.fuzzy_cutoff} onChange={inputFuzzyCutoff} />
                         </div>
-                        <div class="control">
-                            <a class="button is-static">%</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="column is-3">
-                    <h1 class="title is-5"><span class="has-tooltip-bottom has-tooltip-multiline" data-tooltip={_("feeds-pollinginterval-tooltip")}>{_("feeds-pollinginterval-title")}</span></h1>
-                    <h2 class="subtitle is-6">{_("feeds-pollinginterval-subtitle")}</h2>
-                    <div class="field has-addons">
-                        <div class="control">
-                            <input class="input" type="number" min="30" placeholder="900" value={config.polling_interval} onChange={inputPollingInterval} />
-                        </div>
-                        <div class="control">
-                            <a class="button is-static">{_("seconds-suffix")}</a>
+                        <div className="control">
+                            <a className="button is-static">%</a>
                         </div>
                     </div>
                 </div>
-                <div class="column is-3">
-                    <h1 class="title is-5">{_("feeds-completioncheck-title")}</h1>
-                    <h2 class="subtitle is-6">{_("feeds-completioncheck-subtitle")}</h2>
-                    <div class="field has-addons">
-                        <div class="control">
-                            <input class="input" type="number" min="1" placeholder="15" value={config.complete_check_interval} onChange={inputCompleteCheck} />
+                <div className="column is-3">
+                    <h1 className="title is-5"><span className="has-tooltip-bottom has-tooltip-multiline" data-tooltip={_("feeds-pollinginterval-tooltip")}>{_("feeds-pollinginterval-title")}</span></h1>
+                    <h2 className="subtitle is-6">{_("feeds-pollinginterval-subtitle")}</h2>
+                    <div className="field has-addons">
+                        <div className="control">
+                            <input className="input" type="number" min="30" placeholder="900" value={config.polling_interval} onChange={inputPollingInterval} />
                         </div>
-                        <div class="control">
-                            <a class="button is-static">{_("seconds-suffix")}</a>
+                        <div className="control">
+                            <a className="button is-static">{_("seconds-suffix")}</a>
                         </div>
                     </div>
                 </div>
-                <div class="column is-3">
-                    <h1 class="title is-5">{_("feeds-seedratio-title")}</h1>
-                    <h2 class="subtitle is-6">{_("feeds-seedratio-subtitle")}</h2>
-                    <div class="field">
-                        <div class="control">
-                            <input class="input" type="number" min="0.0" placeholder="0.0" step="0.1" value={config.seed_ratio_limit?.toFixed(2)} onChange={inputSeedRatioLimit} />
+                <div className="column is-3">
+                    <h1 className="title is-5">{_("feeds-completioncheck-title")}</h1>
+                    <h2 className="subtitle is-6">{_("feeds-completioncheck-subtitle")}</h2>
+                    <div className="field has-addons">
+                        <div className="control">
+                            <input className="input" type="number" min="1" placeholder="15" value={config.complete_check_interval} onChange={inputCompleteCheck} />
+                        </div>
+                        <div className="control">
+                            <a className="button is-static">{_("seconds-suffix")}</a>
+                        </div>
+                    </div>
+                </div>
+                <div className="column is-3">
+                    <h1 className="title is-5">{_("feeds-seedratio-title")}</h1>
+                    <h2 className="subtitle is-6">{_("feeds-seedratio-subtitle")}</h2>
+                    <div className="field">
+                        <div className="control">
+                            <input className="input" type="number" min="0.0" placeholder="0.0" step="0.1" value={config.seed_ratio_limit?.toFixed(2)} onChange={inputSeedRatioLimit} />
                         </div>
                     </div>
                 </div>

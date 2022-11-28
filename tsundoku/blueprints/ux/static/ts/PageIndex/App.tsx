@@ -1,5 +1,6 @@
 import { toast } from "bulma-toast";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect } from "react";
+import { useQuery } from "react-query";
 
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
@@ -8,6 +9,7 @@ import { Entry, Show, GeneralConfig } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
+import { fetchConfigGeneral } from "../queries";
 
 import "../../css/index.css";
 
@@ -40,7 +42,7 @@ export const IndexApp = () => {
     const [sortDirection, setSortDirection] = useState<string>(storedSortDirection || "+");
     const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 
-    const [generalConfig, setGeneralConfig] = useState<GeneralConfig>({});
+    const generalConfig = useQuery("configGeneral", fetchConfigGeneral);
 
     const fetchShows = async () => {
         let request = {
@@ -58,24 +60,6 @@ export const IndexApp = () => {
             return;
 
         setShows(getSortedShows(resp_json.result));
-    }
-
-    const fetchConfig = async () => {
-        let request = {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
-
-        let resp = await fetch("/api/v1/config/general", request);
-        let resp_json: any;
-        if (resp.ok)
-            resp_json = await resp.json();
-        else
-            return;
-
-        setGeneralConfig(resp_json.result);
     }
 
     const addShow = (show: Show) => {
@@ -185,7 +169,6 @@ export const IndexApp = () => {
 
     useEffect(() => {
         fetchShows();
-        fetchConfig();
     }, []);
 
     useEffect(() => {
@@ -217,7 +200,7 @@ export const IndexApp = () => {
                 currentModal={currentModal}
                 setCurrentModal={setCurrentModal}
                 addShow={addShow}
-                generalConfig={generalConfig}
+                generalConfig={generalConfig.data}
             />
 
             <DeleteModal
@@ -236,10 +219,10 @@ export const IndexApp = () => {
                 updateShow={updateShow}
             />
 
-            <div class="columns">
-                <div class="column is-full">
-                    <h1 class="title">{_("shows-page-title")}</h1>
-                    <h2 class="subtitle">{_("shows-page-subtitle")}</h2>
+            <div className="columns">
+                <div className="column is-full">
+                    <h1 className="title">{_("shows-page-title")}</h1>
+                    <h2 className="subtitle">{_("shows-page-subtitle")}</h2>
                 </div>
             </div>
             <Filters

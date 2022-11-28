@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { hydrate } from "preact";
+import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 
@@ -43,4 +43,5 @@ const RootApp = () => {
     )
 }
 
-hydrate(<RootApp />, document.getElementById("root")!);
+const root = createRoot(document.getElementById("root"));
+root.render(<RootApp />);

@@ -5,6 +5,7 @@
   "private": true,
   "devDependencies": {
     "@fluent/bundle": "^0.16.0",
+    "@types/humanize-duration": "^3.27.1",
     "@types/jquery": "^3.5.5",
     "@types/jqueryui": "^1.12.14",
     "@types/react-html-parser": "^2.0.1",
@@ -14,7 +15,8 @@
     "css-loader": "^5.0.1",
     "humanize-duration": "^3.25.1",
     "intl-pluralrules": "^1.2.2",
-    "preact": "10.11.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.2.3",
     "react-html-parser": "^2.0.2",
     "react-query": "^3.39.2",
