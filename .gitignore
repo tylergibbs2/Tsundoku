@@ -25,3 +25,7 @@ tsundoku.db-wal
 
 # Ignore built JS
 tsundoku/blueprints/ux/static/js/*.js
+
+# Installed parsers
+parsers
+data
