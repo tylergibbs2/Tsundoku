@@ -10,6 +10,7 @@ import { ConfigApp } from "./PageConfig/App";
 import { LogsApp } from "./PageLogs/App";
 
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
+import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
 
 const router = createBrowserRouter([

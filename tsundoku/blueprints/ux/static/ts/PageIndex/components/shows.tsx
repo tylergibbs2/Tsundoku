@@ -59,6 +59,7 @@ const CardView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }
             {
                 shows.map((show: Show) => (
                     <Card
+                        key={show.id_}
                         textFilter={textFilter}
                         filters={filters}
                         show={show}
@@ -76,26 +77,26 @@ const CardView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }
 
 const ListView = ({ shows, setActiveShow, filters, textFilter, setCurrentModal }: ViewTypeParams) => {
     return (
-        <table className="table is-fullwidth is-striped is-hoverable" style={{tableLayout: "fixed"}}>
+        <table className="table is-fullwidth is-striped is-hoverable" style={{ tableLayout: "fixed" }}>
             <thead>
                 <tr>
-                    <th style={{width: "5%" }}></th>
-                    <th style={{width: "70%"}}>{_("add-form-name-field")}</th>
-                    <th style={{width: "15%"}}>{_("list-view-entry-update-header")}</th>
-                    <th style={{width: "10%"}}>{_("list-view-actions-header")}</th>
+                    <th style={{ width: "5%" }}></th>
+                    <th style={{ width: "70%" }}>{_("add-form-name-field")}</th>
+                    <th style={{ width: "15%" }}>{_("list-view-entry-update-header")}</th>
+                    <th style={{ width: "10%" }}>{_("list-view-actions-header")}</th>
                 </tr>
             </thead>
             <tbody>
                 {
                     shows.map((show: Show) => (
                         <ListItem
-                        key={show.id_}
-                        textFilter={textFilter}
-                        filters={filters}
-                        show={show}
-                        setCurrentModal={setCurrentModal}
-                        setActiveShow={setActiveShow}
-                    />
+                            key={show.id_}
+                            textFilter={textFilter}
+                            filters={filters}
+                            show={show}
+                            setCurrentModal={setCurrentModal}
+                            setActiveShow={setActiveShow}
+                        />
                     ))
                 }
 

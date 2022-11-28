@@ -203,7 +203,7 @@ const ExistingShowSelect = ({ register, name, shows }: ExistingShowSelectInputs)
     return (
         <select {...register(name, { required: true })} required>
             {shows.map(show => (
-                <option value={show.id_}>{show.title}</option>
+                <option key={show.id_} value={show.id_}>{show.title}</option>
             ))}
         </select>
     )

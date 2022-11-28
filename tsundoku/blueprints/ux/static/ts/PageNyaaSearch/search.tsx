@@ -87,8 +87,9 @@ export const SearchTable = ({ setChoice, results }: SearchTableParams) => {
                     {
                         results.map((show: NyaaIndividualResult) => (
                             <SearchTableRow
-                            setChoice={setChoice}
-                            show={show}
+                                key={show.post_link}
+                                setChoice={setChoice}
+                                show={show}
                             />
                         ))
                     }
@@ -110,7 +111,7 @@ const SearchTableRow = ({ setChoice, show }: SearchTableRowParams) => {
     }
 
     return (
-        <tr onClick={updateChoice} style={{"cursor": "pointer"}}>
+        <tr onClick={updateChoice} style={{ "cursor": "pointer" }}>
             <td style={{ width: "60%" }}>{show.title}</td>
             <td>{show.size}</td>
             <td>{show.published}</td>

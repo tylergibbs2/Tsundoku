@@ -8,8 +8,6 @@ import { ShowToggleButton } from "./components/show_toggle_button";
 import { Show, Entry, Webhook } from "../interfaces";
 import { IonIcon } from "../icon";
 
-import "bulma-extensions/dist/css/bulma-extensions.min.css";
-
 let resources = [
     "base",
     "index"
@@ -428,6 +426,7 @@ const FixMatchDropdown = ({ show, register, setValue }: FixMatchDropdownParams) 
                             {
                                 results.slice(0, 5).map((result) => (
                                     <FixMatchRow
+                                        key={result.id}
                                         result={result}
                                         selectedId={selectedId}
                                         setSelectedId={setSelectedId}
@@ -745,6 +744,7 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
                         {
                             show.webhooks.map((webhook) => (
                                 <EditWebhookTableRow
+                                    key={webhook.base.base_id}
                                     webhook={webhook}
                                     webhooksToUpdate={webhooksToUpdate}
                                     setWebhooksToUpdate={setWebhooksToUpdate}
