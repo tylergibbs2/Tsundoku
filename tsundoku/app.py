@@ -147,21 +147,25 @@ async def setup_parsers() -> None:
         spec_root = "parsers"
 
     parser_path.mkdir(exist_ok=True, parents=True)
+    if not (parser_path / "COPIED").exists():
+        default_parsers = ("subsplease", "nyaa")
+        for parser in default_parsers:
+            if not (parser_path / f"{parser}.py").exists():
+                async with aiofiles.open(parser_path / f"{parser}.py", "wb") as fp:
+                    async with aiofiles.open(Path.cwd() / "default_parsers" / f"{parser}.py", "rb") as default_fp:
+                        await fp.write(await default_fp.read())
 
-    default_parsers = ("subsplease", "nyaa")
+        async with aiofiles.open(parser_path / "COPIED", "wb") as fp:
+            await fp.write(b"")
 
-    for parser in default_parsers:
-        if not (parser_path / f"{parser}.py").exists():
-            async with aiofiles.open(parser_path / f"{parser}.py", "wb") as fp:
-                async with aiofiles.open(Path.cwd() / "default_parsers" / f"{parser}.py", "rb") as default_fp:
-                    await fp.write(await default_fp.read())
+    parsers = [f"{spec_root}.{p.stem}" for p in parser_path.glob("*.py")]
 
     # It's okay if we're blocking here.
     # The webserver isn't intended to
     # be serving at this point in time.
     app.parser_lock = asyncio.Lock()
     async with app.parser_lock:
-        load_parsers([f"{spec_root}.{parser}" for parser in default_parsers])
+        load_parsers(parsers)
 
 
 @app.before_serving
