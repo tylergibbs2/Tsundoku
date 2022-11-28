@@ -5,7 +5,7 @@ import { useState, useEffect, StateUpdater } from "preact/hooks";
 import { useForm } from "react-hook-form";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { ShowToggleButton } from "../index/components/show_toggle_button";
+import { ShowToggleButton } from "../PageIndex/components/show_toggle_button";
 
 
 let resources = [
