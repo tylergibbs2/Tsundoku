@@ -117,7 +117,7 @@ interface ViewTypeParams {
 
 const CardView = ({ shows, setActiveShow, filters, textFilter, sortDirection, sortKey, setCurrentModal }: ViewTypeParams) => {
     return (
-        <div className="columns is-multiline">
+        <div className="columns is-mobile is-multiline">
             {
                 getSortedShows(shows, sortDirection, sortKey).map((show: Show) => (
                     <Card
