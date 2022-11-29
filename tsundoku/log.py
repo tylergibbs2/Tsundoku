@@ -3,7 +3,10 @@ from __future__ import annotations
 import logging
 from asyncio import QueueFull
 from logging.config import dictConfig
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
 
 from tsundoku.config import GeneralConfig
 
@@ -11,7 +14,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class SocketHandler(logging.Handler):
-    def __init__(self, app: Any) -> None:
+    def __init__(self, app: TsundokuApp) -> None:
         self.app = app
         super().__init__()
 
@@ -31,7 +34,7 @@ class SocketHandler(logging.Handler):
                 continue
 
 
-def setup_logging(app: Any) -> None:
+def setup_logging(app: TsundokuApp) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     cfg = GeneralConfig.sync_retrieve(ensure_exists=True)

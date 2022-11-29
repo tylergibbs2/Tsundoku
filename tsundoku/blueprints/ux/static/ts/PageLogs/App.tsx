@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useQuery } from "react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
 import { Entry, Show } from "../interfaces";
+import { fetchShows } from "../queries";
 
 import "../../css/logs.css";
-import { fetchShows } from "../queries";
 
 let resources = [
     "logs"
@@ -36,11 +36,12 @@ export const LogsApp = () => {
     let ws_url = `${protocol}//${ws_host}/ws/logs`;
 
     const { readyState, lastMessage } = useWebSocket(ws_url);
-    const messageHistory = useRef([]);
+    const [messageHistory, setMessageHistory] = useState([]);
 
-    messageHistory.current = useMemo(() =>
-        messageHistory.current.concat(lastMessage), [lastMessage]
-    );
+    useEffect(() => {
+        if (lastMessage !== null)
+          setMessageHistory((prev) => prev.concat(lastMessage));
+    }, [lastMessage, setMessageHistory]);
 
     if (shows.isLoading)
         return <progress className="progress is-large is-primary" style={{transform: "translateY(33vh)"}} max="100" />;
@@ -58,7 +59,8 @@ export const LogsApp = () => {
                 height: "73vh"
             }}>
                 <div className="logrow-container">
-                    {messageHistory.current.map((msg, idx) => (
+                    <div></div>
+                    {messageHistory.map((msg, idx) => (
                         <LogRow
                             key={idx}
                             row={msg}
@@ -119,18 +121,15 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: L
     }).format(dt);
 
     return (
-        <>
-            <div></div>
-            <div className="is-size-5">
-                {localized} {logLevel} <b>{match.groups.name}</b>: <Content
-                    raw_content={match.groups.content}
-                    shows={shows}
-                    showAccessCache={showAccessCache}
-                    entryAccessCache={entryAccessCache}
-                    ignoreList={ignoreList}
-                />
-            </div>
-        </>
+        <div className="is-size-5">
+            {localized} {logLevel} <b>{match.groups.name}</b>: <Content
+                raw_content={match.groups.content}
+                shows={shows}
+                showAccessCache={showAccessCache}
+                entryAccessCache={entryAccessCache}
+                ignoreList={ignoreList}
+            />
+        </div>
     );
 }
 
