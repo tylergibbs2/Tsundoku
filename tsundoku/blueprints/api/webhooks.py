@@ -1,7 +1,7 @@
 from quart import current_app as app
 from quart import request, views
 
-from tsundoku.webhooks import Webhook
+from tsundoku.webhooks import Webhook, VALID_TRIGGERS
 
 from .response import APIResponse
 
@@ -12,7 +12,6 @@ class WebhooksAPI(views.MethodView):
         return APIResponse(result=webhooks)
 
     async def put(self, show_id: int, base_id: int) -> APIResponse:
-        valid_triggers = ("downloading", "downloaded", "renamed", "moved", "completed")
         arguments = await request.get_json()
 
         triggers = arguments.get("triggers")
@@ -27,7 +26,7 @@ class WebhooksAPI(views.MethodView):
             return APIResponse(
                 status=404, error="Webhook with specified ID does not exist."
             )
-        elif any(t not in valid_triggers for t in triggers):
+        elif any(t not in VALID_TRIGGERS for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
 
         all_triggers = await wh.get_triggers()

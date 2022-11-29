@@ -90,6 +90,7 @@ class Poller:
 
                 traceback.print_exc()
 
+            logger.info(f"Sleeping {self.interval} seconds before polling RSS parsers again...")
             await asyncio.sleep(self.interval)
 
     def reset_rss_cache(self) -> None:
@@ -132,12 +133,13 @@ class Poller:
                     continue
 
                 logger.info(f"`{parser.name}` - Checking for New Releases...")
-                found += await self.check_feed(items)
-                logger.info(f"`{parser.name}` - Checked for New Releases")
+                parser_items = await self.check_feed(items)
+                found += parser_items
+                logger.info(f"`{parser.name}` - Checked for New Releases, {len(parser_items)} items found")
 
         self.current_parser = None
 
-        logger.info("Checked for New Releases")
+        logger.info(f"Checked for New Releases, total of {len(found)} items found")
 
         # This still returns information, despite not being used in this particular
         # task, because the REST API hooks into the running Poller task and will call
@@ -274,7 +276,7 @@ class Poller:
         # poller task from crashing.
         try:
             if self.current_parser.ignore_logic(item) is False:
-                logger.debug(f"{self.current_parser.name} - Release Ignored")
+                logger.debug(f"{self.current_parser.name} - Release ignored by parser-specific logic")
                 return None
         except AttributeError:
             pass  # The parser doesn't have an ignore_logic method.

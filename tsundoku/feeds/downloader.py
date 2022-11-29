@@ -111,8 +111,12 @@ class Downloader:
         """
         return ExprDict(
             n=title,
+            name=title,
+            title=title,
             s=season,
+            season=season,
             e=episode,
+            episode=episode,
             s00=season.zfill(2),
             e00=episode.zfill(2),
             s00e00=f"s{season.zfill(2)}e{episode.zfill(2)}",
@@ -248,9 +252,9 @@ class Downloader:
         try:
             await move(str(entry.file_path), str(desired_folder / name))
         except PermissionError:
-            logger.error("Error Moving Release - Invalid Permissions")
+            logger.error(f"Error Moving Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
-            logger.error(f"Error Moving Release - {e}")
+            logger.error(f"Error Moving Release <e{entry.id}> - {e}")
         else:
             moved_file = desired_folder / name
 
@@ -328,7 +332,7 @@ class Downloader:
         except PermissionError:
             logger.error(f"Error Renaming Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
-            logger.error(f"Error Renaming Release - {e}")
+            logger.error(f"Error Renaming Release <e{entry.id}> - {e}")
         else:
             return new_path
 
@@ -385,12 +389,16 @@ class Downloader:
         """
         logger.info(f"Checking Release Status - <e{entry.id}>")
 
+        if entry.state == EntryState.failed:
+            return
+
         # Initial downloading check. This conditional branch is essentially
         # waiting for the downloaded file to appear in the file system.
         if entry.state == EntryState.downloading:
             path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
             if not path:
-                logger.error(f"Entry <e{entry.id}> missing from download client.")
+                logger.error(f"Entry <e{entry.id}> missing from download client, marking as failed.")
+                await entry.set_state(EntryState.failed)
                 return
             elif not path.parent.is_dir():
                 logger.error(f"<e{entry.id}>, `{path}` could not be read")

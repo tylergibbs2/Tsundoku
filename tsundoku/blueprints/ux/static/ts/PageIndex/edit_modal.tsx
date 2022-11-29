@@ -691,6 +691,12 @@ const EditShowWebhooks = ({ tab, show, webhooksToUpdate, setWebhooksToUpdate }: 
                             <th>{_("edit-webhooks-th-webhook")}</th>
                             <td>
                                 <span className="icon has-tooltip-arrow has-tooltip-up"
+                                    data-tooltip={_('edit-webhooks-th-failed')}>
+                                    <IonIcon name="ban" />
+                                </span>
+                            </td>
+                            <td>
+                                <span className="icon has-tooltip-arrow has-tooltip-up"
                                     data-tooltip={_('edit-webhooks-th-downloading')}>
                                     <IonIcon name="download" />
                                 </span>
@@ -757,6 +763,7 @@ const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }:
 
     const { register } = useForm({
         defaultValues: {
+            failed: triggers.includes("failed"),
             downloading: triggers.includes("downloading"),
             downloaded: triggers.includes("downloaded"),
             renamed: triggers.includes("renamed"),
@@ -793,6 +800,9 @@ const EditWebhookTableRow = ({ webhook, webhooksToUpdate, setWebhooksToUpdate }:
     return (
         <tr className="has-text-centered">
             <td className="is-vcentered">{webhook.base.name}</td>
+            <td className="is-vcentered">
+                <input type="checkbox" {...register('failed')} onChange={update}></input>
+            </td>
             <td className="is-vcentered">
                 <input type="checkbox" {...register('downloading')} onChange={update}></input>
             </td>

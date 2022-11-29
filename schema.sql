@@ -7,7 +7,8 @@ INSERT INTO EntryState (Type) VALUES
     ('downloaded'),
     ('renamed'),
     ('moved'),
-    ('completed');
+    ('completed'),
+    ('failed');
 
 CREATE TABLE WebhookService (
     Type TEXT PRIMARY KEY

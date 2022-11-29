@@ -12,7 +12,7 @@ class ExprDict(dict):
 
 
 VALID_SERVICES = ("discord", "slack", "custom")
-VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed")
+VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed", "failed")
 
 
 class WebhookBase:
@@ -634,7 +634,7 @@ class Webhook:
 
         return await self.get_triggers()
 
-    def generate_discord_embed(self, content: str) -> dict:
+    def generate_discord_embed(self, status: str, content: str) -> dict:
         """
         Generates a Discord sendable embed.
 
@@ -647,9 +647,17 @@ class Webhook:
         -------
         A embed that can be sent to Discord.
         """
+        color: int = 0
+        if status == "completed":
+            color = 370725
+        elif status == "failed":
+            color = 16711680
+        else:
+            color = 16776960
+
         return {
             "title": "Tsundoku Progress Event",
-            "color": 370725,
+            "color": color,
             "description": content,
         }
 
@@ -719,7 +727,7 @@ class Webhook:
 
         if self.base.service == "discord":
             # Discord expects an array
-            payload["embeds"] = [self.generate_discord_embed(content)]
+            payload["embeds"] = [self.generate_discord_embed(event, content)]
         elif self.base.service == "slack":
             payload["blocks"] = self.generate_slack_blocks(content)
         else:

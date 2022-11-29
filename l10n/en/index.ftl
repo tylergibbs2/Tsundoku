@@ -75,6 +75,7 @@ edit-entries-form-exists = This episode is already tracked.
 edit-entries-form-add-button = Add entry
 
 edit-webhooks-th-webhook = Webhook
+edit-webhooks-th-failed = Failed
 edit-webhooks-th-downloading = Downloading
 edit-webhooks-th-downloaded = Downloaded
 edit-webhooks-th-renamed = Renamed

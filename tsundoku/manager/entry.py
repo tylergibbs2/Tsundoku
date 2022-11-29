@@ -27,6 +27,7 @@ class EntryState(str, Enum):
     renamed = "renamed"
     moved = "moved"
     completed = "completed"
+    failed = "failed"
 
 
 class Entry:
