@@ -4,7 +4,13 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from sqlite3 import Row
-from typing import Any, List, Optional
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    app: TsundokuApp
+else:
+    from quart import current_app as app
 
 from tsundoku.webhooks import Webhook
 
@@ -24,7 +30,7 @@ class EntryState(str, Enum):
 
 
 class Entry:
-    def __init__(self, app: Any, record: Row) -> None:
+    def __init__(self, app: TsundokuApp, record: Row) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]
@@ -35,7 +41,7 @@ class Entry:
         fp = record["file_path"]
         self.file_path: Optional[Path] = Path(fp) if fp is not None else None
 
-        self._app: Any = app
+        self._app: TsundokuApp = app
         self._record: Row = record
 
     def to_dict(self) -> dict:
@@ -58,7 +64,7 @@ class Entry:
         }
 
     @classmethod
-    async def from_show_id(cls, app: Any, show_id: int) -> List[Entry]:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> List[Entry]:
         """
         Retrieves a list of Entries that are associated
         with a specific Show's ID.

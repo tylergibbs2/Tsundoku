@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useQuery } from "react-query";
+import { useQuery, UseQueryResult } from "react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
 import { Entry, Show } from "../interfaces";
-import { fetchShows } from "../queries";
+import { fetchEntryById, fetchShowById, fetchShows } from "../queries";
 
 import "../../css/logs.css";
 
@@ -26,10 +26,6 @@ export const LogsApp = () => {
 
     let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
     let protocol = location.protocol === "https:" ? "wss:" : "ws:";
-
-    let showAccessCache: Map<number, Show> = new Map();
-    let entryAccessCache: Map<number, Entry> = new Map();
-    let ignoreList: number[] = [];
 
     const shows = useQuery(["shows"], fetchShows);
 
@@ -64,10 +60,6 @@ export const LogsApp = () => {
                         <LogRow
                             key={idx}
                             row={msg}
-                            shows={shows.data}
-                            showAccessCache={showAccessCache}
-                            entryAccessCache={entryAccessCache}
-                            ignoreList={ignoreList}
                         />
                     ))}
                 </div>
@@ -85,13 +77,9 @@ export const LogsApp = () => {
 
 interface LogRowParams {
     row?: MessageEvent;
-    shows: Show[];
-    showAccessCache: Map<number, Show>;
-    entryAccessCache: Map<number, Entry>;
-    ignoreList: number[];
 }
 
-const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: LogRowParams) => {
+const LogRow = ({ row }: LogRowParams) => {
     if (!row || row.data === "ACCEPT")
         return (<></>);
 
@@ -124,10 +112,6 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: L
         <div className="is-size-5">
             {localized} {logLevel} <b>{match.groups.name}</b>: <Content
                 raw_content={match.groups.content}
-                shows={shows}
-                showAccessCache={showAccessCache}
-                entryAccessCache={entryAccessCache}
-                ignoreList={ignoreList}
             />
         </div>
     );
@@ -136,63 +120,15 @@ const LogRow = ({ row, shows, showAccessCache, entryAccessCache, ignoreList }: L
 
 interface ContentParams {
     raw_content: string;
-    shows: Show[];
-    showAccessCache: Map<number, Show>;
-    entryAccessCache: Map<number, Entry>;
-    ignoreList: number[];
 }
 
-const Content = ({ raw_content, shows, showAccessCache, entryAccessCache, ignoreList }: ContentParams) => {
-    const [toJoin, setToJoin] = useState<any>([]);
+type ContentPart = JSX.Element | string;
 
-    const fetchShow = async (id: number): Promise<Show> | null => {
-        let resp = await fetch(`/api/v1/shows/${id}`);
-        if (resp.ok) {
-            return (await resp.json()).result;
-        }
-    }
-
-    const showFromId = async (id: number): Promise<Show> | null => {
-        let exists = showAccessCache.get(id);
-        if (exists)
-            return exists;
-
-        while (shows === null)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-        let found = shows.find(show => show.id_ === id);
-        if (found) {
-            showAccessCache.set(id, found);
-            return found;
-        } else {
-            if (ignoreList.includes(id)) return;
-            found = await fetchShow(id);
-            if (found) {
-                showAccessCache.set(id, found);
-                return found
-            }
-            ignoreList.push(id);
-        }
-    }
-
-    const entryFromId = async (id: number): Promise<Entry> | null => {
-        let exists = entryAccessCache.get(id);
-        if (exists)
-            return exists;
-
-        let entries: Entry[] = [];
-        for (const show of shows)
-            entries = entries.concat(show.entries);
-
-        let found = entries.find(entry => entry.id === id);
-        if (found) {
-            entryAccessCache.set(id, found);
-            return found;
-        }
-    }
+const Content = ({ raw_content }: ContentParams) => {
+    const [toJoin, setToJoin] = useState<ContentPart[]>([]);
 
     const render = async () => {
-        let temp: any = [];
+        let temp: ContentPart[] = [];
         let formatted = raw_content.replace(codeRe, (match, _) => {
             return `<code>${match.substring(1, match.length - 1)}</code>`;
         });
@@ -207,23 +143,14 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache, ignore
             let type = data.charAt(1);
             let id = parseInt(data.substring(2, data.length - 1));
 
-            let res: any;
+            let res: ContentPart;
             switch (type) {
                 case "s":
-                    let show = await showFromId(id);
-                    if (show) {
-                        res = <Context show={show} />
-                        break;
-                    }
+                    res = <Context show_id={id} />
+                    break;
                 case "e":
-                    let entry = await entryFromId(id);
-                    if (entry) {
-                        let show = await showFromId(entry.show_id);
-                        if (show) {
-                            res = <Context show={show} entry={entry} />
-                            break;
-                        }
-                    }
+                    res = <Context entry_id={id} />
+                    break;
                 default:
                     res = _("context-cache-failure", {
                         type: type,
@@ -250,7 +177,7 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache, ignore
 
     return (
         <>
-            {toJoin.map(data => {
+            {toJoin.map((data, i) => {
                 if (typeof data === "string")
                     return ReactHtmlParser(data);
                 else
@@ -262,11 +189,32 @@ const Content = ({ raw_content, shows, showAccessCache, entryAccessCache, ignore
 
 
 interface ContextParams {
-    show: Show;
-    entry?: Entry;
+    show_id?: number | null;
+    entry_id?: number | null;
 }
 
-const Context = ({ show, entry }: ContextParams) => {
+const Context = ({ show_id, entry_id }: ContextParams) => {
+    const entry = useQuery(["entries", { id: entry_id}], async () => {
+        return await fetchEntryById(entry_id);
+    }, {
+        enabled: !!entry_id,
+        retry: false,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false
+    });
+
+    const entryShowId = !!entry_id ? entry.data?.show_id : show_id;
+    const show = useQuery(["shows", { id_: entryShowId}], async () => {
+        return await fetchShowById(entryShowId);
+    }, {
+        enabled: !entry_id || (!!entry_id && !!entryShowId),
+        retry: false,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false
+    });
+
     const [isUp, setIsUp] = useState<boolean>(true);
     let ref = useRef(null);
 
@@ -285,17 +233,20 @@ const Context = ({ show, entry }: ContextParams) => {
         setIsUp(true);
     }
 
+    if (entry.isLoading || show.isLoading || entry.isError || show.isError)
+        return <div></div>;
+
     return (
         <div onMouseOver={calcPos} onMouseOut={makeUp} className={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}>
             <div className="dropdown-trigger">
                 <a>
-                    {!entry &&
-                        <span>{show.title}</span>
+                    {!entry.data &&
+                        <span>{show.data.title}</span>
                     }
-                    {entry &&
+                    {entry.data &&
                         <span>{_("title-with-episode", {
-                            title: show.title,
-                            episode: entry.episode
+                            title: show.data.title,
+                            episode: entry.data.episode
                         })}</span>
                     }
                 </a>
@@ -308,23 +259,23 @@ const Context = ({ show, entry }: ContextParams) => {
                         <div className="columns is-vcentered">
                             <div className="column is-4">
                                 <figure className="image is-3by4">
-                                    <img loading="lazy" src={show.metadata.poster} />
+                                    <img loading="lazy" src={show.data.metadata.poster} />
                                 </figure>
                             </div>
                             <div className="column is-8">
-                                <b>{show.title}</b>
+                                <b>{show.data.title}</b>
                             </div>
                         </div>
                     </div>
                     <div className="dropdown-item has-text-centered">
-                        {ReactHtmlParser(show.metadata.html_status)}
+                        {ReactHtmlParser(show.data.metadata.html_status)}
                     </div>
 
-                    {entry &&
+                    {entry.data &&
                         <div className="dropdown-item has-text-centered">
                             <b>{_("episode-prefix-state", {
-                                episode: entry.episode,
-                                state: entry.state
+                                episode: entry.data.episode,
+                                state: entry.data.state
                             })}</b>
                         </div>
                     }

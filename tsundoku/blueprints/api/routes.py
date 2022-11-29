@@ -23,6 +23,7 @@ from tsundoku.config import (
 )
 from tsundoku.manager import Show
 
+from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
 from .nyaa import NyaaAPI
 from .response import APIResponse
@@ -218,18 +219,26 @@ def setup_views() -> None:
     )
 
     # Setup EntriesAPI URL rules.
-    entries_view = EntriesAPI.as_view("entries_api")
+    show_entries_view = ShowEntriesAPI.as_view("show_entries_api")
 
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/entries",
         defaults={"entry_id": None},
-        view_func=entries_view,
+        view_func=show_entries_view,
         methods=["GET", "POST"],
     )
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/entries/<int:entry_id>",
-        view_func=entries_view,
+        view_func=show_entries_view,
         methods=["GET", "DELETE"],
+    )
+
+    entries_view = EntriesAPI.as_view("entries_api")
+
+    api_blueprint.add_url_rule(
+        "/entries/<int:entry_id>",
+        view_func=entries_view,
+        methods=["GET"]
     )
 
     # Setup WebhooksAPI URL rules.

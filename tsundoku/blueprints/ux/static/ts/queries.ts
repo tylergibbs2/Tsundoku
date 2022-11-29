@@ -1,4 +1,4 @@
-import { APIResponse, Show } from "./interfaces";
+import { APIResponse, Entry, Show } from "./interfaces";
 
 const COMMON_HEADERS = {
     "Content-Type": "application/json",
@@ -65,6 +65,21 @@ export const fetchShowById = async (id: number): Promise<Show> => {
     }
 
     throw new Error(`Failed to get show by ID '${id}', ${response.status}: ${response.statusText}`);
+}
+
+export const fetchEntryById = async (id: number): Promise<Entry> => {
+    let request = {
+        method: "GET",
+        headers: COMMON_HEADERS
+    };
+
+    let response = await fetch(`/api/v1/entries/${id}`, request);
+    if (response.ok) {
+        let data: APIResponse<Entry> = await response.json();
+        return data.result;
+    }
+
+    throw new Error(`Failed to get entry by ID '${id}', ${response.status}: ${response.statusText}`);
 }
 
 export const addNewShow = async (formData: any): Promise<Show> => {

@@ -1,7 +1,15 @@
-import logging
-from typing import Optional
+from __future__ import annotations
 
-from quart import current_app as app
+import logging
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
+
 from quart import request, views
 
 from tsundoku.manager import Show, ShowCollection
@@ -201,6 +209,20 @@ class ShowsAPI(views.MethodView):
         async with app.acquire_db() as con:
             await con.execute(
                 """
+                SELECT
+                    title
+                FROM
+                    shows
+                WHERE
+                    id=?
+            """,
+                show_id,
+            )
+
+            title = await con.fetchval()
+
+            await con.execute(
+                """
                 DELETE FROM
                     shows
                 WHERE id=?;
@@ -208,6 +230,6 @@ class ShowsAPI(views.MethodView):
                 show_id,
             )
 
-        logger.info(f"Show Deleted - <s{show_id}>")
+        logger.info(f"Show Deleted - {title}")
 
         return APIResponse(result=True)
