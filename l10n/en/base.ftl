@@ -18,6 +18,7 @@ entry-status-renamed = Renamed
 entry-status-moved = Moved
 entry-status-completed = Completed
 entry-status-buffered = Buffered
+entry-status-failed = Failed
 
 update-detected = Tsundoku Update Detected
 
