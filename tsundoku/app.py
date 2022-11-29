@@ -121,7 +121,7 @@ async def setup_db() -> None:
         users = await con.fetchval()
 
     if not users:
-        logger.error(
+        logger.warn(
             "No existing users! Run `tsundoku --create-user` to create a new user."
         )
 

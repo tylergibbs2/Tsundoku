@@ -236,9 +236,7 @@ def setup_views() -> None:
     entries_view = EntriesAPI.as_view("entries_api")
 
     api_blueprint.add_url_rule(
-        "/entries/<int:entry_id>",
-        view_func=entries_view,
-        methods=["GET"]
+        "/entries/<int:entry_id>", view_func=entries_view, methods=["GET"]
     )
 
     # Setup WebhooksAPI URL rules.

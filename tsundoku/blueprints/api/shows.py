@@ -5,6 +5,7 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
+
     app: TsundokuApp
 else:
     from quart import current_app as app

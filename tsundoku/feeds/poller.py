@@ -90,7 +90,9 @@ class Poller:
 
                 traceback.print_exc()
 
-            logger.info(f"Sleeping {self.interval} seconds before polling RSS parsers again...")
+            logger.info(
+                f"Sleeping {self.interval} seconds before polling RSS parsers again..."
+            )
             await asyncio.sleep(self.interval)
 
     def reset_rss_cache(self) -> None:
@@ -135,7 +137,9 @@ class Poller:
                 logger.info(f"`{parser.name}` - Checking for New Releases...")
                 parser_items = await self.check_feed(items)
                 found += parser_items
-                logger.info(f"`{parser.name}` - Checked for New Releases, {len(parser_items)} items found")
+                logger.info(
+                    f"`{parser.name}` - Checked for New Releases, {len(parser_items)} items found"
+                )
 
         self.current_parser = None
 
@@ -276,7 +280,9 @@ class Poller:
         # poller task from crashing.
         try:
             if self.current_parser.ignore_logic(item) is False:
-                logger.debug(f"{self.current_parser.name} - Release ignored by parser-specific logic")
+                logger.debug(
+                    f"{self.current_parser.name} - Release ignored by parser-specific logic"
+                )
                 return None
         except AttributeError:
             pass  # The parser doesn't have an ignore_logic method.

@@ -12,7 +12,14 @@ class ExprDict(dict):
 
 
 VALID_SERVICES = ("discord", "slack", "custom")
-VALID_TRIGGERS = ("downloading", "downloaded", "renamed", "moved", "completed", "failed")
+VALID_TRIGGERS = (
+    "downloading",
+    "downloaded",
+    "renamed",
+    "moved",
+    "completed",
+    "failed",
+)
 
 
 class WebhookBase:

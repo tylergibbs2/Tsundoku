@@ -397,7 +397,9 @@ class Downloader:
         if entry.state == EntryState.downloading:
             path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
             if not path:
-                logger.error(f"Entry <e{entry.id}> missing from download client, marking as failed.")
+                logger.error(
+                    f"Entry <e{entry.id}> missing from download client, marking as failed."
+                )
                 await entry.set_state(EntryState.failed)
                 return
             elif not path.parent.is_dir():
