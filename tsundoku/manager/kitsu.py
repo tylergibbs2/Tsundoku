@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+    app: TsundokuApp
+else:
+    from quart import current_app as app
 
 import aiohttp
-from quart import current_app as app
 from quart import url_for
 
 from tsundoku.config import GeneralConfig
@@ -283,7 +288,7 @@ class KitsuManager:
         logger.debug(f"Creating KitsuManager from data for show <s{show_id}>")
 
         if data.get("kitsu_id") is None:
-            async with app.acquire() as con:
+            async with app.acquire_db() as con:
                 await con.execute(
                     """
                     SELECT
