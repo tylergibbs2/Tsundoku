@@ -1,6 +1,6 @@
 @import "bulma";
 
-body {
+body.do-theme-transition {
     transition: all 0.4s ease;
 }
 

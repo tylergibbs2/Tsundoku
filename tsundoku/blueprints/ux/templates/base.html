@@ -19,6 +19,10 @@
     <script>
         window["LOCALE"] = "{{LOCALE}}";
 
+        const theme = localStorage.getItem('theme');
+
+        document.documentElement.style.backgroundColor = theme === "dark" ? "hsl(0deg, 0%, 21%)" : "#fff";
+
         const toggleTheme = () => {
             const isDark = document.body.classList.contains("dark");
             if (isDark) {
@@ -31,11 +35,17 @@
         }
 
         window.onload = () => {
-            const theme = localStorage.getItem('theme');
             if (theme === 'dark') {
-                document.body.classList.add("dark");
                 document.getElementById("darkModeSwitch").checked = true;
+                document.body.classList.add("dark");
             }
+
+            document.body.style.removeProperty("visibility");
+            document.documentElement.style.removeProperty("background-color");
+
+            setTimeout(() => {
+                document.body.classList.add("do-theme-transition");
+            }, 500);
         }
     </script>
 
@@ -55,7 +65,7 @@
     {% endblock %}
 </head>
 
-<body>
+<body style="visibility: hidden;">
     <div class="dashboard is-full-height">
         <div class="dashboard-panel is-small">
             <header class="dashboard-panel-header">
