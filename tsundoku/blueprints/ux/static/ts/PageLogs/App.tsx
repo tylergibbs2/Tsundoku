@@ -22,6 +22,7 @@ const contextRe = /<[es]\d+>/g;
 
 export const LogsApp = () => {
     document.getElementById("navLogs").classList.add("is-active");
+    document.getElementById("root").style.maxHeight = "100%";
 
     let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
     let protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -46,19 +47,15 @@ export const LogsApp = () => {
 
     return (
         <>
-            <div className="columns" style={{
-                height: "12%"
-            }}>
-                <div className="column is-full">
-                    <h1 className="title is-inline">{_("logs-page-title")}</h1>
-                    <ConnectionTag readyState={readyState} />
-                    <h2 className="subtitle">{_("logs-page-subtitle")}</h2>
-                </div>
+            <div className="column is-full">
+                <h1 className="title is-inline">{_("logs-page-title")}</h1>
+                <ConnectionTag readyState={readyState} />
+                <h2 className="subtitle">{_("logs-page-subtitle")}</h2>
             </div>
             <div className="box mb-0" style={{
                 display: "flex",
                 overflow: "hidden",
-                height: "73%"
+                height: "73vh"
             }}>
                 <div className="logrow-container">
                     {messageHistory.current.map((msg, idx) => (
