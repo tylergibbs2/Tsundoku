@@ -41,6 +41,8 @@ $ docker container exec -it tsundoku python -m tsundoku --create-user
 
 ## Source Installation
 
+### Initial Setup
+
 ```bash
 $ git clone https://github.com/tylergibbs2/Tsundoku
 $ cd Tsundoku
@@ -51,7 +53,7 @@ $ pip install -r requirements.txt
 $ python -m tsundoku --create-user   # Creates a user for logging in
 ```
 
-## Updating
+### Updating
 
 ```bash
 $ git pull
@@ -60,7 +62,7 @@ $ git pull
 $ pip install -r requirements.txt
 ```
 
-## Usage
+### Usage
 
 ```bash
 # WINDOWS: .venv\Scripts\activate.bat
@@ -70,4 +72,4 @@ $ python -m tsundoku
 
 ## Parsers
 
-Please see the [example parser](https://github.com/tylergibbs2/Tsundoku/blob/master/parsers/_example.py) for writing custom parsers.
+Please see the [example parser](https://github.com/tylergibbs2/Tsundoku/blob/master/default_parsers/_example.py) for writing custom parsers.
