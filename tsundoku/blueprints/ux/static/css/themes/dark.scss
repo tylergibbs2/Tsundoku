@@ -17,7 +17,8 @@ body.dark a,
 body.dark .table tbody tr td,
 body.dark .table thead tr th,
 body.dark .modal-card-title,
-body.dark span {
+body.dark span,
+body.dark p {
     color: $white;
 }
 
@@ -45,9 +46,8 @@ body.dark button {
 }
 
 body.dark .card,
-body.dark section.modal-card-body,
-body.dark .box {
-    background-color: $scheme-invert;
+body.dark .box  {
+    background-color: $scheme-invert-ter;
 }
 
 body.dark .card-content a {
@@ -73,9 +73,10 @@ body.dark .input {
 }
 
 body.dark .table {
-    background-color: $scheme-invert;
+    background-color: $scheme-invert-bis;
 }
 
+body.dark section.modal-card-body,
 body.dark .table.is-striped tbody tr:not(.is-selected):nth-child(even) {
     background-color: $scheme-invert-bis;
 }
