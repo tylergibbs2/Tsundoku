@@ -10,6 +10,7 @@
 # Local config
 config.ini
 config.old
+.env
 
 # Log file
 tsundoku.log

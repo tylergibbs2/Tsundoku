@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from asyncio.queues import Queue
 import logging
-import os
 from pathlib import Path
 import secrets
 from typing import Any, Tuple, MutableSet, List
@@ -15,6 +14,13 @@ from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
 from werkzeug import Response
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
 
 import tsundoku.asqlite
 from tsundoku.blueprints.api import api_blueprint
