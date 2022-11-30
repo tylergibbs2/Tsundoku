@@ -3,6 +3,7 @@ from __future__ import annotations
 from asyncio import Queue
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Union
+from uuid import uuid4
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -77,6 +78,7 @@ async def update_context() -> dict:
 
 
 @ux_blueprint.route("/issue", methods=["POST"])
+@login_required
 async def issue() -> APIResponse:
     data = await request.get_json()
 
@@ -97,9 +99,9 @@ async def index() -> str:
     ctx["_"] = fluent.format_value
 
     if not len(app.rss_parsers):
-        await flash(fluent._("no-rss-parsers"))
+        await flash(fluent._("no-rss-parsers"), category="error")
     elif not len(app.seen_titles):
-        await flash(fluent._("no-shows-found"))
+        await flash(fluent._("no-shows-found"), category="error")
 
     return await render_template("index.html", **ctx)
 
@@ -191,6 +193,82 @@ async def logs() -> Union[str, Response]:
     return await render_template("index.html", **ctx)
 
 
+@ux_blueprint.route("/register", methods=["GET", "POST"])
+async def register() -> Any:
+    if await current_user.is_authenticated or not app.flags.IS_FIRST_LAUNCH:
+        return redirect(url_for("ux.index"))
+
+    if request.method == "GET":
+        fluent = get_injector(["register"])
+        return await render_template("register.html", **{"_": fluent.format_value})
+    else:
+        resources = ["register"]
+        fluent = get_injector(resources)
+
+        form = await request.form
+
+        username = form.get("username")
+        password = form.get("password")
+        password_confirm = form.get("confirmPassword")
+        if not username:
+            await flash(
+                fluent._("form-missing-data", {"field": "username"}), category="error"
+            )
+            return redirect(url_for("ux.register"))
+        elif not password:
+            await flash(
+                fluent._("form-missing-data", {"field": "password"}), category="error"
+            )
+            return redirect(url_for("ux.register"))
+        elif len(password) < 8:
+            await flash(fluent._("form-password-characters"), category="error")
+            return redirect(url_for("ux.register"))
+        elif password != password_confirm:
+            await flash(fluent._("form-password-mismatch"), category="error")
+            return redirect(url_for("ux.register"))
+
+        async with app.acquire_db() as con:
+            await con.execute(
+                """
+                SELECT
+                    id
+                FROM
+                    users
+                WHERE
+                    LOWER(username) = LOWER(?);
+            """,
+                username,
+            )
+            existing_id = await con.fetchval()
+
+        # technically not possible to get to this page if there are
+        # any other users at all
+        if existing_id is not None:
+            await flash(fluent._("form-username-taken"), category="error")
+            return redirect(url_for("ux.register"))
+
+        pw_hash = PasswordHasher().hash(password)
+        async with app.acquire_db() as con:
+            await con.execute(
+                """
+                INSERT INTO
+                    users
+                    (username, password_hash, api_key)
+                VALUES
+                    (?, ?, ?);
+            """,
+                username,
+                pw_hash,
+                str(uuid4()),
+            )
+
+        if app.flags.IS_FIRST_LAUNCH:
+            app.flags.IS_FIRST_LAUNCH = False
+
+        await flash(fluent._("form-register-success"), category="success")
+        return redirect(url_for("ux.login"))
+
+
 @ux_blueprint.route("/login", methods=["GET", "POST"])
 async def login() -> Any:
     if await current_user.is_authenticated:
@@ -207,8 +285,8 @@ async def login() -> Any:
 
         username = form.get("username")
         password = form.get("password")
-        if username is None or password is None:
-            await flash(fluent._("form-missing-data"))
+        if not username or not password:
+            await flash(fluent._("form-missing-data"), category="error")
             return redirect(url_for("ux.login"))
 
         async with app.acquire_db() as con:
@@ -226,13 +304,13 @@ async def login() -> Any:
             user_data = await con.fetchone()
 
         if not user_data:
-            await flash(fluent._("invalid-credentials"))
+            await flash(fluent._("invalid-credentials"), category="error")
             return redirect(url_for("ux.login"))
 
         try:
             hasher.verify(user_data["password_hash"], password)
         except VerifyMismatchError:
-            await flash(fluent._("invalid-credentials"))
+            await flash(fluent._("invalid-credentials"), category="error")
             return redirect(url_for("ux.login"))
 
         if hasher.check_needs_rehash(user_data["password_hash"]):

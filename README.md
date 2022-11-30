@@ -31,14 +31,6 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 Updating is as simple as running `docker compose pull` and `docker compose up -d`.
 
-I will not be providing an example on how to start the container using
-`docker run`.
-
-To create a login user, you need to run the following command:
-```bash
-$ docker container exec -it tsundoku python -m tsundoku --create-user
-```
-
 ## Source Installation
 
 ### Initial Setup
@@ -50,7 +42,6 @@ $ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ pip install -r requirements.txt
-$ python -m tsundoku --create-user   # Creates a user for logging in
 ```
 
 ### Updating

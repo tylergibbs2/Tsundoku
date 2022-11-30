@@ -1,12 +1,22 @@
+from __future__ import annotations
+
 import sqlite3
-from typing import Any, List
+from typing import Dict, List, Optional
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 from tsundoku.config import GeneralConfig
 
 
-def get_injector(resources: List[str]) -> Any:
+class CustomFluentLocalization(FluentLocalization):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _(self, key: str, args: Optional[Dict] = None) -> str:
+        return self.format_value(key, args)
+
+
+def get_injector(resources: List[str]) -> CustomFluentLocalization:
     try:
         cfg = GeneralConfig.sync_retrieve()
         locale = cfg.get("locale", default="en")
@@ -17,7 +27,5 @@ def get_injector(resources: List[str]) -> Any:
 
     resources = [f"{r}.ftl" for r in resources]
 
-    fluent: Any = FluentLocalization([locale, "en"], resources, loader)
-    fluent._ = fluent.format_value
-
+    fluent = CustomFluentLocalization([locale, "en"], resources, loader)
     return fluent

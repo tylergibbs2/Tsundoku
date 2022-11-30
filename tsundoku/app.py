@@ -34,8 +34,6 @@ from tsundoku.log import setup_logging
 from tsundoku.parsers import load_parsers, ParserStub
 from tsundoku.user import User
 
-hasher = PasswordHasher()
-
 auth = AuthManager()
 auth.user_class = User
 
@@ -92,7 +90,7 @@ async def insert_user(username: str, password: str) -> None:
     else:
         fp = "tsundoku.db"
 
-    pw_hash = hasher.hash(password)
+    pw_hash = PasswordHasher().hash(password)
     async with tsundoku.asqlite.connect(fp) as con:
         await con.execute(
             """
@@ -110,13 +108,16 @@ async def insert_user(username: str, password: str) -> None:
 
 @app.errorhandler(Unauthorized)
 async def redirect_to_login(*_: Any) -> Response:
+    if app.flags.IS_FIRST_LAUNCH:
+        return redirect(url_for("ux.register"))
+
     return redirect(url_for("ux.login"))
 
 
 @app.before_serving
 async def setup_db() -> None:
     """
-    Creates a database pool for PostgreSQL interaction.
+    Creates a database pool for database interaction.
     """
     await migrate()
     app.acquire_db = acquire
@@ -135,7 +136,7 @@ async def setup_db() -> None:
 
     if not users:
         logger.warn(
-            "No existing users! Run `tsundoku --create-user` to create a new user."
+            "No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command."
         )
         app.flags.IS_FIRST_LAUNCH = True
 
