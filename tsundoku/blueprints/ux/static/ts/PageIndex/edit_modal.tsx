@@ -278,7 +278,7 @@ export const EditModal = ({ activeShow, setActiveShow, currentModal, setCurrentM
 
                 <footer className="modal-card-foot">
                     <button className={"button is-success " + (anyMutationIsLoading() ? "is-loading" : "")} onClick={triggerForm}>{_("edit-form-save-button")}</button>
-                    <button className="button closes-modals" onClick={cancel}>{_('edit-form-cancel-button')}</button>
+                    <button className="button" onClick={cancel}>{_('edit-form-cancel-button')}</button>
                 </footer>
             </div>
         </div>

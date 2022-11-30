@@ -6,8 +6,6 @@
   "devDependencies": {
     "@fluent/bundle": "^0.16.0",
     "@types/humanize-duration": "^3.27.1",
-    "@types/jquery": "^3.5.5",
-    "@types/jqueryui": "^1.12.14",
     "@types/react-html-parser": "^2.0.1",
     "bulma": "^0.9.4",
     "bulma-dashboard": "^0.3.1",
@@ -44,5 +42,6 @@
   "scripts": {
     "build": "webpack --mode=production",
     "dev": "webpack --mode=development --watch"
-  }
+  },
+  "dependencies": {}
 }

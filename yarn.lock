@@ -111,20 +111,6 @@
   resolved "https://registry.yarnpkg.com/@types/humanize-duration/-/humanize-duration-3.27.1.tgz#f14740d1f585a0a8e3f46359b62fda8b0eaa31e7"
   integrity sha512-K3e+NZlpCKd6Bd/EIdqjFJRFHbrq5TzPPLwREk5Iv/YoIjQrs6ljdAUCo+Lb2xFlGNOjGSE0dqsVD19cZL137w==
 
-"@types/jquery@*", "@types/jquery@^3.5.5":
-  version "3.5.14"
-  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.5.14.tgz#ac8e11ee591e94d4d58da602cb3a5a8320dee577"
-  integrity sha512-X1gtMRMbziVQkErhTQmSe2jFwwENA/Zr+PprCkF63vFq+Yt5PZ4AlKqgmeNlwgn7dhsXEK888eIW2520EpC+xg==
-  dependencies:
-    "@types/sizzle" "*"
-
-"@types/jqueryui@^1.12.14":
-  version "1.12.16"
-  resolved "https://registry.yarnpkg.com/@types/jqueryui/-/jqueryui-1.12.16.tgz#9e319f7db39490db950cba77fe83887e0ad3e1d9"
-  integrity sha512-6huAQDpNlso9ayaUT9amBOA3kj02OCeUWs+UvDmbaJmwkHSg/HLsQOoap/D5uveN9ePwl72N45Bl+Frp5xyG1Q==
-  dependencies:
-    "@types/jquery" "*"
-
 "@types/json-schema@*", "@types/json-schema@^7.0.8":
   version "7.0.11"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.11.tgz#d421b6c527a3037f7c84433fd2c4229e016863d3"
@@ -161,11 +147,6 @@
   version "0.16.2"
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.2.tgz#1a62f89525723dde24ba1b01b092bf5df8ad4d39"
   integrity sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==
-
-"@types/sizzle@*":
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/@types/sizzle/-/sizzle-2.3.3.tgz#ff5e2f1902969d305225a047c8a0fd5c915cebef"
-  integrity sha512-JYM8x9EGF163bEyhdJBpR2QX1R5naCJHC8ucJylJ3w9/CVBaskdQ8WqBf8MmQrd1kRvp/a4TS8HJ+bxzR7ZJYQ==
 
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { IndexApp } from "./PageIndex/App";
 import { DiscoverApp } from "./PageDiscover/App";
 import { NyaaSearchApp } from "./PageNyaaSearch/App";
+import { WebhooksApp } from "./PageWebhooks/App";
 import { ConfigApp } from "./PageConfig/App";
 import { LogsApp } from "./PageLogs/App";
 
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
     {
         path: "/nyaa",
         element: <NyaaSearchApp />
+    },
+    {
+        path: "/webhooks",
+        element: <WebhooksApp />
     },
     {
         path: "/config",

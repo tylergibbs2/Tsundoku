@@ -1,14 +1,14 @@
-import {} from "../patch";
 import { WebhookBase } from "../interfaces";
 import { getInjector } from "../fluent";
 
-import "bulma/css/bulma.min.css";
-import "bulma-dashboard/dist/bulma-dashboard.min.css";
-import "bulma-extensions/dist/css/bulma-extensions.min.css";
-
-import "../../css/styles.scss";
 import "../../css/webhooks.css";
-
+import { useQuery } from "react-query";
+import { fetchWebhookBases } from "../queries";
+import { WebhookCard } from "./components/WebhookCard";
+import { AddModal } from "./add_modal";
+import { EditModal } from "./edit_modal";
+import { DeleteModal } from "./delete_modal";
+import { useEffect, useState } from "react";
 
 let resources = [
     "webhooks"
@@ -16,97 +16,75 @@ let resources = [
 
 const _ = getInjector(resources);
 
-function submitAddWebhookForm(event: Event) {
-    event.preventDefault();
-    let url: string = $(this).closest("form").attr("action");
-    let method: string = $(this).closest("form").attr("method");
-    let data: string = $(this).closest("form").serialize();
 
-    $.ajax(
-        {
-            url: url,
-            type: method,
-            data: data,
-            success: function (data) {
-                location.reload();
-            },
-            error: function (jqXHR, status, error) {
-                alert("There was an error processing the request.");
-            }
-        }
-    );
+export const WebhooksApp = () => {
+    document.getElementById("navWebhooks").classList.add("is-active");
+
+    const bases = useQuery("webhooks", fetchWebhookBases);
+
+    const [activeModal, setActiveModal] = useState<string | null>(null);
+    const [activeWebhook, setActiveWebhook] = useState<WebhookBase | null>(null);
+
+    useEffect(() => {
+        if (activeModal)
+            document.body.classList.add("is-clipped");
+        else
+            document.body.classList.remove("is-clipped");
+    }, [activeModal]);
+
+    if (bases.isLoading)
+        return (
+            <progress className="progress is-large is-primary" style={{ transform: "translateY(33vh)" }} max="100" />
+        )
+
+    return (
+        <>
+            <AddModal
+                activeModal={activeModal}
+                setActiveModal={setActiveModal}
+            />
+
+            <EditModal
+                activeModal={activeModal}
+                setActiveModal={setActiveModal}
+                activeWebhook={activeWebhook}
+                setActiveWebhook={setActiveWebhook}
+            />
+
+            <DeleteModal
+                activeModal={activeModal}
+                setActiveModal={setActiveModal}
+                activeWebhook={activeWebhook}
+                setActiveWebhook={setActiveWebhook}
+            />
+
+            <div className="container mb-3">
+                <h1 className="title">{_("webhooks-page-title")}</h1>
+                <h2 className="subtitle">{_("webhooks-page-subtitle")}</h2>
+            </div>
+
+            <div className="container" style={{ padding: "15px" }}>
+                <div className="columns is-multiline">
+                    {bases.data.length === 0 &&
+                        <div className="container has-text-centered my-6">
+                            <h3 className="title is-3">{_("webhook-page-empty")}</h3>
+                            <h4 className="subtitle is-5">{_("webhook-page-empty-subtitle")}</h4>
+                        </div>
+                    }
+                    {bases.data.length > 0 && bases.data.map((base: WebhookBase) =>
+                        <WebhookCard
+                            key={base.base_id}
+                            setActiveModal={setActiveModal}
+                            setActiveWebhook={setActiveWebhook}
+                            webhook={base}
+                        />)
+                    }
+                </div>
+            </div>
+
+            <div className="container has-text-centered mt-3">
+                <button className="button is-medium is-success" onClick={() => setActiveModal("add")}>{_("webhook-add-button")}</button>
+            </div>
+        </>
+    )
 }
-
-
-function openAddWebhookModal() {
-    let form: JQuery = $("#add-webhook-form");
-
-    form.attr("action", "/api/v1/webhooks");
-    form.attr("method", "POST");
-    form.on("submit", submitAddWebhookForm);
-
-    $(document.documentElement).addClass("is-clipped");
-    $("#add-webhook-modal").addClass("is-active");
-};
-
-
-function openEditWebhookModal(webhook: WebhookBase) {
-    let form: JQuery = $("#edit-webhook-form");
-    form.trigger("reset");
-
-    $("#edit-webhook-form :input").each(function (i: number, elem: HTMLElement) {
-        let name: string = $(elem).attr("name");
-        $(elem).val(webhook[name])
-    });
-
-    form.attr("method", "PUT");
-    form.attr("action", `/api/v1/webhooks/${webhook.base_id}`);
-
-    form.on("submit", submitAddWebhookForm);
-
-    $(document.documentElement).addClass("is-clipped");
-    $("#edit-webhook-modal").addClass("is-active");
-}
-
-
-function openDeleteWebhookModal(webhook: WebhookBase) {
-    $("#delete-webhook-button").on("click", function (e) {
-        e.preventDefault();
-        $.ajax(
-            {
-                url: `/api/v1/webhooks/${webhook.base_id}`,
-                type: "DELETE",
-                success: function () {
-                    location.reload();
-                }
-            }
-        );
-    });
-    $("#delete-confirm-text").html(_("delete-confirm-text", {"name": webhook.name}));
-
-    $(document.documentElement).addClass("is-clipped");
-    $("#delete-webhook-modal").addClass("is-active");
-}
-
-
-function closeWebhookModals() {
-    $(".modal").removeClass("is-active");
-    $(document.documentElement).removeClass("is-clipped");
-}
-
-
-$(function () {
-    $('.notification .delete').each(function () {
-        $(this).on("click", function () {
-            $(this).parent().remove();
-        })
-    });
-
-    $("#navWebhooks").addClass("is-active");
-});
-
-// PATCHES
-window.openAddWebhookModal = openAddWebhookModal;
-window.openEditWebhookModal = openEditWebhookModal;
-window.openDeleteWebhookModal = openDeleteWebhookModal;
-window.closeWebhookModals = closeWebhookModals;

@@ -25,8 +25,7 @@ class WebhookBaseAPI(views.MethodView):
 
     async def post(self) -> APIResponse:
         wh_services = ("discord", "slack", "custom")
-        await request.get_data()
-        arguments = await request.form
+        arguments = await request.get_json()
 
         name = arguments.get("name")
         service = arguments.get("service")
@@ -52,9 +51,8 @@ class WebhookBaseAPI(views.MethodView):
             )
 
     async def put(self, base_id: int) -> APIResponse:
-        wh_services = ("discord", "slack", "custom")
-        await request.get_data()
-        arguments = await request.form
+        wh_services = ("discord", "slack")
+        arguments = await request.get_json()
 
         name = arguments.get("name")
         service = arguments.get("service")

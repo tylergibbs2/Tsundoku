@@ -153,15 +153,12 @@ async def nyaa_search() -> str:
 async def webhooks() -> str:
     ctx = {}
 
-    resources = ["base", "webhooks"]
+    resources = ["base"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    all_bases = await WebhookBase.all(app)
-    ctx["bases"] = [b.to_dict() for b in all_bases]
-
-    return await render_template("webhooks.html", **ctx)
+    return await render_template("index.html", **ctx)
 
 
 @ux_blueprint.route("/config", methods=["GET"])
