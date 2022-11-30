@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from asyncio import Queue
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Union
@@ -74,7 +73,7 @@ async def update_context() -> dict:
         "version": version,
     }
 
-    return {"stats": stats, "docker": os.environ.get("IS_DOCKER", False)}
+    return {"stats": stats, "docker": app.flags.IS_DOCKER}
 
 
 @ux_blueprint.route("/issue", methods=["POST"])

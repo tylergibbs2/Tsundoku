@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from asyncio.queues import Queue
-from contextlib import _AsyncGeneratorContextManager
 import logging
 import os
 from pathlib import Path
@@ -24,6 +23,7 @@ from tsundoku.config import GeneralConfig
 from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
+from tsundoku.flags import Flags
 from tsundoku.log import setup_logging
 from tsundoku.parsers import load_parsers, ParserStub
 from tsundoku.user import User
@@ -35,11 +35,12 @@ auth.user_class = User
 
 
 class TsundokuApp(Quart):
-    seen_titles: MutableSet[str] = set()
-    connected_websockets: MutableSet[Queue[str]] = set()
-    logging_queue: Queue[str]
     session: aiohttp.ClientSession
     dl_client: Manager
+
+    seen_titles: MutableSet[str]
+    connected_websockets: MutableSet[Queue[str]]
+    logging_queue: Queue[str]
 
     rss_parsers: List[ParserStub]
     parser_lock: asyncio.Lock
@@ -51,10 +52,16 @@ class TsundokuApp(Quart):
     acquire_db: Any
     sync_acquire_db: Any
 
+    flags: Flags
+
     _tasks: List[asyncio.Task] = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.seen_titles = set()
+        self.connected_websockets = set()
+        self.flags = Flags()
 
 
 app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
@@ -63,7 +70,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class QuartConfig:
-    SECRET_KEY = "1"  # secrets.token_urlsafe(16)
+    SECRET_KEY = secrets.token_urlsafe(16) if not app.flags.IS_DEBUG else "debug"
     QUART_AUTH_COOKIE_SECURE = False
 
 
@@ -74,7 +81,7 @@ setup_logging(app)
 async def insert_user(username: str, password: str) -> None:
     await migrate()
 
-    if os.getenv("IS_DOCKER"):
+    if app.flags.IS_DOCKER:
         fp = "data/tsundoku.db"
     else:
         fp = "tsundoku.db"
@@ -124,6 +131,7 @@ async def setup_db() -> None:
         logger.warn(
             "No existing users! Run `tsundoku --create-user` to create a new user."
         )
+        app.flags.IS_FIRST_LAUNCH = True
 
 
 @app.before_serving
@@ -148,7 +156,7 @@ async def setup_parsers() -> None:
     """
     Load all of the custom RSS parsers into the app.
     """
-    if os.getenv("IS_DOCKER"):
+    if app.flags.IS_DOCKER:
         parser_path = Path.cwd() / "data" / "parsers"
         spec_root = "data.parsers"
     else:

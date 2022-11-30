@@ -8,7 +8,7 @@ from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import subprocess
-from typing import Any, AsyncGenerator, AsyncContextManager, Generator, TYPE_CHECKING
+from typing import Any, AsyncGenerator, Generator, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.asqlite import Cursor

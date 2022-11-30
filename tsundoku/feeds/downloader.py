@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-import os
 import shutil
 from functools import partial, wraps
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
 
 import aiofiles.os
 import anitopy
@@ -59,7 +63,7 @@ class Downloader:
     """
 
     def __init__(self, app_context: Any) -> None:
-        self.app = app_context.app
+        self.app: TsundokuApp = app_context.app
 
         self.complete_check: int
         self.seed_ratio_limit: float
@@ -262,8 +266,7 @@ class Downloader:
             # if we're in a Docker environment. This is due to the fact that
             # symlinks are relative and the symlink can be valid or invalid
             # depending on which filesystem it's being checked from.
-            is_docker = os.environ.get("IS_DOCKER", False)
-            if not is_docker:
+            if not self.app.flags.IS_DOCKER:
                 try:
                     entry.file_path.symlink_to(moved_file)
                 except Exception as e:
