@@ -49,7 +49,7 @@ export const Card = ({ textFilter, filters, show, setCurrentModal, setActiveShow
     }
 
     return (
-        <div className={"column is-12-mobile is-4-tablet is-2-desktop" + (shouldShow ? "" : "is-hidden")}>
+        <div className={"column is-12-mobile is-4-tablet is-2-desktop " + (shouldShow ? "" : "is-hidden")}>
             <div className="card">
                 {show.metadata.poster &&
                     <div className="card-image">
