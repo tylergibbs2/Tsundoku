@@ -301,7 +301,7 @@ class Poller:
             )
             return None
 
-        if show_episode is None:
+        if show_episode is None or show_name is None:
             return None
 
         self.app.seen_titles.add(show_name)
