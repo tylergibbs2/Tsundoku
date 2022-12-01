@@ -15,7 +15,7 @@ class SubsPlease:
 
         self.app = app
 
-    def get_show_name(self, file_name: str) -> str:
+    def get_show_name(self, file_name: str) -> Optional[str]:
         """
         Using the `file_name` argument, you must parse
         the file name in order to get the name of the show.
@@ -23,6 +23,8 @@ class SubsPlease:
         Failure to do so will result in incorrect matching.
         """
         parsed = anitopy.parse(file_name)
+        if parsed is None:
+            return None
 
         return parsed["anime_title"]
 
@@ -36,6 +38,8 @@ class SubsPlease:
         Returning `None` will stop the matching.
         """
         parsed = anitopy.parse(file_name)
+        if parsed is None:
+            return None
 
         if "anime_type" in parsed.keys():
             return None

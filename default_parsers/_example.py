@@ -70,7 +70,7 @@ class Example:
         be ignored by Tsundoku. Any other return value
         will continue operation as normal.
         """
-        pass
+        return True
 
 
 def setup(app: Any) -> Example:

@@ -4,9 +4,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from sqlite3 import Row
-from typing import Any, List
+from typing import Any, List, TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+    from quart import current_app as app
 
 from tsundoku.webhooks.webhook import Webhook
 

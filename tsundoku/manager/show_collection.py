@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+    from quart import current_app as app
 
 import aiohttp
-from quart import current_app as app
 
 from .kitsu import API_URL
 from .show import Show

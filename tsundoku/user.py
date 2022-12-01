@@ -1,6 +1,13 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+
+    from quart import current_app as app
+
 from quart_auth import AuthUser
 
 

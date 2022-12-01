@@ -1,6 +1,13 @@
 import logging
+from typing import TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
 from quart import request, views
 
 from tsundoku.nyaa import NyaaSearcher, SearchResult

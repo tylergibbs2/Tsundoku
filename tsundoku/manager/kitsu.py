@@ -305,7 +305,7 @@ class KitsuManager:
 
         instance = cls()
         instance.show_id = show_id
-        instance.kitsu_id = data.get("kitsu_id")
+        instance.kitsu_id = int(data["kitsu_id"]) if data.get("kitsu_id") else None
         instance.slug = data.get("slug")
         instance.status = data.get("show_status")
 
@@ -369,9 +369,9 @@ class KitsuManager:
                         result = {}
 
             attributes = result.get("attributes", {})
-            poster_images = attributes.get("posterImage")
+            poster_images = attributes.get("posterImage", {})
 
-        if self.kitsu_id is None:
+        if self.kitsu_id is None or poster_images is None:
             return url_for("ux.static", filename="img/missing.png")
 
         async with app.acquire_db() as con:

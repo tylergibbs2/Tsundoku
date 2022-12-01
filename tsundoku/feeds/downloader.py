@@ -371,6 +371,9 @@ class Downloader:
                 logger.debug(f"Anitopy - Could not parse `{subpath.name}`, skipping")
                 continue  # TODO: maybe ask user on UI to match manually
 
+            if parsed is None:
+                continue
+
             try:
                 found = int(parsed["episode_number"])
             except (KeyError, ValueError, TypeError):
