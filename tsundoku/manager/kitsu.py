@@ -163,7 +163,10 @@ class KitsuManager:
         logger.info(f"Fetching Kitsu ID for <s{show_id}>")
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
-            payload = {"filter[id]": kitsu_id, "fields[anime]": "status,slug"}
+            payload = {
+                "filter[id]": kitsu_id,
+                "fields[anime]": "status,slug,posterImage",
+            }
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
                 try:
@@ -392,7 +395,7 @@ class KitsuManager:
         logger.info(f"Retrieving new poster URL for <s{self.show_id}> from Kitsu")
 
         to_cache = None
-        for size in ["large", "medium", "small", "tiny", "original"]:
+        for size in ("large", "medium", "original", "small", "tiny"):
             if poster_images.get(size) is not None:
                 logger.info(
                     f"New poster found for <s{self.show_id}> at [{size}] quality"
