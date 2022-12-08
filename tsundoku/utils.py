@@ -1,3 +1,8 @@
+class ExprDict(dict):
+    def __missing__(self, value: str) -> str:
+        return value
+
+
 def normalize_resolution(original: str) -> str:
     """
     Normalize a resolution string.

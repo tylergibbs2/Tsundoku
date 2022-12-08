@@ -15,6 +15,7 @@ import anitopy
 
 from tsundoku.config import FeedsConfig
 from tsundoku.manager import Entry, EntryState
+from tsundoku.utils import ExprDict
 
 logger = logging.getLogger("tsundoku")
 
@@ -33,17 +34,6 @@ def wrap(func: Any) -> Any:
 
 
 move = wrap(shutil.move)
-
-
-class ExprDict(dict):
-    """
-    A basic wrapping around a dict that,
-    when a missing key is requested, will
-    simply return the requested key.
-    """
-
-    def __missing__(self, value: str) -> str:
-        return value
 
 
 class Downloader:

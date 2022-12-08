@@ -4,13 +4,9 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from tsundoku.app import TsundokuApp
+from tsundoku.utils import ExprDict
 
 logger = logging.getLogger("tsundoku")
-
-
-class ExprDict(dict):
-    def __missing__(self, value: str) -> str:
-        return value
 
 
 VALID_SERVICES = ("discord", "slack", "custom")
