@@ -7,6 +7,7 @@ if sys.version_info < (3, 7):
 import argparse
 import asyncio
 import getpass
+import os
 from pathlib import Path
 
 from fluent.runtime import FluentBundle, FluentResource
@@ -114,6 +115,7 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=fluent._("title"))
+    parser.add_argument("--test", action="store_true", help="Run unit tests.")
     parser.add_argument("--dbshell", action="store_true", help=fluent._("cmd-dbshell"))
     parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
     parser.add_argument(
@@ -127,7 +129,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.dbshell:
+    if args.test:
+        os.system("pytest")
+    elif args.dbshell:
         from tsundoku.database import spawn_shell
 
         spawn_shell()
