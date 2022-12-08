@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -16,41 +16,40 @@ import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
 import "../css/styles.scss";
 
-
 const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <IndexApp />
-    },
-    {
-        path: "/nyaa",
-        element: <NyaaSearchApp />
-    },
-    {
-        path: "/webhooks",
-        element: <WebhooksApp />
-    },
-    {
-        path: "/config",
-        element: <ConfigApp />
-    },
-    {
-        path: "/logs",
-        element: <LogsApp />
-    }
+  {
+    path: "/",
+    element: <IndexApp />,
+  },
+  {
+    path: "/nyaa",
+    element: <NyaaSearchApp />,
+  },
+  {
+    path: "/webhooks",
+    element: <WebhooksApp />,
+  },
+  {
+    path: "/config",
+    element: <ConfigApp />,
+  },
+  {
+    path: "/logs",
+    element: <LogsApp />,
+  },
 ]);
 
 const queryClient = new QueryClient();
 
 const RootApp = () => {
-    return (
-        <React.StrictMode>
-            <QueryClientProvider client={queryClient}>
-                <RouterProvider router={router} />
-            </QueryClientProvider>
-        </React.StrictMode>
-    )
-}
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 const root = createRoot(document.getElementById("root"));
 root.render(<RootApp />);

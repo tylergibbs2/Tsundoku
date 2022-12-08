@@ -1,54 +1,55 @@
 html::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
-html, body {
-    overflow: hidden;
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
+html,
+body {
+  overflow: hidden;
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .menu-panel-footer {
-    position: absolute;
-    bottom: 3%;
+  position: absolute;
+  bottom: 3%;
 }
 
 .menu-panel-footer p {
-    position: relative;
+  position: relative;
 }
 
 .noselect {
-    -webkit-touch-callout: none;
-    /* iOS Safari */
-    -webkit-user-select: none;
-    /* Safari */
-    -khtml-user-select: none;
-    /* Konqueror HTML */
-    -moz-user-select: none;
-    /* Old versions of Firefox */
-    -ms-user-select: none;
-    /* Internet Explorer/Edge */
-    user-select: none;
-    /* Non-prefixed version, currently
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
                                     supported by Chrome, Edge, Opera and Firefox */
 }
 
-.switch[type=checkbox] {
-    position: fixed !important;
+.switch[type="checkbox"] {
+  position: fixed !important;
 }
 
 .form-columns {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    margin-top: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 0 !important;
 }
 
 .form-columns:last-child {
-    margin-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 ion-icon {
-    pointer-events: none;
+  pointer-events: none;
 }

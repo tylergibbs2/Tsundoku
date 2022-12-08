@@ -14,6 +14,7 @@
     "css-loader": "^5.0.1",
     "humanize-duration": "^3.25.1",
     "intl-pluralrules": "^1.2.2",
+    "prettier": "^2.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.2.3",

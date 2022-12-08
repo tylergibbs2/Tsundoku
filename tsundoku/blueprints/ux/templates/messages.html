@@ -1,15 +1,15 @@
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%}
 <script type="text/javascript">
-    function deleteNotif() {
-        document.querySelector(".notification").remove();
-    }
+  function deleteNotif() {
+    document.querySelector(".notification").remove();
+  }
 </script>
 {% for category, message in messages %}
-<div class="notification {% if category == 'error' %}is-danger{% endif %}{% if category == 'success' %}is-success{% endif %} mx-6 mt-3">
-    <button class="delete" onclick="deleteNotif();"></button>
-    {{ message }}
+<div
+  class="notification {% if category == 'error' %}is-danger{% endif %}{% if category == 'success' %}is-success{% endif %} mx-6 mt-3"
+>
+  <button class="delete" onclick="deleteNotif();"></button>
+  {{ message }}
 </div>
-{% endfor %}
-{% endif %}
-{% endwith %}
+{% endfor %} {% endif %} {% endwith %}

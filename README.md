@@ -10,18 +10,18 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 ## Key Features
 
-* Parse various RSS feeds for the latest anime
-* Rename and move downloaded files automatically
-* Search Nyaa for existing releases and batches
-* Import third-party RSS parsers to search other feeds
-* Send updates to Discord or Slack with webhooks
-* View airing status of shows
-* Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.moe/docs))
+- Parse various RSS feeds for the latest anime
+- Rename and move downloaded files automatically
+- Search Nyaa for existing releases and batches
+- Import third-party RSS parsers to search other feeds
+- Send updates to Discord or Slack with webhooks
+- View airing status of shows
+- Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.moe/docs))
 
 ## Requirements
 
-* Python 3.7+
-* One of: [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi), [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled, [Transmission](https://transmissionbt.com/)
+- Python 3.7+
+- One of: [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi), [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled, [Transmission](https://transmissionbt.com/)
 
 ## Docker Installation (Recommended)
 

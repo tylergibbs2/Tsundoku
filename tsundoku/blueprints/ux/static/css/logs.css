@@ -1,26 +1,26 @@
 .logrow-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    overflow-y: scroll;
-    overscroll-behavior-y: contain;
-    scroll-snap-type: y proximity;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: scroll;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y proximity;
 }
 
 .logrow-container > div {
-    width: 99%;
+  width: 99%;
 }
 
 .logrow-container > div:first-child {
-    flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
 .logrow-container > div:not(:first-child) {
-    flex: 0 0 auto;
+  flex: 0 0 auto;
 }
 
 .logrow-container > div:last-child {
-    scroll-snap-align: end;
+  scroll-snap-align: end;
 }

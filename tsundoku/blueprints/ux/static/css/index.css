@@ -1,32 +1,32 @@
 .card {
-    border-radius: 7.5px;
+  border-radius: 7.5px;
 }
 
 .card-image img {
-    border-top-left-radius: 7.5px;
-    border-top-right-radius: 7.5px;
+  border-top-left-radius: 7.5px;
+  border-top-right-radius: 7.5px;
 }
 
 div.card-content {
-    height: 6em;
+  height: 6em;
 }
 
 div.card-content span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* number of lines to show */
-    -webkit-box-orient: vertical;
-    vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* number of lines to show */
+  -webkit-box-orient: vertical;
+  vertical-align: middle;
 }
 
 .card-image {
-    position: relative;
+  position: relative;
 }
 
 .card-image .img-overlay-span {
-    position: absolute;
-    z-index: 1;
-    top: 5px;
-    right: 5px;
+  position: absolute;
+  z-index: 1;
+  top: 5px;
+  right: 5px;
 }

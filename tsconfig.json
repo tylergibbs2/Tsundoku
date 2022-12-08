@@ -1,15 +1,15 @@
 {
-    "compilerOptions": {
-        "target": "es2020",
-        "jsx": "react-jsx",
-        "module": "commonjs",
-        "lib": ["ES2020", "ES2016", "DOM"],
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true,
-        "moduleResolution": "node"
-    },
-    "include": [
-        "tsundoku/blueprints/ux/static/ts/App.tsx",
-        "tsundoku/blueprints/ux/static/ts/PageWebhooks/App.tsx"
-    ]
+  "compilerOptions": {
+    "target": "es2020",
+    "jsx": "react-jsx",
+    "module": "commonjs",
+    "lib": ["ES2020", "ES2016", "DOM"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "tsundoku/blueprints/ux/static/ts/App.tsx",
+    "tsundoku/blueprints/ux/static/ts/PageWebhooks/App.tsx"
+  ]
 }

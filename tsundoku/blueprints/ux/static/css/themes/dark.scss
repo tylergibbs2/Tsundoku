@@ -1,14 +1,14 @@
 body.dark {
-    background-color: $grey-darker;
-    color: $white;
+  background-color: $grey-darker;
+  color: $white;
 }
 
 body.dark .background-gradient {
-    background-image: linear-gradient($dark 80%, rgba(255, 255, 255, 0) 100%)
+  background-image: linear-gradient($dark 80%, rgba(255, 255, 255, 0) 100%);
 }
 
 body.dark .dashboard-panel {
-    background-color: $black;
+  background-color: $black;
 }
 
 body.dark .subtitle,
@@ -19,20 +19,22 @@ body.dark .table thead tr th,
 body.dark .modal-card-title,
 body.dark span,
 body.dark p {
-    color: $white;
+  color: $white;
 }
 
 body.dark .input::placeholder {
-    color: $grey;
+  color: $grey;
 }
 
-body.dark a.button:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary) {
-    background-color: $grey-darker;
+body.dark
+  a.button:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary) {
+  background-color: $grey-darker;
 }
 
-body.dark .tag:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary),
+body.dark
+  .tag:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary),
 body.dark code {
-    background-color: $black-ter;
+  background-color: $black-ter;
 }
 
 body.dark .dropdown-menu,
@@ -41,83 +43,82 @@ body.dark .dropdown-item:not(.is-active),
 body.dark select,
 body.dark .input,
 body.dark button {
-    background-color: $grey-darker;
-    color: $text-invert;
+  background-color: $grey-darker;
+  color: $text-invert;
 }
 
 body.dark .card,
-body.dark .box  {
-    background-color: $scheme-invert-ter;
+body.dark .box {
+  background-color: $scheme-invert-ter;
 }
 
 body.dark .card-content a {
-    color: $link-invert;
+  color: $link-invert;
 }
 
 body.dark .card-footer,
 body.dark footer.modal-card-foot {
-    border-top: 1px solid findColorInvert($border-light);
+  border-top: 1px solid findColorInvert($border-light);
 }
 
 body.dark .card-footer-item:not(:last-child) {
-    border-right: 1px solid findColorInvert($border-light);
+  border-right: 1px solid findColorInvert($border-light);
 }
 
 body.dark header.modal-card-head {
-    border-bottom: 1px solid findColorInvert($border-light);
+  border-bottom: 1px solid findColorInvert($border-light);
 }
 
 body.dark .button,
 body.dark .input {
-    border: 1px solid findColorInvert($border-light);
+  border: 1px solid findColorInvert($border-light);
 }
 
 body.dark .table {
-    background-color: $scheme-invert-bis;
+  background-color: $scheme-invert-bis;
 }
 
 body.dark section.modal-card-body,
 body.dark .table.is-striped tbody tr:not(.is-selected):nth-child(even) {
-    background-color: $scheme-invert-bis;
+  background-color: $scheme-invert-bis;
 }
 
-
 body.dark .table.is-striped tbody tr:not(.is-selected):nth-child(2n) {
-    background-color: $scheme-invert-ter;
+  background-color: $scheme-invert-ter;
 }
 
 body.dark .table.is-hoverable tbody tr:hover {
-    background-color: $scheme-invert-bis !important;
+  background-color: $scheme-invert-bis !important;
 }
 
 body.dark .table td,
 body.dark .table th {
-    border-bottom: 1px solid findColorInvert($grey-lighter);
+  border-bottom: 1px solid findColorInvert($grey-lighter);
 }
 
 body.dark header.modal-card-head,
 body.dark footer.modal-card-foot {
-    background-color: $black-ter;
+  background-color: $black-ter;
 }
 
 body.dark a:hover:not(.is-active):not(.button):not(.ml-1) {
-    color: $white;
-    background-color: $scheme-invert-ter;
+  color: $white;
+  background-color: $scheme-invert-ter;
 }
 
 body.dark .card-footer-item > a:hover:not(.is-active) {
-    color: $grey-light;
-    background-color: $scheme-invert;
+  color: $grey-light;
+  background-color: $scheme-invert;
 }
 
 body.dark .button:hover {
-    color: $text-invert;
-    border: 1px solid findColorInvert($grey-light);
+  color: $text-invert;
+  border: 1px solid findColorInvert($grey-light);
 }
 
 body.dark header.dashboard-panel-header {
-    background-color: $grey-darker;
-    border-radius: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+  background-color: $grey-darker;
+  border-radius: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }

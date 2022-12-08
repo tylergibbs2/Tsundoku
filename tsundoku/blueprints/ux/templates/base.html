@@ -1,113 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <!-- Page Meta -->
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>{{ _("page-title") }}</title>
-    <link rel="shortcut icon" href="{{ url_for ('ux.static', filename='img/favicon.ico') }}">
+    <link
+      rel="shortcut icon"
+      href="{{ url_for ('ux.static', filename='img/favicon.ico') }}"
+    />
 
     <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('ux.static', filename='css/base.css') }}">
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tooltip@1.0.2/dist/bulma-tooltip.min.css"
-        integrity="sha384-EBGMr0LJD7tRVfxRKCHIGWo0kMW1fseE7eFCIZFyF/nzdZMxZ1/u6DBSuyrXdBCP" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('ux.static', filename='css/base.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tooltip@1.0.2/dist/bulma-tooltip.min.css"
+      integrity="sha384-EBGMr0LJD7tRVfxRKCHIGWo0kMW1fseE7eFCIZFyF/nzdZMxZ1/u6DBSuyrXdBCP"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
 
     <script>
-        window["LOCALE"] = "{{LOCALE}}";
+      window["LOCALE"] = "{{LOCALE}}";
 
-        const theme = localStorage.getItem('theme');
+      const theme = localStorage.getItem("theme");
 
-        document.documentElement.style.backgroundColor = theme === "dark" ? "hsl(0deg, 0%, 21%)" : "#fff";
+      document.documentElement.style.backgroundColor =
+        theme === "dark" ? "hsl(0deg, 0%, 21%)" : "#fff";
 
-        const toggleTheme = () => {
-            const isDark = document.body.classList.contains("dark");
-            if (isDark) {
-                document.body.classList.remove("dark");
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.body.classList.add("dark");
-                localStorage.setItem('theme', 'dark');
-            }
+      const toggleTheme = () => {
+        const isDark = document.body.classList.contains("dark");
+        if (isDark) {
+          document.body.classList.remove("dark");
+          localStorage.setItem("theme", "light");
+        } else {
+          document.body.classList.add("dark");
+          localStorage.setItem("theme", "dark");
+        }
+      };
+
+      window.onload = () => {
+        if (theme === "dark") {
+          document.getElementById("darkModeSwitch").checked = true;
+          document.body.classList.add("dark");
         }
 
-        window.onload = () => {
-            if (theme === 'dark') {
-                document.getElementById("darkModeSwitch").checked = true;
-                document.body.classList.add("dark");
-            }
+        document.body.style.removeProperty("visibility");
+        document.documentElement.style.removeProperty("background-color");
 
-            document.body.style.removeProperty("visibility");
-            document.documentElement.style.removeProperty("background-color");
-
-            setTimeout(() => {
-                document.body.classList.add("do-theme-transition");
-            }, 500);
-        }
+        setTimeout(() => {
+          document.body.classList.add("do-theme-transition");
+        }, 500);
+      };
     </script>
 
     <!-- JS -->
-    <script src="https://unpkg.com/bulma-modal-fx/dist/js/modal-fx.min.js"
-        integrity="sha384-R+4Ivym139x+5G2a03CfiIp2ZInb03PRZcuibbrPsTpQ8DPaXeLZ71pzuLRyOFZN"
-        crossorigin="anonymous"></script>
-    <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
+    <script
+      src="https://unpkg.com/bulma-modal-fx/dist/js/modal-fx.min.js"
+      integrity="sha384-R+4Ivym139x+5G2a03CfiIp2ZInb03PRZcuibbrPsTpQ8DPaXeLZ71pzuLRyOFZN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"
+    ></script>
+    <script
+      nomodule=""
+      src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"
+    ></script>
 
-    {% block extralib %}
-    {% endblock %}
-</head>
+    {% block extralib %} {% endblock %}
+  </head>
 
-<body style="visibility: hidden;">
+  <body style="visibility: hidden">
     <div class="dashboard is-full-height">
-        <div class="dashboard-panel is-small">
-            <header class="dashboard-panel-header">
-                <div class="has-text-centered">
-                    <img src="{{ url_for('ux.static', filename='img/logo.png') }}" width="112" height="28">
-                </div>
-            </header>
+      <div class="dashboard-panel is-small">
+        <header class="dashboard-panel-header">
+          <div class="has-text-centered">
+            <img
+              src="{{ url_for('ux.static', filename='img/logo.png') }}"
+              width="112"
+              height="28"
+            />
+          </div>
+        </header>
 
-            <div class="dashboard-panel-content">
-                <aside class="menu has-text-white">
-                    <p class="menu-label">
-                        {{ _("category-general") }}
-                    </p>
-                    <ul class="menu-list">
-                        <li><a id="navIndex" href="{{ url_for('ux.index') }}">{{ _("page-shows") }}</a></li>
-                        <li><a id="navNyaa" href="{{ url_for('ux.nyaa_search') }}">{{ _("page-nyaa") }}</a></li>
-                    </ul>
-                    <p class="menu-label">
-                        {{ _("category-settings") }}
-                    </p>
-                    <ul class="menu-list">
-                        <li><a id="navWebhooks" href="{{ url_for('ux.webhooks') }}">{{ _("page-webhooks") }}</a></li>
-                        <li><a id="navConfig" href="{{ url_for('ux.config') }}">{{ _("page-config") }}</a></li>
-                        <li><a id="navLogs" href="{{ url_for('ux.logs') }}">{{ _("page-logs") }}</a></li>
-                    </ul>
-                </aside>
-            </div>
-
-            <div class="menu-panel-footer has-text-centered is-size-7">
-                <div class="field">
-                    <input id="darkModeSwitch" type="checkbox" class="switch" onChange="toggleTheme();" />
-                    <label for="darkModeSwitch">Dark Mode</label>
-                </div>
-
-                <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small">{{ _("logout-button") }}</a>
-                <p class="mt-4">Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}</p>
-                <p><b>Tsundoku</b> is an <a href="https://github.com/tylergibbs2/Tsundoku">open-source project.</a></p>
-                <p>Copyright (c) 2020-2022 Tyler Gibbs</p>
-            </div>
+        <div class="dashboard-panel-content">
+          <aside class="menu has-text-white">
+            <p class="menu-label">{{ _("category-general") }}</p>
+            <ul class="menu-list">
+              <li>
+                <a id="navIndex" href="{{ url_for('ux.index') }}"
+                  >{{ _("page-shows") }}</a
+                >
+              </li>
+              <li>
+                <a id="navNyaa" href="{{ url_for('ux.nyaa_search') }}"
+                  >{{ _("page-nyaa") }}</a
+                >
+              </li>
+            </ul>
+            <p class="menu-label">{{ _("category-settings") }}</p>
+            <ul class="menu-list">
+              <li>
+                <a id="navWebhooks" href="{{ url_for('ux.webhooks') }}"
+                  >{{ _("page-webhooks") }}</a
+                >
+              </li>
+              <li>
+                <a id="navConfig" href="{{ url_for('ux.config') }}"
+                  >{{ _("page-config") }}</a
+                >
+              </li>
+              <li>
+                <a id="navLogs" href="{{ url_for('ux.logs') }}"
+                  >{{ _("page-logs") }}</a
+                >
+              </li>
+            </ul>
+          </aside>
         </div>
 
-        <div class="dashboard-main is-scrollable">
-            {% block content %}
-            {% endblock %}
+        <div class="menu-panel-footer has-text-centered is-size-7">
+          <div class="field">
+            <input
+              id="darkModeSwitch"
+              type="checkbox"
+              class="switch"
+              onChange="toggleTheme();"
+            />
+            <label for="darkModeSwitch">Dark Mode</label>
+          </div>
+
+          <a href="{{ url_for('ux.logout') }}" class="button is-danger is-small"
+            >{{ _("logout-button") }}</a
+          >
+          <p class="mt-4">
+            Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}
+          </p>
+          <p>
+            <b>Tsundoku</b> is an
+            <a href="https://github.com/tylergibbs2/Tsundoku"
+              >open-source project.</a
+            >
+          </p>
+          <p>Copyright (c) 2020-2022 Tyler Gibbs</p>
         </div>
+      </div>
+
+      <div class="dashboard-main is-scrollable">
+        {% block content %} {% endblock %}
+      </div>
     </div>
-</body>
+  </body>
 
-{% block webpack %}
-{% endblock %}
-
+  {% block webpack %} {% endblock %}
 </html>
