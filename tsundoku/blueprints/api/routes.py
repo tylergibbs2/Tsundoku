@@ -6,7 +6,9 @@ from uuid import uuid4
 from quart import Blueprint
 
 if TYPE_CHECKING:
-    app: Any
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
 else:
     from quart import current_app as app
 
@@ -140,6 +142,7 @@ async def config_route(cfg_type: str) -> APIResponse:
 @api_blueprint.route("/config/torrent/test", methods=["GET"])
 async def test_torrent_client() -> APIResponse:
     res = await app.dl_client.test_client()
+    app.flags.DL_CLIENT_CONNECTION_ERROR = not res
     return APIResponse(result=res)
 
 

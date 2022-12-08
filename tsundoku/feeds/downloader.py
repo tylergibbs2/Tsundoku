@@ -143,7 +143,16 @@ class Downloader:
         Optional[int]:
             The ID of the added entry.
         """
-        torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
+        try:
+            torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
+        except Exception:
+            logger.exception(
+                f"Failed to begin handling, could not connect to download client"
+            )
+            self.app.flags.DL_CLIENT_CONNECTION_ERROR = True
+            return None
+
+        self.app.flags.DL_CLIENT_CONNECTION_ERROR = False
 
         if torrent_hash is None:
             logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")

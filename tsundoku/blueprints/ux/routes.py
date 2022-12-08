@@ -102,6 +102,8 @@ async def index() -> str:
         await flash(fluent._("no-rss-parsers"), category="error")
     elif not len(app.seen_titles):
         await flash(fluent._("no-shows-found"), category="error")
+    elif app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
@@ -115,6 +117,9 @@ async def nyaa_search() -> str:
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     async with app.acquire_db() as con:
         await con.execute(
@@ -145,6 +150,9 @@ async def webhooks() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
+
     return await render_template("index.html", **ctx)
 
 
@@ -157,6 +165,9 @@ async def config() -> str:
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
