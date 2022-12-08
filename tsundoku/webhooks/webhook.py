@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
+from tsundoku.app import TsundokuApp
+
 logger = logging.getLogger("tsundoku")
 
 
@@ -23,7 +25,7 @@ VALID_TRIGGERS = (
 
 
 class WebhookBase:
-    _app: Any
+    _app: TsundokuApp
 
     base_id: int
     name: str
@@ -153,14 +155,14 @@ class WebhookBase:
 
     @classmethod
     async def from_id(
-        cls, app: Any, base_id: int, with_validity: bool = True
+        cls, app: TsundokuApp, base_id: int, with_validity: bool = True
     ) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         base_id: int
             The WebhookBase's ID.
@@ -223,14 +225,14 @@ class WebhookBase:
 
     @classmethod
     async def from_data(
-        cls, app: Any, data: Dict[str, str], with_validity: bool = True
+        cls, app: TsundokuApp, data: Dict[str, str], with_validity: bool = True
     ) -> WebhookBase:
         """
         Returns a WebhookBase object from passed data.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         data: Dict[str, str]
             The data.
@@ -260,14 +262,16 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls, app: Any, with_validity: bool = True) -> List[WebhookBase]:
+    async def all(
+        cls, app: TsundokuApp, with_validity: bool = True
+    ) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
         the database.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         with_validity: bool
             Whether to fetch if base is valid.
@@ -363,7 +367,7 @@ class WebhookBase:
 
 
 class Webhook:
-    _app: Any
+    _app: TsundokuApp
 
     show_id: int
     base: WebhookBase
@@ -386,14 +390,14 @@ class Webhook:
 
     @classmethod
     async def from_show_id(
-        cls, app: Any, show_id: int, with_validity: bool = False
+        cls, app: TsundokuApp, show_id: int, with_validity: bool = False
     ) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         show_id: int
             The show's ID.
@@ -467,14 +471,14 @@ class Webhook:
 
     @classmethod
     async def from_composite(
-        cls, app: Any, show_id: int, base_id: int
+        cls, app: TsundokuApp, show_id: int, base_id: int
     ) -> Optional[Webhook]:
         """
         Returns a webhook from its composite key.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         show_id: int
             The show's ID.
