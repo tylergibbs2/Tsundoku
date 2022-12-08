@@ -25,7 +25,7 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 ## Docker Installation (Recommended)
 
-1. Copy the `docker-compose.yml` file from the repository.
+1. Copy the [`docker-compose.yml`](docker-compose.yml) file from the repository.
 2. Replace the file paths.
 3. Run `docker compose up -d`.
 
