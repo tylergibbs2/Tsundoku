@@ -102,10 +102,11 @@ class ShowsAPI(views.MethodView):
         logger.info(
             f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
         )
-        app.poller.reset_rss_cache()
-        await app.poller.poll()
+        await app.poller.poll(force=True)
 
         show = await Show.from_id(show.id_)
+        for webhook in await show.webhooks():
+            await webhook.import_default_triggers()
 
         return APIResponse(result=show.to_dict())
 
@@ -188,8 +189,7 @@ class ShowsAPI(views.MethodView):
             logger.info(
                 f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases"
             )
-            app.poller.reset_rss_cache()
-            await app.poller.poll()
+            await app.poller.poll(force=True)
 
         show = await Show.from_id(show_id)
 

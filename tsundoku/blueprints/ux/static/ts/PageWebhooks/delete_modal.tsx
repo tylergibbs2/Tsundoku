@@ -65,7 +65,7 @@ export const DeleteModal = ({
       <div className="modal-background" onClick={cancel}></div>
       <div className="modal-card">
         <header className="modal-card-head">
-          <p className="modal-card-title">{_("delete-modal-header")}</p>
+          <p className="modal-card-title">{_("delete-webhook-modal-header")}</p>
           <button
             className="delete"
             onClick={cancel}

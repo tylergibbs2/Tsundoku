@@ -1,3 +1,3 @@
-from .webhook import Webhook, WebhookBase, VALID_TRIGGERS
+from .webhook import Webhook, WebhookBase
 
-__all__ = ["Webhook", "WebhookBase", "VALID_TRIGGERS"]
+__all__ = ["Webhook", "WebhookBase"]

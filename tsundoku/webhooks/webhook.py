@@ -1,23 +1,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
-from tsundoku.app import TsundokuApp
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+from tsundoku.constants import VALID_SERVICES, VALID_TRIGGERS
 from tsundoku.utils import ExprDict
 
 logger = logging.getLogger("tsundoku")
-
-
-VALID_SERVICES = ("discord", "slack", "custom")
-VALID_TRIGGERS = (
-    "downloading",
-    "downloaded",
-    "renamed",
-    "moved",
-    "completed",
-    "failed",
-)
 
 
 class WebhookBase:
@@ -28,6 +20,7 @@ class WebhookBase:
     service: str
     url: str
     content_fmt: str
+    default_triggers: List[str]
 
     valid: Optional[bool]
 
@@ -47,6 +40,7 @@ class WebhookBase:
             "url": self.url,
             "content_fmt": self.content_fmt,
             "valid": self.valid,
+            "default_triggers": self.default_triggers,
         }
 
     @classmethod
@@ -57,6 +51,7 @@ class WebhookBase:
         service: str,
         url: str,
         content_fmt: Optional[str] = None,
+        default_triggers: Optional[List[str]] = None,
     ) -> Optional[WebhookBase]:
         """
         Adds a new WebhookBase to the database and
@@ -82,6 +77,9 @@ class WebhookBase:
         """
         if service not in VALID_SERVICES:
             return None
+
+        if default_triggers is None:
+            default_triggers = []
 
         args: Tuple[str, ...] = (name, service, url)
         if content_fmt:
@@ -146,6 +144,32 @@ class WebhookBase:
         instance.url = url
         instance.content_fmt = new_base["content_fmt"]
         instance.valid = await instance.is_valid()
+
+        for trigger in default_triggers:
+            await instance.add_default_trigger(trigger)
+
+        async with app.acquire_db() as con:
+            await con.execute(
+                """
+                    INSERT INTO
+                        webhook_trigger (
+                            show_id,
+                            base,
+                            trigger
+                        )
+                    SELECT
+                        wh.show_id,
+                        wbd.base,
+                        wbd.trigger
+                    FROM
+                        webhook_base_default_trigger as wbd
+                    LEFT JOIN
+                        webhook as wh
+                    ON wh.base = wbd.base
+                    WHERE wbd.base=?;
+                """,
+                instance.base_id,
+            )
 
         return instance
 
@@ -212,6 +236,8 @@ class WebhookBase:
         instance.url = base["base_url"]
         instance.content_fmt = base["content_fmt"]
 
+        await instance.get_default_triggers()
+
         if with_validity:
             instance.valid = await instance.is_valid()
         else:
@@ -249,6 +275,8 @@ class WebhookBase:
         instance.service = data["base_service"]
         instance.url = data["base_url"]
         instance.content_fmt = data["content_fmt"]
+
+        await instance.get_default_triggers()
 
         if with_validity:
             instance.valid = await instance.is_valid()
@@ -328,6 +356,8 @@ class WebhookBase:
                 self.base_id,
             )
 
+        await self.get_default_triggers()
+
     async def delete(self) -> None:
         """
         Deletes a WebhookBase from the database.
@@ -342,6 +372,126 @@ class WebhookBase:
             """,
                 self.base_id,
             )
+
+    async def get_default_triggers(self) -> List[str]:
+        """
+        Retrieves all triggers for a webhook.
+
+        Returns
+        -------
+        List[str]
+            All valid triggers.
+        """
+        async with self._app.acquire_db() as con:
+            await con.execute(
+                """
+                SELECT
+                    trigger
+                FROM
+                    webhook_base_default_trigger
+                WHERE
+                    base=?;
+            """,
+                self.base_id,
+            )
+            triggers = await con.fetchall()
+
+        self.default_triggers = [r["trigger"] for r in triggers]
+        return self.default_triggers
+
+    async def add_default_trigger(self, trigger: str) -> List[str]:
+        """
+        Adds a new default trigger to the webhook.
+
+        Parameters
+        ----------
+        trigger: str
+            The valid trigger.
+
+        Returns
+        -------
+        List[str]
+            List of triggers after attempted change.
+        """
+        if trigger not in VALID_TRIGGERS:
+            return await self.get_default_triggers()
+
+        async with self._app.acquire_db() as con:
+            await con.execute(
+                """
+                SELECT
+                    trigger
+                FROM
+                    webhook_base_default_trigger
+                WHERE base=? AND trigger=?;
+            """,
+                self.base_id,
+                trigger,
+            )
+            exists = await con.fetchval()
+
+            if exists:
+                return await self.get_default_triggers()
+
+            await con.execute(
+                """
+                INSERT INTO
+                    webhook_base_default_trigger
+                    (base, trigger)
+                VALUES
+                    (?, ?);
+            """,
+                self.base_id,
+                trigger,
+            )
+
+        return await self.get_default_triggers()
+
+    async def remove_default_trigger(self, trigger: str) -> List[str]:
+        """
+        Removes a default trigger from a webhook.
+
+        Parameters
+        ----------
+        trigger: str
+            The valid trigger.
+
+        Returns
+        -------
+        List[str]
+            List of triggers after attempted change.
+        """
+        if trigger not in VALID_TRIGGERS:
+            return await self.get_default_triggers()
+
+        async with self._app.acquire_db() as con:
+            await con.execute(
+                """
+                SELECT
+                    trigger
+                FROM
+                    webhook_base_default_trigger
+                WHERE base=? AND trigger=?;
+            """,
+                self.base_id,
+                trigger,
+            )
+            exists = await con.fetchval()
+
+            if not exists:
+                return await self.get_default_triggers()
+
+            await con.execute(
+                """
+                DELETE FROM
+                    webhook_base_default_trigger
+                WHERE base=? AND trigger=?;
+            """,
+                self.base_id,
+                trigger,
+            )
+
+        return await self.get_default_triggers()
 
     async def is_valid(self) -> bool:
         """
@@ -514,6 +664,33 @@ class Webhook:
         instance.triggers = await instance.get_triggers()
 
         return instance
+
+    async def import_default_triggers(self) -> None:
+        """
+        Imports the default triggers from the base webhook.
+        """
+        async with self._app.acquire_db() as con:
+            await con.execute(
+                """
+                    INSERT INTO
+                        webhook_trigger (
+                            show_id,
+                            base,
+                            trigger
+                        )
+                    SELECT
+                        (?),
+                        base,
+                        trigger
+                    FROM
+                        webhook_base_default_trigger
+                    WHERE base=?;
+                """,
+                self.show_id,
+                self.base.base_id,
+            )
+
+        await self.get_triggers()
 
     async def get_triggers(self) -> List[str]:
         """

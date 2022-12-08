@@ -106,7 +106,7 @@ class Poller:
             parser._last_modified = None
             parser._most_recent_hash = None
 
-    async def poll(self) -> List[Tuple[int, int]]:
+    async def poll(self, force: bool = False) -> List[Tuple[int, int]]:
         """
         Iterates through every installed RSS parser
         and will check for new items to download.
@@ -117,13 +117,21 @@ class Poller:
         Returns a list of releases found in the format
         (show_id, episode).
 
+        Parameters
+        ----------
+        force: bool
+            If True, will force a re-fetch of the RSS feed
+
         Returns
         -------
         List[Tuple[int, int]]
             A list of tuples in the format (show_id, episode).
             These are newly found entries that have begun processing.
         """
-        logger.info("Checking for New Releases...")
+        logger.info(f"Checking for New Releases... [force: {force}]")
+
+        if force:
+            self.reset_rss_cache()
 
         found = []
 

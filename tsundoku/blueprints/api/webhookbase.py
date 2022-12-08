@@ -1,8 +1,15 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from quart import current_app as app
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
 from quart import request, views
 
+from tsundoku.constants import VALID_TRIGGERS
 from tsundoku.webhooks import WebhookBase
 
 from .response import APIResponse
@@ -32,16 +39,23 @@ class WebhookBaseAPI(views.MethodView):
         url = arguments.get("url")
         content_fmt = arguments.get("content_fmt")
 
+        triggers = arguments.get("default_triggers", "")
+        triggers = triggers.split(",")
+        if len(triggers) == 1 and not triggers[0]:
+            triggers = []
+
         if service not in wh_services:
             return APIResponse(status=400, error="Invalid webhook service.")
         elif not url:
             return APIResponse(status=400, error="Invalid webhook URL.")
         elif not name:
             return APIResponse(status=400, error="Invalid webhook name.")
+        elif any(t not in VALID_TRIGGERS for t in triggers):
+            return APIResponse(status=400, error="Invalid webhook triggers.")
         elif content_fmt == "":
             content_fmt = None
 
-        base = await WebhookBase.new(app, name, service, url, content_fmt)
+        base = await WebhookBase.new(app, name, service, url, content_fmt, triggers)
 
         if base:
             return APIResponse(result=base.to_dict())
@@ -78,6 +92,22 @@ class WebhookBaseAPI(views.MethodView):
         base.service = service
         base.url = url
         base.content_fmt = content_fmt
+
+        triggers = arguments.get("default_triggers", "")
+        triggers = triggers.split(",")
+
+        if len(triggers) == 1 and not triggers[0]:
+            triggers = []
+        elif any(t not in VALID_TRIGGERS for t in triggers):
+            return APIResponse(status=400, error="Invalid webhook triggers.")
+
+        all_triggers = await base.get_default_triggers()
+        for trigger in all_triggers:
+            if trigger not in triggers:
+                await base.remove_default_trigger(trigger)
+
+        for trigger in triggers:
+            await base.add_default_trigger(trigger)
 
         await base.save()
 

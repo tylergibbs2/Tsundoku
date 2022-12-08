@@ -1,7 +1,16 @@
-from quart import current_app as app
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
+else:
+    from quart import current_app as app
+
 from quart import request, views
 
-from tsundoku.webhooks import Webhook, VALID_TRIGGERS
+from tsundoku.constants import VALID_TRIGGERS
+from tsundoku.webhooks import Webhook
 
 from .response import APIResponse
 

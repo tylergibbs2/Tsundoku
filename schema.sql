@@ -130,6 +130,12 @@ CREATE TABLE webhook_base (
     content_fmt TEXT NOT NULL DEFAULT '{name}, episode {episode}, has been marked as {state}'
 );
 
+CREATE TABLE webhook_base_default_trigger (
+    base INTEGER NOT NULL REFERENCES webhook_base(id) ON DELETE CASCADE,
+    trigger show_state NOT NULL,
+    PRIMARY KEY (base, trigger)
+);
+
 CREATE TABLE webhook (
     show_id INTEGER REFERENCES shows(id) ON DELETE CASCADE,
     base INTEGER REFERENCES webhook_base(id) ON DELETE CASCADE,

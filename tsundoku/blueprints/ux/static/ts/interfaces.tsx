@@ -16,6 +16,7 @@ export interface WebhookBase {
   url: string;
   content_fmt: string;
   valid: boolean;
+  default_triggers: string[];
 }
 
 export interface Entry {

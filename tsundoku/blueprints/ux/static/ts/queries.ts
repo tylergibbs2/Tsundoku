@@ -1,4 +1,6 @@
 import { APIResponse, Entry, Show, WebhookBase } from "./interfaces";
+import { AddWebhookFormValues } from "./PageWebhooks/add_modal";
+import { EditWebhookFormValues } from "./PageWebhooks/edit_modal";
 
 const COMMON_HEADERS = {
   "Content-Type": "application/json",
@@ -130,7 +132,9 @@ export const addNewShow = async (formData: any): Promise<Show> => {
   );
 };
 
-export const addNewWebhook = async (formData: any): Promise<Show> => {
+export const addNewWebhook = async (
+  formData: AddWebhookFormValues
+): Promise<Show> => {
   let request = {
     method: "POST",
     headers: COMMON_HEADERS,
@@ -167,7 +171,7 @@ export const updateShowById = async (show: Show): Promise<Show> => {
 };
 
 export const updateWebhookById = async (
-  webhook: WebhookBase
+  webhook: EditWebhookFormValues
 ): Promise<WebhookBase> => {
   let request = {
     method: "PUT",

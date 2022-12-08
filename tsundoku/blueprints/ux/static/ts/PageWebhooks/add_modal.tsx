@@ -1,12 +1,13 @@
 import { toast } from "bulma-toast";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "react-query";
 import { getInjector } from "../fluent";
+import { IonIcon } from "../icon";
 import { WebhookBase } from "../interfaces";
 import { addNewWebhook } from "../queries";
 
-let resources = ["webhooks"];
+let resources = ["index", "webhooks"];
 
 const _ = getInjector(resources);
 
@@ -15,11 +16,12 @@ interface AddModalParams {
   setActiveModal: Dispatch<SetStateAction<string | null>>;
 }
 
-type AddWebhookFormValues = {
+export type AddWebhookFormValues = {
   name: string;
   service: string;
   url: string;
   content_fmt: string;
+  default_triggers: string;
 };
 
 export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
@@ -51,6 +53,8 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
     content_fmt: "{name}, episode {episode}, has been marked as {state}",
   };
 
+  const [triggers, setTriggers] = useState<string[]>([]);
+
   const { register, handleSubmit, reset } = useForm({
     defaultValues: defaultValues,
   });
@@ -62,13 +66,26 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
   const submitHandler: SubmitHandler<AddWebhookFormValues> = (
     formData: AddWebhookFormValues
   ) => {
-    mutation.mutate(formData);
+    mutation.mutate({ ...formData, default_triggers: triggers.join(",") });
   };
 
   const cancel = () => {
     if (mutation.isLoading) return;
 
     setActiveModal(null);
+  };
+
+  const updateTriggers = (e: any) => {
+    let idx = triggers.findIndex((tr) => tr === e.target.name);
+    let newTrs: string[];
+    if (idx === -1) {
+      newTrs = [e.target.name, ...triggers];
+      setTriggers(newTrs);
+    } else {
+      newTrs = [...triggers];
+      newTrs.splice(idx, 1);
+      setTriggers(newTrs);
+    }
   };
 
   return (
@@ -81,7 +98,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
       <div className="modal-background" onClick={cancel}></div>
       <div className="modal-card">
         <header className="modal-card-head">
-          <p className="modal-card-title">{_("add-modal-header")}</p>
+          <p className="modal-card-title">{_("add-webhook-modal-header")}</p>
           <button
             className="delete"
             onClick={cancel}
@@ -95,9 +112,9 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
               <label className="label">
                 <span
                   className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                  data-tooltip={_("add-form-name-tt")}
+                  data-tooltip={_("add-webhook-form-name-tt")}
                 >
-                  {_("add-form-name-field")}
+                  {_("add-webhook-form-name-field")}
                 </span>
               </label>
               <div className="control">
@@ -105,7 +122,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
                   {...register("name", { required: true })}
                   className="input"
                   type="text"
-                  placeholder={_("add-form-name-placeholder")}
+                  placeholder={_("add-webhook-form-name-placeholder")}
                 />
               </div>
             </div>
@@ -114,9 +131,9 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
               <label className="label">
                 <span
                   className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                  data-tooltip={_("add-form-service-tt")}
+                  data-tooltip={_("add-webhook-form-service-tt")}
                 >
-                  {_("add-form-service-field")}
+                  {_("add-webhook-form-service-field")}
                 </span>
               </label>
               <div className="select">
@@ -131,9 +148,9 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
               <label className="label">
                 <span
                   className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                  data-tooltip={_("add-form-url-tt")}
+                  data-tooltip={_("add-webhook-form-url-tt")}
                 >
-                  {_("add-form-url-field")}
+                  {_("add-webhook-form-url-field")}
                 </span>
               </label>
               <div className="control">
@@ -150,9 +167,9 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
               <label className="label">
                 <span
                   className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                  data-tooltip={_("add-form-content-tt")}
+                  data-tooltip={_("add-webhook-form-content-tt")}
                 >
-                  {_("add-form-content-field")}
+                  {_("add-webhook-form-content-field")}
                 </span>
               </label>
               <div className="control">
@@ -163,6 +180,118 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
                   placeholder="{name}, episode {episode}, has been marked as {state}"
                 />
               </div>
+            </div>
+
+            <div className="field">
+              <label className="label">
+                <span
+                  className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                  data-tooltip={_("add-webhook-form-default-triggers-tt")}
+                >
+                  {_("add-webhook-form-default-triggers-field")}
+                </span>
+              </label>
+
+              <table className="table is-fullwidth is-hoverable">
+                <thead>
+                  <tr className="has-text-centered">
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-failed")}
+                      >
+                        <IonIcon name="ban" />
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-downloading")}
+                      >
+                        <IonIcon name="download" />
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-downloaded")}
+                      >
+                        <IonIcon name="save" />
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-renamed")}
+                      >
+                        <IonIcon name="pencil-sharp" />
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-moved")}
+                      >
+                        <IonIcon name="arrow-forward-circle" />
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="icon has-tooltip-arrow has-tooltip-up"
+                        data-tooltip={_("edit-webhooks-th-completed")}
+                      >
+                        <IonIcon name="checkmark-circle" />
+                      </span>
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="has-text-centered">
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="failed"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="downloading"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="downloaded"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="renamed"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="moved"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                    <td className="is-vcentered">
+                      <input
+                        type="checkbox"
+                        name="completed"
+                        onChange={updateTriggers}
+                      ></input>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </form>
         </section>
@@ -175,10 +304,10 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
             type="submit"
             form="add-webhook-form"
           >
-            {_("add-form-add-button")}
+            {_("add-webhook-form-add-button")}
           </button>
           <button className="button" onClick={cancel}>
-            {_("add-form-cancel-button")}
+            {_("add-webhook-form-cancel-button")}
           </button>
         </footer>
       </div>
