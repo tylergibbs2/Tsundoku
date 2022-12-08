@@ -3,8 +3,7 @@ const WebpackFluentPlugin = require('./l10n/WebpackFluentPlugin.js');
 
 module.exports = {
   entry: {
-    root: './tsundoku/blueprints/ux/static/ts/App.tsx',
-    webhooks: './tsundoku/blueprints/ux/static/ts/PageWebhooks/App.tsx',
+    root: './tsundoku/blueprints/ux/static/ts/App.tsx'
   },
   module: {
     rules: [
