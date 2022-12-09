@@ -241,7 +241,7 @@ class Poller:
         )
 
     async def check_item_for_match(
-        self, show_name: str, release_group: str, resolution: str
+        self, show_name: str, release_group: str
     ) -> Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
@@ -254,6 +254,8 @@ class Poller:
         ----------
         show_name: str
             The name of the show from RSS.
+        release_group: str
+            The release group of the episode from RSS.
 
         Returns
         -------
@@ -279,7 +281,6 @@ class Poller:
             show["title"]: show["id"]
             for show in desired_shows
             if show["watch"]
-            and show["preferred_resolution"] == resolution
             and (
                 show["preferred_release_group"] is None
                 or show["preferred_release_group"].lower() == release_group.lower()
@@ -331,24 +332,20 @@ class Poller:
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
-        elif "video_resolution" not in parsed:
-            logger.error(
-                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'video_resolution' from '{filename}'"
-            )
-            return None
         elif "release_group" not in parsed:
             logger.error(
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'release_group' from '{filename}'"
             )
             return None
-        elif "anime_type" in parsed.keys():
-            logger.info(
-                f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
-            )
-            return None
+        # elif "anime_type" in parsed.keys():
+        #     print(parsed)
+        #     logger.info(
+        #         f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
+        #     )
+        #     return None
         elif "batch" in parsed.get("release_information", "").lower():
             logger.info(
-                f"`{source.name}@{source.version}` - Ignoring batch '{filename}'"
+                f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'"
             )
             return None
 
@@ -360,12 +357,32 @@ class Poller:
             )
             return None
 
-        resolution = normalize_resolution(parsed["video_resolution"])
         match = await self.check_item_for_match(
-            parsed["anime_title"], parsed["release_group"], resolution
+            parsed["anime_title"], parsed["release_group"]
         )
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
+            return None
+
+        async with self.app.acquire_db() as con:
+            await con.execute(
+                """
+                SELECT
+                    preferred_resolution
+                FROM
+                    shows
+                WHERE
+                    id=?;
+            """,
+                match.matched_id,
+            )
+            preferred_resolution = await con.fetchval()
+
+        resolution = normalize_resolution(parsed.get("video_resolution", ""))
+        if preferred_resolution is not None and resolution != preferred_resolution:
+            logger.info(
+                f"`{source.name}@{source.version}` - Ignoring release for '{filename}', resolution {resolution} does not match preferred resolution {preferred_resolution}"
+            )
             return None
 
         release_version = parsed.get("release_version", "v0")

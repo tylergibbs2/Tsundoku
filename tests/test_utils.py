@@ -19,6 +19,9 @@ class TestSimplifyResolution(unittest.TestCase):
     def test_4k_as_dimensions(self):
         self.assertEqual(utils.normalize_resolution("2160x3840"), "4k")
 
+    def test_empty(self):
+        self.assertEqual(utils.normalize_resolution(""), "")
+
 
 class TestCompareVersionStrings(unittest.TestCase):
     def test_v0_v0(self):
