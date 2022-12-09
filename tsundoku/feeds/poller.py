@@ -280,7 +280,10 @@ class Poller:
             for show in desired_shows
             if show["watch"]
             and show["preferred_resolution"] == resolution
-            and show["preferred_release_group"] == release_group
+            and (
+                show["preferred_release_group"] is None
+                or show["preferred_release_group"].lower() == release_group.lower()
+            )
         }
 
         if not show_list:
