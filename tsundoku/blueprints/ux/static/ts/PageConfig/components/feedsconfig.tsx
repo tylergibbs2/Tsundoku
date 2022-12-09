@@ -93,7 +93,7 @@ export const FeedsConfig = () => {
               <input
                 className="input"
                 type="number"
-                min="30"
+                min="180"
                 placeholder="900"
                 value={config.data?.polling_interval}
                 onChange={inputPollingInterval}

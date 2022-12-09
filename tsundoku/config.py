@@ -147,7 +147,7 @@ class FeedsConfig(Config):
     TABLE_NAME = "feeds_config"
 
     def check_polling_interval(self, value: str) -> bool:
-        return int(value) >= 1
+        return int(value) >= 180
 
     def check_complete_check_interval(self, value: str) -> bool:
         return int(value) >= 1
