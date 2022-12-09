@@ -91,6 +91,7 @@ export const EditModal = ({
         watch: activeShow.watch,
         post_process: activeShow.post_process,
         kitsu_id: activeShow.metadata.kitsu_id,
+        preferred_resolution: activeShow.preferred_resolution ?? "0",
         preferred_release_group: activeShow.preferred_release_group,
       });
     }
