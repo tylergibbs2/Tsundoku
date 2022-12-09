@@ -19,10 +19,11 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 - View airing status of shows
 - Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.moe/docs))
 
-## Requirements
+## Supported Download Clients
 
-- Python 3.7+
-- One of: [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi), [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled, [Transmission](https://transmissionbt.com/)
+- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
+- [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
+- [Transmission](https://transmissionbt.com/)
 
 ## Docker Installation (Recommended)
 
@@ -34,6 +35,11 @@ Updating is as simple as running `docker compose pull` and `docker compose up -d
 
 ## Source Installation
 
+### Requirements
+
+- Python 3.7+
+- Yarn
+
 ### Initial Setup
 
 ```bash
@@ -43,6 +49,8 @@ $ python -m venv .venv
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ pip install -r requirements.txt
+$ yarn
+$ yarn build
 ```
 
 ### Updating
@@ -52,9 +60,11 @@ $ git pull
 # WINDOWS: .venv\Scripts\activate.bat
 # LINUX:   source .venv/bin/activate
 $ pip install -r requirements.txt
+$ yarn
+$ yarn build
 ```
 
-### Usage
+### Running
 
 ```bash
 # WINDOWS: .venv\Scripts\activate.bat
