@@ -240,9 +240,7 @@ class Poller:
             or compare_version_strings(entry["version"], version) >= 0
         )
 
-    async def check_item_for_match(
-        self, show_name: str, release_group: str
-    ) -> Optional[EntryMatch]:
+    async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
@@ -254,8 +252,6 @@ class Poller:
         ----------
         show_name: str
             The name of the show from RSS.
-        release_group: str
-            The release group of the episode from RSS.
 
         Returns
         -------
@@ -278,13 +274,7 @@ class Poller:
             )
             desired_shows = await con.fetchall()
         show_list = {
-            show["title"]: show["id"]
-            for show in desired_shows
-            if show["watch"]
-            and (
-                show["preferred_release_group"] is None
-                or show["preferred_release_group"].lower() == release_group.lower()
-            )
+            show["title"]: show["id"] for show in desired_shows if show["watch"]
         }
 
         if not show_list:
@@ -332,11 +322,6 @@ class Poller:
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
-        elif "release_group" not in parsed:
-            logger.error(
-                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'release_group' from '{filename}'"
-            )
-            return None
         # elif "anime_type" in parsed.keys():
         #     print(parsed)
         #     logger.info(
@@ -357,9 +342,7 @@ class Poller:
             )
             return None
 
-        match = await self.check_item_for_match(
-            parsed["anime_title"], parsed["release_group"]
-        )
+        match = await self.check_item_for_match(parsed["anime_title"])
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None
@@ -368,7 +351,8 @@ class Poller:
             await con.execute(
                 """
                 SELECT
-                    preferred_resolution
+                    preferred_resolution,
+                    preferred_release_group
                 FROM
                     shows
                 WHERE
@@ -376,12 +360,24 @@ class Poller:
             """,
                 match.matched_id,
             )
-            preferred_resolution = await con.fetchval()
+            preferences = await con.fetchone()
+
+        preferred_resolution = preferences["preferred_resolution"]
+        preferred_release_group = preferences["preferred_release_group"]
 
         resolution = normalize_resolution(parsed.get("video_resolution", ""))
+        release_group = parsed.get("release_group")
         if preferred_resolution is not None and resolution != preferred_resolution:
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring release for '{filename}', resolution {resolution} does not match preferred resolution {preferred_resolution}"
+            )
+            return None
+        elif (
+            preferred_release_group is not None
+            and release_group != preferred_release_group
+        ):
+            logger.info(
+                f"`{source.name}@{source.version}` - Ignoring release for '{filename}', release group {release_group} does not match preferred release group {preferred_release_group}"
             )
             return None
 
