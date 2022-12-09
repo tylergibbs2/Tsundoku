@@ -65,7 +65,7 @@ export const IndexApp = () => {
     else document.body.classList.remove("is-clipped");
   }, [currentModal]);
 
-  if (shows.isLoading) return <GlobalLoading />;
+  if (shows.isLoading) return <GlobalLoading withText={true} />;
 
   return (
     <>

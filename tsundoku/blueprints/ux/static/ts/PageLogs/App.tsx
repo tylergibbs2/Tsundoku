@@ -35,7 +35,7 @@ export const LogsApp = () => {
       setMessageHistory((prev) => prev.concat(lastMessage));
   }, [lastMessage, setMessageHistory]);
 
-  if (shows.isLoading) return <GlobalLoading />;
+  if (shows.isLoading) return <GlobalLoading withText={true} />;
 
   return (
     <>

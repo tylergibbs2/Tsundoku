@@ -28,7 +28,7 @@ export const WebhooksApp = () => {
     else document.body.classList.remove("is-clipped");
   }, [activeModal]);
 
-  if (bases.isLoading) return <GlobalLoading />;
+  if (bases.isLoading) return <GlobalLoading withText={true} />;
 
   return (
     <>
