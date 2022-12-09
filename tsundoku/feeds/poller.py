@@ -17,7 +17,7 @@ import feedparser
 from tsundoku.config import FeedsConfig
 from tsundoku.feeds.fuzzy import extract_one
 from tsundoku.sources import get_all_sources, Source
-from tsundoku.utils import compare_version_strings
+from tsundoku.utils import compare_version_strings, normalize_resolution
 
 logger = logging.getLogger("tsundoku")
 
@@ -240,7 +240,9 @@ class Poller:
             or compare_version_strings(entry["version"], version) >= 0
         )
 
-    async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
+    async def check_item_for_match(
+        self, show_name: str, release_group: str, resolution: str
+    ) -> Optional[EntryMatch]:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
@@ -265,14 +267,20 @@ class Poller:
                 SELECT
                     id,
                     title,
-                    watch
+                    watch,
+                    preferred_resolution,
+                    preferred_release_group
                 FROM
                     shows;
             """
             )
             desired_shows = await con.fetchall()
         show_list = {
-            show["title"]: show["id"] for show in desired_shows if show["watch"]
+            show["title"]: show["id"]
+            for show in desired_shows
+            if show["watch"]
+            and show["preferred_resolution"] == resolution
+            and show["preferred_release_group"] == release_group
         }
 
         if not show_list:
@@ -320,6 +328,16 @@ class Poller:
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
+        elif "video_resolution" not in parsed:
+            logger.error(
+                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'video_resolution' from '{filename}'"
+            )
+            return None
+        elif "release_group" not in parsed:
+            logger.error(
+                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'release_group' from '{filename}'"
+            )
+            return None
         elif "anime_type" in parsed.keys():
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
@@ -339,7 +357,10 @@ class Poller:
             )
             return None
 
-        match = await self.check_item_for_match(parsed["anime_title"])
+        resolution = normalize_resolution(parsed["video_resolution"])
+        match = await self.check_item_for_match(
+            parsed["anime_title"], parsed["release_group"], resolution
+        )
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None

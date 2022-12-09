@@ -45,6 +45,8 @@ CREATE TABLE shows (
     episode_offset INTEGER NOT NULL DEFAULT 0,
     watch BOOLEAN NOT NULL DEFAULT '1',
     post_process BOOLEAN NOT NULL DEFAULT '1',
+    preferred_resolution TEXT,
+    preferred_release_group TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

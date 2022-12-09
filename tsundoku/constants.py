@@ -20,3 +20,10 @@ VALID_TRIGGERS = (
     "completed",
     "failed",
 )
+
+VALID_RESOLUTIONS = (
+    "480p",
+    "720p",
+    "1080p",
+    "4k",
+)

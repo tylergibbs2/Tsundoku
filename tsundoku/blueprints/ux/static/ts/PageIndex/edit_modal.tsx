@@ -91,6 +91,7 @@ export const EditModal = ({
         watch: activeShow.watch,
         post_process: activeShow.post_process,
         kitsu_id: activeShow.metadata.kitsu_id,
+        preferred_release_group: activeShow.preferred_release_group,
       });
     }
   }, [activeShow]);
@@ -511,6 +512,54 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                 className="input"
                 type="text"
                 placeholder={_("edit-form-name-placeholder")}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-half">
+          <div className="field">
+            <label className="label">
+              <span
+                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                data-tooltip={_("edit-form-resolution-tt")}
+              >
+                {_("edit-form-resolution-field")}
+              </span>
+            </label>
+            <div className="select is-fullwidth">
+              <select
+                {...register("preferred_resolution", { required: true })}
+                defaultValue={
+                  show.preferred_resolution == null
+                    ? "0"
+                    : show.preferred_resolution
+                }
+              >
+                <option value="0">Any</option>
+                <option value="480p">480p</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+                <option value="4k">4k</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-half">
+          <div className="field">
+            <label className="label">
+              <span
+                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
+                data-tooltip={_("edit-form-release-group-tt")}
+              >
+                {_("edit-form-release-group-field")}
+              </span>
+            </label>
+            <div className="control">
+              <input
+                {...register("preferred_release_group")}
+                className="input"
               />
             </div>
           </div>

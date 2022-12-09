@@ -181,7 +181,7 @@ class Downloader:
         async with self.app.acquire_db() as con:
             await con.execute(
                 """
-                INSERT INTO
+                INSERT OR REPLACE INTO
                     show_entry (
                         show_id,
                         episode,
@@ -190,15 +190,7 @@ class Downloader:
                         created_manually
                     )
                 VALUES
-                    (:show_id, :episode, :version, :torrent_hash, :manual)
-                ON CONFLICT (show_id, episode)
-                DO UPDATE SET
-                    version = :version,
-                    torrent_hash = :torrent_hash,
-                    current_state = 'downloading',
-                    file_path = NULL,
-                    created_manually = :manual,
-                    last_update = CURRENT_TIMESTAMP;
+                    (:show_id, :episode, :version, :torrent_hash, :manual);
             """,
                 {
                     "show_id": show_id,
@@ -502,6 +494,7 @@ class Downloader:
             logger.info(f"Preparing to Rename Release - <e{entry.id}>")
             renamed_path = await self.handle_rename(entry)
             if renamed_path is None:
+                await entry.set_state(EntryState.failed)
                 return
 
             await entry.set_state(EntryState.renamed)
@@ -512,6 +505,7 @@ class Downloader:
             logger.info(f"Preparing to Move Release - <e{entry.id}>")
             moved_path = await self.handle_move(entry)
             if moved_path is None:
+                await entry.set_state(EntryState.failed)
                 return
 
             await entry.set_state(EntryState.moved)

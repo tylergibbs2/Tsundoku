@@ -56,6 +56,8 @@ export interface Show {
   episode_offset: number;
   watch: boolean;
   post_process: boolean;
+  preferred_resolution: string | null;
+  preferred_release_group: string | null;
   created_at: string;
   metadata: Metadata;
   entries: Entry[];

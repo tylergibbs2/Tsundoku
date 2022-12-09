@@ -31,6 +31,8 @@ class Show:
     episode_offset: int
     watch: bool
     post_process: bool
+    preferred_resolution: Optional[str]
+    preferred_release_group: Optional[str]
     created_at: datetime
 
     metadata: KitsuManager
@@ -56,6 +58,8 @@ class Show:
             "episode_offset": self.episode_offset,
             "watch": self.watch,
             "post_process": self.post_process,
+            "preferred_resolution": self.preferred_resolution,
+            "preferred_release_group": self.preferred_release_group,
             "created_at": self.created_at.isoformat(),
             "entries": [e.to_dict() for e in self._entries],
             "metadata": self.metadata.to_dict(),
@@ -123,6 +127,8 @@ class Show:
                     episode_offset,
                     watch,
                     post_process,
+                    preferred_resolution,
+                    preferred_release_group,
                     created_at
                 FROM
                     shows
@@ -181,10 +187,12 @@ class Show:
                     season,
                     episode_offset,
                     watch,
-                    post_process
+                    post_process,
+                    preferred_resolution,
+                    preferred_release_group
                 )
                 VALUES
-                    (?, ?, ?, ?, ?, ?, ?);
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?);
             """,
                 kwargs["title"],
                 kwargs["desired_format"],
@@ -193,6 +201,8 @@ class Show:
                 kwargs["episode_offset"],
                 kwargs["watch"],
                 kwargs["post_process"],
+                kwargs["preferred_resolution"],
+                kwargs["preferred_release_group"],
             )
             new_id = con.lastrowid
 
@@ -215,7 +225,9 @@ class Show:
                     season=?,
                     episode_offset=?,
                     watch=?,
-                    post_process=?
+                    post_process=?,
+                    preferred_resolution=?,
+                    preferred_release_group=?
                 WHERE
                     id=?
             """,
@@ -226,6 +238,8 @@ class Show:
                 self.episode_offset,
                 self.watch,
                 self.post_process,
+                self.preferred_resolution,
+                self.preferred_release_group,
                 self.id_,
             )
 

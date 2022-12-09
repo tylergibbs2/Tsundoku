@@ -25,6 +25,8 @@ type AddShowFormValues = {
   episode_offset: number;
   watch: boolean;
   post_process: boolean;
+  preferred_resolution: string;
+  preferred_release_group: string;
 };
 
 export const AddModal = ({
@@ -61,6 +63,8 @@ export const AddModal = ({
     episode_offset: 0,
     watch: true,
     post_process: true,
+    preferred_resolution: "0",
+    preferred_release_group: "",
   };
 
   const { register, handleSubmit, reset, setValue } = useForm({
@@ -135,6 +139,50 @@ export const AddModal = ({
                       className="input"
                       type="text"
                       placeholder={_("add-form-name-placeholder")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="column is-half">
+                <div className="field">
+                  <label className="label">
+                    <span
+                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                      data-tooltip={_("edit-form-resolution-tt")}
+                    >
+                      {_("edit-form-resolution-field")}
+                    </span>
+                  </label>
+                  <div className="select is-fullwidth">
+                    <select
+                      {...register("preferred_resolution", { required: true })}
+                      defaultValue="0"
+                    >
+                      <option value="0">Any</option>
+                      <option value="480p">480p</option>
+                      <option value="720p">720p</option>
+                      <option value="1080p">1080p</option>
+                      <option value="4k">4k</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="column is-half">
+                <div className="field">
+                  <label className="label">
+                    <span
+                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
+                      data-tooltip={_("edit-form-release-group-tt")}
+                    >
+                      {_("edit-form-release-group-field")}
+                    </span>
+                  </label>
+                  <div className="control">
+                    <input
+                      {...register("preferred_release_group")}
+                      className="input"
                     />
                   </div>
                 </div>

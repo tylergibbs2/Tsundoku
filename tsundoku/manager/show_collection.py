@@ -58,6 +58,8 @@ class ShowCollection:
                     s.episode_offset,
                     s.watch,
                     s.post_process,
+                    s.preferred_resolution,
+                    s.preferred_release_group,
                     s.created_at,
                     ki.kitsu_id,
                     ki.slug,

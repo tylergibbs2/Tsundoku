@@ -88,6 +88,12 @@ edit-form-name-tt = Name of the title as it appears in the RSS feed.
 edit-form-name-field = Name
 edit-form-name-placeholder = Show title
 
+edit-form-resolution-tt = The resolution to download for this show.
+edit-form-resolution-field = Preferred Resolution
+
+edit-form-release-group-tt = The release group to look for releases from.
+edit-form-release-group-field = Preferred Release Group
+
 edit-form-advanced = Advanced Settings
 
 edit-form-desired-format-tt = Override the global format used to rename the completed file.

@@ -13,6 +13,7 @@ else:
 
 from quart import request, views
 
+from tsundoku.constants import VALID_RESOLUTIONS
 from tsundoku.manager import Show, ShowCollection
 
 from .response import APIResponse
@@ -82,6 +83,19 @@ class ShowsAPI(views.MethodView):
                     status=400, error="Episode offset is not an integer."
                 )
 
+        preferred_resolution = arguments.get("preferred_resolution")
+        if not preferred_resolution or preferred_resolution == "0":
+            preferred_resolution = None
+
+        if preferred_resolution not in VALID_RESOLUTIONS:
+            return APIResponse(
+                status=400, error="Preferred resolution is not a valid resolution."
+            )
+
+        preferred_release_group = arguments.get("preferred_release_group")
+        if not preferred_release_group:
+            preferred_release_group = None
+
         show = await Show.insert(
             title=arguments["title"],
             desired_format=desired_format,
@@ -90,6 +104,8 @@ class ShowsAPI(views.MethodView):
             episode_offset=episode_offset,
             watch=arguments.get("watch", True),
             post_process=arguments.get("post_process", True),
+            preferred_resolution=preferred_resolution,
+            preferred_release_group=preferred_release_group,
         )
 
         async with app.acquire_db() as con:
@@ -121,6 +137,23 @@ class ShowsAPI(views.MethodView):
             show = await Show.from_id(show_id)
         except Exception:
             return APIResponse(status=404, error="Show with passed ID not found.")
+
+        preferred_resolution = arguments.get("preferred_resolution")
+        if not preferred_resolution or preferred_resolution == "0":
+            preferred_resolution = None
+
+        if preferred_resolution not in VALID_RESOLUTIONS:
+            return APIResponse(
+                status=400, error="Preferred resolution is not a valid resolution."
+            )
+
+        show.preferred_resolution = preferred_resolution
+
+        preferred_release_group = arguments.get("preferred_release_group")
+        if not preferred_release_group:
+            preferred_release_group = None
+
+        show.preferred_release_group = preferred_release_group
 
         desired_format = arguments.get("desired_format")
         if not desired_format:
