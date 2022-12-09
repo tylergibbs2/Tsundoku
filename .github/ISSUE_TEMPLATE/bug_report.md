@@ -34,7 +34,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Software**
 
-- Tsundoku version: [e.g. 0.0.1a]
+- Tsundoku version: [e.g. 1.0.0]
 - Tsundoku Python version: [e.g. 3.8.4]
 - Tsundoku host system: [e.g. Ubuntu Server 18.04]
 - Docker?: [e.g. yes]
