@@ -1,7 +1,7 @@
 shows-page-title = Shows
 shows-page-subtitle = Tracked shows in RSS
 
-status-airing = Airing
+status-current = Airing
 status-finished = Finished
 status-tba = TBA
 status-unreleased = Unreleased

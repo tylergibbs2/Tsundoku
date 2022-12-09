@@ -1,7 +1,7 @@
 shows-page-title = Показывает
 shows-page-subtitle = Отслеживаемые шоу в RSS
 
-status-airing = В эфире
+status-current = В эфире
 status-finished = Готово
 status-tba = TBA
 status-unreleased = Не выпущено

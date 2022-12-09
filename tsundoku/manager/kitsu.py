@@ -15,6 +15,7 @@ import aiohttp
 from quart import url_for
 
 from tsundoku.config import GeneralConfig
+from tsundoku.constants import STATUS_HTML_MAP
 from tsundoku.fluent import get_injector
 
 API_URL = "https://kitsu.io/api/edge/anime"
@@ -22,14 +23,6 @@ logger = logging.getLogger("tsundoku")
 resources = ["base", "errors", "index"]
 
 fluent = get_injector(resources)
-
-status_html_map = {
-    "current": f"<span class='img-overlay-span tag is-success noselect'>{fluent._('status-airing')}</span>",
-    "finished": f"<span class='img-overlay-span tag is-danger noselect'>{fluent._('status-finished')}</span>",
-    "tba": f"<span class='img-overlay-span tag is-warning noselect'>{fluent._('status-tba')}</span>",
-    "unreleased": f"<span class='img-overlay-span tag is-info noselect'>{fluent._('status-unreleased')}</span>",
-    "upcoming": f"<span class='img-overlay-span tag is-primary noselect'>{fluent._('status-upcoming')}</span>",
-}
 
 
 class KitsuManager:
@@ -64,7 +57,11 @@ class KitsuManager:
             "link": self.link,
             "slug": self.slug,
             "status": self.status,
-            "html_status": status_html_map[self.status] if self.status else None,
+            "html_status": STATUS_HTML_MAP[self.status].format(
+                fluent._(f"status-{self.status}")
+            )
+            if self.status
+            else None,
             "poster": self.poster,
         }
 

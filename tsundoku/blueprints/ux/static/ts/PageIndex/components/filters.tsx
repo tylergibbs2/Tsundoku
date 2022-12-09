@@ -114,7 +114,7 @@ export const Filters = ({
             }
             onClick={filterAiring}
           >
-            {_("status-airing")}
+            {_("status-current")}
           </span>
           <span
             className={

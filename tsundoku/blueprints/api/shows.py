@@ -21,15 +21,6 @@ from .response import APIResponse
 logger = logging.getLogger("tsundoku")
 
 
-status_html_map = {
-    "current": "<span class='img-overlay-span tag is-success'>Airing</span>",
-    "finished": "<span class='img-overlay-span tag is-danger'>Finished</span>",
-    "tba": "<span class='img-overlay-span tag is-warning'>TBA</span>",
-    "unreleased": "<span class='img-overlay-span tag is-info'>Unreleased</span>",
-    "upcoming": "<span class='img-overlay-span tag is-primary'>Upcoming</span>",
-}
-
-
 class ShowsAPI(views.MethodView):
     async def get(self, show_id: Optional[int]) -> APIResponse:
         if show_id is None:
