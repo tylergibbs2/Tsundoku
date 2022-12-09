@@ -347,6 +347,13 @@ class Poller:
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None
 
+        release_version = parsed.get("release_version", "v0")
+        if not release_version.startswith("v"):
+            release_version = f"v{release_version}"
+
+        if await self.is_parsed(match.matched_id, show_episode, release_version):
+            return None
+
         async with self.app.acquire_db() as con:
             await con.execute(
                 """
@@ -379,13 +386,6 @@ class Poller:
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring release for '{filename}', release group {release_group} does not match preferred release group {preferred_release_group}"
             )
-            return None
-
-        release_version = parsed.get("release_version", "v0")
-        if not release_version.startswith("v"):
-            release_version = f"v{release_version}"
-
-        if await self.is_parsed(match.matched_id, show_episode, release_version):
             return None
 
         logger.info(
