@@ -9,6 +9,10 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 [Chat on Discord](https://discord.gg/thxN858gXm)
 
+<p align="center">
+  <img height="300" src="media/sample.jpg" />
+</p>
+
 ## Key Features
 
 - Parse various RSS feeds for the latest anime
