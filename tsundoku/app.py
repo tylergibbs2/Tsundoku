@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from asyncio.queues import Queue
 import logging
-from pathlib import Path
 import secrets
 from typing import Any, Tuple, MutableSet, List
 from uuid import uuid4
@@ -31,7 +30,6 @@ from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.flags import Flags
 from tsundoku.log import setup_logging
-from tsundoku.parsers import load_parsers, ParserStub
 from tsundoku.user import User
 
 auth = AuthManager()
@@ -42,12 +40,10 @@ class TsundokuApp(Quart):
     session: aiohttp.ClientSession
     dl_client: Manager
 
-    seen_titles: MutableSet[str]
     connected_websockets: MutableSet[Queue[str]]
     logging_queue: Queue[str]
 
-    rss_parsers: List[ParserStub]
-    parser_lock: asyncio.Lock
+    source_lock: asyncio.Lock
 
     poller: Poller
     downloader: Downloader
@@ -63,7 +59,6 @@ class TsundokuApp(Quart):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.seen_titles = set()
         self.connected_websockets = set()
         self.flags = Flags()
 
@@ -156,42 +151,6 @@ async def setup_session() -> None:
         loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0)
     )
     app.dl_client = Manager(app.session)
-
-
-@app.before_serving
-async def setup_parsers() -> None:
-    """
-    Load all of the custom RSS parsers into the app.
-    """
-    if app.flags.IS_DOCKER:
-        parser_path = Path.cwd() / "data" / "parsers"
-        spec_root = "data.parsers"
-    else:
-        parser_path = Path.cwd() / "parsers"
-        spec_root = "parsers"
-
-    parser_path.mkdir(exist_ok=True, parents=True)
-    if not (parser_path / "COPIED").exists():
-        default_parsers = ("subsplease", "nyaa")
-        for parser in default_parsers:
-            if not (parser_path / f"{parser}.py").exists():
-                async with aiofiles.open(parser_path / f"{parser}.py", "wb") as fp:
-                    async with aiofiles.open(
-                        Path.cwd() / "default_parsers" / f"{parser}.py", "rb"
-                    ) as default_fp:
-                        await fp.write(await default_fp.read())
-
-        async with aiofiles.open(parser_path / "COPIED", "wb") as fp:
-            await fp.write(b"")
-
-    parsers = [f"{spec_root}.{p.stem}" for p in parser_path.glob("*.py")]
-
-    # It's okay if we're blocking here.
-    # The webserver isn't intended to
-    # be serving at this point in time.
-    app.parser_lock = asyncio.Lock()
-    async with app.parser_lock:
-        load_parsers(parsers)
 
 
 @app.before_serving

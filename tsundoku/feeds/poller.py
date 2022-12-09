@@ -1,20 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 import hashlib
 import logging
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
-    from tsundoku.parsers import ParserStub
 
+import anitopy
 import feedparser
 
 from tsundoku.config import FeedsConfig
-from .fuzzy import extract_one
+from tsundoku.sources import get_all_sources, Source
+from tsundoku.feeds.fuzzy import extract_one
 
 logger = logging.getLogger("tsundoku")
 
@@ -40,14 +42,34 @@ class EntryMatch:
     match_percent: int
 
 
+@dataclass
+class SourceCache:
+    """
+    Represents a cache for a single RSS feed source.
+
+    Attributes
+    ----------
+    last_etag: str
+        The last ETag value for the feed.
+    last_modified: str
+        The last modified value for the feed.
+    most_recent_hash: str
+        The hash of the most recent item in the feed.
+    """
+
+    last_etag: Optional[str] = None
+    last_modified: Optional[str] = None
+    most_recent_hash: Optional[str] = None
+
+
 class Poller:
     """
     The polling manager handles all RSS feed related
     activities.
 
     Once started, the manager will iterate through every
-    enabled RSS feed parser and parse their respective
-    feeds using custom logic defined in each parser.
+    enabled RSS feed source and parse their respective
+    feeds using custom logic defined in each source.
 
     Items that are matched with the `shows` database will
     be then passed onto the download manager for downloading,
@@ -55,14 +77,13 @@ class Poller:
     """
 
     app: TsundokuApp
+    source_cache: Dict[str, SourceCache]
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
         self.loop = asyncio.get_running_loop()
 
-        self.current_parser: Optional[
-            ParserStub
-        ] = None  # keeps track of the current parser
+        self.source_cache = defaultdict(SourceCache)
 
     async def update_config(self) -> None:
         """
@@ -77,10 +98,6 @@ class Poller:
         The program will poll every n seconds, as specified
         in the configuration file.
         """
-        if not self.app.rss_parsers:
-            logger.error("No RSS parsers found.")
-            return
-
         while True:
             await self.update_config()
             try:
@@ -91,28 +108,22 @@ class Poller:
                 traceback.print_exc()
 
             logger.info(
-                f"Sleeping {self.interval} seconds before polling RSS parsers again..."
+                f"Sleeping {self.interval} seconds before polling RSS sources again..."
             )
             await asyncio.sleep(self.interval)
 
     def reset_rss_cache(self) -> None:
         """
-        Resets all cache attributes on parser
+        Resets all cache attributes on source
         objects for re-fetching the complete RSS
         feed.
         """
-        for parser in self.app.rss_parsers:
-            parser._last_etag = None
-            parser._last_modified = None
-            parser._most_recent_hash = None
+        self.source_cache.clear()
 
     async def poll(self, force: bool = False) -> List[Tuple[int, int]]:
         """
-        Iterates through every installed RSS parser
+        Iterates through every installed RSS source
         and will check for new items to download.
-
-        The order of the parsers used is determined
-        by how they are listed in the configuration.
 
         Returns a list of releases found in the format
         (show_id, episode).
@@ -135,21 +146,19 @@ class Poller:
 
         found = []
 
-        async with self.app.parser_lock:
-            for parser in self.app.rss_parsers:
-                self.current_parser = parser
-                items = await self.get_items_from_parser()
-                if not items:
-                    continue
+        async for source in get_all_sources():
+            items = await self.get_items_from_source(source)
+            if not items:
+                continue
 
-                logger.info(f"`{parser.name}` - Checking for New Releases...")
-                parser_items = await self.check_feed(items)
-                found += parser_items
-                logger.info(
-                    f"`{parser.name}` - Checked for New Releases, {len(parser_items)} items found"
-                )
-
-        self.current_parser = None
+            logger.info(
+                f"`{source.name}@{source.version}` - Checking for New Releases..."
+            )
+            source_items = await self.check_feed(source, items)
+            found += source_items
+            logger.info(
+                f"`{source.name}@{source.version}` - Checked for New Releases, {len(source_items)} items found"
+            )
 
         logger.info(f"Checked for New Releases, total of {len(found)} items found")
 
@@ -158,7 +167,9 @@ class Poller:
         # this. See: tsundoku/blueprints/api/routes.py#check_for_releases
         return found
 
-    async def check_feed(self, items: List[dict]) -> List[Tuple[int, int]]:
+    async def check_feed(
+        self, source: Source, items: List[dict]
+    ) -> List[Tuple[int, int]]:
         """
         Iterates through the list of items in an
         RSS feed and will individually check each
@@ -179,7 +190,7 @@ class Poller:
         found_items = []
 
         for item in items:
-            found = await self.check_item(item)
+            found = await self.check_item(source, item)
             if found:
                 found_items.append(found)
 
@@ -264,7 +275,7 @@ class Poller:
 
         return None
 
-    async def check_item(self, item: dict) -> Optional[Tuple[int, int]]:
+    async def check_item(self, source: Source, item: dict) -> Optional[Tuple[int, int]]:
         """
         Checks an item to see if it is from a
         desired show entry, and will then begin
@@ -280,41 +291,44 @@ class Poller:
         Optional[Tuple[int, int]]
             A tuple with (show_id, episode)
         """
-        if self.current_parser is None:
-            return None
+        filename = source.get_filename(item)
+        parsed = anitopy.parse(filename)
 
-        # In case there are any errors with the user-defined parsing
-        # functions, this try-except block will prevent the whole
-        # poller task from crashing.
-        try:
-            if self.current_parser.ignore_logic(item) is False:
-                logger.debug(
-                    f"{self.current_parser.name} - Release ignored by parser-specific logic"
-                )
-                return None
-        except AttributeError:
-            pass  # The parser doesn't have an ignore_logic method.
-
-        try:
-            if hasattr(self.current_parser, "get_file_name"):
-                torrent_name = self.current_parser.get_file_name(item)
-            else:
-                torrent_name = item["title"]
-
-            show_name = self.current_parser.get_show_name(torrent_name)
-            show_episode = self.current_parser.get_episode_number(torrent_name)
-        except Exception as e:
+        if parsed is None:
             logger.error(
-                f"Parsing Error - `{self.current_parser.name}@{self.current_parser.version}`: {e}"
+                f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'"
+            )
+            return None
+        elif "anime_title" not in parsed:
+            logger.error(
+                f"`{source.name}@{source.version}` - anitopy failed retrieve 'anime_title' from '{filename}'"
+            )
+            return None
+        elif "episode_number" not in parsed:
+            logger.error(
+                f"`{source.name}@{source.version}` - anitopy failed retrieve 'episode_number' from '{filename}'"
+            )
+            return None
+        elif "anime_type" in parsed.keys():
+            logger.info(
+                f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
+            )
+            return None
+        elif "batch" in parsed.get("release_information", "").lower():
+            logger.info(
+                f"`{source.name}@{source.version}` - Ignoring batch '{filename}'"
             )
             return None
 
-        if show_episode is None or show_name is None:
+        try:
+            show_episode = int(parsed["episode_number"])
+        except (ValueError, TypeError):
+            logger.error(
+                f"`{source.name}@{source.version}` - Failed to convert episode to integer from '{parsed['episode_number']}'"
+            )
             return None
 
-        self.app.seen_titles.add(show_name)
-
-        match = await self.check_item_for_match(show_name)
+        match = await self.check_item_for_match(parsed["anime_title"])
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None
@@ -324,10 +338,10 @@ class Poller:
             return None
 
         logger.info(
-            f"{self.current_parser.name} - Release Found for <s{match.matched_id}>, episode {show_episode}"
+            f"`{source.name}@{source.version}` - Release Found for <s{match.matched_id}>, episode {show_episode}"
         )
 
-        magnet_url = await self.get_torrent_link(item)
+        magnet_url = await self.get_torrent_link(source, item)
         await self.app.downloader.begin_handling(
             match.matched_id, show_episode, magnet_url
         )
@@ -357,68 +371,51 @@ class Poller:
 
         return hashlib.sha256(to_hash.encode("utf-8")).hexdigest()
 
-    async def get_items_from_parser(self) -> List[dict]:
+    async def get_items_from_source(self, source: Source) -> List[dict]:
         """
         Returns new items from the current
-        parser's RSS feed.
+        source's RSS feed.
 
         Returns
         -------
         List[dict]
             New items in the RSS feed.
         """
-        if self.current_parser is None:
-            return []
-
-        if not hasattr(self.current_parser, "_last_etag"):
-            self.current_parser._last_etag = None
-
-        if not hasattr(self.current_parser, "_last_modified"):
-            self.current_parser._last_modified = None
-
-        # The last_etag and last_modified attributes are going to
-        # be private due to the fact that `self.current_parser` is
-        # a user-defined class and there's an off-chance they could
-        # use these names.
-
         feed = await self.loop.run_in_executor(
             None,
             partial(
                 feedparser.parse,
-                self.current_parser.url,
-                etag=self.current_parser._last_etag,
-                modified=self.current_parser._last_modified,
+                source.url,
+                etag=self.source_cache[source.name].last_etag,
+                modified=self.source_cache[source.name].last_modified,
             ),
         )
 
-        # None of the RSS URLs that I provide with this software out-of-the-box
-        # provide etag or modified headers, but it's entirely possible a user-provided
-        # URL will.
-        try:
-            self.current_parser._last_etag = feed.etag
-        except AttributeError:
-            self.current_parser._last_etag = None
+        if hasattr(feed, "etag"):
+            self.source_cache[source.name].last_etag = feed.etag
+        else:
+            self.source_cache[source.name].last_etag = None
 
-        try:
-            self.current_parser._last_modified = feed.modified
-        except AttributeError:
-            self.current_parser._last_modified = None
+        if hasattr(feed, "modified"):
+            self.source_cache[source.name].last_modified = feed.modified
+        else:
+            self.source_cache[source.name].last_modified = None
 
         # 304 status means no new items according to the etag/modified attributes.
         if hasattr(feed, "status") and feed.status == 304:
             return []
 
         if (
-            self.current_parser._last_etag is not None
-            or self.current_parser._last_modified is not None
+            self.source_cache[source.name].last_etag is not None
+            or self.source_cache[source.name].last_modified is not None
         ):
             return feed["items"]
 
         # Worst-case scenario, etag header and modified header weren't
         # implemented on the server-side. Manually check unique item hashes
         # for all items in the feed.
-        if not hasattr(self.current_parser, "_most_recent_hash"):
-            self.current_parser._most_recent_hash = None
+        if not hasattr(source, "_most_recent_hash"):
+            self.source_cache[source.name].most_recent_hash = None
 
         new_items = []
 
@@ -428,7 +425,7 @@ class Poller:
             # If the first item in the feed is the same as it was
             # on the previous iteration, the feed has no new items.
             first_hash = self.hash_rss_item(feed["items"][0])
-            if first_hash == self.current_parser._most_recent_hash:
+            if first_hash == self.source_cache[source.name].most_recent_hash:
                 return []
 
             new_items.append(feed["items"][0])
@@ -437,21 +434,18 @@ class Poller:
             # repeating the same process above.
             for item in feed["items"][1:]:
                 item_hash = self.hash_rss_item(item)
-                if item_hash == self.current_parser._most_recent_hash:
+                if item_hash == self.source_cache[source.name].most_recent_hash:
                     break
 
                 new_items.append(item)
 
-            self.current_parser._most_recent_hash = first_hash
+            self.source_cache[source.name].most_recent_hash = first_hash
 
         return new_items
 
-    async def get_torrent_link(self, item: dict) -> str:
+    async def get_torrent_link(self, source: Source, item: dict) -> str:
         """
         Returns a magnet URL for a specified item.
-        This is found by using the parser's `get_link_location`
-        method and is assisted by a torrent file to magnet
-        decoder.
 
         Parameters
         ----------
@@ -463,14 +457,4 @@ class Poller:
         str
             The found magnet URL.
         """
-        if self.current_parser is None:
-            return ""
-
-        client = self.app.dl_client
-
-        if hasattr(self.current_parser, "get_link_location"):
-            torrent_location = self.current_parser.get_link_location(item)
-        else:
-            torrent_location = item["link"]
-
-        return await client.get_magnet(torrent_location)
+        return await self.app.dl_client.get_magnet(source.get_torrent(item))

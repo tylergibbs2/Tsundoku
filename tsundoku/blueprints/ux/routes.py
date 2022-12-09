@@ -70,7 +70,6 @@ async def update_context() -> dict:
     stats = {
         "shows": shows,
         "entries": entries,
-        "seen": len(app.seen_titles),
         "version": version,
     }
 
@@ -98,11 +97,7 @@ async def index() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    if not len(app.rss_parsers):
-        await flash(fluent._("no-rss-parsers"), category="error")
-    elif not len(app.seen_titles):
-        await flash(fluent._("no-shows-found"), category="error")
-    elif app.flags.DL_CLIENT_CONNECTION_ERROR:
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
@@ -134,8 +129,6 @@ async def nyaa_search() -> str:
         )
         shows = await con.fetchall()
         ctx["shows"] = [dict(s) for s in shows]
-
-    ctx["seen_titles"] = list(app.seen_titles)
 
     return await render_template("index.html", **ctx)
 

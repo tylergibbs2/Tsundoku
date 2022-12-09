@@ -25,6 +25,6 @@ tsundoku.db
 tsundoku.db-shm
 tsundoku.db-wal
 
-# Installed parsers
-parsers
+# Installed sources
+sources
 data

@@ -1,0 +1,9 @@
+{
+  "name": "SubsPlease",
+  "version": "1.0.0",
+  "url": "https://subsplease.org/rss/",
+  "rssItemKeyMapping": {
+    "filename": "$.title",
+    "torrent": "$.link"
+  }
+}

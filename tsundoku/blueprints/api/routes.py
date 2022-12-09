@@ -156,19 +156,6 @@ async def get_encode_stats() -> APIResponse:
     return APIResponse(result=await app.encoder.get_stats())
 
 
-@api_blueprint.route("/shows/seen", methods=["GET"])
-async def get_seen_shows() -> APIResponse:
-    """
-    Returns a list of distinct titles that the Tsundoku
-    poller task has seen while parsing the enabled RSS feeds.
-
-    .. :quickref: Shows; Retrieves seen shows.
-
-    :returns: List[:class:`str`]
-    """
-    return APIResponse(result=list(app.seen_titles))
-
-
 @api_blueprint.route("/shows/check", methods=["GET"])
 async def check_for_releases() -> APIResponse:
     """

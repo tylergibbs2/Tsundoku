@@ -1,0 +1,9 @@
+{
+  "name": "Nyaa.si",
+  "version": "1.0.0",
+  "url": "https://nyaa.si/?page=rss&c=1_2",
+  "rssItemKeyMapping": {
+    "filename": "$.title",
+    "torrent": "$.link"
+  }
+}

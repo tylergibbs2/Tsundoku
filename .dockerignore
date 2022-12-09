@@ -8,6 +8,6 @@ __pycache__
 .Python
 .env
 docs
-parsers
+sources
 tsundoku.db
 tsundoku.log
