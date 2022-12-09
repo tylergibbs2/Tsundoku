@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 import aiofiles.os
 import anitopy
 
-from tsundoku.config import FeedsConfig
+from tsundoku.config import FeedsConfig, GeneralConfig
 from tsundoku.manager import Entry, EntryState
 from tsundoku.utils import ExprDict
 
@@ -52,19 +52,28 @@ class Downloader:
     `show_entry` table.
     """
 
-    def __init__(self, app_context: Any) -> None:
-        self.app: TsundokuApp = app_context.app
+    app: TsundokuApp
 
-        self.complete_check: int
-        self.seed_ratio_limit: float
+    complete_check: int
+    seed_ratio_limit: float
+
+    default_desired_format: str
+    default_desired_folder: str
+
+    def __init__(self, app_context: Any) -> None:
+        self.app = app_context.app
 
     async def update_config(self) -> None:
         """
         Updates the configuration for the task.
         """
-        cfg = await FeedsConfig.retrieve()
-        self.complete_check = cfg["complete_check_interval"]
-        self.seed_ratio_limit = cfg["seed_ratio_limit"]
+        feed_cfg = await FeedsConfig.retrieve()
+        self.complete_check = feed_cfg["complete_check_interval"]
+        self.seed_ratio_limit = feed_cfg["seed_ratio_limit"]
+
+        general_cfg = await GeneralConfig.retrieve()
+        self.default_desired_format = general_cfg["default_desired_format"]
+        self.default_desired_folder = general_cfg["default_desired_folder"]
 
     async def start(self) -> None:
         while True:
@@ -72,10 +81,11 @@ class Downloader:
 
             try:
                 await self.check_show_entries()
-            except Exception:
+            except Exception as e:
                 import traceback
 
                 traceback.print_exc()
+                logger.error(f"Error occurred while checking show entries, '{e}'")
 
             await asyncio.sleep(self.complete_check)
 
@@ -241,14 +251,13 @@ class Downloader:
 
         expressions = self.get_expression_mapping(show_info["title"], season, episode)
 
-        desired_folder = show_info["desired_folder"]
-        if desired_folder is None:
-            desired_folder = entry.file_path.parent
-        else:
-            expressive_folder = desired_folder.format_map(expressions)
+        if show_info["desired_folder"]:
+            expressive_folder = show_info["desired_folder"].format_map(expressions)
 
             Path(expressive_folder).mkdir(parents=True, exist_ok=True)
             desired_folder = Path(expressive_folder)
+        else:
+            desired_folder = Path(self.default_desired_folder)
 
         name = entry.file_path.name
 
@@ -317,7 +326,7 @@ class Downloader:
         if show_info["desired_format"]:
             file_fmt = show_info["desired_format"]
         else:
-            file_fmt = "{n} - {s00e00}"
+            file_fmt = self.default_desired_format
 
         suffix = entry.file_path.suffix
 

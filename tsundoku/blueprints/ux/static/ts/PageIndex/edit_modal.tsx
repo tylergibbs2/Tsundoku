@@ -11,10 +11,16 @@ import { useForm } from "react-hook-form";
 import humanizeDuration from "humanize-duration";
 
 import { ShowToggleButton } from "./components/show_toggle_button";
-import { Show, Entry, Webhook, APIResponse } from "../interfaces";
+import {
+  Show,
+  Entry,
+  Webhook,
+  APIResponse,
+  GeneralConfig,
+} from "../interfaces";
 import { IonIcon } from "../icon";
-import { useMutation, useQueryClient } from "react-query";
-import { updateShowById } from "../queries";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { fetchConfig, updateShowById } from "../queries";
 import { toast } from "bulma-toast";
 
 let resources = ["base", "index"];
@@ -475,6 +481,10 @@ interface EditShowFormParams {
 }
 
 const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
+  const generalConfig = useQuery(["config", "general"], async () => {
+    return await fetchConfig<GeneralConfig>("general");
+  });
+
   if (show === null) return <></>;
 
   return (
@@ -501,47 +511,6 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                 className="input"
                 type="text"
                 placeholder={_("edit-form-name-placeholder")}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-full">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("edit-form-desired-format-tt")}
-              >
-                {_("edit-form-desired-format-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("desired_format")}
-                className="input"
-                type="text"
-                placeholder="{n} - {s00e00}"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-full">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("edit-form-desired-folder-tt")}
-              >
-                {_("edit-form-desired-folder-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("desired_folder")}
-                className="input"
-                type="text"
               />
             </div>
           </div>
@@ -585,6 +554,64 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
               />
             </div>
           </div>
+        </div>
+
+        <div className="column is-full">
+          <details>
+            <summary>{_("edit-form-advanced")}</summary>
+
+            <div className="columns mt-2">
+              <div className="column">
+                <div className="field">
+                  <label className="label">
+                    <span
+                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                      data-tooltip={_("edit-form-desired-format-tt")}
+                    >
+                      {_("edit-form-desired-format-field")}
+                    </span>
+                  </label>
+                  <div className="control">
+                    <input
+                      {...register("desired_format")}
+                      className="input"
+                      type="text"
+                      placeholder={
+                        generalConfig.isLoading
+                          ? "..."
+                          : generalConfig.data?.default_desired_format
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="column">
+                <div className="field">
+                  <label className="label">
+                    <span
+                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
+                      data-tooltip={_("edit-form-desired-folder-tt")}
+                    >
+                      {_("edit-form-desired-folder-field")}
+                    </span>
+                  </label>
+                  <div className="control">
+                    <input
+                      {...register("desired_folder")}
+                      className="input"
+                      type="text"
+                      placeholder={
+                        generalConfig.isLoading
+                          ? "..."
+                          : generalConfig.data?.default_desired_folder
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </form>

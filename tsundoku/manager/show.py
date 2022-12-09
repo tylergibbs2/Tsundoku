@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from sqlite3 import Row
-from typing import Any, List, TYPE_CHECKING
+from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -25,8 +25,8 @@ logger = logging.getLogger("tsundoku")
 class Show:
     id_: int
     title: str
-    desired_format: str
-    desired_folder: str
+    desired_format: Optional[str]
+    desired_folder: Optional[str]
     season: int
     episode_offset: int
     watch: bool

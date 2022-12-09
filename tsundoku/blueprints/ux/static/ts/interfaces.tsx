@@ -48,8 +48,8 @@ export interface Metadata {
 export interface Show {
   id_: number;
   title: string;
-  desired_format: string;
-  desired_folder: string;
+  desired_format: string | null;
+  desired_folder: string | null;
   season: number;
   episode_offset: number;
   watch: boolean;

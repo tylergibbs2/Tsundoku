@@ -88,11 +88,13 @@ edit-form-name-tt = Name of the title as it appears in the RSS feed.
 edit-form-name-field = Name
 edit-form-name-placeholder = Show title
 
-edit-form-desired-format-tt = Desired name of the file after it is renamed.
-edit-form-desired-format-field = Desired Format
+edit-form-advanced = Advanced Settings
 
-edit-form-desired-folder-tt = Folder which to place the completed file.
-edit-form-desired-folder-field = Desired Folder
+edit-form-desired-format-tt = Override the global format used to rename the completed file.
+edit-form-desired-format-field = File Format Override
+
+edit-form-desired-folder-tt = Override the global folder to place the completed file.
+edit-form-desired-folder-field = Folder Placement Override
 
 edit-form-season-tt = Value to use for the season of the series when renaming.
 edit-form-season-field = Season

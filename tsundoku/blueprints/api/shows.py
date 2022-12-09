@@ -57,6 +57,10 @@ class ShowsAPI(views.MethodView):
 
         desired_format = arguments.get("desired_format")
         desired_folder = arguments.get("desired_folder")
+        if not desired_format:
+            desired_format = None
+        if not desired_folder:
+            desired_folder = None
 
         season = arguments.get("season")
         if season is None:
@@ -120,13 +124,13 @@ class ShowsAPI(views.MethodView):
 
         desired_format = arguments.get("desired_format")
         if not desired_format:
-            show.desired_format = ""
+            show.desired_format = None
         else:
             show.desired_format = desired_format
 
         desired_folder = arguments.get("desired_folder")
         if not desired_folder:
-            show.desired_folder = ""
+            show.desired_folder = None
         else:
             show.desired_folder = desired_folder
 

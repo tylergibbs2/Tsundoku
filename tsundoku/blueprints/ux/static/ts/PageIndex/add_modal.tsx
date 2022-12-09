@@ -55,8 +55,8 @@ export const AddModal = ({
 
   let defaultValues = {
     title: "",
-    desired_format: generalConfig?.default_desired_format,
-    desired_folder: generalConfig?.default_desired_folder,
+    desired_format: "",
+    desired_folder: "",
     season: 1,
     episode_offset: 0,
     watch: true,
@@ -140,47 +140,6 @@ export const AddModal = ({
                 </div>
               </div>
 
-              <div className="column is-full">
-                <div className="field">
-                  <label className="label">
-                    <span
-                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                      data-tooltip={_("add-form-desired-format-tt")}
-                    >
-                      {_("add-form-desired-format-field")}
-                    </span>
-                  </label>
-                  <div className="control">
-                    <input
-                      {...register("desired_format")}
-                      className="input"
-                      type="text"
-                      placeholder="{n} - {s00e00}"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="column is-full">
-                <div className="field">
-                  <label className="label">
-                    <span
-                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                      data-tooltip={_("add-form-desired-folder-tt")}
-                    >
-                      {_("add-form-desired-folder-field")}
-                    </span>
-                  </label>
-                  <div className="control">
-                    <input
-                      {...register("desired_folder")}
-                      className="input"
-                      type="text"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div className="column is-half">
                 <div className="field">
                   <label className="label">
@@ -219,6 +178,56 @@ export const AddModal = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="column is-full">
+                <details>
+                  <summary>{_("edit-form-advanced")}</summary>
+
+                  <div className="columns mt-2">
+                    <div className="column">
+                      <div className="field">
+                        <label className="label">
+                          <span
+                            className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                            data-tooltip={_("edit-form-desired-format-tt")}
+                          >
+                            {_("edit-form-desired-format-field")}
+                          </span>
+                        </label>
+                        <div className="control">
+                          <input
+                            {...register("desired_format")}
+                            className="input"
+                            type="text"
+                            placeholder={generalConfig.default_desired_format}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="column">
+                      <div className="field">
+                        <label className="label">
+                          <span
+                            className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
+                            data-tooltip={_("edit-form-desired-folder-tt")}
+                          >
+                            {_("edit-form-desired-folder-field")}
+                          </span>
+                        </label>
+                        <div className="control">
+                          <input
+                            {...register("desired_folder")}
+                            className="input"
+                            type="text"
+                            placeholder={generalConfig.default_desired_folder}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
           </form>
