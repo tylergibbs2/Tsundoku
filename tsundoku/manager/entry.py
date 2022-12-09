@@ -209,7 +209,7 @@ class Entry:
         for wh in webhooks:
             triggers = await wh.get_triggers()
             if self.state.value in triggers:
-                await wh.send(self.episode, self.state)
+                await wh.send(self)
 
     def __repr__(self) -> str:
         return (

@@ -312,12 +312,12 @@ class Poller:
             return None
         elif "anime_title" not in parsed:
             logger.error(
-                f"`{source.name}@{source.version}` - anitopy failed retrieve 'anime_title' from '{filename}'"
+                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'"
             )
             return None
         elif "episode_number" not in parsed:
             logger.error(
-                f"`{source.name}@{source.version}` - anitopy failed retrieve 'episode_number' from '{filename}'"
+                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
         elif "anime_type" in parsed.keys():

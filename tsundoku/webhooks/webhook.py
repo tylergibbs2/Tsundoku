@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
+    from tsundoku.manager import Entry
 
 from tsundoku.constants import VALID_SERVICES, VALID_TRIGGERS
 from tsundoku.utils import ExprDict
@@ -870,7 +871,7 @@ class Webhook:
 
         return [title_block, content_block]
 
-    async def generate_payload(self, episode: int, event: str) -> Optional[dict]:
+    async def generate_payload(self, entry: Entry) -> Optional[dict]:
         """
         Generates the complete payload for
         a webhook send.
@@ -905,13 +906,19 @@ class Webhook:
 
         payload: Any = {}
 
-        expr = ExprDict(name=show_name, episode=episode, state=event)
+        expr = ExprDict(
+            name=show_name,
+            episode=entry.episode,
+            state=entry.state,
+            manual=entry.created_manually,
+            version=entry.version,
+        )
 
         content = self.base.content_fmt.format_map(expr)
 
         if self.base.service == "discord":
             # Discord expects an array
-            payload["embeds"] = [self.generate_discord_embed(event, content)]
+            payload["embeds"] = [self.generate_discord_embed(entry.state, content)]
         elif self.base.service == "slack":
             payload["blocks"] = self.generate_slack_blocks(content)
         else:
@@ -920,7 +927,7 @@ class Webhook:
 
         return payload
 
-    async def send(self, episode: int, event: str) -> None:
+    async def send(self, entry: Entry) -> None:
         """
         Posts an event with data to a webhook.
 
@@ -938,7 +945,7 @@ class Webhook:
             return None
 
         logger.debug(f"Webhooks - Generating payload for webhook for <s{self.show_id}>")
-        payload = await self.generate_payload(episode, event)
+        payload = await self.generate_payload(entry)
 
         if not payload:
             logger.warn(
