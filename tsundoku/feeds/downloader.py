@@ -90,7 +90,7 @@ class Downloader:
             await asyncio.sleep(self.complete_check)
 
     def get_expression_mapping(
-        self, title: str, season: str, episode: str, **kwargs: str
+        self, title: str, season: str, episode: str, version: str, **kwargs: str
     ) -> ExprDict:
         """
         Creates an ExprDict of specific expressions to use
@@ -126,6 +126,8 @@ class Downloader:
             s00e00=f"s{season.zfill(2)}e{episode.zfill(2)}",
             S00E00=f"S{season.zfill(2)}E{episode.zfill(2)}",
             sxe=f"{season}x{episode.zfill(2)}",
+            version=version,
+            v=version,
             **kwargs,
         )
 
@@ -272,7 +274,9 @@ class Downloader:
         season = str(show_info["season"])
         episode = str(entry.episode + show_info["episode_offset"])
 
-        expressions = self.get_expression_mapping(show_info["title"], season, episode)
+        expressions = self.get_expression_mapping(
+            show_info["title"], season, episode, entry.version
+        )
 
         if show_info["desired_folder"]:
             expressive_folder = show_info["desired_folder"].format_map(expressions)
@@ -356,7 +360,11 @@ class Downloader:
         episode = str(entry.episode + show_info["episode_offset"])
 
         expressions = self.get_expression_mapping(
-            show_info["title"], str(show_info["season"]), episode, ext=suffix
+            show_info["title"],
+            str(show_info["season"]),
+            episode,
+            entry.version,
+            ext=suffix,
         )
         name = file_fmt.format_map(expressions)
 
