@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 import { getInjector } from "../../fluent";
 
 let resources = ["config"];

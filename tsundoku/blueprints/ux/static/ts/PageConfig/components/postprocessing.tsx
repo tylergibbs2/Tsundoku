@@ -10,6 +10,7 @@ import { MutateConfigVars } from "../../interfaces";
 import { fetchConfig, setConfig } from "../../queries";
 
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
+import { GlobalLoading } from "../../Components/GlobalLoading";
 
 let resources = ["config"];
 
@@ -67,7 +68,7 @@ export const PostProcessing = () => {
     getEncodingStats();
   }, []);
 
-  if (config.isLoading) return <div>loading...</div>;
+  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
   const inputEnabled = (e: React.MouseEvent<HTMLInputElement>): void => {
     if (e.currentTarget.checked)

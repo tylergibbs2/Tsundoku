@@ -4,8 +4,8 @@ import { useQuery, UseQueryResult } from "react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
-import { Entry, Show } from "../interfaces";
 import { fetchEntryById, fetchShowById, fetchShows } from "../queries";
+import { GlobalLoading } from "../Components/GlobalLoading";
 
 import "../../css/logs.css";
 
@@ -35,14 +35,7 @@ export const LogsApp = () => {
       setMessageHistory((prev) => prev.concat(lastMessage));
   }, [lastMessage, setMessageHistory]);
 
-  if (shows.isLoading)
-    return (
-      <progress
-        className="progress is-large is-primary"
-        style={{ transform: "translateY(33vh)" }}
-        max="100"
-      />
-    );
+  if (shows.isLoading) return <GlobalLoading />;
 
   return (
     <>

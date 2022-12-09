@@ -1,5 +1,6 @@
 import { ChangeEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
 import { MutateConfigVars } from "../../interfaces";
 import { fetchConfig, setConfig } from "../../queries";
@@ -54,7 +55,7 @@ export const TorrentConfig = () => {
     setFetchingStatus(false);
   };
 
-  if (config.isLoading) return <div>loading...</div>;
+  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
   const inputClient = (e: ChangeEvent<HTMLSelectElement>) => {
     setClientStatus(null);

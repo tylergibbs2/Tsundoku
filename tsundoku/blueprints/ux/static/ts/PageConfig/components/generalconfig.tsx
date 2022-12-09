@@ -3,6 +3,7 @@ import { GeneralConfig, MutateConfigVars } from "../../interfaces";
 import { getInjector } from "../../fluent";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, setConfig } from "../../queries";
+import { GlobalLoading } from "../../Components/GlobalLoading";
 
 let resources = ["config", "logs"];
 
@@ -26,7 +27,7 @@ export const GeneralConfigApp = () => {
     }
   );
 
-  if (config.isLoading) return <div>loading...</div>;
+  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
   const inputHost = (e: ChangeEvent<HTMLInputElement>) => {
     mutation.mutate({ key: "host", value: e.target.value });

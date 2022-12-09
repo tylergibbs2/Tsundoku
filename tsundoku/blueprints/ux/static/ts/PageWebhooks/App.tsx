@@ -9,6 +9,7 @@ import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
 import { useEffect, useState } from "react";
+import { GlobalLoading } from "../Components/GlobalLoading";
 
 let resources = ["webhooks"];
 
@@ -27,14 +28,7 @@ export const WebhooksApp = () => {
     else document.body.classList.remove("is-clipped");
   }, [activeModal]);
 
-  if (bases.isLoading)
-    return (
-      <progress
-        className="progress is-large is-primary"
-        style={{ transform: "translateY(33vh)" }}
-        max="100"
-      />
-    );
+  if (bases.isLoading) return <GlobalLoading />;
 
   return (
     <>

@@ -11,6 +11,7 @@ import { Shows } from "./components/shows";
 import { fetchConfig, fetchShows } from "../queries";
 
 import "../../css/index.css";
+import { GlobalLoading } from "../Components/GlobalLoading";
 
 let resources = ["base", "index"];
 
@@ -64,14 +65,7 @@ export const IndexApp = () => {
     else document.body.classList.remove("is-clipped");
   }, [currentModal]);
 
-  if (shows.isLoading)
-    return (
-      <progress
-        className="progress is-large is-primary"
-        style={{ transform: "translateY(33vh)" }}
-        max="100"
-      />
-    );
+  if (shows.isLoading) return <GlobalLoading />;
 
   return (
     <>

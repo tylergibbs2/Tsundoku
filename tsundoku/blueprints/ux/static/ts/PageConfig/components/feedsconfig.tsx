@@ -1,5 +1,6 @@
 import { ChangeEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
 import { MutateConfigVars } from "../../interfaces";
 import { fetchConfig, setConfig } from "../../queries";
@@ -33,7 +34,7 @@ export const FeedsConfig = () => {
     }
   );
 
-  if (config.isLoading) return <div>loading...</div>;
+  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
   const inputPollingInterval = async (e: ChangeEvent<HTMLInputElement>) => {
     mutation.mutate({ key: "polling_interval", value: e.target.value });
