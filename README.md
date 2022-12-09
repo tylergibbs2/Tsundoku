@@ -4,7 +4,8 @@
 [![Discord Invite](https://img.shields.io/discord/801396820772257802)](https://discord.gg/thxN858gXm)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
-Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has a parser for SubsPlease installed.
+Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has sources for
+[Nyaa.si](https://nyaa.si/), [SubsPlease](https://subsplease.org/), and [Tokyo Toshokan](https://www.tokyotosho.info/).
 
 [Chat on Discord](https://discord.gg/thxN858gXm)
 
@@ -60,7 +61,3 @@ $ pip install -r requirements.txt
 # LINUX:   source .venv/bin/activate
 $ python -m tsundoku
 ```
-
-## Parsers
-
-Please see the [example parser](https://github.com/tylergibbs2/Tsundoku/blob/master/default_parsers/_example.py) for writing custom parsers.
