@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 from asyncio.queues import Queue
 import logging
+from pathlib import Path
 import secrets
-from typing import Any, Tuple, MutableSet, List
+from typing import Any, Optional, Tuple, MutableSet, List
 from uuid import uuid4
 
-import aiofiles
 import aiohttp
 from argon2 import PasswordHasher
 from quart import Quart, redirect, url_for
@@ -54,6 +54,7 @@ class TsundokuApp(Quart):
 
     flags: Flags
 
+    cached_bundle_hash: Optional[str] = None
     _tasks: List[asyncio.Task] = []
 
     def __init__(self, *args, **kwargs):
@@ -107,6 +108,32 @@ async def redirect_to_login(*_: Any) -> Response:
         return redirect(url_for("ux.register"))
 
     return redirect(url_for("ux.login"))
+
+
+@app.url_defaults
+def add_hash_for_webpack_bundle(endpoint: str, values: dict) -> None:
+    filename = values.get("filename")
+    if endpoint != "ux.static" or filename != "js/root.js":
+        return
+
+    if app.cached_bundle_hash is not None and not app.flags.IS_DEBUG:
+        values["filename"] = f"js/root.{app.cached_bundle_hash}.js"
+        return
+
+    js_folder = Path("tsundoku", "blueprints", "ux", "static", "js")
+    if not js_folder.exists():
+        logger.error("Could not find static JS folder!")
+        return
+
+    for file in js_folder.glob("*.js"):
+        if file.name.startswith("root."):
+            split = file.name.split(".")
+            if len(split) == 2:
+                return
+
+            app.cached_bundle_hash = split[1]
+            values["filename"] = f"js/root.{app.cached_bundle_hash}.js"
+            return
 
 
 @app.before_serving

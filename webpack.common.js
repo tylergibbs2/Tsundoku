@@ -33,4 +33,8 @@ module.exports = {
     },
   },
   plugins: [new WebpackFluentPlugin()],
+  output: {
+    path: path.resolve(__dirname, "tsundoku/blueprints/ux/static/js/"),
+    clean: true,
+  },
 };

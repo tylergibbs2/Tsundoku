@@ -21,6 +21,7 @@ tsundoku.log
 # Node modules
 node_modules
 act
+tsundoku/blueprints/ux/static/js
 
 # Database
 tsundoku.db
