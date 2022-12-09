@@ -36,8 +36,10 @@ class Entry:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]
+        self.version: str = record["version"]
         self.state: EntryState = EntryState[record["current_state"]]
         self.torrent_hash: str = record["torrent_hash"]
+        self.created_manually: bool = record["created_manually"]
         self.last_update: datetime = record["last_update"]
 
         fp = record["file_path"]
@@ -59,9 +61,11 @@ class Entry:
             "id": self.id,
             "show_id": self.show_id,
             "episode": self.episode,
+            "version": self.version,
             "state": self.state.value,
             "torrent_hash": self.torrent_hash,
             "file_path": str(self.file_path),
+            "created_manually": self.created_manually,
             "last_update": self.last_update.isoformat(),
         }
 
@@ -90,9 +94,11 @@ class Entry:
                     id,
                     show_id,
                     episode,
+                    version,
                     current_state,
                     torrent_hash,
                     file_path,
+                    created_manually,
                     last_update
                 FROM
                     show_entry

@@ -52,9 +52,11 @@ CREATE TABLE show_entry (
     id INTEGER PRIMARY KEY,
     show_id INTEGER NOT NULL REFERENCES shows(id) ON DELETE CASCADE,
     episode INTEGER NOT NULL,
+    version TEXT NOT NULL DEFAULT "v0",
     current_state REFERENCES EntryState(Type) NOT NULL DEFAULT 'downloading',
     torrent_hash TEXT NOT NULL,
     file_path TEXT,
+    created_manually BOOLEAN NOT NULL DEFAULT '0',
     last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -75,7 +75,9 @@ class ShowEntriesAPI(views.MethodView):
 
         if entry["magnet"]:
             magnet = await app.dl_client.get_magnet(entry["magnet"])
-            entry_id = await app.downloader.begin_handling(show_id, episode, magnet)
+            entry_id = await app.downloader.begin_handling(
+                show_id, episode, magnet, "v0", manual=True
+            )
         else:
             async with app.acquire_db() as con:
                 await con.execute(
@@ -85,15 +87,17 @@ class ShowEntriesAPI(views.MethodView):
                             show_id,
                             episode,
                             current_state,
-                            torrent_hash
+                            torrent_hash,
+                            created_manually
                         )
                     VALUES
-                        (?, ?, ?, ?);
+                        (?, ?, ?, ?, ?);
                 """,
                     show_id,
                     episode,
                     "completed",
                     "",
+                    True,
                 )
                 entry_id = con.lastrowid
 
@@ -104,9 +108,11 @@ class ShowEntriesAPI(views.MethodView):
                     id,
                     show_id,
                     episode,
+                    version,
                     current_state,
                     torrent_hash,
                     file_path,
+                    created_manually,
                     last_update
                 FROM
                     show_entry

@@ -25,9 +25,11 @@ class EntriesAPI(views.MethodView):
                     id,
                     show_id,
                     episode,
+                    version,
                     current_state,
                     torrent_hash,
                     file_path,
+                    created_manually,
                     last_update
                 FROM
                     show_entry

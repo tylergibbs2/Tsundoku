@@ -47,3 +47,46 @@ def normalize_resolution(original: str) -> str:
             return "4k"
 
     return original
+
+
+def compare_version_strings(first: str, second: str) -> int:
+    """
+    Compare two version strings.
+
+    Parameters
+    ----------
+    a: str
+        The first version string.
+    b: str
+        The second version string.
+
+    Returns
+    -------
+    int
+        1 if a > b, -1 if a < b, 0 if a == b.
+    """
+    if first.startswith("v"):
+        first = first[1:]
+    if second.startswith("v"):
+        second = second[1:]
+
+    a = first.split(".")
+    b = second.split(".")
+
+    for i in range(max(len(a), len(b))):
+        try:
+            a_part = int(a[i])
+        except IndexError:
+            a_part = 0
+
+        try:
+            b_part = int(b[i])
+        except IndexError:
+            b_part = 0
+
+        if a_part > b_part:
+            return 1
+        elif a_part < b_part:
+            return -1
+
+    return 0

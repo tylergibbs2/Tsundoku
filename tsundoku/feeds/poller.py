@@ -15,8 +15,9 @@ import anitopy
 import feedparser
 
 from tsundoku.config import FeedsConfig
-from tsundoku.sources import get_all_sources, Source
 from tsundoku.feeds.fuzzy import extract_one
+from tsundoku.sources import get_all_sources, Source
+from tsundoku.utils import compare_version_strings
 
 logger = logging.getLogger("tsundoku")
 
@@ -196,7 +197,7 @@ class Poller:
 
         return found_items
 
-    async def is_parsed(self, show_id: int, episode: int) -> bool:
+    async def is_parsed(self, show_id: int, episode: int, version: str) -> bool:
         """
         Will check if a specified episode of a
         show has already been parsed.
@@ -207,6 +208,8 @@ class Poller:
             The ID of the show to check.
         episode: int
             The episode to check if it has been parsed.
+        version: str
+            The release version of the episode.
 
         Returns
         -------
@@ -217,7 +220,9 @@ class Poller:
             await con.execute(
                 """
                 SELECT
-                    id
+                    id,
+                    version,
+                    created_manually
                 FROM
                     show_entry
                 WHERE show_id=? AND episode=?;
@@ -225,9 +230,15 @@ class Poller:
                 show_id,
                 episode,
             )
-            show_entry = await con.fetchval()
+            entry = await con.fetchone()
 
-        return bool(show_entry)
+        if entry is None:
+            return False
+
+        return (
+            entry["created_manually"]
+            or compare_version_strings(entry["version"], version) >= 0
+        )
 
     async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
         """
@@ -333,17 +344,20 @@ class Poller:
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
             return None
 
-        entry_is_parsed = await self.is_parsed(match.matched_id, show_episode)
-        if entry_is_parsed:
+        release_version = parsed.get("release_version", "v0")
+        if not release_version.startswith("v"):
+            release_version = f"v{release_version}"
+
+        if await self.is_parsed(match.matched_id, show_episode, release_version):
             return None
 
         logger.info(
-            f"`{source.name}@{source.version}` - Release Found for <s{match.matched_id}>, episode {show_episode}"
+            f"`{source.name}@{source.version}` - Release Found for <s{match.matched_id}>, episode {show_episode}{release_version}"
         )
 
         magnet_url = await self.get_torrent_link(source, item)
         await self.app.downloader.begin_handling(
-            match.matched_id, show_episode, magnet_url
+            match.matched_id, show_episode, magnet_url, release_version
         )
 
         return (match.matched_id, show_episode)

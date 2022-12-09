@@ -24,8 +24,10 @@ export interface Entry {
   show_id: number;
   state: string;
   episode: number;
+  version: string;
   torrent_hash?: string;
   file_path?: string;
+  created_manually: boolean;
   last_update: string;
 }
 

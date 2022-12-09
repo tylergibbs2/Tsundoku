@@ -658,9 +658,11 @@ const EditShowEntries = ({
     let entry = {
       id: fakeId,
       episode: newEpNum,
+      version: "v0",
       show_id: show.id_,
       state: "buffered",
       magnet: data.magnet,
+      created_manually: true,
       last_update: new Date().toISOString(),
     };
     let temp = [entry, ...entries];
@@ -790,7 +792,10 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
 
   return (
     <tr>
-      <td>{entry.episode}</td>
+      <td>
+        {entry.episode}
+        {entry.version}
+      </td>
       <td>{_(`entry-status-${entry.state}`)}</td>
       <td title={localizedTitle}>
         {_("edit-entries-last-update", { time: localized })}

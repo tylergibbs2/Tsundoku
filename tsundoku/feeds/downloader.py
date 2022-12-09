@@ -130,7 +130,12 @@ class Downloader:
         )
 
     async def begin_handling(
-        self, show_id: int, episode: int, magnet_url: str
+        self,
+        show_id: int,
+        episode: int,
+        magnet_url: str,
+        version: str,
+        manual: bool = False,
     ) -> Optional[int]:
         """
         Begins downloading an episode of a show
@@ -147,6 +152,8 @@ class Downloader:
             The episode of the show downloading.
         magnet_url: str
             The magnet URL to use to initiate the download.
+        version: str
+            The version of the release.
 
         Returns
         -------
@@ -176,14 +183,28 @@ class Downloader:
                     show_entry (
                         show_id,
                         episode,
-                        torrent_hash
+                        version,
+                        torrent_hash,
+                        created_manually
                     )
                 VALUES
-                    (?, ?, ?);
+                    (:show_id, :episode, :version, :torrent_hash, :manual)
+                ON CONFLICT (show_id, episode)
+                DO UPDATE SET
+                    version = :version,
+                    torrent_hash = :torrent_hash,
+                    current_state = 'downloading',
+                    file_path = NULL,
+                    created_manually = :manual,
+                    last_update = CURRENT_TIMESTAMP;
             """,
-                show_id,
-                episode,
-                torrent_hash,
+                {
+                    "show_id": show_id,
+                    "episode": episode,
+                    "version": version,
+                    "torrent_hash": torrent_hash,
+                    "manual": manual,
+                },
             )
             await con.execute(
                 """
@@ -191,9 +212,11 @@ class Downloader:
                     id,
                     show_id,
                     episode,
+                    version,
                     current_state,
                     torrent_hash,
                     file_path,
+                    created_manually,
                     last_update
                 FROM
                     show_entry
@@ -503,9 +526,11 @@ class Downloader:
                     id,
                     show_id,
                     episode,
+                    version,
                     torrent_hash,
                     current_state,
                     file_path,
+                    created_manually,
                     last_update
                 FROM
                     show_entry
