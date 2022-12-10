@@ -21,7 +21,6 @@ interface EncodeConfig {
   quality_preset?: string;
   speed_preset?: string;
   maximum_encodes?: number;
-  retry_on_fail?: boolean;
   timed_encoding?: boolean;
   hour_start?: number;
   hour_end?: number;
@@ -133,11 +132,6 @@ const PostProcessingForm = ({
     }
 
     updateConfig({ key: "quality_preset", value: preset });
-  };
-
-  const inputRetryFail = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) updateConfig({ key: "retry_on_fail", value: true });
-    else updateConfig({ key: "retry_on_fail", value: false });
   };
 
   const inputSpeedPreset = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -342,21 +336,6 @@ const PostProcessingForm = ({
                 </select>
               </div>
             </div>
-          </div>
-        </div>
-        <div className="column is-one-third">
-          <h1 className="title is-5">{_("process-retry-title")}</h1>
-          <h2 className="subtitle is-6">{_("process-retry-subtitle")}</h2>
-          <div className="field">
-            <input
-              id="retryCheck"
-              type="checkbox"
-              className="switch"
-              onChange={inputRetryFail}
-              checked={config.retry_on_fail}
-              disabled={disabled}
-            />
-            <label htmlFor="retryCheck">{_("checkbox-enabled")}</label>
           </div>
         </div>
       </div>

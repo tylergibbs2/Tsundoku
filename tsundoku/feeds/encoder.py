@@ -40,6 +40,19 @@ class Encoder:
     at a user-specified Constant Rate Factor (CRF).
     """
 
+    ENABLED: bool
+    MAX_ENCODES: int
+    CRF: int
+    SPEED_PRESET: str
+
+    TIMED_ENCODING: bool
+    HOUR_START: int
+    HOUR_END: int
+
+    __encode_queue: List[int]
+    __active_encodes: int
+    __has_ffmpeg: bool
+
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
 
@@ -55,7 +68,6 @@ class Encoder:
         self.MAX_ENCODES = 2
         self.CRF = 21
         self.SPEED_PRESET = "medium"
-        self.RETRY_ON_FAIL = False
 
         self.TIMED_ENCODING = False
         self.HOUR_START = 3
@@ -88,7 +100,6 @@ class Encoder:
                     quality_preset,
                     speed_preset,
                     maximum_encodes,
-                    retry_on_fail,
                     timed_encoding,
                     hour_start,
                     hour_end
@@ -108,7 +119,6 @@ class Encoder:
             self.SPEED_PRESET = cfg["speed_preset"]
 
         self.ENABLED = cfg["enabled"]
-        self.RETRY_ON_FAIL = cfg["retry_on_fail"]
         self.MAX_ENCODES = cfg["maximum_encodes"] if cfg["maximum_encodes"] > 0 else 1
         self.TIMED_ENCODING = cfg["timed_encoding"]
         self.HOUR_START = cfg["hour_start"]
@@ -226,9 +236,7 @@ class Encoder:
         except Exception as e:
             logger.error(f"Failed to encode <e{entry_id}>: {e}")
 
-        if not ret and self.RETRY_ON_FAIL:
-            await self.encode(entry_id)
-        elif not ret and not self.RETRY_ON_FAIL:
+        if not ret:
             async with self.app.acquire_db() as con:
                 await con.execute(
                     """
@@ -239,7 +247,7 @@ class Encoder:
                 """,
                     entry_id,
                 )
-        elif not ret:
+
             await self.encode_next()
 
     async def encode_next(self) -> None:
