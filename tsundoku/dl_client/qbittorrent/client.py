@@ -116,12 +116,12 @@ class qBittorrentClient(TorrentClient):
 
         headers = {"Referer": self.url}
 
-        params = {"username": self.auth["username"], "password": self.auth["password"]}
+        payload = {"username": self.auth["username"], "password": self.auth["password"]}
 
         request_url = f"{self.url}/api/v2/auth/login"
 
-        async with self.session.get(
-            request_url, headers=headers, params=params
+        async with self.session.post(
+            request_url, headers=headers, data=payload
         ) as resp:
             status = resp.status
             if status == 200:
