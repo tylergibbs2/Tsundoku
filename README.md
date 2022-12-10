@@ -29,6 +29,8 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 - [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 - [Transmission](https://transmissionbt.com/)
 
+For sample configurations, please check out the [wiki page](../../wiki/Torrent-Client-Sample-Configuration).
+
 ## Docker Installation (Recommended)
 
 1. Copy the [`docker-compose.yml`](docker-compose.yml) file from the repository.
