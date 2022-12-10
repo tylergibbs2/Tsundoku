@@ -25,7 +25,7 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 
 ## Supported Download Clients
 
-- [Deluge WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
+- [Deluge](https://deluge-torrent.org/) with [WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
 - [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 - [Transmission](https://transmissionbt.com/)
 
