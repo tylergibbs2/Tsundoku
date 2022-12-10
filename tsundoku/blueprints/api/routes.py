@@ -172,8 +172,7 @@ async def check_for_releases() -> APIResponse:
     """
     logger.info("API - Force New Releases Check")
 
-    app.poller.reset_rss_cache()
-    found_items = await app.poller.poll()
+    found_items = await app.poller.poll(force=True)
 
     return APIResponse(result=found_items)
 
