@@ -536,7 +536,9 @@ class Downloader:
                     last_update
                 FROM
                     show_entry
-                WHERE current_state != 'completed';
+                WHERE
+                    current_state != 'completed'
+                    AND current_state != 'failed';
             """
             )
             entries = await con.fetchall()
