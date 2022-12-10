@@ -127,8 +127,8 @@ class qBittorrentClient(TorrentClient):
         http_method: str,
         location: str,
         method: str,
-        payload: dict = {},
-        params: dict = {},
+        payload: dict = None,  # type: ignore
+        params: dict = None,  # type: ignore
     ) -> dict:
         """
         Makes a request to qBittorrent.
@@ -149,6 +149,11 @@ class qBittorrentClient(TorrentClient):
         dict:
             The response.
         """
+        if payload is None:
+            payload = {}
+        if params is None:
+            params = {}
+
         # This retry code is from CuteFwan on GitHub! Thanks Cute
         # <https://github.com/CuteFwan/aqbit/blob/master/qbittorrent/connectors.py>
 
