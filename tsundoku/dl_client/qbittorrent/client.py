@@ -13,6 +13,11 @@ logger = logging.getLogger("tsundoku")
 
 
 class qBittorrentClient(TorrentClient):
+    auth: Dict[str, str]
+    url: str
+
+    last_authed_user: Optional[str] = None
+
     def __init__(
         self, session: aiohttp.ClientSession, auth: Dict[str, str], **kwargs: Any
     ) -> None:
@@ -105,6 +110,10 @@ class qBittorrentClient(TorrentClient):
         return match.group(1).lower()
 
     async def login(self) -> bool:
+        if self.last_authed_user == f"{self.auth['username']}:{self.auth['password']}":
+            logger.info("qBittorrent - Authentication is already cached")
+            return True
+
         headers = {"Referer": self.url}
 
         params = {"username": self.auth["username"], "password": self.auth["password"]}
@@ -116,8 +125,12 @@ class qBittorrentClient(TorrentClient):
         ) as resp:
             status = resp.status
             if status == 200:
+                self.last_authed_user = (
+                    f"{self.auth['username']}:{self.auth['password']}"
+                )
                 logger.info("qBittorrent - Successfully Authenticated")
             else:
+                self.last_authed_user = None
                 logger.warn(f"qBittorrent - Failed to Authenticate, status {status}")
 
         return status == 200
