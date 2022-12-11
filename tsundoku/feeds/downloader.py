@@ -270,13 +270,14 @@ class Downloader:
             show_info["title"], season, episode, entry.version
         )
 
-        if show_info["desired_folder"]:
-            expressive_folder = show_info["desired_folder"].format_map(expressions)
-
-            Path(expressive_folder).mkdir(parents=True, exist_ok=True)
-            desired_folder = Path(expressive_folder)
-        else:
-            desired_folder = Path(self.default_desired_folder)
+        desired_folder = (
+            show_info["desired_folder"]
+            if show_info["desired_folder"]
+            else self.default_desired_folder
+        )
+        expressive_folder = desired_folder.format_map(expressions)
+        Path(expressive_folder).mkdir(parents=True, exist_ok=True)
+        desired_folder = Path(expressive_folder)
 
         name = entry.file_path.name
 
