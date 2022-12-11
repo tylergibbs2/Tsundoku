@@ -211,13 +211,14 @@ class SearchResult:
                     """
                     INSERT INTO
                         show_entry
-                        (show_id, episode, torrent_hash)
+                        (show_id, episode, torrent_hash, created_manually)
                     VALUES
-                        (?, ?, ?);
+                        (?, ?, ?, ?);
                 """,
                     self.show_id,
                     episode,
                     torrent_hash,
+                    True,
                 )
                 await con.execute(
                     """
@@ -225,9 +226,11 @@ class SearchResult:
                         id,
                         show_id,
                         episode,
+                        version,
                         current_state,
                         torrent_hash,
                         file_path,
+                        created_manually,
                         last_update
                     FROM
                         show_entry
