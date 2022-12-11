@@ -429,6 +429,15 @@ class Downloader:
         if entry.state == EntryState.failed:
             return
 
+        # Sometimes the file path may exist on disk, but it isn't fully
+        # downloaded by the torrent client at this point in time.
+        is_completed = await self.app.dl_client.check_torrent_completed(
+            entry.torrent_hash
+        )
+        if not is_completed:
+            logger.info(f"<e{entry.id}> torrent state is not completed")
+            return
+
         # Initial downloading check. This conditional branch is essentially
         # waiting for the downloaded file to appear in the file system.
         if entry.state == EntryState.downloading:
@@ -448,15 +457,6 @@ class Downloader:
             path = entry.file_path
 
         if path is None:
-            return
-
-        # Sometimes the file path may exist on disk, but it isn't fully
-        # downloaded by the torrent client at this point in time.
-        is_completed = await self.app.dl_client.check_torrent_completed(
-            entry.torrent_hash
-        )
-        if not is_completed:
-            logger.info(f"<e{entry.id}> torrent state is not completed")
             return
 
         # This ensures that the path is an actual file rather than
