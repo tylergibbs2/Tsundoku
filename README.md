@@ -43,7 +43,7 @@ Updating is as simple as running `docker compose pull` and `docker compose up -d
 
 ### Requirements
 
-- Python 3.7+
+- Python 3.8+
 - Yarn
 
 ### Initial Setup

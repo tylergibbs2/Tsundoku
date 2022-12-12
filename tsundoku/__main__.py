@@ -1,7 +1,7 @@
 import sys
 
-if sys.version_info < (3, 7):
-    print("Please update Python to use version 3.7+")
+if sys.version_info < (3, 8):
+    print("Please update Python to use version 3.8+")
     exit(1)
 
 import argparse
