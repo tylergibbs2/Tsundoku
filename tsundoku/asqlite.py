@@ -497,6 +497,13 @@ class Connection:
         async with self.execute(query, *parameters) as cursor:
             return await cursor.fetchone()
 
+    async def fetchval(self, query: str, *parameters: Any) -> Any:
+        async with self.execute(query, *parameters) as cursor:
+            try:
+                return (await cursor.fetchone())[0]
+            except TypeError:
+                return
+
     @overload
     async def fetchmany(
         self, query: str, parameter: Dict[str, Any], /, *, size: Optional[int] = None

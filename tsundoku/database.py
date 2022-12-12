@@ -11,7 +11,7 @@ import subprocess
 from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.asqlite import Cursor
+    from tsundoku.asqlite import Connection
 
 from yoyo import get_backend, read_migrations
 
@@ -27,10 +27,9 @@ else:
 
 
 @asynccontextmanager
-async def acquire() -> AsyncIterator[Cursor]:
+async def acquire() -> AsyncIterator[Connection]:
     async with asqlite.connect(fp) as con:
-        async with con.cursor() as cur:
-            yield cur
+        yield con
 
 
 @contextmanager

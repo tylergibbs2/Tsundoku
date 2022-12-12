@@ -217,7 +217,7 @@ class Poller:
             True if the episode has been parsed, False otherwise.
         """
         async with self.app.acquire_db() as con:
-            await con.execute(
+            entry = await con.fetchone(
                 """
                 SELECT
                     id,
@@ -230,7 +230,6 @@ class Poller:
                 show_id,
                 episode,
             )
-            entry = await con.fetchone()
 
         if entry is None:
             return False
@@ -260,7 +259,7 @@ class Poller:
             Could be None if no shows are desired.
         """
         async with self.app.acquire_db() as con:
-            await con.execute(
+            desired_shows = await con.fetchall(
                 """
                 SELECT
                     id,
@@ -272,7 +271,6 @@ class Poller:
                     shows;
             """
             )
-            desired_shows = await con.fetchall()
         show_list = {
             show["title"]: show["id"] for show in desired_shows if show["watch"]
         }
@@ -338,7 +336,7 @@ class Poller:
             show_episode = int(parsed["episode_number"])
         except (ValueError, TypeError):
             logger.error(
-                f"`{source.name}@{source.version}` - Failed to convert episode to integer from '{parsed['episode_number']}'"
+                f"`{source.name}@{source.version}` - Failed to convert episode '{parsed['episode_number']}' to integer from '{filename}'"
             )
             return None
 
@@ -355,7 +353,7 @@ class Poller:
             return None
 
         async with self.app.acquire_db() as con:
-            await con.execute(
+            preferences = await con.fetchone(
                 """
                 SELECT
                     preferred_resolution,
@@ -367,7 +365,6 @@ class Poller:
             """,
                 match.matched_id,
             )
-            preferences = await con.fetchone()
 
         preferred_resolution = preferences["preferred_resolution"]
         preferred_release_group = preferences["preferred_release_group"]

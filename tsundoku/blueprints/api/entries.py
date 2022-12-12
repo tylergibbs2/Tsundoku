@@ -19,7 +19,7 @@ logger = logging.getLogger("tsundoku")
 class EntriesAPI(views.MethodView):
     async def get(self, entry_id: int) -> APIResponse:
         async with app.acquire_db() as con:
-            await con.execute(
+            entry = await con.fetchone(
                 """
                 SELECT
                     id,
@@ -37,7 +37,6 @@ class EntriesAPI(views.MethodView):
             """,
                 entry_id,
             )
-            entry = await con.fetchone()
 
         if entry is None:
             return APIResponse(

@@ -49,7 +49,7 @@ class NyaaAPI(views.MethodView):
             return APIResponse(status=400, error="Show ID passed is not an integer.")
 
         async with app.acquire_db() as con:
-            await con.execute(
+            show_id = await con.fetchval(
                 """
                 SELECT
                     id
@@ -59,7 +59,6 @@ class NyaaAPI(views.MethodView):
             """,
                 show_id,
             )
-            show_id = await con.fetchval()
 
         if not show_id:
             return APIResponse(

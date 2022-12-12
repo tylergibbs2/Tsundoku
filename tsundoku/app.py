@@ -59,7 +59,7 @@ class TsundokuApp(Quart):
     downloader: Downloader
     encoder: Encoder
 
-    acquire_db: Callable[..., AsyncContextManager[tsundoku.asqlite.Cursor]]
+    acquire_db: Callable[..., AsyncContextManager[tsundoku.asqlite.Connection]]
     sync_acquire_db: Callable[..., ContextManager[sqlite3.Connection]]
 
     flags: Flags
@@ -156,7 +156,7 @@ async def setup_db() -> None:
     app.sync_acquire_db = sync_acquire
 
     async with app.acquire_db() as con:
-        await con.execute(
+        users = await con.fetchval(
             """
             SELECT
                 COUNT(*)
@@ -164,7 +164,6 @@ async def setup_db() -> None:
                 users;
         """
         )
-        users = await con.fetchval()
 
     if not users:
         logger.warn(

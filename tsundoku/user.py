@@ -21,7 +21,7 @@ class User(AuthUser):
     async def _resolve(self) -> None:
         if not self._resolved:
             async with app.acquire_db() as con:
-                await con.execute(
+                user = await con.fetchone(
                     """
                     SELECT
                         username,
@@ -32,7 +32,6 @@ class User(AuthUser):
                 """,
                     self.auth_id,
                 )
-                user = await con.fetchone()
             self._username = user["username"]
             self._api_key = user["api_key"]
             self._resolved = True

@@ -116,7 +116,7 @@ class Show:
             The retrieved Show's object.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            show = await con.fetchone(
                 """
                 SELECT
                     id as id_,
@@ -136,7 +136,6 @@ class Show:
             """,
                 id_,
             )
-            show = await con.fetchone()
 
         if not show:
             logger.error(f"Failed to retrieve show with ID #{id_}")
@@ -144,7 +143,7 @@ class Show:
 
         metadata = await KitsuManager.from_show_id(show["id_"])
 
-        instance = cls(**show, metadata=metadata, _entries=[], _webhooks=[])
+        instance = cls(**show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
 
         await instance.entries()
         await instance.webhooks()
@@ -176,35 +175,36 @@ class Show:
             The inserted Show object.
         """
         async with app.acquire_db() as con:
-            await con.execute(
-                """
-                INSERT INTO
-                    shows
-                (
-                    title,
-                    desired_format,
-                    desired_folder,
-                    season,
-                    episode_offset,
-                    watch,
-                    post_process,
-                    preferred_resolution,
-                    preferred_release_group
+            async with con.cursor() as cur:
+                await cur.execute(
+                    """
+                    INSERT INTO
+                        shows
+                    (
+                        title,
+                        desired_format,
+                        desired_folder,
+                        season,
+                        episode_offset,
+                        watch,
+                        post_process,
+                        preferred_resolution,
+                        preferred_release_group
+                    )
+                    VALUES
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                    kwargs["title"],
+                    kwargs["desired_format"],
+                    kwargs["desired_folder"],
+                    kwargs["season"],
+                    kwargs["episode_offset"],
+                    kwargs["watch"],
+                    kwargs["post_process"],
+                    kwargs["preferred_resolution"],
+                    kwargs["preferred_release_group"],
                 )
-                VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """,
-                kwargs["title"],
-                kwargs["desired_format"],
-                kwargs["desired_folder"],
-                kwargs["season"],
-                kwargs["episode_offset"],
-                kwargs["watch"],
-                kwargs["post_process"],
-                kwargs["preferred_resolution"],
-                kwargs["preferred_release_group"],
-            )
-            new_id = con.lastrowid
+                new_id = cur.lastrowid
 
         return await Show.from_id(new_id)
 

@@ -196,7 +196,7 @@ class WebhookBase:
             The requested webhook base.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            base = await con.fetchone(
                 """
                 SELECT
                     id,
@@ -211,7 +211,6 @@ class WebhookBase:
             """,
                 base_id,
             )
-            base = await con.fetchone()
 
         if not base:
             return None
@@ -307,7 +306,7 @@ class WebhookBase:
             All rows.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            ids = await con.fetchall(
                 """
                 SELECT
                     id
@@ -317,7 +316,6 @@ class WebhookBase:
                     id ASC;
             """
             )
-            ids = await con.fetchall()
 
         instances: List[WebhookBase] = []
         for id_ in ids:
@@ -384,7 +382,7 @@ class WebhookBase:
             All valid triggers.
         """
         async with self._app.acquire_db() as con:
-            await con.execute(
+            triggers = await con.fetchall(
                 """
                 SELECT
                     trigger
@@ -395,7 +393,6 @@ class WebhookBase:
             """,
                 self.base_id,
             )
-            triggers = await con.fetchall()
 
         self.default_triggers = [r["trigger"] for r in triggers]
         return self.default_triggers
@@ -418,7 +415,7 @@ class WebhookBase:
             return await self.get_default_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute(
+            exists = await con.fetchval(
                 """
                 SELECT
                     trigger
@@ -429,7 +426,6 @@ class WebhookBase:
                 self.base_id,
                 trigger,
             )
-            exists = await con.fetchval()
 
             if exists:
                 return await self.get_default_triggers()
@@ -466,7 +462,7 @@ class WebhookBase:
             return await self.get_default_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute(
+            exists = await con.fetchval(
                 """
                 SELECT
                     trigger
@@ -477,7 +473,6 @@ class WebhookBase:
                 self.base_id,
                 trigger,
             )
-            exists = await con.fetchval()
 
             if not exists:
                 return await self.get_default_triggers()
@@ -557,7 +552,7 @@ class Webhook:
             All found webhooks.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            webhooks = await con.fetchall(
                 """
                 SELECT
                     wh.base,
@@ -577,9 +572,8 @@ class Webhook:
             """,
                 show_id,
             )
-            webhooks = await con.fetchall()
 
-            await con.execute(
+            triggers = await con.fetchall(
                 """
                 SELECT
                     base,
@@ -591,7 +585,6 @@ class Webhook:
             """,
                 show_id,
             )
-            triggers = await con.fetchall()
 
         instances = []
 
@@ -638,7 +631,7 @@ class Webhook:
             The found webhook.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            webhook = await con.fetchone(
                 """
                 SELECT
                     base
@@ -650,7 +643,6 @@ class Webhook:
                 show_id,
                 base_id,
             )
-            webhook = await con.fetchone()
 
         base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
         if not base:
@@ -703,7 +695,7 @@ class Webhook:
             All valid triggers.
         """
         async with self._app.acquire_db() as con:
-            await con.execute(
+            triggers = await con.fetchall(
                 """
                 SELECT
                     trigger
@@ -715,7 +707,6 @@ class Webhook:
                 self.show_id,
                 self.base.base_id,
             )
-            triggers = await con.fetchall()
 
         self.triggers = [r["trigger"] for r in triggers]
 
@@ -739,7 +730,7 @@ class Webhook:
             return await self.get_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute(
+            exists = await con.fetchval(
                 """
                 SELECT
                     trigger
@@ -751,7 +742,6 @@ class Webhook:
                 self.base.base_id,
                 trigger,
             )
-            exists = await con.fetchval()
 
             if exists:
                 return await self.get_triggers()
@@ -789,7 +779,7 @@ class Webhook:
             return await self.get_triggers()
 
         async with self._app.acquire_db() as con:
-            await con.execute(
+            exists = await con.fetchval(
                 """
                 SELECT
                     trigger
@@ -801,7 +791,6 @@ class Webhook:
                 self.base.base_id,
                 trigger,
             )
-            exists = await con.fetchval()
 
             if not exists:
                 return await self.get_triggers()
@@ -889,7 +878,7 @@ class Webhook:
             The generated payload.
         """
         async with self._app.acquire_db() as con:
-            await con.execute(
+            show_name = await con.fetchval(
                 """
                 SELECT
                     title
@@ -899,7 +888,6 @@ class Webhook:
             """,
                 self.show_id,
             )
-            show_name = await con.fetchval()
 
         if not show_name:
             return None

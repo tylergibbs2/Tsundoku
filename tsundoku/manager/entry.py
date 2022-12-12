@@ -88,7 +88,7 @@ class Entry:
             A list of associated Show Entries.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            entries = await con.fetchall(
                 """
                 SELECT
                     id,
@@ -109,7 +109,6 @@ class Entry:
             """,
                 show_id,
             )
-            entries = await con.fetchall()
 
         return [Entry(app, entry) for entry in entries]
 
@@ -124,7 +123,7 @@ class Entry:
             Whether to post-process or not.
         """
         async with self._app.acquire_db() as con:
-            await con.execute(
+            encoding_enabled = await con.fetchval(
                 """
                 SELECT
                     post_process
@@ -134,7 +133,6 @@ class Entry:
             """,
                 self.show_id,
             )
-            encoding_enabled = await con.fetchval()
 
         return (
             self.state == "completed"

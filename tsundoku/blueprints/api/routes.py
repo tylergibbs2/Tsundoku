@@ -49,7 +49,7 @@ async def ensure_auth() -> Optional[APIResponse]:
         token = request.headers["Authorization"]
         async with app.acquire_db() as con:
             try:
-                await con.execute(
+                user = await con.fetchval(
                     """
                     SELECT
                         id
@@ -60,7 +60,6 @@ async def ensure_auth() -> Optional[APIResponse]:
                 """,
                     token,
                 )
-                user = await con.fetchval()
 
                 if user:
                     authed = True

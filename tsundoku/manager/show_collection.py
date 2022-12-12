@@ -47,7 +47,7 @@ class ShowCollection:
             Collection of all shows.
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            shows = await con.fetchall(
                 """
                 SELECT
                     s.id as id_,
@@ -73,7 +73,6 @@ class ShowCollection:
                 ORDER BY title;
             """
             )
-            shows = await con.fetchall()
 
         _shows = [await Show.from_data(show) for show in shows]
         instance = cls(_shows=_shows)

@@ -232,7 +232,7 @@ class KitsuManager:
         logger.debug(f"Retrieving existing Kitsu info for <s{show_id}>")
 
         async with app.acquire_db() as con:
-            await con.execute(
+            row = await con.fetchone(
                 """
                 SELECT
                     kitsu_id,
@@ -244,9 +244,8 @@ class KitsuManager:
             """,
                 show_id,
             )
-            row = await con.fetchone()
             if not row:
-                await con.execute(
+                show_name = await con.fetchval(
                     """
                     SELECT
                         title
@@ -256,7 +255,6 @@ class KitsuManager:
                 """,
                     show_id,
                 )
-                show_name = await con.fetchval()
                 return await KitsuManager.fetch(show_id, show_name)
 
         instance = cls()
@@ -290,7 +288,7 @@ class KitsuManager:
 
         if data.get("kitsu_id") is None:
             async with app.acquire_db() as con:
-                await con.execute(
+                show_name = await con.fetchval(
                     """
                     SELECT
                         title
@@ -300,7 +298,6 @@ class KitsuManager:
                 """,
                     show_id,
                 )
-                show_name = await con.fetchval()
                 return await KitsuManager.fetch(show_id, show_name)
 
         instance = cls()
@@ -375,7 +372,7 @@ class KitsuManager:
             return url_for("ux.static", filename="img/missing.png")
 
         async with app.acquire_db() as con:
-            await con.execute(
+            url = await con.fetchval(
                 """
                 SELECT
                     cached_poster_url
@@ -385,7 +382,6 @@ class KitsuManager:
             """,
                 self.kitsu_id,
             )
-            url = await con.fetchval()
             if url:
                 return url
 
@@ -439,7 +435,7 @@ class KitsuManager:
             return False
 
         async with app.acquire_db() as con:
-            await con.execute(
+            row = await con.fetchone(
                 """
                 SELECT
                     show_status,
@@ -450,7 +446,6 @@ class KitsuManager:
             """,
                 self.kitsu_id,
             )
-            row = await con.fetchone()
 
         now = datetime.datetime.utcnow()
 

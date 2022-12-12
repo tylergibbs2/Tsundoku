@@ -21,7 +21,7 @@ class ShowEntriesAPI(views.MethodView):
     async def get(self, show_id: int, entry_id: Optional[int]) -> APIResponse:
         if entry_id is None:
             async with app.acquire_db() as con:
-                await con.execute(
+                entries = await con.fetchall(
                     """
                     SELECT
                         id,
@@ -34,12 +34,11 @@ class ShowEntriesAPI(views.MethodView):
                 """,
                     show_id,
                 )
-                entries = await con.fetchall()
 
             return APIResponse(result=[dict(record) for record in entries])
         else:
             async with app.acquire_db() as con:
-                await con.execute(
+                entry = await con.fetchone(
                     """
                     SELECT
                         id,
@@ -52,7 +51,6 @@ class ShowEntriesAPI(views.MethodView):
                 """,
                     entry_id,
                 )
-                entry = await con.fetchone()
 
             if entry is None:
                 return APIResponse(
@@ -80,29 +78,30 @@ class ShowEntriesAPI(views.MethodView):
             )
         else:
             async with app.acquire_db() as con:
-                await con.execute(
-                    """
-                    INSERT INTO
-                        show_entry (
-                            show_id,
-                            episode,
-                            current_state,
-                            torrent_hash,
-                            created_manually
-                        )
-                    VALUES
-                        (?, ?, ?, ?, ?);
-                """,
-                    show_id,
-                    episode,
-                    "completed",
-                    "",
-                    True,
-                )
-                entry_id = con.lastrowid
+                async with con.cursor() as cur:
+                    await cur.execute(
+                        """
+                        INSERT INTO
+                            show_entry (
+                                show_id,
+                                episode,
+                                current_state,
+                                torrent_hash,
+                                created_manually
+                            )
+                        VALUES
+                            (?, ?, ?, ?, ?);
+                    """,
+                        show_id,
+                        episode,
+                        "completed",
+                        "",
+                        True,
+                    )
+                    entry_id = cur.lastrowid
 
         async with app.acquire_db() as con:
-            await con.execute(
+            new_entry = await con.fetchone(
                 """
                 SELECT
                     id,
@@ -120,7 +119,6 @@ class ShowEntriesAPI(views.MethodView):
             """,
                 entry_id,
             )
-            new_entry = await con.fetchone()
 
         new_entry_obj = Entry(app, new_entry)
         logger.info(f"Entry Manually Added - <e{new_entry_obj.id}>")
@@ -146,7 +144,7 @@ class ShowEntriesAPI(views.MethodView):
 
     async def delete(self, show_id: int, entry_id: int) -> APIResponse:
         async with app.acquire_db() as con:
-            await con.execute(
+            episode = await con.fetchval(
                 """
                 SELECT
                     episode
@@ -156,8 +154,6 @@ class ShowEntriesAPI(views.MethodView):
             """,
                 entry_id,
             )
-
-            episode = await con.fetchval()
 
             await con.execute(
                 """

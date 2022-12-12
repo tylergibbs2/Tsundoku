@@ -62,12 +62,11 @@ class Config:
                 """
                 )
 
-            await con.execute(
+            row = await con.fetchone(
                 f"""
                 SELECT * FROM {cls.TABLE_NAME};
             """
             )
-            row: sqlite3.Row = await con.fetchone()
 
         return cls({k: row[k] for k in row.keys()})
 

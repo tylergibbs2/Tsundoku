@@ -236,7 +236,7 @@ class ShowsAPI(views.MethodView):
         :returns: :class:`bool`
         """
         async with app.acquire_db() as con:
-            await con.execute(
+            title = await con.fetchval(
                 """
                 SELECT
                     title
@@ -247,8 +247,6 @@ class ShowsAPI(views.MethodView):
             """,
                 show_id,
             )
-
-            title = await con.fetchval()
 
             await con.execute(
                 """

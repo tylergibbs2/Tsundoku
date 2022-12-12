@@ -179,47 +179,48 @@ class Downloader:
 
         # TODO: handle entry insertion in the Entry class
         async with self.app.acquire_db() as con:
-            await con.execute(
-                """
-                INSERT OR REPLACE INTO
-                    show_entry (
+            async with con.cursor() as cur:
+                await cur.execute(
+                    """
+                    INSERT OR REPLACE INTO
+                        show_entry (
+                            show_id,
+                            episode,
+                            version,
+                            torrent_hash,
+                            created_manually
+                        )
+                    VALUES
+                        (:show_id, :episode, :version, :torrent_hash, :manual);
+                """,
+                    {
+                        "show_id": show_id,
+                        "episode": episode,
+                        "version": version,
+                        "torrent_hash": torrent_hash,
+                        "manual": manual,
+                    },
+                )
+                await cur.execute(
+                    """
+                    SELECT
+                        id,
                         show_id,
                         episode,
                         version,
+                        current_state,
                         torrent_hash,
-                        created_manually
-                    )
-                VALUES
-                    (:show_id, :episode, :version, :torrent_hash, :manual);
-            """,
-                {
-                    "show_id": show_id,
-                    "episode": episode,
-                    "version": version,
-                    "torrent_hash": torrent_hash,
-                    "manual": manual,
-                },
-            )
-            await con.execute(
-                """
-                SELECT
-                    id,
-                    show_id,
-                    episode,
-                    version,
-                    current_state,
-                    torrent_hash,
-                    file_path,
-                    created_manually,
-                    last_update
-                FROM
-                    show_entry
-                WHERE
-                    id = ?;
-            """,
-                con.lastrowid,
-            )
-            entry = await con.fetchone()
+                        file_path,
+                        created_manually,
+                        last_update
+                    FROM
+                        show_entry
+                    WHERE
+                        id = ?;
+                """,
+                    cur.lastrowid,
+                )
+                entry = await cur.fetchone()
 
         entry = Entry(self.app, entry)
         await entry.set_state(EntryState.downloading)
@@ -248,7 +249,7 @@ class Downloader:
             return None
 
         async with self.app.acquire_db() as con:
-            await con.execute(
+            show_info = await con.fetchone(
                 """
                 SELECT
                     title,
@@ -261,7 +262,6 @@ class Downloader:
             """,
                 entry.show_id,
             )
-            show_info = await con.fetchone()
 
         season = str(show_info["season"])
         episode = str(entry.episode + show_info["episode_offset"])
@@ -328,7 +328,7 @@ class Downloader:
             return None
 
         async with self.app.acquire_db() as con:
-            await con.execute(
+            show_info = await con.fetchone(
                 """
                 SELECT
                     title,
@@ -341,7 +341,6 @@ class Downloader:
             """,
                 entry.show_id,
             )
-            show_info = await con.fetchone()
 
         if show_info["desired_format"]:
             file_fmt = show_info["desired_format"]
@@ -523,7 +522,7 @@ class Downloader:
         to check for completion.
         """
         async with self.app.acquire_db() as con:
-            await con.execute(
+            entries = await con.fetchall(
                 """
                 SELECT
                     id,
@@ -542,7 +541,6 @@ class Downloader:
                     AND current_state != 'failed';
             """
             )
-            entries = await con.fetchall()
 
         for entry in entries:
             entry = Entry(self.app, entry)

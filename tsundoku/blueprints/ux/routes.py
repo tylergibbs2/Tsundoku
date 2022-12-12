@@ -48,7 +48,7 @@ hasher = PasswordHasher()
 @ux_blueprint.context_processor
 async def update_context() -> dict:
     async with app.acquire_db() as con:
-        await con.execute(
+        shows = await con.fetchval(
             """
             SELECT
                 COUNT(*)
@@ -56,8 +56,7 @@ async def update_context() -> dict:
                 shows;
         """
         )
-        shows = await con.fetchval()
-        await con.execute(
+        entries = await con.fetchval(
             """
             SELECT
                 COUNT(*)
@@ -65,7 +64,6 @@ async def update_context() -> dict:
                 show_entry;
         """
         )
-        entries = await con.fetchval()
 
     stats = {
         "shows": shows,
@@ -117,7 +115,7 @@ async def nyaa_search() -> str:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
     async with app.acquire_db() as con:
-        await con.execute(
+        shows = await con.fetchall(
             """
             SELECT
                 id,
@@ -127,7 +125,6 @@ async def nyaa_search() -> str:
             ORDER BY title;
         """
         )
-        shows = await con.fetchall()
         ctx["shows"] = [dict(s) for s in shows]
 
     return await render_template("index.html", **ctx)
@@ -216,7 +213,7 @@ async def register() -> Any:
             return redirect(url_for("ux.register"))
 
         async with app.acquire_db() as con:
-            await con.execute(
+            existing_id = await con.fetchval(
                 """
                 SELECT
                     id
@@ -227,7 +224,6 @@ async def register() -> Any:
             """,
                 username,
             )
-            existing_id = await con.fetchval()
 
         # technically not possible to get to this page if there are
         # any other users at all
@@ -278,7 +274,7 @@ async def login() -> Any:
             return redirect(url_for("ux.login"))
 
         async with app.acquire_db() as con:
-            await con.execute(
+            user_data = await con.fetchone(
                 """
                 SELECT
                     id,
@@ -289,7 +285,6 @@ async def login() -> Any:
             """,
                 username.lower(),
             )
-            user_data = await con.fetchone()
 
         if not user_data:
             await flash(fluent._("invalid-credentials"), category="error")
@@ -329,10 +324,10 @@ async def logout() -> Any:
     return redirect(url_for("ux.index"))
 
 
-def collect_websocket(func):  # type: ignore
+def collect_websocket(func):
     @wraps(func)
-    async def wrapper(*args, **kwargs):  # type: ignore
-        queue = Queue()  # type: ignore
+    async def wrapper(*args, **kwargs):
+        queue = Queue()
         app.connected_websockets.add(queue)
         try:
             return await func(queue, *args, **kwargs)
