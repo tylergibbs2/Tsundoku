@@ -5,7 +5,17 @@ from asyncio.queues import Queue
 import logging
 from pathlib import Path
 import secrets
-from typing import Any, Optional, Tuple, MutableSet, List
+import sqlite3
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+    MutableSet,
+    List,
+    Callable,
+    AsyncContextManager,
+    ContextManager,
+)
 from uuid import uuid4
 
 import aiohttp
@@ -49,8 +59,8 @@ class TsundokuApp(Quart):
     downloader: Downloader
     encoder: Encoder
 
-    acquire_db: Any
-    sync_acquire_db: Any
+    acquire_db: Callable[..., AsyncContextManager[tsundoku.asqlite.Cursor]]
+    sync_acquire_db: Callable[..., ContextManager[sqlite3.Connection]]
 
     flags: Flags
 
@@ -143,7 +153,7 @@ async def setup_db() -> None:
     """
     await migrate()
     app.acquire_db = acquire
-    app.sync_acquire_db = sync_acquire  # type: ignore
+    app.sync_acquire_db = sync_acquire
 
     async with app.acquire_db() as con:
         await con.execute(

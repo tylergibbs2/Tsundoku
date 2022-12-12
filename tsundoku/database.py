@@ -8,7 +8,7 @@ from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import subprocess
-from typing import Any, AsyncGenerator, Generator, TYPE_CHECKING
+from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.asqlite import Cursor
@@ -27,14 +27,14 @@ else:
 
 
 @asynccontextmanager
-async def acquire() -> AsyncGenerator[Cursor, None]:
+async def acquire() -> AsyncIterator[Cursor]:
     async with asqlite.connect(fp) as con:
         async with con.cursor() as cur:
             yield cur
 
 
 @contextmanager
-def sync_acquire() -> Generator[sqlite3.Connection, None, None]:
+def sync_acquire() -> Iterator[sqlite3.Connection]:
     with sqlite3.connect(fp) as con:
         con.row_factory = sqlite3.Row
         yield con
