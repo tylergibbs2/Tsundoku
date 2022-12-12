@@ -7,6 +7,8 @@ Tsundoku is an all-in-one utility to download, rename, and move anime from RSS f
 Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has sources for
 [Nyaa.si](https://nyaa.si/), [SubsPlease](https://subsplease.org/), and [Tokyo Toshokan](https://www.tokyotosho.info/).
 
+Please check out the [wiki](https://github.com/tylergibbs2/Tsundoku/wiki) if you have any troubles.
+
 [Chat on Discord](https://discord.gg/thxN858gXm)
 
 <p align="center">
@@ -28,8 +30,6 @@ Anime is able to be matched from any source with an RSS feed. Out of the box, Ts
 - [Deluge](https://deluge-torrent.org/) with [WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
 - [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 - [Transmission](https://transmissionbt.com/)
-
-For sample configurations, please check out the [wiki page](../../wiki/Torrent-Client-Sample-Configuration).
 
 ## Docker Installation (Recommended)
 
