@@ -78,7 +78,10 @@ class ShowsAPI(views.MethodView):
         if not preferred_resolution or preferred_resolution == "0":
             preferred_resolution = None
 
-        if preferred_resolution not in VALID_RESOLUTIONS:
+        if (
+            preferred_resolution is not None
+            and preferred_resolution not in VALID_RESOLUTIONS
+        ):
             return APIResponse(
                 status=400, error="Preferred resolution is not a valid resolution."
             )
