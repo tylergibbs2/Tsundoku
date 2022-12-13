@@ -3,8 +3,13 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING
 from urllib.parse import quote_plus
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
 
 import anitopy
 import feedparser
@@ -27,17 +32,17 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: Any) -> None:
+    def __init__(self, app: TsundokuApp) -> None:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: Any, _from: dict) -> SearchResult:
+    def from_dict(cls, app: TsundokuApp, _from: dict) -> SearchResult:
         """
         Returns a valid SearchResult object from a data dict.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The Quart app.
         from: dict
             The data dict.
@@ -68,14 +73,16 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(cls, app: Any, show_id: int, torrent_link: str) -> SearchResult:
+    def from_necessary(
+        cls, app: TsundokuApp, show_id: int, torrent_link: str
+    ) -> SearchResult:
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The Quart app.
         show_id: int
             The ID of the show to be added to.
@@ -160,7 +167,7 @@ class SearchResult:
         existing_torrents = set()
         async with self._app.acquire_db() as con:
             for episode in await self.get_episodes():
-                await con.execute(
+                exists = await con.fetchval(
                     """
                     SELECT
                         torrent_hash
@@ -174,7 +181,6 @@ class SearchResult:
                     self.show_id,
                     episode,
                 )
-                exists = await con.fetchval()
                 if exists and overwrite:
                     existing_torrents.add(exists)
                     episodes_to_process.append(episode)
@@ -206,43 +212,44 @@ class SearchResult:
             return added
 
         async with self._app.acquire_db() as con:
-            for episode in episodes_to_process:
-                await con.execute(
-                    """
-                    INSERT INTO
-                        show_entry
-                        (show_id, episode, torrent_hash, created_manually)
-                    VALUES
-                        (?, ?, ?, ?);
-                """,
-                    self.show_id,
-                    episode,
-                    torrent_hash,
-                    True,
-                )
-                await con.execute(
-                    """
-                    SELECT
-                        id,
-                        show_id,
+            async with con.cursor() as cur:
+                for episode in episodes_to_process:
+                    await con.execute(
+                        """
+                        INSERT INTO
+                            show_entry
+                            (show_id, episode, torrent_hash, created_manually)
+                        VALUES
+                            (?, ?, ?, ?);
+                    """,
+                        self.show_id,
                         episode,
-                        version,
-                        current_state,
                         torrent_hash,
-                        file_path,
-                        created_manually,
-                        last_update
-                    FROM
-                        show_entry
-                    WHERE id = ?;
-                """,
-                    con.lastrowid,
-                )
-                entry = await con.fetchone()
+                        True,
+                    )
+                    await con.execute(
+                        """
+                        SELECT
+                            id,
+                            show_id,
+                            episode,
+                            version,
+                            current_state,
+                            torrent_hash,
+                            file_path,
+                            created_manually,
+                            last_update
+                        FROM
+                            show_entry
+                        WHERE id = ?;
+                    """,
+                        cur.lastrowid,
+                    )
+                    entry = await cur.fetchone()
 
-                entry = Entry(self._app, entry)
-                await entry.set_state(EntryState.downloading)
-                added.append(entry)
+                    entry = Entry(self._app, entry)
+                    await entry.set_state(EntryState.downloading)
+                    added.append(entry)
 
         return added
 
@@ -261,13 +268,13 @@ class NyaaSearcher:
         return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
 
     @staticmethod
-    async def search(app: Any, query: str) -> List[SearchResult]:
+    async def search(app: TsundokuApp, query: str) -> List[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The app.
         query: str
             The search query.

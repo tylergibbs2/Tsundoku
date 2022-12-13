@@ -47,7 +47,7 @@ class WebhookBase:
     @classmethod
     async def new(
         cls,
-        app: Any,
+        app: TsundokuApp,
         name: str,
         service: str,
         url: str,
@@ -60,7 +60,7 @@ class WebhookBase:
 
         Parameters
         ----------
-        app: Any:
+        app: TsundokuApp:
             The app.
         name: str
             The name of the WebhookBase.
@@ -106,20 +106,21 @@ class WebhookBase:
             """
 
         async with app.acquire_db() as con:
-            await con.execute(query, *args)
-            await con.execute(
-                """
-                SELECT
-                    id,
-                    content_fmt
-                FROM
-                    webhook_base
-                WHERE
-                    id = ?;
-            """,
-                con.lastrowid,
-            )
-            new_base = await con.fetchone()
+            async with con.cursor() as cur:
+                await cur.execute(query, *args)
+                await cur.execute(
+                    """
+                    SELECT
+                        id,
+                        content_fmt
+                    FROM
+                        webhook_base
+                    WHERE
+                        id = ?;
+                """,
+                    cur.lastrowid,
+                )
+                new_base = await cur.fetchone()
 
         if not new_base:
             return None

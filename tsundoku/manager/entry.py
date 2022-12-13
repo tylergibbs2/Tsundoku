@@ -77,7 +77,7 @@ class Entry:
 
         Parameters
         ----------
-        app: Any
+        app: TsundokuApp
             The Quart app.
         show_id: int
             The Show's ID.

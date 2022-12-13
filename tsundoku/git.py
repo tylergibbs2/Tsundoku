@@ -5,7 +5,9 @@ import sys
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 if TYPE_CHECKING:
-    app: Any
+    from tsundoku.app import TsundokuApp
+
+    app: TsundokuApp
 else:
     from quart import current_app as app
 
@@ -58,9 +60,6 @@ async def update() -> None:
     Performs a "git pull" to update the local
     Tsundoku to the latest GitHub version.
     """
-    if not app.update_info:
-        return
-
     logger.info("Tsundoku is updating...")
 
     out, _ = await run("pull --ff-only")
@@ -84,8 +83,6 @@ async def update() -> None:
 
     await migrate()
 
-    app.update_info = []
-
 
 async def check_for_updates() -> None:
     """
@@ -107,6 +104,3 @@ async def check_for_updates() -> None:
         hash_ = commit.split()[0]
         message = " ".join(commit.split()[1:])
         commits.append([hash_, message])
-
-    if commits:
-        app.update_info = commits
