@@ -1,7 +1,7 @@
 {
   "name": "Tokyo Toshokan",
   "version": "1.0.0",
-  "url": "https://www.tokyotosho.info/rss.php?filter=1,11&zwnj=0",
+  "url": "https://www.tokyotosho.info/rss.php?filter=1,11&zwnj=0&reversepolarity=1",
   "rssItemKeyMapping": {
     "filename": "$.title",
     "torrent": "$.link"
