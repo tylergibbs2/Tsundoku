@@ -214,7 +214,7 @@ class SearchResult:
         async with self._app.acquire_db() as con:
             async with con.cursor() as cur:
                 for episode in episodes_to_process:
-                    await con.execute(
+                    await cur.execute(
                         """
                         INSERT INTO
                             show_entry
@@ -227,7 +227,7 @@ class SearchResult:
                         torrent_hash,
                         True,
                     )
-                    await con.execute(
+                    await cur.execute(
                         """
                         SELECT
                             id,
