@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
@@ -5,7 +7,10 @@ import statistics
 from asyncio import create_subprocess_shell
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
 
 from quart import request
 
@@ -39,6 +44,8 @@ class Encoder:
     be re-encoded to the h.264 video encoding format
     at a user-specified Constant Rate Factor (CRF).
     """
+
+    app: TsundokuApp
 
     ENABLED: bool
     MAX_ENCODES: int
@@ -93,7 +100,7 @@ class Encoder:
                     (0);
             """
             )
-            await con.execute(
+            cfg = await con.fetchone(
                 """
                 SELECT
                     enabled,
@@ -107,7 +114,6 @@ class Encoder:
                     encode_config;
             """
             )
-            cfg = await con.fetchone()
 
         self.CRF = {"high": 18, "moderate": 21, "low": 24}.get(
             cfg["quality_preset"], 21
@@ -132,7 +138,7 @@ class Encoder:
         and also starts the encoding process.
         """
         async with self.app.acquire_db() as con:
-            await con.execute(
+            leftovers = await con.fetchall(
                 """
                 SELECT
                     entry_id
@@ -143,7 +149,6 @@ class Encoder:
                 ORDER BY started_at ASC;
             """
             )
-            leftovers = await con.fetchall()
 
         for entry in leftovers:
             await self.encode(entry["entry_id"])
@@ -280,7 +285,7 @@ class Encoder:
             True if successfully started, False if error occurred.
         """
         async with self.app.acquire_db() as con:
-            await con.execute(
+            entry = await con.fetchone(
                 """
                 SELECT
                     file_path,
@@ -292,7 +297,6 @@ class Encoder:
             """,
                 entry_id,
             )
-            entry = await con.fetchone()
 
         if entry["file_path"] is None:
             logger.warn(
@@ -403,7 +407,7 @@ class Encoder:
     async def handle_finished(self, entry_id: int) -> None:
         logger.debug(f"Encode finished for entry <e{entry_id}>")
         async with self.app.acquire_db() as con:
-            await con.execute(
+            entry_path = await con.fetchval(
                 """
                 SELECT
                     file_path
@@ -414,7 +418,6 @@ class Encoder:
             """,
                 entry_id,
             )
-            entry_path = await con.fetchval()
 
             if entry_path is None:
                 logger.warn(
@@ -484,7 +487,7 @@ class Encoder:
         """
         async with self.app.acquire_db() as con:
             # initial_size and final_size are stored in bytes
-            await con.execute(
+            stats = await con.fetchone(
                 """
                 SELECT
                     COUNT(*) AS total_encoded,
@@ -496,9 +499,8 @@ class Encoder:
                     ended_at IS NOT NULL;
             """
             )
-            stats = await con.fetchone()
 
-            await con.execute(
+            times = await con.fetchall(
                 """
                 SELECT
                     started_at,
@@ -509,7 +511,6 @@ class Encoder:
                     ended_at IS NOT NULL;
             """
             )
-            times = await con.fetchall()
 
         stats = dict(stats)
         durations = [(t["ended_at"] - t["started_at"]).total_seconds() for t in times]
