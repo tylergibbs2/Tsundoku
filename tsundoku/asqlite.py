@@ -191,8 +191,8 @@ class Cursor:
         return self._cursor
 
     @property
-    def lastrowid(self) -> int:
-        return self._cursor.lastrowid or 0
+    def lastrowid(self) -> Optional[int]:
+        return self._cursor.lastrowid
 
     @property
     def connection(self) -> Connection:

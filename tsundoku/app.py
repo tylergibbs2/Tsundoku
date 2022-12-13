@@ -32,6 +32,7 @@ except ImportError:
     pass
 
 import tsundoku.asqlite
+from tsundoku.asqlite import Connection
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import GeneralConfig
@@ -59,7 +60,7 @@ class TsundokuApp(Quart):
     downloader: Downloader
     encoder: Encoder
 
-    acquire_db: Callable[..., AsyncContextManager[tsundoku.asqlite.Connection]]
+    acquire_db: Callable[..., AsyncContextManager[Connection]]
     sync_acquire_db: Callable[..., ContextManager[sqlite3.Connection]]
 
     flags: Flags

@@ -206,6 +206,9 @@ class Show:
                 )
                 new_id = cur.lastrowid
 
+        if new_id is None:
+            raise Exception("Failed to insert show into database")
+
         return await Show.from_id(new_id)
 
     async def update(self) -> None:
