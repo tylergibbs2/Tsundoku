@@ -1,4 +1,10 @@
-import { APIResponse, Entry, Show, WebhookBase } from "./interfaces";
+import {
+  APIResponse,
+  Entry,
+  SeenRelease,
+  Show,
+  WebhookBase,
+} from "./interfaces";
 import { AddWebhookFormValues } from "./PageWebhooks/add_modal";
 import { EditWebhookFormValues } from "./PageWebhooks/edit_modal";
 
@@ -214,4 +220,64 @@ export const deleteWebhookById = async (id: number): Promise<void> => {
     throw new Error(
       `Failed to delete webhook, ${response.status}: ${response.statusText}`
     );
+};
+
+type fetchDistinctFilters = {
+  title?: string;
+  release_group?: string;
+  resolution?: string;
+};
+
+export const fetchDistinctSeenReleases = async (
+  field: string,
+  filters: fetchDistinctFilters = {}
+): Promise<string[]> => {
+  let request = {
+    method: "GET",
+    headers: COMMON_HEADERS,
+  };
+
+  let params = new URLSearchParams({ field: field, ...filters });
+  let response = await fetch(
+    `/api/v1/seen_releases/distinct?${params.toString()}`,
+    request
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get distinct field '${field}' seen releases, ${response.status}: ${response.statusText}`
+    );
+  }
+
+  let data: APIResponse<string[]> = await response.json();
+  return data.result;
+};
+
+type fetchFilteredFilters = {
+  title?: string;
+  release_group?: string;
+  resolution?: string;
+  episode?: string;
+};
+
+export const fetchFilteredSeenReleases = async (
+  filters: fetchFilteredFilters = {}
+): Promise<SeenRelease[]> => {
+  let request = {
+    method: "GET",
+    headers: COMMON_HEADERS,
+  };
+
+  let params = new URLSearchParams(filters);
+  let response = await fetch(
+    `/api/v1/seen_releases/filter?${params.toString()}`,
+    request
+  );
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get filtered seen releases, ${response.status}: ${response.statusText}`
+    );
+  }
+
+  let data: APIResponse<SeenRelease[]> = await response.json();
+  return data.result;
 };

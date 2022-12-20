@@ -6,10 +6,6 @@ from typing import Dict, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
 import aiohttp
 
 from .kitsu import API_URL
@@ -36,7 +32,7 @@ class ShowCollection:
         return [s.to_dict() for s in self._shows]
 
     @classmethod
-    async def all(cls) -> ShowCollection:
+    async def all(cls, app: TsundokuApp) -> ShowCollection:
         """
         Retrieves a collection of all Show
         objects presently stored in the database.
@@ -74,7 +70,7 @@ class ShowCollection:
             """
             )
 
-        _shows = [await Show.from_data(show) for show in shows]
+        _shows = [await Show.from_data(app, show) for show in shows]
         instance = cls(_shows=_shows)
 
         return instance

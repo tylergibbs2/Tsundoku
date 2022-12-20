@@ -16,6 +16,7 @@ import feedparser
 
 from tsundoku.config import FeedsConfig
 from tsundoku.feeds.fuzzy import extract_one
+from tsundoku.manager import SeenRelease
 from tsundoku.sources import get_all_sources, Source
 from tsundoku.utils import compare_version_strings, normalize_resolution
 
@@ -343,6 +344,7 @@ class Poller:
         match = await self.check_item_for_match(parsed["anime_title"])
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:
+            await SeenRelease.add(self.app, parsed, source.get_torrent(item))
             return None
 
         release_version = parsed.get("release_version", "v0")

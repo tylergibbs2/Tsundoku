@@ -27,9 +27,10 @@ class APIResponse(Response):
                 {
                     "status": 500,
                     "error": "The server encountered an error producing a response.",
-                }
+                },
+                ensure_ascii=False,
             )
         elif result is None:
-            return json.dumps({"status": status, "error": error})
+            return json.dumps({"status": status, "error": error}, ensure_ascii=False)
         else:
-            return json.dumps({"status": status, "result": result})
+            return json.dumps({"status": status, "result": result}, ensure_ascii=False)

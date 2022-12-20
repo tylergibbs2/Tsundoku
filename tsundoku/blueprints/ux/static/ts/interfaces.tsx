@@ -93,3 +93,13 @@ export interface GeneralConfig {
   default_desired_format?: string;
   unwatch_when_finished?: boolean;
 }
+
+export interface SeenRelease {
+  title: string;
+  release_group: string;
+  episode: number;
+  resolution: string;
+  version: string;
+  torrent_destination: string;
+  seen_at: string;
+}

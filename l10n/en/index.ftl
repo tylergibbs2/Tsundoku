@@ -28,6 +28,21 @@ add-show-button = Add show
 
 add-modal-header = Add Show
 
+add-form-discover-select-title = Please select a show title...
+add-form-discover-select-release-group = Please select a release group...
+add-form-discover-select-resolution = Please select a resolution...
+
+add-form-discover-mode-result-amount =
+    Upon adding, { $releaseCount } already seen {$releaseCount ->
+        [one] release
+        *[other] releases
+    } will begin processing.
+
+add-form-discover-mode-seen-episodes = Seen Episodes
+
+add-form-mode-manual = Manual Mode
+add-form-mode-discover = Discover Mode
+
 add-form-name-tt = Name of the title as it appears in the RSS feed.
 add-form-name-field = Name
 add-form-name-placeholder = Attack on Titan

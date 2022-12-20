@@ -32,6 +32,7 @@ from .response import APIResponse
 from .shows import ShowsAPI
 from .webhookbase import WebhookBaseAPI
 from .webhooks import WebhooksAPI
+from .seen_releases import SeenReleasesAPI
 
 api_blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
@@ -185,7 +186,7 @@ async def delete_show_cache(show_id: int) -> APIResponse:
     """
     logger.info(f"API - Deleting cache for Show <s{show_id}>")
 
-    show = await Show.from_id(show_id)
+    show = await Show.from_id(app, show_id)
     await show.metadata.clear_cache()
     await show.refetch()
 
@@ -249,6 +250,12 @@ def setup_views() -> None:
         "/webhooks/<int:base_id>",
         view_func=webhookbase_view,
         methods=["GET", "PUT", "DELETE"],
+    )
+
+    seenreleases_view = SeenReleasesAPI.as_view("seenreleases_api")
+
+    api_blueprint.add_url_rule(
+        "/seen_releases/<string:action>", view_func=seenreleases_view, methods=["GET"]
     )
 
     # Setup NyaaAPI URL rules.

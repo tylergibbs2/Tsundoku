@@ -9,10 +9,6 @@ from typing import Any, List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
 from tsundoku.webhooks.webhook import Webhook
 
 from .entry import Entry
@@ -23,6 +19,8 @@ logger = logging.getLogger("tsundoku")
 
 @dataclass
 class Show:
+    app: TsundokuApp
+
     id_: int
     title: str
     desired_format: Optional[str]
@@ -67,7 +65,7 @@ class Show:
         }
 
     @classmethod
-    async def from_data(cls, data: Row) -> Show:
+    async def from_data(cls, app: TsundokuApp, data: Row) -> Show:
         """
         Creates a Show object from a sqlite3.Row
         of a Show in the database.
@@ -92,7 +90,7 @@ class Show:
         }
         metadata = await KitsuManager.from_data(metadata_dict)
 
-        instance = cls(**data_dict, metadata=metadata, _entries=[], _webhooks=[])
+        instance = cls(app, **data_dict, metadata=metadata, _entries=[], _webhooks=[])
 
         await instance.entries()
         await instance.webhooks()
@@ -100,7 +98,7 @@ class Show:
         return instance
 
     @classmethod
-    async def from_id(cls, id_: int) -> Show:
+    async def from_id(cls, app: TsundokuApp, id_: int) -> Show:
         """
         Retrieves a Show from the database based on
         a passed identifier.
@@ -143,7 +141,7 @@ class Show:
 
         metadata = await KitsuManager.from_show_id(show["id_"])
 
-        instance = cls(**show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
+        instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
 
         await instance.entries()
         await instance.webhooks()
@@ -158,7 +156,19 @@ class Show:
         self.metadata = await KitsuManager.from_show_id(self.id_)
 
     @staticmethod
-    async def insert(**kwargs: Any) -> Show:
+    async def insert(
+        app: TsundokuApp,
+        /,
+        title: str,
+        desired_format: Optional[str],
+        desired_folder: Optional[str],
+        season: int,
+        episode_offset: int,
+        watch: bool,
+        post_process: bool,
+        preferred_resolution: Optional[str],
+        preferred_release_group: Optional[str],
+    ) -> Show:
         """
         Inserts a Show into the database based on the
         passed keyword arguments.
@@ -194,29 +204,29 @@ class Show:
                     VALUES
                         (?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
-                    kwargs["title"],
-                    kwargs["desired_format"],
-                    kwargs["desired_folder"],
-                    kwargs["season"],
-                    kwargs["episode_offset"],
-                    kwargs["watch"],
-                    kwargs["post_process"],
-                    kwargs["preferred_resolution"],
-                    kwargs["preferred_release_group"],
+                    title,
+                    desired_format,
+                    desired_folder,
+                    season,
+                    episode_offset,
+                    watch,
+                    post_process,
+                    preferred_resolution,
+                    preferred_release_group,
                 )
                 new_id = cur.lastrowid
 
         if new_id is None:
             raise Exception("Failed to insert show into database")
 
-        return await Show.from_id(new_id)
+        return await Show.from_id(app, new_id)
 
     async def update(self) -> None:
         """
         Updates a Show in the database using the
         existing object's attributes.
         """
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             await con.execute(
                 """
                 UPDATE
@@ -256,7 +266,7 @@ class Show:
         List[Entry]
             The Show's entries.
         """
-        self._entries = await Entry.from_show_id(app, self.id_)
+        self._entries = await Entry.from_show_id(self.app, self.id_)
         return self._entries
 
     async def webhooks(self) -> List[Webhook]:
@@ -269,7 +279,7 @@ class Show:
         List[Webhook]
             The Show's webhooks.
         """
-        self._webhooks = await Webhook.from_show_id(app, self.id_)
+        self._webhooks = await Webhook.from_show_id(self.app, self.id_)
         return self._webhooks
 
     def __repr__(self) -> str:

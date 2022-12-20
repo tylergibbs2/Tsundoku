@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Optional, TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
@@ -14,7 +15,7 @@ else:
 from quart import request, views
 
 from tsundoku.constants import VALID_RESOLUTIONS
-from tsundoku.manager import Show, ShowCollection
+from tsundoku.manager import SeenRelease, Show, ShowCollection
 
 from .response import APIResponse
 
@@ -24,13 +25,13 @@ logger = logging.getLogger("tsundoku")
 class ShowsAPI(views.MethodView):
     async def get(self, show_id: Optional[int]) -> APIResponse:
         if show_id is None:
-            shows = await ShowCollection.all()
+            shows = await ShowCollection.all(app)
             await shows.gather_statuses()
 
             return APIResponse(result=shows.to_list())
         else:
             try:
-                show = await Show.from_id(show_id)
+                show = await Show.from_id(app, show_id)
             except Exception:
                 return APIResponse(status=404, error="Show with passed ID not found.")
 
@@ -91,6 +92,7 @@ class ShowsAPI(views.MethodView):
             preferred_release_group = None
 
         show = await Show.insert(
+            app,
             title=arguments["title"],
             desired_format=desired_format,
             desired_folder=desired_folder,
@@ -113,14 +115,37 @@ class ShowsAPI(views.MethodView):
                 show.id_,
             )
 
+        show = await Show.from_id(app, show.id_)
+        for webhook in await show.webhooks():
+            await webhook.import_default_triggers()
+
         logger.info(
             f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
         )
-        await app.poller.poll(force=True)
 
-        show = await Show.from_id(show.id_)
-        for webhook in await show.webhooks():
-            await webhook.import_default_triggers()
+        # Find already seen releases. Must be done before triggering the poller
+        if (
+            show.preferred_resolution is not None
+            and show.preferred_release_group is not None
+        ):
+            seen_releases = await SeenRelease.filter(
+                app,
+                title=show.title,
+                resolution=show.preferred_resolution,
+                release_group=show.preferred_release_group,
+            )
+            for seen_release in seen_releases:
+                magnet = await app.dl_client.get_magnet(
+                    seen_release.torrent_destination
+                )
+                await app.downloader.begin_handling(
+                    show.id_, seen_release.episode, magnet, seen_release.version
+                )
+        else:
+            await app.poller.poll(force=True)
+
+        # Refetch entries in case they were added during the poll
+        await show.entries()
 
         return APIResponse(result=show.to_dict())
 
@@ -128,7 +153,7 @@ class ShowsAPI(views.MethodView):
         arguments = await request.get_json()
 
         try:
-            show = await Show.from_id(show_id)
+            show = await Show.from_id(app, show_id)
         except Exception:
             return APIResponse(status=404, error="Show with passed ID not found.")
 
@@ -222,7 +247,7 @@ class ShowsAPI(views.MethodView):
             )
             await app.poller.poll(force=True)
 
-        show = await Show.from_id(show_id)
+        show = await Show.from_id(app, show_id)
 
         return APIResponse(result=show.to_dict())
 
