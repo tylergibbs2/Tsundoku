@@ -47,29 +47,7 @@ hasher = PasswordHasher()
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
-    async with app.acquire_db() as con:
-        shows = await con.fetchval(
-            """
-            SELECT
-                COUNT(*)
-            FROM
-                shows;
-        """
-        )
-        entries = await con.fetchval(
-            """
-            SELECT
-                COUNT(*)
-            FROM
-                show_entry;
-        """
-        )
-
-    stats = {
-        "shows": shows,
-        "entries": entries,
-        "version": version,
-    }
+    stats = {"version": version}
 
     return {"stats": stats, "docker": app.flags.IS_DOCKER}
 
