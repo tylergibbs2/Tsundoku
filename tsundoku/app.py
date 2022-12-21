@@ -189,6 +189,9 @@ async def setup_session() -> None:
     )
     app.dl_client = Manager(app.session)
 
+    res = await app.dl_client.test_client()
+    app.flags.DL_CLIENT_CONNECTION_ERROR = not res
+
 
 @app.before_serving
 async def setup_tasks() -> None:
