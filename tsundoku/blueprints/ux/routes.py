@@ -46,12 +46,6 @@ hasher = PasswordHasher()
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
-    resources = ["errors"]
-    fluent = get_injector(resources)
-
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
     stats = {"version": version}
 
     return {"stats": stats, "docker": app.flags.IS_DOCKER}
@@ -78,6 +72,9 @@ async def index() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
+
     return await render_template("index.html", **ctx)
 
 
@@ -86,10 +83,13 @@ async def index() -> str:
 async def nyaa_search() -> str:
     ctx = {}
 
-    resources = ["base"]
+    resources = ["base", "errors"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     async with app.acquire_db() as con:
         shows = await con.fetchall(
@@ -112,10 +112,13 @@ async def nyaa_search() -> str:
 async def webhooks() -> str:
     ctx = {}
 
-    resources = ["base"]
+    resources = ["base", "errors"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
@@ -125,10 +128,13 @@ async def webhooks() -> str:
 async def config() -> str:
     ctx = {}
 
-    resources = ["base"]
+    resources = ["base", "errors"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
@@ -141,10 +147,13 @@ async def logs() -> Union[str, Response]:
 
     ctx = {}
 
-    resources = ["base"]
+    resources = ["base", "errors"]
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
