@@ -1,3 +1,20 @@
+"""
+This install script is essentially performing the following operations:
+
+1. Check for virtual environment
+   1. Create one if it doesn't exist
+2. Begin execution using the executable of the virtual environment
+3. Installs `requirements.txt` with pip
+4. Check if Yarn is required (required if the frontend is not built, or if the built frontend is out of date)
+5. If Yarn is required:
+   1. Check if Yarn is installed
+   2. Install the `package.json` dependencies
+   3. Run `yarn build`
+6. Create the `run.py` script.
+
+If any of the operations fail, the script exits.
+"""
+
 from __future__ import annotations
 import sys
 
