@@ -23,7 +23,7 @@ Please check out the [wiki](https://github.com/tylergibbs2/Tsundoku/wiki) if you
 - Import third-party RSS parsers to search other feeds
 - Send updates to Discord or Slack with webhooks
 - View airing status of shows
-- Full-fledged backend RESTful API for easy integration ([docs](https://tsundoku.moe/docs))
+- Full-fledged backend RESTful API for easy integration
 
 ## Supported Download Clients
 
@@ -43,37 +43,35 @@ Updating is as simple as running `docker compose pull` and `docker compose up -d
 
 ### Requirements
 
+If you downloaded Tsundoku from the releases page, Yarn is not required.
+
 - Python 3.8+
 - Yarn
 
 ### Initial Setup
 
+The cross-platform installation script should work on Windows, Linux, and macOS.
+It will create a virtual environment, install dependencies, and create a `run.py` file.
+
 ```bash
 $ git clone https://github.com/tylergibbs2/Tsundoku
 $ cd Tsundoku
-$ python -m venv .venv
-# WINDOWS: .venv\Scripts\activate.bat
-# LINUX:   source .venv/bin/activate
-$ pip install -r requirements.txt
-$ yarn
-$ yarn build
+$ python install.py
 ```
 
 ### Updating
 
+The installation script will also update Tsundoku and its dependencies.
+
 ```bash
 $ git pull
-# WINDOWS: .venv\Scripts\activate.bat
-# LINUX:   source .venv/bin/activate
-$ pip install -r requirements.txt
-$ yarn
-$ yarn build
+$ python install.py
 ```
 
 ### Running
 
 ```bash
-# WINDOWS: .venv\Scripts\activate.bat
-# LINUX:   source .venv/bin/activate
-$ python -m tsundoku
+$ python run.py
 ```
+
+_Note: `run.py` will only exist after running `install.py`._

@@ -32,3 +32,4 @@ data
 
 # Bundled app
 *.zip
+run.py

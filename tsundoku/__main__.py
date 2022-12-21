@@ -34,6 +34,7 @@ def bundle_zip() -> None:
         "l10n",
         "migrations",
         "tsundoku",
+        "install.py",
         "LICENSE.md",
         "README.md",
         "requirements.txt",
