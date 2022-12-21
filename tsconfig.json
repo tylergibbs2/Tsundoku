@@ -8,8 +8,5 @@
     "esModuleInterop": true,
     "moduleResolution": "node"
   },
-  "include": [
-    "tsundoku/blueprints/ux/static/ts/App.tsx",
-    "tsundoku/blueprints/ux/static/ts/PageWebhooks/App.tsx"
-  ]
+  "include": ["tsundoku/blueprints/ux/static/ts/App.tsx"]
 }
