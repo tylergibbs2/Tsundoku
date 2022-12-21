@@ -114,7 +114,7 @@ export const TorrentConfig = () => {
                 className="input"
                 type="text"
                 placeholder="localhost"
-                value={config?.data?.host}
+                defaultValue={config?.data?.host}
                 onChange={inputHost}
               />
             </div>
@@ -125,7 +125,7 @@ export const TorrentConfig = () => {
                 placeholder="8080"
                 min="1"
                 max="65535"
-                value={config?.data?.port}
+                defaultValue={config?.data?.port}
                 onChange={inputPort}
               />
             </div>
@@ -137,7 +137,7 @@ export const TorrentConfig = () => {
           <input
             className="input"
             type="text"
-            value={config?.data?.username}
+            defaultValue={config?.data?.username}
             onChange={inputUsername}
             placeholder="admin"
             name="disableAuto"
@@ -150,7 +150,7 @@ export const TorrentConfig = () => {
           <input
             className="input"
             type="password"
-            value={config?.data?.password}
+            defaultValue={config?.data?.password}
             onChange={inputPassword}
             placeholder="********"
             name="disableAuto"
@@ -166,7 +166,7 @@ export const TorrentConfig = () => {
               type="checkbox"
               className="switch"
               onChange={inputSecure}
-              checked={config?.data?.secure}
+              defaultChecked={config?.data?.secure}
             />
             <label htmlFor="secureCheck">{_("checkbox-enabled")}</label>
           </div>

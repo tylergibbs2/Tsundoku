@@ -90,7 +90,7 @@ export const GeneralConfigApp = () => {
                 className="input"
                 type="text"
                 placeholder="localhost"
-                value={config?.data?.host}
+                defaultValue={config?.data?.host}
                 onChange={inputHost}
               />
             </div>
@@ -101,7 +101,7 @@ export const GeneralConfigApp = () => {
                 placeholder="6439"
                 min="1"
                 max="65535"
-                value={config?.data?.port}
+                defaultValue={config?.data?.port}
                 onChange={inputPort}
               />
             </div>
@@ -154,7 +154,7 @@ export const GeneralConfigApp = () => {
               id="updateCheck"
               type="checkbox"
               className="switch"
-              checked={config?.data?.update_do_check}
+              defaultChecked={config?.data?.update_do_check}
               onChange={inputUpdateCheck}
             />
             <label htmlFor="updateCheck">{_("checkbox-enabled")}</label>
@@ -172,7 +172,7 @@ export const GeneralConfigApp = () => {
           <input
             className="input"
             type="text"
-            value={config?.data?.default_desired_format}
+            defaultValue={config?.data?.default_desired_format}
             onChange={inputDefaultDesiredFormat}
           />
         </div>
@@ -188,7 +188,7 @@ export const GeneralConfigApp = () => {
           <input
             className="input"
             type="text"
-            value={config?.data?.default_desired_folder}
+            defaultValue={config?.data?.default_desired_folder}
             onChange={inputDefaultDesiredFolder}
           />
         </div>
@@ -202,7 +202,7 @@ export const GeneralConfigApp = () => {
               id="unwatchCheck"
               type="checkbox"
               className="switch"
-              checked={config?.data?.unwatch_when_finished}
+              defaultChecked={config?.data?.unwatch_when_finished}
               onChange={inputUnwatchWhenFinished}
             />
             <label htmlFor="unwatchCheck">{_("checkbox-enabled")}</label>

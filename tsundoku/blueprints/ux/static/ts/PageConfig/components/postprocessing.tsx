@@ -242,7 +242,7 @@ const PostProcessingForm = ({
             max="2"
             type="range"
             disabled={disabled}
-            value={getQualityValue()}
+            defaultValue={getQualityValue()}
             onChange={inputQualityValue}
           ></input>
         </div>
@@ -278,7 +278,7 @@ const PostProcessingForm = ({
             className="input"
             type="number"
             min="1"
-            value={config.maximum_encodes}
+            defaultValue={config.maximum_encodes}
             onChange={inputMaxEncodes}
             disabled={disabled}
           ></input>

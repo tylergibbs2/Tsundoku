@@ -54,7 +54,7 @@ export const APITokenComponent = () => {
           className="input"
           type="text"
           readOnly={true}
-          value={localToken}
+          defaultValue={localToken}
         />
       </div>
       <div className="control">

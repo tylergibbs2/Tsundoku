@@ -68,7 +68,7 @@ export const FeedsConfig = () => {
                 min="0"
                 max="100"
                 placeholder="90"
-                value={config.data?.fuzzy_cutoff}
+                defaultValue={config.data?.fuzzy_cutoff}
                 onChange={inputFuzzyCutoff}
               />
             </div>
@@ -96,7 +96,7 @@ export const FeedsConfig = () => {
                 type="number"
                 min="180"
                 placeholder="900"
-                value={config.data?.polling_interval}
+                defaultValue={config.data?.polling_interval}
                 onChange={inputPollingInterval}
               />
             </div>
@@ -117,7 +117,7 @@ export const FeedsConfig = () => {
                 type="number"
                 min="1"
                 placeholder="15"
-                value={config.data?.complete_check_interval}
+                defaultValue={config.data?.complete_check_interval}
                 onChange={inputCompleteCheck}
               />
             </div>
@@ -137,7 +137,7 @@ export const FeedsConfig = () => {
                 min="0.0"
                 placeholder="0.0"
                 step="0.1"
-                value={config.data?.seed_ratio_limit?.toFixed(2)}
+                defaultValue={config.data?.seed_ratio_limit?.toFixed(2)}
                 onChange={inputSeedRatioLimit}
               />
             </div>
