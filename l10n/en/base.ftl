@@ -43,5 +43,3 @@ unwatch-button-title = Unwatch
 
 process-button-title = Enable Post-Processing
 unprocess-button-title = Disable Post-Processing
-
-dl-client-connection-error = There was an error connecting to the download client.

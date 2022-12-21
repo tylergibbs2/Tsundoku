@@ -31,7 +31,6 @@ from tsundoku import __version__ as version
 from tsundoku.blueprints.api import APIResponse
 from tsundoku.fluent import get_injector
 from tsundoku.user import User
-from tsundoku.webhooks import WebhookBase
 
 from .issues import get_issue_url
 
@@ -47,6 +46,12 @@ hasher = PasswordHasher()
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
+    resources = ["errors"]
+    fluent = get_injector(resources)
+
+    if app.flags.DL_CLIENT_CONNECTION_ERROR:
+        await flash(fluent._("dl-client-connection-error"), category="error")
+
     stats = {"version": version}
 
     return {"stats": stats, "docker": app.flags.IS_DOCKER}
@@ -73,9 +78,6 @@ async def index() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
     return await render_template("index.html", **ctx)
 
 
@@ -88,9 +90,6 @@ async def nyaa_search() -> str:
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
-
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
 
     async with app.acquire_db() as con:
         shows = await con.fetchall(
@@ -118,9 +117,6 @@ async def webhooks() -> str:
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
 
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
     return await render_template("index.html", **ctx)
 
 
@@ -133,9 +129,6 @@ async def config() -> str:
 
     fluent = get_injector(resources)
     ctx["_"] = fluent.format_value
-
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
 
     return await render_template("index.html", **ctx)
 
