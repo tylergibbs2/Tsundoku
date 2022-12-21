@@ -31,47 +31,6 @@ Please check out the [wiki](https://github.com/tylergibbs2/Tsundoku/wiki) if you
 - [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 - [Transmission](https://transmissionbt.com/)
 
-## Docker Installation (Recommended)
+## Installation
 
-1. Copy the [`docker-compose.yml`](docker-compose.yml) file from the repository.
-2. Replace the file paths.
-3. Run `docker compose up -d`.
-
-Updating is as simple as running `docker compose pull` and `docker compose up -d`.
-
-## Source Installation
-
-### Requirements
-
-If you downloaded Tsundoku from the releases page, Yarn is not required.
-
-- Python 3.8+
-- Yarn
-
-### Initial Setup
-
-The cross-platform installation script should work on Windows, Linux, and macOS.
-It will create a virtual environment, install dependencies, and create a `run.py` file.
-
-```bash
-$ git clone https://github.com/tylergibbs2/Tsundoku
-$ cd Tsundoku
-$ python install.py
-```
-
-### Updating
-
-The installation script will also update Tsundoku and its dependencies.
-
-```bash
-$ git pull
-$ python install.py
-```
-
-### Running
-
-```bash
-$ python run.py
-```
-
-_Note: `run.py` will only exist after running `install.py`._
+Please refer to [Installing Tsundoku](https://github.com/tylergibbs2/Tsundoku/wiki/Installing-Tsundoku) on the wiki for detailed installation instructions.
