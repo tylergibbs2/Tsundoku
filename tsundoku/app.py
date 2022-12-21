@@ -152,7 +152,6 @@ async def setup_db() -> None:
     """
     Creates a database pool for database interaction.
     """
-    await migrate()
     app.acquire_db = acquire
     app.sync_acquire_db = sync_acquire
 
