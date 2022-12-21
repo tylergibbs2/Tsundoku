@@ -9,13 +9,68 @@ import asyncio
 import getpass
 import os
 from pathlib import Path
+import subprocess
+from zipfile import ZipFile
 
-from fluent.runtime import FluentBundle, FluentResource
+try:
+    from fluent.runtime import FluentBundle, FluentResource
 
-from tsundoku import database
-from tsundoku.fluent import get_injector
+    from tsundoku import __version__ as version, database
+    from tsundoku.fluent import get_injector
+except ImportError:
+    print("Please install the dependencies before running Tsundoku.")
+    print("Run `pip install -r requirements.txt` to install them.")
+    exit(1)
 
 fluent = get_injector(["cmdline"])
+
+
+def bundle_zip() -> None:
+    """
+    Bundles the Tsundoku application into a zip file.
+    """
+    TO_ZIP = (
+        "default_sources",
+        "l10n",
+        "migrations",
+        "tsundoku",
+        "LICENSE.md",
+        "README.md",
+        "requirements.txt",
+    )
+
+    INVALID_EXTS = (".pyc",)
+
+    for fp in TO_ZIP:
+        if not Path(fp).exists():
+            print(f"Bundle process failed, missing '{fp}'...")
+            exit(1)
+
+    print("Running `yarn build`...")
+    proc = subprocess.Popen(
+        ["yarn", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    out, err = proc.communicate()
+    if err:
+        print(err.decode())
+        exit(1)
+
+    print(out.decode())
+
+    print("Zipping contents...")
+    filename = f"tsundoku-{version}.zip"
+    with ZipFile(filename, "w") as zip:
+        for fp in TO_ZIP:
+            print(f"Adding {fp}...")
+            if Path(fp).is_dir():
+                for path in Path(fp).rglob("*"):
+                    if path.suffix in INVALID_EXTS:
+                        continue
+                    zip.write(str(path))
+            else:
+                zip.write(fp)
+
+    print(f"Bundle process complete. '{filename}' created.")
 
 
 def find_locale_duplicates(lang: str) -> None:
@@ -115,6 +170,7 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=fluent._("title"))
+    parser.add_argument("--bundle", action="store_true", help="Bundle Tsundoku.")
     parser.add_argument("--test", action="store_true", help="Run unit tests.")
     parser.add_argument("--dbshell", action="store_true", help=fluent._("cmd-dbshell"))
     parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
@@ -129,7 +185,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.test:
+    if args.bundle:
+        bundle_zip()
+    elif args.test:
         os.system("pytest")
     elif args.dbshell:
         from tsundoku.database import spawn_shell

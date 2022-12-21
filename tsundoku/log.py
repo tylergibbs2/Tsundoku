@@ -37,8 +37,11 @@ class SocketHandler(logging.Handler):
 def setup_logging(app: TsundokuApp) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
-    cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
-    level = cfg.get("log_level") or "info"
+    try:
+        cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
+        level = cfg.get("log_level") or "info"
+    except Exception:
+        level = "info"
 
     dictConfig(
         {

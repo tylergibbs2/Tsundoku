@@ -12,3 +12,4 @@ sources
 tsundoku.db
 tsundoku.log
 tsundoku/blueprints/ux/static/js
+*.zip

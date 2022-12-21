@@ -31,3 +31,6 @@ tsundoku.db-wal
 # Installed sources
 sources
 data
+
+# Bundled app
+*.zip
