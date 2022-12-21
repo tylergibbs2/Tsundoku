@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useQuery, UseQueryResult } from "react-query";
+import { useQuery } from "react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
@@ -28,11 +28,16 @@ export const LogsApp = () => {
   let ws_url = `${protocol}//${ws_host}/ws/logs`;
 
   const { readyState, lastMessage } = useWebSocket(ws_url);
-  const [messageHistory, setMessageHistory] = useState([]);
+  const [messageHistory, setMessageHistory] = useState<MessageEvent<string>[]>(
+    []
+  );
 
   useEffect(() => {
     if (lastMessage !== null)
-      setMessageHistory((prev) => prev.concat(lastMessage));
+      setMessageHistory((prev) => {
+        if (prev.length + 1 > 50) prev.shift();
+        return prev.concat(lastMessage);
+      });
   }, [lastMessage, setMessageHistory]);
 
   if (shows.isLoading) return <GlobalLoading withText={true} />;
@@ -54,8 +59,8 @@ export const LogsApp = () => {
       >
         <div className="logrow-container">
           <div></div>
-          {messageHistory.map((msg, idx) => (
-            <LogRow key={idx} row={msg} />
+          {messageHistory.map((msg) => (
+            <LogRow key={msg.data} row={msg} />
           ))}
         </div>
       </div>
@@ -76,7 +81,7 @@ export const LogsApp = () => {
 };
 
 interface LogRowParams {
-  row?: MessageEvent;
+  row?: MessageEvent<string>;
 }
 
 const LogRow = ({ row }: LogRowParams) => {
@@ -174,7 +179,7 @@ const Content = ({ raw_content }: ContentParams) => {
 
   return (
     <>
-      {toJoin.map((data, i) => {
+      {toJoin.map((data) => {
         if (typeof data === "string") return ReactHtmlParser(data);
         else return data;
       })}
