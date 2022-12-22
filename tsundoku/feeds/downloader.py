@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
-from functools import partial, wraps
 from pathlib import Path
 from typing import Any, Optional, TYPE_CHECKING
 
@@ -15,25 +14,9 @@ import anitopy
 
 from tsundoku.config import FeedsConfig, GeneralConfig
 from tsundoku.manager import Entry, EntryState
-from tsundoku.utils import ExprDict
+from tsundoku.utils import ExprDict, move
 
 logger = logging.getLogger("tsundoku")
-
-
-def wrap(func: Any) -> Any:
-    @wraps(func)
-    async def run(
-        *args: Any, loop: Any = None, executor: Any = None, **kwargs: Any
-    ) -> Any:
-        if loop is None:
-            loop = asyncio.get_event_loop()
-        pfunc = partial(func, *args, **kwargs)
-        return await loop.run_in_executor(executor, pfunc)
-
-    return run
-
-
-move = wrap(shutil.move)
 
 
 class Downloader:

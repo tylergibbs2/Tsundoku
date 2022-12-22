@@ -16,7 +16,7 @@ from quart import request
 
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import VALID_SPEEDS
-from tsundoku.feeds.downloader import move
+from tsundoku.utils import move
 
 logger = logging.getLogger("tsundoku")
 
