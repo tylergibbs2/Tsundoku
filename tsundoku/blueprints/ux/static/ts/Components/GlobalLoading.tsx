@@ -1,5 +1,4 @@
 const loadingQuips = [
-  "Are you scared of the Home Server Devil?",
   "I have existed for millennia.",
   "???%",
   "Loading 10 billion shows...",
@@ -12,6 +11,17 @@ const loadingQuips = [
   "I may not be perfect, but at least I'm not a cabbage.",
   "It's not about revenge. It's about justice.",
   "Sometimes the best way to solve your own problems is to help someone else.",
+  "Sorry, that was a strange thing to ask.",
+  "Gotta catch 'em all!",
+  "I'll become the Pirate King!",
+  "I am the bone of my sword",
+  "Believe in the Kamina who believes in you!",
+  "I'm coming through!",
+  "It's a terrible day for rain...",
+  "This could have been a spoiler!",
+  "すもももももももものうち",
+  "I'll leave tomorrow's problems to tomorrow's me.",
+  "Life is not a game of luck. If you wanna win, work hard."
 ];
 
 interface GlobalLoadingParams {
