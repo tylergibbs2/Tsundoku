@@ -19,14 +19,6 @@ class SocketHandler(logging.Handler):
         super().__init__()
 
     def emit(self, record: logging.LogRecord) -> None:
-        if not hasattr(self.app, "logging_queue"):
-            return
-
-        if hasattr(self.app, "connected_websockets") and not len(
-            self.app.connected_websockets
-        ):
-            return
-
         for queue in self.app.connected_websockets:
             try:
                 queue.put_nowait(self.format(record))

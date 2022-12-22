@@ -52,7 +52,6 @@ class TsundokuApp(Quart):
     dl_client: Manager
 
     connected_websockets: MutableSet[Queue[str]]
-    logging_queue: Queue[str]
 
     source_lock: asyncio.Lock
 
@@ -216,8 +215,6 @@ async def setup_tasks() -> None:
     app._tasks.append(asyncio.create_task(poller()))
     app._tasks.append(asyncio.create_task(downloader()))
     app._tasks.append(asyncio.create_task(encoder()))
-
-    app.logging_queue = Queue(maxsize=50)
 
 
 @app.after_serving
