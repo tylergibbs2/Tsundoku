@@ -464,6 +464,9 @@ class Encoder:
             stderr=asyncio.subprocess.DEVNULL,
         )
         stdout, _ = await proc.communicate()
+        if proc.returncode != 0:
+            self.__has_ffmpeg = False
+            return self.__has_ffmpeg
 
         output = stdout.decode("utf-8")
         self.__has_ffmpeg = "--enable-libx264" in output
