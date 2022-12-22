@@ -307,17 +307,17 @@ class Poller:
         parsed = anitopy.parse(filename)
 
         if parsed is None:
-            logger.error(
+            logger.warning(
                 f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'"
             )
             return None
         elif "anime_title" not in parsed:
-            logger.error(
+            logger.warning(
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'"
             )
             return None
         elif "episode_number" not in parsed:
-            logger.error(
+            logger.warning(
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
@@ -336,7 +336,7 @@ class Poller:
         try:
             show_episode = int(parsed["episode_number"])
         except (ValueError, TypeError):
-            logger.error(
+            logger.warning(
                 f"`{source.name}@{source.version}` - Failed to convert episode '{parsed['episode_number']}' to integer from '{filename}'"
             )
             return None
