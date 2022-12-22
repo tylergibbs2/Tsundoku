@@ -24,6 +24,8 @@ const loadingQuips = [
   "Life is not a game of luck. If you wanna win, work hard."
 ];
 
+const loadString = loadingQuips[Math.floor(Math.random() * loadingQuips.length)];
+
 interface GlobalLoadingParams {
   withText?: boolean;
   heightTranslation?: string;
@@ -35,9 +37,6 @@ export const GlobalLoading = ({
 }: GlobalLoadingParams) => {
   if (!withText) withText = false;
   if (!heightTranslation) heightTranslation = "translateY(25vh)";
-
-  const loadString =
-    loadingQuips[Math.floor(Math.random() * loadingQuips.length)];
 
   return (
     <div
