@@ -35,36 +35,25 @@ def setup_logging(app: TsundokuApp) -> None:
     except Exception:
         level = "info"
 
-    dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "formatters": {
-                "default": {
-                    "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-                }
-            },
-            "handlers": {
-                "stream": {"class": "logging.StreamHandler", "formatter": "default"},
-                "file": {
-                    "filename": "tsundoku.log",
-                    "class": "logging.FileHandler",
-                    "formatter": "default",
-                    "encoding": "utf-8",
-                },
-            },
-            "loggers": {
-                "tsundoku": {
-                    "handlers": ["stream", "file"],
-                    "level": level.upper(),
-                    "propagate": True,
-                }
-            },
-        }
-    )
+    logger.propagate = True
+    logger.setLevel(logging.DEBUG)
 
-    handler = SocketHandler(app)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    file_handler = logging.FileHandler("tsundoku.log", encoding="utf-8")
+    file_handler.set_name("file")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.set_name("stream")
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(level.upper())
+    logger.addHandler(stream_handler)
+
+    socket_handler = SocketHandler(app)
+    socket_handler.set_name("socket")
+    socket_handler.setFormatter(formatter)
+    socket_handler.setLevel(level.upper())
+    logger.addHandler(socket_handler)
 
     logger.debug("Logging successfully configured")

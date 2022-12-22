@@ -135,8 +135,10 @@ class GeneralConfig(Config):
 
     def check_log_level(self, value: str) -> bool:
         if value in ("error", "warning", "info", "debug"):
-            level = getattr(logging, value.upper())
-            logger.setLevel(level)
+            for handler in logger.handlers:
+                if handler.name in ("stream", "socket"):
+                    handler.setLevel(value.upper())
+
             return True
 
         return False
