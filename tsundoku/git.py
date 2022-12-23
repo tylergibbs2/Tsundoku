@@ -1,8 +1,6 @@
-import asyncio
+from dataclasses import dataclass
 import logging
-import os
-import sys
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -11,96 +9,50 @@ if TYPE_CHECKING:
 else:
     from quart import current_app as app
 
-from tsundoku.database import migrate
-
-# Git run command inspired by Tautulli's version check code!
-# https://github.com/Tautulli/Tautulli/blob/master/plexpy/versioncheck.py
+from tsundoku import __version__ as current_version
+from tsundoku.utils import compare_version_strings
 
 
 logger = logging.getLogger("tsundoku")
 
-
-async def run(args: str) -> Tuple[str, Optional[bytes]]:
-    git_loc = "git"
-    cmd = f"{git_loc} {args}"
-
-    stdout: Optional[bytes] = None
-    stderr: Optional[bytes] = None
-
-    output_text = ""
-
-    try:
-        logger.debug(f"Git: Trying to execute `{cmd}` with shell")
-        proc = await asyncio.subprocess.create_subprocess_shell(
-            cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        stdout, stderr = await proc.communicate()
-
-        output_text = stdout.strip().decode()
-
-        logger.debug(f"Git: output: {output_text}")
-    except OSError:
-        logger.debug(f"Git: command failed: {cmd}")
-    else:
-        if (
-            "not found" in output_text
-            or "not recognized as an internal or external command" in output_text
-        ):
-            logger.debug(f"Git: Unable to find executable with command {cmd}")
-        elif "fatal: " in output_text or stderr:
-            logger.error("Git: Returned bad info. Bad installation?")
-
-    return output_text, stderr
+REQUEST_URL = "https://api.github.com/repos/{owner}/{repository}/releases/latest"
 
 
-async def update() -> None:
-    """
-    Performs a "git pull" to update the local
-    Tsundoku to the latest GitHub version.
-    """
-    logger.info("Tsundoku is updating...")
+@dataclass
+class UpdateInformation:
+    """Information about a new release."""
 
-    out, _ = await run("pull --ff-only")
-
-    if not out:
-        logger.error("Git: Unable to download latest version")
-        return
-
-    for line in out.split("\n"):
-        if "Already up-to-date." in line or "Already up to date." in line:
-            logger.info("Git: No update available")
-            return
-        elif line.endswith(("Aborting", "Aborting.")):
-            logger.error(f"Git: Unable to update, {line}")
-            return
-
-    proc = await asyncio.subprocess.create_subprocess_shell(
-        f"{sys.executable} -m pip install -r requirements.txt"
-    )
-    await proc.wait()
-
-    await migrate()
+    version: str
+    url: str
 
 
-async def check_for_updates() -> None:
-    """
-    Checks for updates from GitHub.
+async def check_for_updates() -> Optional[UpdateInformation]:
+    headers = {"accept": "application/vnd.github+json"}
 
-    If commit is newer, prompt for an update.
-    """
-    is_docker = os.environ.get("IS_DOCKER", False)
-    if is_docker:
-        return
+    url = REQUEST_URL.format(owner="tylergibbs2", repository="Tsundoku")
+    async with app.session.get(url, headers=headers) as resp:
+        data = await resp.json()
 
-    out, e = await run("fetch")
-    out, e = await run("rev-list --format=oneline HEAD..origin/master")
-    if not out or e:
-        return
+    if resp.status == 404:
+        logger.error("Update check: Could not find repository on GitHub.")
+        return None
+    elif resp.status != 200:
+        logger.error("Update check: Could not connect to GitHub.")
+        return None
 
-    commits = []
-    for commit in out.split("\n"):
-        hash_ = commit.split()[0]
-        message = " ".join(commit.split()[1:])
-        commits.append([hash_, message])
+    if "name" not in data:
+        logger.error("Update check: Could not find release name.")
+        return None
+
+    version = data["name"]
+    logger.debug(f"Update check: Latest version on GitHub is {version}.")
+
+    if compare_version_strings(version, current_version) > 0:
+        if "html_url" not in data:
+            logger.error("Update check: Could not find release URL.")
+            return None
+
+        logger.info(f"Update check: New version {version} is available.")
+        return UpdateInformation(version, data["html_url"])
+
+    logger.info("Update check: No new version is available.")
