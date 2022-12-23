@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from asyncio.queues import Queue
 import logging
+import os
 from pathlib import Path
 import secrets
 import sqlite3
@@ -260,7 +261,18 @@ def get_bind() -> Tuple[str, int]:
         Address and port
     """
     cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
-    return cfg["host"], cfg["port"]
+
+    host = os.getenv("HOST", default="") if os.getenv("HOST") else cfg["host"]
+    port = os.getenv("PORT", default="") if os.getenv("PORT") else cfg["port"]
+
+    if isinstance(port, str) and not port.isdigit():
+        raise ValueError("Port must be a number!")
+
+    port = int(port)
+    if not 0 < port < 65536:
+        raise ValueError("Port must be between [1, 65536)!")
+
+    return host, port
 
 
 async def run() -> None:
