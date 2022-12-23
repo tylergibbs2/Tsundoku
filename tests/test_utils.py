@@ -38,3 +38,24 @@ class TestCompareVersionStrings(unittest.TestCase):
 
     def test_v02_v1(self):
         self.assertEqual(utils.compare_version_strings("v0.2", "v1"), -1)
+
+    def test_semver_1(self):
+        self.assertEqual(utils.compare_version_strings("1.0.0", "1.0.0"), 0)
+
+    def test_semver_2(self):
+        self.assertEqual(utils.compare_version_strings("1.0.0", "1.0.1"), -1)
+
+    def test_semver_3(self):
+        self.assertEqual(utils.compare_version_strings("1.0.1", "1.0.0"), 1)
+
+    def test_semver_4(self):
+        self.assertEqual(utils.compare_version_strings("1.0.0", "1.1.0"), -1)
+
+    def test_semver_5(self):
+        self.assertEqual(utils.compare_version_strings("1.1.0", "1.0.0"), 1)
+
+    def test_semver_6(self):
+        self.assertEqual(utils.compare_version_strings("1.0.0", "2.0.0"), -1)
+
+    def test_semver_7(self):
+        self.assertEqual(utils.compare_version_strings("2.0.0", "1.0.0"), 1)
