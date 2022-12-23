@@ -137,6 +137,8 @@ class Encoder:
         Starts watching for new media to encode
         and also starts the encoding process.
         """
+        logger.debug("Encoder task started.")
+
         async with self.app.acquire_db() as con:
             leftovers = await con.fetchall(
                 """
@@ -190,7 +192,9 @@ class Encoder:
             THe entry ID to encode.
         """
         logger.debug(f"Launching new encode task for <e{entry_id}>")
-        asyncio.create_task(self.encode(entry_id))
+        self.app._tasks.append(
+            asyncio.create_task(self.encode(entry_id), name=f"encode-{entry_id}")
+        )
 
     async def encode(self, entry_id: int) -> None:
         """

@@ -100,6 +100,8 @@ class Poller:
         The program will poll every n seconds, as specified
         in the configuration file.
         """
+        logger.debug("Poller task started.")
+
         while True:
             await self.update_config()
             try:

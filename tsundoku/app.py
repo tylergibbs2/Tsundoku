@@ -183,9 +183,11 @@ async def setup_session() -> None:
         unsafe=True
     )  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
+    logger.debug("Creating aiohttp ClientSession...")
     app.session = aiohttp.ClientSession(
         loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0)
     )
+    logger.debug("Creating interface to downloader client...")
     app.dl_client = Manager(app.session)
 
     res = await app.dl_client.test_client()
@@ -213,29 +215,42 @@ async def setup_tasks() -> None:
         app.encoder = Encoder(app.app_context())
         await app.encoder.resume()
 
-    app._tasks.append(asyncio.create_task(poller()))
-    app._tasks.append(asyncio.create_task(downloader()))
-    app._tasks.append(asyncio.create_task(encoder()))
+    logger.debug("Starting task: Poller")
+    app._tasks.append(asyncio.create_task(poller(), name="Poller"))
+    logger.debug("Starting task: Downloader")
+    app._tasks.append(asyncio.create_task(downloader(), name="Downloader"))
+    logger.debug("Starting task: Encoder")
+    app._tasks.append(asyncio.create_task(encoder(), name="Encoder"))
+
+    logger.debug("All tasks created.")
 
 
 @app.after_serving
 async def cleanup() -> None:
     """
-    Closes the database pool and the
-    aiohttp ClientSession on script closure.
-
-    Also tries to cancel running tasks (downloader and poller).
+    Attempts to cancel any running tasks and close the aiohttp session.
     """
+    failed_to_cancel = 0
+    logger.debug("Cleanup: Attempting to cancel tasks...")
     for task in app._tasks:
+        logger.debug(f"Cleanup: Attempting to cancel task '{task.get_name()}'...")
         try:
             task.cancel()
         except Exception:
-            pass
+            logger.warn(f"Could not cancel task '{task.get_name()}'!", exc_info=True)
+            failed_to_cancel += 1
+        else:
+            logger.debug(f"Cleanup: Task '{task.get_name()}' cancelled.")
 
+    logger.debug(f"Cleanup: Tasks cancelled. [{failed_to_cancel} failed to cancel]")
+
+    logger.debug("Cleanup: Closing aiohttp session...")
     try:
         await app.session.close()
     except Exception:
-        pass
+        logger.warn("Cleanup: Could not close aiohttp session!", exc_info=True)
+    else:
+        logger.debug("Cleanup: aiohttp session closed.")
 
 
 @ux_blueprint.context_processor
@@ -279,6 +294,7 @@ async def run() -> None:
     await migrate()
 
     host, port = get_bind()
+    logger.debug(f"Attempting to bind to {host}:{port}")
 
     auth.init_app(app)
 

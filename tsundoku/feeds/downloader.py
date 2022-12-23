@@ -59,6 +59,8 @@ class Downloader:
         self.default_desired_folder = general_cfg["default_desired_folder"]
 
     async def start(self) -> None:
+        logger.debug("Downloader task started.")
+
         while True:
             await self.update_config()
 
