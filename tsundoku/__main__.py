@@ -7,6 +7,7 @@ if sys.version_info < (3, 8):
 import argparse
 import asyncio
 import getpass
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -15,7 +16,7 @@ from zipfile import ZipFile
 try:
     from fluent.runtime import FluentBundle, FluentResource
 
-    from tsundoku import __version__ as version, database
+    from tsundoku import __version__ as version
     from tsundoku.fluent import get_injector
 except ImportError:
     print("Please install the dependencies before running Tsundoku.")
@@ -46,6 +47,17 @@ def bundle_zip() -> None:
         if not Path(fp).exists():
             print(f"Bundle process failed, missing '{fp}'...")
             exit(1)
+
+    print("Checking yarn package version...")
+    with open("package.json", "r", encoding="utf-8") as f:
+        package = json.load(f)
+
+    if package["version"] != version:
+        print(
+            f"Bundle process failed, package.json version '{package['version']}' "
+            f"does not match __init__.py version '{version}'..."
+        )
+        exit(1)
 
     print("Running `yarn build`...")
     proc = subprocess.Popen(
@@ -200,7 +212,9 @@ if __name__ == "__main__":
     elif args.l10n_duplicates:
         find_locale_duplicates(args.l10n_duplicates[0])
     elif args.migrate:
-        asyncio.run(database.migrate())
+        from tsundoku.database import migrate
+
+        asyncio.run(migrate())
     elif args.create_user:
         username = input(fluent._("username") + " ")
         match = False
