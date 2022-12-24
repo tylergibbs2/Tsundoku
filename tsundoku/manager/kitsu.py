@@ -20,9 +20,8 @@ from tsundoku.fluent import get_injector
 
 API_URL = "https://kitsu.io/api/edge/anime"
 logger = logging.getLogger("tsundoku")
-resources = ["base", "errors", "index"]
 
-fluent = get_injector(resources)
+fluent = get_injector()
 
 
 class KitsuManager:

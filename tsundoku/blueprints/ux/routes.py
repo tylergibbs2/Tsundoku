@@ -43,12 +43,14 @@ ux_blueprint = Blueprint(
 )
 hasher = PasswordHasher()
 
+fluent = get_injector()
+
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
     stats = {"version": version}
 
-    return {"stats": stats, "docker": app.flags.IS_DOCKER}
+    return {"stats": stats, "docker": app.flags.IS_DOCKER, "_": fluent.format_value}
 
 
 @ux_blueprint.route("/issue", methods=["POST"])
@@ -65,28 +67,16 @@ async def issue() -> APIResponse:
 @ux_blueprint.route("/", methods=["GET"])
 @login_required
 async def index() -> str:
-    ctx = {}
-
-    resources = ["base", "errors", "index"]
-
-    fluent = get_injector(resources)
-    ctx["_"] = fluent.format_value
-
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
-    return await render_template("index.html", **ctx)
+    return await render_template("index.html")
 
 
 @ux_blueprint.route("/nyaa", methods=["GET"])
 @login_required
 async def nyaa_search() -> str:
     ctx = {}
-
-    resources = ["base", "errors"]
-
-    fluent = get_injector(resources)
-    ctx["_"] = fluent.format_value
 
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
@@ -110,33 +100,19 @@ async def nyaa_search() -> str:
 @ux_blueprint.route("/webhooks", methods=["GET"])
 @login_required
 async def webhooks() -> str:
-    ctx = {}
-
-    resources = ["base", "errors"]
-
-    fluent = get_injector(resources)
-    ctx["_"] = fluent.format_value
-
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
-    return await render_template("index.html", **ctx)
+    return await render_template("index.html")
 
 
 @ux_blueprint.route("/config", methods=["GET"])
 @login_required
 async def config() -> str:
-    ctx = {}
-
-    resources = ["base", "errors"]
-
-    fluent = get_injector(resources)
-    ctx["_"] = fluent.format_value
-
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
-    return await render_template("index.html", **ctx)
+    return await render_template("index.html")
 
 
 @ux_blueprint.route("/logs", methods=["GET"])
@@ -145,17 +121,10 @@ async def logs() -> Union[str, Response]:
     if request.args.get("dl"):
         return await send_file("tsundoku.log", as_attachment=True)
 
-    ctx = {}
-
-    resources = ["base", "errors"]
-
-    fluent = get_injector(resources)
-    ctx["_"] = fluent.format_value
-
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
-    return await render_template("index.html", **ctx)
+    return await render_template("index.html")
 
 
 @ux_blueprint.route("/register", methods=["GET", "POST"])
@@ -164,12 +133,8 @@ async def register() -> Any:
         return redirect(url_for("ux.index"))
 
     if request.method == "GET":
-        fluent = get_injector(["register"])
-        return await render_template("register.html", **{"_": fluent.format_value})
+        return await render_template("register.html")
     else:
-        resources = ["register"]
-        fluent = get_injector(resources)
-
         form = await request.form
 
         username = form.get("username")
@@ -177,12 +142,14 @@ async def register() -> Any:
         password_confirm = form.get("confirmPassword")
         if not username:
             await flash(
-                fluent._("form-missing-data", {"field": "username"}), category="error"
+                fluent._("form-register-missing-data", {"field": "username"}),
+                category="error",
             )
             return redirect(url_for("ux.register"))
         elif not password:
             await flash(
-                fluent._("form-missing-data", {"field": "password"}), category="error"
+                fluent._("form-register-missing-data", {"field": "password"}),
+                category="error",
             )
             return redirect(url_for("ux.register"))
         elif len(password) < 8:
@@ -239,12 +206,8 @@ async def login() -> Any:
         return redirect(url_for("ux.index"))
 
     if request.method == "GET":
-        fluent = get_injector(["login"])
-        return await render_template("login.html", **{"_": fluent.format_value})
+        return await render_template("login.html")
     else:
-        resources = ["login"]
-        fluent = get_injector(resources)
-
         form = await request.form
 
         username = form.get("username")

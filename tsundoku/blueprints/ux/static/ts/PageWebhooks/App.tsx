@@ -11,9 +11,7 @@ import { DeleteModal } from "./delete_modal";
 import { useEffect, useState } from "react";
 import { GlobalLoading } from "../Components/GlobalLoading";
 
-let resources = ["webhooks"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const WebhooksApp = () => {
   document.getElementById("navWebhooks").classList.add("is-active");

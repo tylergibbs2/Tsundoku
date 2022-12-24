@@ -6,9 +6,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { deleteWebhookById } from "../queries";
 import { toast } from "bulma-toast";
 
-let resources = ["index", "webhooks"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface DeleteModalParams {
   activeModal: string | null;

@@ -8,9 +8,7 @@ import { FeedsConfig } from "./components/feedsconfig";
 
 import "../../css/config.css";
 
-let resources = ["config"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const ConfigApp = () => {
   document.getElementById("navConfig").classList.add("is-active");

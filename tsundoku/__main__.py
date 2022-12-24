@@ -10,6 +10,7 @@ import getpass
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 from zipfile import ZipFile
 
@@ -17,13 +18,10 @@ try:
     from fluent.runtime import FluentBundle, FluentResource
 
     from tsundoku import __version__ as version
-    from tsundoku.fluent import get_injector
 except ImportError:
     print("Please install the dependencies before running Tsundoku.")
     print("Run `pip install -r requirements.txt` to install them.")
     exit(1)
-
-fluent = get_injector(["cmdline"])
 
 
 def bundle_zip() -> None:
@@ -95,17 +93,17 @@ def find_locale_duplicates(lang: str) -> None:
     lang: str
         Locale to check.
     """
-    locale_files = Path().rglob(f"l10n/{lang}/*.ftl")
+    locale_file = Path(f"l10n/{lang}.ftl")
+    if not locale_file.exists():
+        print(f"Locale '{lang}' could not be found or does not exist.")
+        exit(1)
 
     seen_keys = set()
     duplicates = set()
-    for fp in locale_files:
-        bundle = FluentBundle([lang])
 
-        with open(str(fp), "r", encoding="utf-8") as text:
-            bundle.add_resource(FluentResource(text.read()))
-
-        for key in bundle._messages.keys():
+    with open(str(locale_file), "r", encoding="utf-8") as text:
+        for match in re.finditer(r"^([\w\-]+) =", text.read(), re.MULTILINE):
+            key = match.group(1)
             if key in seen_keys:
                 duplicates.add(key)
             else:
@@ -131,70 +129,72 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
     to_lang: str
         Destination locale.
     """
-    from_path = Path(f"l10n/{from_lang}")
-    to_path = Path(f"l10n/{to_lang}")
+    from_path = Path(f"l10n/{from_lang}.ftl")
+    to_path = Path(f"l10n/{to_lang}.ftl")
 
     if not from_path.exists():
-        print(fluent._("compare-missing-lang", {"missing": from_lang}))
+        print(f"Language '{from_lang}' could not be found or does not exist.")
         return
     elif not to_path.exists():
-        print(fluent._("compare-missing-lang", {"missing": to_lang}))
+        print(f"Language '{to_lang}' could not be found or does not exist.")
         return
 
+    from_bundle = FluentBundle([from_lang])
+    to_bundle = FluentBundle([to_lang])
+
+    with open(str(from_path), "r", encoding="utf-8") as text:
+        from_bundle.add_resource(FluentResource(text.read()))
+    with open(str(to_path), "r", encoding="utf-8") as text:
+        to_bundle.add_resource(FluentResource(text.read()))
+
+    from_keys = from_bundle._messages.keys()
+    to_keys = to_bundle._messages.keys()
+
     conflicts = 0
-
-    from_files = {Path(*fp.parts[2:]) for fp in from_path.rglob("*.ftl")}
-    to_files = {Path(*fp.parts[2:]) for fp in to_path.rglob("*.ftl")}
-
-    for fp in from_files.difference(to_files):
+    missing_keys = set(from_keys).difference(set(to_keys))
+    for key in missing_keys:
         conflicts += 1
-        print(fluent._("compare-missing-file", {"lang": to_lang, "file": str(fp)}))
-
-    for fp in from_files.intersection(to_files):
-        from_file = from_path / fp
-        to_file = to_path / fp
-
-        from_bundle = FluentBundle([from_lang])
-        to_bundle = FluentBundle([to_lang])
-
-        with open(str(from_file), "r", encoding="utf-8") as text:
-            from_bundle.add_resource(FluentResource(text.read()))
-        with open(str(to_file), "r", encoding="utf-8") as text:
-            to_bundle.add_resource(FluentResource(text.read()))
-
-        from_keys = from_bundle._messages.keys()
-        to_keys = to_bundle._messages.keys()
-
-        missing_keys = set(from_keys).difference(set(to_keys))
-        for key in missing_keys:
-            conflicts += 1
-            print(
-                fluent._(
-                    "compare-missing-key",
-                    {"lang": to_lang, "file": str(fp), "key": key},
-                )
-            )
+        print(f"Language '{to_lang}' is missing key: '{key}'.")
 
     if conflicts:
-        print(fluent._("compare-conflict-count", {"count": conflicts, "to": to_lang}))
+        print(f"{conflicts} different conflicts were found in language '{to_lang}'.")
+
+        print(
+            f"'{to_lang}' is {100 - (len(missing_keys) / len(from_keys)) * 100:.2f}% compatible with '{from_lang}'."
+        )
+        print(f"(missing {len(missing_keys)} keys out of {len(from_keys)})")
     else:
-        print(fluent._("compare-no-conflict"))
+        print("No conflicts found. Both locales have the same features.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=fluent._("title"))
+    parser = argparse.ArgumentParser(description="Tsunduku Command Line Interface")
     parser.add_argument("--bundle", action="store_true", help="Bundle Tsundoku.")
     parser.add_argument("--test", action="store_true", help="Run unit tests.")
-    parser.add_argument("--dbshell", action="store_true", help=fluent._("cmd-dbshell"))
-    parser.add_argument("--migrate", action="store_true", help=fluent._("cmd-migrate"))
     parser.add_argument(
-        "--create-user", action="store_true", help=fluent._("cmd-create-user")
+        "--dbshell",
+        action="store_true",
+        help="Launch a sqlite shell into the Tsundoku database.",
     )
     parser.add_argument(
-        "--l10n-compat", type=str, nargs=2, help=fluent._("cmd-l10n-compat")
+        "--migrate",
+        action="store_true",
+        help="Migrates the Tsundoku database to match any updates.",
     )
     parser.add_argument(
-        "--l10n-duplicates", type=str, nargs=1, help=fluent._("cmd-l10n-duplicates")
+        "--create-user", action="store_true", help="Creates a new login user."
+    )
+    parser.add_argument(
+        "--l10n-compat",
+        type=str,
+        nargs=2,
+        help="Compares two languages, will point out missing translations in the second one.",
+    )
+    parser.add_argument(
+        "--l10n-duplicates",
+        type=str,
+        nargs=1,
+        help="Finds duplicate keys in a given language.",
     )
     args = parser.parse_args()
 
@@ -216,21 +216,21 @@ if __name__ == "__main__":
 
         asyncio.run(migrate())
     elif args.create_user:
-        username = input(fluent._("username") + " ")
+        username = input("Username: ")
         match = False
         password = ""
         while not match:
-            password = getpass.getpass(fluent._("password") + " ")
-            conf_password = getpass.getpass(fluent._("conf-password") + " ")
+            password = getpass.getpass("Password: ")
+            conf_password = getpass.getpass("Confirm Password: ")
             match = password == conf_password
             if not match:
                 print("Password Mismatch")
 
-        print(fluent._("creating-user"))
+        print("Creating user...")
         from tsundoku import app
 
         asyncio.run(app.insert_user(username, password))
-        print(fluent._("created-user"))
+        print("User created successfully.")
     else:
         from tsundoku import app
 

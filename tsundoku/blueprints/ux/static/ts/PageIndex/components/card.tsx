@@ -5,9 +5,7 @@ import { Show } from "../../interfaces";
 import ReactHtmlParser from "react-html-parser";
 import { IonIcon } from "../../icon";
 
-let resources = ["index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface CardParams {
   textFilter: string;

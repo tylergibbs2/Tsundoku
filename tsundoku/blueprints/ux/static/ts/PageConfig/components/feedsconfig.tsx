@@ -5,9 +5,7 @@ import { getInjector } from "../../fluent";
 import { MutateConfigVars } from "../../interfaces";
 import { fetchConfig, setConfig } from "../../queries";
 
-let resources = ["config"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface FeedsConfig {
   polling_interval?: number;

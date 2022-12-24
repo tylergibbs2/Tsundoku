@@ -6,9 +6,7 @@ import humanizeDuration from "humanize-duration";
 import { Entry, Show } from "../../interfaces";
 import { IonIcon } from "../../icon";
 
-let resources = ["index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 const sortByDate = (a: Entry, b: Entry): number => {
   let dateA = new Date(a.last_update);

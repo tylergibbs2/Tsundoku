@@ -21,10 +21,11 @@ const loadingQuips = [
   "This could have been a spoiler!",
   "すもももももももものうち",
   "I'll leave tomorrow's problems to tomorrow's me.",
-  "Life is not a game of luck. If you wanna win, work hard."
+  "Life is not a game of luck. If you wanna win, work hard.",
 ];
 
-const loadString = loadingQuips[Math.floor(Math.random() * loadingQuips.length)];
+const loadString =
+  loadingQuips[Math.floor(Math.random() * loadingQuips.length)];
 
 interface GlobalLoadingParams {
   withText?: boolean;

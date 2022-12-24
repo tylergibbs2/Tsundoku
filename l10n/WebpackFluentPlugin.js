@@ -11,10 +11,8 @@ module.exports = class WebpackTranslationsPlugin {
   apply(compiler) {
     this.setPath(compiler.context);
 
-    let translations = this.getTranslations();
-
     new DefinePlugin({
-      "window.TRANSLATIONS": JSON.stringify(translations),
+      "window.TRANSLATIONS": JSON.stringify(this.getTranslations()),
     }).apply(compiler);
   }
 
@@ -23,7 +21,7 @@ module.exports = class WebpackTranslationsPlugin {
   }
 
   getTranslations() {
-    let paths = flattenedFiles(this.path);
+    let paths = getTranslationFiles(this.path);
     let translations = {};
 
     for (const fp of paths) {
@@ -39,7 +37,7 @@ module.exports = class WebpackTranslationsPlugin {
   }
 };
 
-function flattenedFiles(dir) {
+function getTranslationFiles(dir) {
   let files = [];
 
   const cb = (file, stats) => {

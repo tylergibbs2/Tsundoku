@@ -9,9 +9,7 @@ import "../../css/nyaa_search.css";
 import { useQuery } from "react-query";
 import { fetchConfig } from "../queries";
 
-let resources = ["nyaa_search"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const NyaaSearchApp = () => {
   document.getElementById("navNyaa").classList.add("is-active");

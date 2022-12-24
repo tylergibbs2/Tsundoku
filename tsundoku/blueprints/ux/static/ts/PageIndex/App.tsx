@@ -13,9 +13,7 @@ import { fetchConfig, fetchShows } from "../queries";
 import "../../css/index.css";
 import { GlobalLoading } from "../Components/GlobalLoading";
 
-let resources = ["base", "index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const IndexApp = () => {
   document.getElementById("navIndex").classList.add("is-active");

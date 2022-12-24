@@ -4,9 +4,7 @@ import { Show } from "../../interfaces";
 import { IonIcon } from "../../icon";
 import { getInjector } from "../../fluent";
 
-let resources = ["base"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface ShowToggleButtonParams {
   show?: Show;

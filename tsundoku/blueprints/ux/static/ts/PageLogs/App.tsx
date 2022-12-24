@@ -9,9 +9,7 @@ import { GlobalLoading } from "../Components/GlobalLoading";
 
 import "../../css/logs.css";
 
-let resources = ["logs"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 const codeRe = /`[^`]+`/g;
 const contextRe = /<[es]\d+>/g;

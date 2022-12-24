@@ -5,9 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, setConfig } from "../../queries";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 
-let resources = ["config", "logs"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const GeneralConfigApp = () => {
   const queryClient = useQueryClient();

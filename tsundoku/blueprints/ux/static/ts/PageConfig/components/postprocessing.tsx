@@ -12,9 +12,7 @@ import { fetchConfig, setConfig } from "../../queries";
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 
-let resources = ["config"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface EncodeConfig {
   enabled?: boolean;

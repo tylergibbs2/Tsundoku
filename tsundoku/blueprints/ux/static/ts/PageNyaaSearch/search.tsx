@@ -6,9 +6,7 @@ import { IonIcon } from "../icon";
 
 const NyaaSearchURL = "/api/v1/nyaa";
 
-let resources = ["nyaa_search"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface SearchBoxParams {
   setResults: Dispatch<SetStateAction<NyaaIndividualResult[]>>;

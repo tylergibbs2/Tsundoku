@@ -2,9 +2,7 @@ import { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
-let resources = ["base", "index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface FiltersParams {
   filters: string[];

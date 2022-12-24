@@ -5,9 +5,7 @@ import { getInjector } from "../../fluent";
 
 import { Entry, Show } from "../../interfaces";
 
-let resources = ["index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 const getSortedShows = (
   toSort: Show[],

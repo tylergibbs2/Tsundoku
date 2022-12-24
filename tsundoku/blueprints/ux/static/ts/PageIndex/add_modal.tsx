@@ -23,9 +23,7 @@ import {
 } from "../queries";
 import { ShowToggleButton } from "./components/show_toggle_button";
 
-let resources = ["base", "index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface AddModalParams {
   currentModal?: string;

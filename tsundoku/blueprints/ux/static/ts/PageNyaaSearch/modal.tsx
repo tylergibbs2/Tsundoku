@@ -7,9 +7,7 @@ import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
 import { ShowToggleButton } from "../PageIndex/components/show_toggle_button";
 
-let resources = ["base", "nyaa_search"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface NyaaShowModalParams {
   shows: Show[];

@@ -7,9 +7,7 @@ import { IonIcon } from "../icon";
 import { WebhookBase } from "../interfaces";
 import { addNewWebhook } from "../queries";
 
-let resources = ["index", "webhooks"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface AddModalParams {
   activeModal?: string;

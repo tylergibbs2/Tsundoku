@@ -6,9 +6,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { deleteShowById } from "../queries";
 import { toast } from "bulma-toast";
 
-let resources = ["index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface DeleteModalParams {
   show?: Show;

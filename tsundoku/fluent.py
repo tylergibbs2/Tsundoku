@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
@@ -16,16 +16,13 @@ class CustomFluentLocalization(FluentLocalization):
         return self.format_value(key, args)
 
 
-def get_injector(resources: List[str]) -> CustomFluentLocalization:
+def get_injector() -> CustomFluentLocalization:
     try:
         cfg = GeneralConfig.sync_retrieve()
         locale = cfg.get("locale", default="en")
     except sqlite3.OperationalError:
         locale = "en"
 
-    loader = FluentResourceLoader("l10n/{locale}")
-
-    resources = [f"{r}.ftl" for r in resources]
-
-    fluent = CustomFluentLocalization([locale, "en"], resources, loader)
+    loader = FluentResourceLoader("l10n")
+    fluent = CustomFluentLocalization([locale, "en"], [f"{locale}.ftl"], loader)
     return fluent

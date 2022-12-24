@@ -23,9 +23,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, updateShowById } from "../queries";
 import { toast } from "bulma-toast";
 
-let resources = ["base", "index"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface EditModalParams {
   activeShow?: Show;

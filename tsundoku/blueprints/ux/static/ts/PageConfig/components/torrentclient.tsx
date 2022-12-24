@@ -5,9 +5,7 @@ import { getInjector } from "../../fluent";
 import { MutateConfigVars } from "../../interfaces";
 import { fetchConfig, setConfig } from "../../queries";
 
-let resources = ["config", "logs"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 interface TorrentConfig {
   client?: string;

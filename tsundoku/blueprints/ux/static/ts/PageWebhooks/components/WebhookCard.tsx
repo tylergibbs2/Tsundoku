@@ -8,9 +8,7 @@ interface WebhookCardParams {
   webhook: WebhookBase;
 }
 
-let resources = ["webhooks"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const WebhookCard = ({
   setActiveModal,

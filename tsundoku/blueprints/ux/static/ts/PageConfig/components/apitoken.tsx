@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
-let resources = ["config"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const APITokenComponent = () => {
   const [localToken, setLocalToken] = useState<string>("");

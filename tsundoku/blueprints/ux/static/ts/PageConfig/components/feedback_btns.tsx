@@ -1,8 +1,6 @@
 import { getInjector } from "../../fluent";
 
-let resources = ["config"];
-
-const _ = getInjector(resources);
+const _ = getInjector();
 
 export const FeedbackBtns = () => {
   const featureRequest = async () => {
