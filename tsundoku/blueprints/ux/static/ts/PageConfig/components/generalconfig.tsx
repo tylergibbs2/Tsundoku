@@ -134,6 +134,7 @@ export const GeneralConfigApp = () => {
             <select onChange={inputLocale} defaultValue={config?.data?.locale}>
               <option value="en">English</option>
               <option value="ru">русский</option>
+              <option value="ja">日本語</option>
             </select>
           </div>
         </div>
