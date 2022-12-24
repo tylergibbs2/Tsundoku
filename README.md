@@ -2,6 +2,7 @@
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Discord Invite](https://img.shields.io/discord/801396820772257802)](https://discord.gg/thxN858gXm)
+[![Crowdin](https://badges.crowdin.net/tsundoku/localized.svg)](https://crowdin.com/project/tsundoku)
 
 Tsundoku is an all-in-one utility to download, rename, and move anime from RSS feeds.
 Anime is able to be matched from any source with an RSS feed. Out of the box, Tsundoku has sources for
