@@ -95,32 +95,24 @@
             <p class="menu-label">{{ _("category-general") }}</p>
             <ul class="menu-list">
               <li>
-                <a id="navIndex" href="{{ url_for('ux.index') }}"
-                  >{{ _("page-shows") }}</a
-                >
+                <a id="navIndex" href="/">{{ _("page-shows") }}</a>
               </li>
               <li>
-                <a id="navNyaa" href="{{ url_for('ux.nyaa_search') }}"
-                  >{{ _("page-nyaa") }}</a
-                >
+                <a id="navNyaa" href="/nyaa">{{ _("page-nyaa") }}</a>
               </li>
             </ul>
             <p class="menu-label">{{ _("category-settings") }}</p>
             <ul class="menu-list">
               <li>
-                <a id="navWebhooks" href="{{ url_for('ux.webhooks') }}"
+                <a id="navWebhooks" href="/webhooks"
                   >{{ _("page-webhooks") }}</a
                 >
               </li>
               <li>
-                <a id="navConfig" href="{{ url_for('ux.config') }}"
-                  >{{ _("page-config") }}</a
-                >
+                <a id="navConfig" href="/config">{{ _("page-config") }}</a>
               </li>
               <li>
-                <a id="navLogs" href="{{ url_for('ux.logs') }}"
-                  >{{ _("page-logs") }}</a
-                >
+                <a id="navLogs" href="/logs">{{ _("page-logs") }}</a>
               </li>
             </ul>
           </aside>

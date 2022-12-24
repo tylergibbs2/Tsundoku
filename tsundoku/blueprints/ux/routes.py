@@ -65,50 +65,11 @@ async def issue() -> APIResponse:
 
 
 @ux_blueprint.route("/", methods=["GET"])
-@login_required
-async def index() -> str:
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
-    return await render_template("index.html")
-
-
 @ux_blueprint.route("/nyaa", methods=["GET"])
-@login_required
-async def nyaa_search() -> str:
-    ctx = {}
-
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
-    async with app.acquire_db() as con:
-        shows = await con.fetchall(
-            """
-            SELECT
-                id,
-                title
-            FROM
-                shows
-            ORDER BY title;
-        """
-        )
-        ctx["shows"] = [dict(s) for s in shows]
-
-    return await render_template("index.html", **ctx)
-
-
 @ux_blueprint.route("/webhooks", methods=["GET"])
-@login_required
-async def webhooks() -> str:
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
-    return await render_template("index.html")
-
-
 @ux_blueprint.route("/config", methods=["GET"])
 @login_required
-async def config() -> str:
+async def index() -> str:
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
@@ -130,7 +91,7 @@ async def logs() -> Union[str, Response]:
 @ux_blueprint.route("/register", methods=["GET", "POST"])
 async def register() -> Any:
     if await current_user.is_authenticated or not app.flags.IS_FIRST_LAUNCH:
-        return redirect(url_for("ux.index"))
+        return redirect("/")
 
     if request.method == "GET":
         return await render_template("register.html")
@@ -203,7 +164,7 @@ async def register() -> Any:
 @ux_blueprint.route("/login", methods=["GET", "POST"])
 async def login() -> Any:
     if await current_user.is_authenticated:
-        return redirect(url_for("ux.index"))
+        return redirect("/")
 
     if request.method == "GET":
         return await render_template("login.html")
@@ -257,14 +218,14 @@ async def login() -> Any:
 
         login_user(User(user_data["id"]), remember=remember)
 
-        return redirect(url_for("ux.index"))
+        return redirect("/")
 
 
 @ux_blueprint.route("/logout", methods=["GET"])
 @login_required
 async def logout() -> Any:
     logout_user()
-    return redirect(url_for("ux.index"))
+    return redirect("/")
 
 
 def collect_websocket(func):
