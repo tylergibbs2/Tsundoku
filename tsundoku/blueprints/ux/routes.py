@@ -29,7 +29,6 @@ from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
 from tsundoku.blueprints.api import APIResponse
-from tsundoku.fluent import get_injector
 from tsundoku.user import User
 
 from .issues import get_issue_url
@@ -43,11 +42,10 @@ ux_blueprint = Blueprint(
 )
 hasher = PasswordHasher()
 
-fluent = get_injector()
-
 
 @ux_blueprint.context_processor
 async def update_context() -> dict:
+    fluent = app.get_fluent()
     stats = {"version": version}
 
     return {"stats": stats, "docker": app.flags.IS_DOCKER, "_": fluent.format_value}
@@ -70,6 +68,7 @@ async def issue() -> APIResponse:
 @ux_blueprint.route("/config", methods=["GET"])
 @login_required
 async def index() -> str:
+    fluent = app.get_fluent()
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
@@ -82,6 +81,7 @@ async def logs() -> Union[str, Response]:
     if request.args.get("dl"):
         return await send_file("tsundoku.log", as_attachment=True)
 
+    fluent = app.get_fluent()
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
         await flash(fluent._("dl-client-connection-error"), category="error")
 
@@ -96,6 +96,7 @@ async def register() -> Any:
     if request.method == "GET":
         return await render_template("register.html")
     else:
+        fluent = app.get_fluent()
         form = await request.form
 
         username = form.get("username")
@@ -169,6 +170,7 @@ async def login() -> Any:
     if request.method == "GET":
         return await render_template("login.html")
     else:
+        fluent = app.get_fluent()
         form = await request.form
 
         username = form.get("username")

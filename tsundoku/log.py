@@ -30,7 +30,7 @@ def setup_logging(app: TsundokuApp) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     try:
-        cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
+        cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
         level = cfg.get("log_level") or "info"
     except Exception:
         level = "info"

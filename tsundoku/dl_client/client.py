@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import base64
 import hashlib
 import logging
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
 
 import aiohttp
 import bencodepy
@@ -18,7 +23,13 @@ logger = logging.getLogger("tsundoku")
 
 
 class Manager:
-    def __init__(self, session: aiohttp.ClientSession) -> None:
+    app: TsundokuApp
+    session: aiohttp.ClientSession
+
+    __last_hash: Optional[int]
+
+    def __init__(self, app_context: Any, session: aiohttp.ClientSession) -> None:
+        self.app = app_context.app
         self.session = session
         self.__last_hash = None
 
@@ -29,7 +40,7 @@ class Manager:
         Updates the configuration for the
         app's desired torrent client.
         """
-        cfg = await TorrentConfig.retrieve()
+        cfg = await TorrentConfig.retrieve(self.app)
 
         hash_ = hash(cfg)
         if self.__last_hash == hash_:

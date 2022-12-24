@@ -21,6 +21,7 @@ from uuid import uuid4
 
 import aiohttp
 from argon2 import PasswordHasher
+from fluent.runtime import FluentResourceLoader
 from quart import Quart, redirect, url_for
 from quart_auth import AuthManager, Unauthorized
 from werkzeug import Response
@@ -41,6 +42,7 @@ from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.flags import Flags
+from tsundoku.fluent import CustomFluentLocalization
 from tsundoku.log import setup_logging
 from tsundoku.user import User
 
@@ -66,13 +68,33 @@ class TsundokuApp(Quart):
     flags: Flags
 
     cached_bundle_hash: Optional[str] = None
+    _active_localization: Optional[CustomFluentLocalization] = None
     _tasks: List[asyncio.Task] = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.acquire_db = acquire
+        self.sync_acquire_db = sync_acquire
+
         self.connected_websockets = set()
         self.flags = Flags()
+
+    def get_fluent(self) -> CustomFluentLocalization:
+        if (
+            self._active_localization is not None
+            and self._active_localization.preferred_locale == self.flags.LOCALE
+        ):
+            return self._active_localization
+
+        loader = FluentResourceLoader("l10n")
+        self._active_localization = CustomFluentLocalization(
+            self.flags.LOCALE,
+            [self.flags.LOCALE, "en"],
+            [f"{self.flags.LOCALE}.ftl", "en.ftl"],
+            loader,
+        )
+        return self._active_localization
 
 
 app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
@@ -152,9 +174,6 @@ async def setup_db() -> None:
     """
     Creates a database pool for database interaction.
     """
-    app.acquire_db = acquire
-    app.sync_acquire_db = sync_acquire
-
     async with app.acquire_db() as con:
         users = await con.fetchval(
             """
@@ -164,6 +183,16 @@ async def setup_db() -> None:
                 users;
         """
         )
+
+        locale = await con.fetchval(
+            """
+            SELECT
+                locale
+            FROM
+                general_config;
+        """
+        )
+        app.flags.LOCALE = locale
 
     if not users:
         logger.warn(
@@ -188,7 +217,7 @@ async def setup_session() -> None:
         loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0)
     )
     logger.debug("Creating interface to downloader client...")
-    app.dl_client = Manager(app.session)
+    app.dl_client = Manager(app.app_context(), app.session)
 
     res = await app.dl_client.test_client()
     app.flags.DL_CLIENT_CONNECTION_ERROR = not res
@@ -255,10 +284,7 @@ async def cleanup() -> None:
 
 @ux_blueprint.context_processor
 async def insert_locale() -> dict:
-    # Inserts the user's locale into jinja2 variables.
-    cfg = await GeneralConfig.retrieve()
-
-    return {"LOCALE": cfg["locale"]}
+    return {"LOCALE": app.flags.LOCALE}
 
 
 app.register_blueprint(api_blueprint)
@@ -275,7 +301,7 @@ def get_bind() -> Tuple[str, int]:
     Tuple[str, int]
         Address and port
     """
-    cfg = GeneralConfig.sync_retrieve(ensure_exists=True)
+    cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
 
     host = os.getenv("HOST", default="") if os.getenv("HOST") else cfg["host"]
     port = os.getenv("PORT", default="") if os.getenv("PORT") else cfg["port"]

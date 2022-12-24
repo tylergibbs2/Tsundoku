@@ -114,7 +114,7 @@ async def config_route(cfg_type: str) -> APIResponse:
     else:
         return APIResponse(status=400, error="Invalid configuration type.")
 
-    cfg = await cfg_class.retrieve()
+    cfg = await cfg_class.retrieve(app)
 
     if request.method == "PATCH":
         arguments = await request.get_json()

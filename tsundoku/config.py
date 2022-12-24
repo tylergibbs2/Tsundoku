@@ -3,10 +3,12 @@ from __future__ import annotations
 import inspect
 import logging
 import sqlite3
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuApp
 
 from tsundoku.constants import VALID_SPEEDS
-from tsundoku.database import acquire, sync_acquire
 
 logger = logging.getLogger("tsundoku")
 
@@ -20,9 +22,11 @@ class ConfigInvalidKey(Exception):
 
 
 class Config:
+    app: TsundokuApp
     TABLE_NAME = None
 
-    def __init__(self, keys: Dict[str, Any]) -> None:
+    def __init__(self, app: TsundokuApp, keys: Dict[str, Any]) -> None:
+        self.app = app
         self.keys = keys
 
         self.valid_keys = set(self.keys.keys())
@@ -49,8 +53,8 @@ class Config:
         self.keys.update(other)
 
     @classmethod
-    async def retrieve(cls, ensure_exists: bool = True) -> Config:
-        async with acquire() as con:
+    async def retrieve(cls, app: TsundokuApp, ensure_exists: bool = True) -> Config:
+        async with app.acquire_db() as con:
             if ensure_exists:
                 await con.execute(
                     f"""
@@ -68,11 +72,11 @@ class Config:
             """
             )
 
-        return cls({k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})
 
     @classmethod
-    def sync_retrieve(cls, ensure_exists: bool = True) -> Config:
-        with sync_acquire() as con:
+    def sync_retrieve(cls, app: TsundokuApp, ensure_exists: bool = True) -> Config:
+        with app.sync_acquire_db() as con:
             if ensure_exists:
                 con.execute(
                     f"""
@@ -92,9 +96,9 @@ class Config:
             row: sqlite3.Row = cur.fetchone()
 
         if row is None:
-            return cls({})
+            return cls(app, {})
 
-        return cls({k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})
 
     async def save(self) -> None:
         for key, value in self.keys.items():
@@ -114,7 +118,7 @@ class Config:
                 raise ConfigCheckFailure(f"'{key}' is invalid.")
 
         sets = ", ".join(f"{col} = ?" for col in self.keys)
-        async with acquire() as con:
+        async with self.app.acquire_db() as con:
             await con.execute(
                 f"""
                 UPDATE
@@ -142,6 +146,10 @@ class GeneralConfig(Config):
             return True
 
         return False
+
+    def check_locale(self, value: str) -> bool:
+        self.app.flags.LOCALE = value
+        return True
 
 
 class FeedsConfig(Config):

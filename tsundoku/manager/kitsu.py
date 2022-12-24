@@ -16,12 +16,9 @@ from quart import url_for
 
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import STATUS_HTML_MAP
-from tsundoku.fluent import get_injector
 
 API_URL = "https://kitsu.io/api/edge/anime"
 logger = logging.getLogger("tsundoku")
-
-fluent = get_injector()
 
 
 class KitsuManager:
@@ -50,6 +47,8 @@ class KitsuManager:
         dict
             The serialized object.
         """
+        fluent = app.get_fluent()
+
         return {
             "show_id": self.show_id,
             "kitsu_id": self.kitsu_id,
@@ -470,7 +469,7 @@ class KitsuManager:
         if self.kitsu_id is None:
             return
 
-        cfg = await GeneralConfig.retrieve()
+        cfg = await GeneralConfig.retrieve(app)
 
         self.status = status
         async with app.acquire_db() as con:
