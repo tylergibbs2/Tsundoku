@@ -5,7 +5,8 @@ from collections import defaultdict
 import hashlib
 import logging
 from dataclasses import dataclass
-from functools import partial
+from functools import partial, cmp_to_key
+from sqlite3 import Row
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -220,7 +221,7 @@ class Poller:
             True if the episode has been parsed, False otherwise.
         """
         async with self.app.acquire_db() as con:
-            entry = await con.fetchone(
+            entries = await con.fetchall(
                 """
                 SELECT
                     id,
@@ -234,12 +235,17 @@ class Poller:
                 episode,
             )
 
-        if entry is None:
+        if not entries:
             return False
 
+        def compare(first: Row, second: Row) -> int:
+            return compare_version_strings(first["version"], second["version"])
+
+        entries = sorted(entries, key=cmp_to_key(compare), reverse=True)
+
         return (
-            entry["created_manually"]
-            or compare_version_strings(entry["version"], version) >= 0
+            entries[0]["created_manually"]
+            or compare_version_strings(entries[0]["version"], version) >= 0
         )
 
     async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
