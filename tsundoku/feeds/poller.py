@@ -306,7 +306,15 @@ class Poller:
             A tuple with (show_id, episode)
         """
         filename = source.get_filename(item)
-        parsed = anitopy.parse(filename)
+
+        try:
+            parsed = anitopy.parse(filename)
+        except Exception:
+            logger.exception(
+                f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'",
+                exc_info=True,
+            )
+            return None
 
         if parsed is None:
             logger.warning(
