@@ -187,6 +187,6 @@ async def migrate() -> None:
     try:
         await transfer_config()
     except Exception as e:
-        logger.error(f"Error importing old configuration: {e}")
+        logger.error(f"Error importing old configuration: {e}", exc_info=True)
 
     logger.info("Database migrations applied.")

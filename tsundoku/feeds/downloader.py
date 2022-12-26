@@ -70,7 +70,9 @@ class Downloader:
                 import traceback
 
                 traceback.print_exc()
-                logger.error(f"Error occurred while checking show entries, '{e}'")
+                logger.error(
+                    f"Error occurred while checking show entries, '{e}'", exc_info=True
+                )
 
             await asyncio.sleep(self.complete_check)
 
@@ -271,7 +273,7 @@ class Downloader:
         except PermissionError:
             logger.error(f"Error Moving Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
-            logger.error(f"Error Moving Release <e{entry.id}> - {e}")
+            logger.error(f"Error Moving Release <e{entry.id}> - {e}", exc_info=True)
         else:
             moved_file = desired_folder / name
 
@@ -283,7 +285,9 @@ class Downloader:
                 try:
                     entry.file_path.symlink_to(moved_file)
                 except Exception as e:
-                    logger.warn(f"Failed to Create Trailing Symlink - {e}")
+                    logger.warn(
+                        f"Failed to Create Trailing Symlink - {e}", exc_info=True
+                    )
             else:
                 logger.debug("Not creating trailing symlink, Docker environment")
 
@@ -351,7 +355,7 @@ class Downloader:
         except PermissionError:
             logger.error(f"Error Renaming Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
-            logger.error(f"Error Renaming Release <e{entry.id}> - {e}")
+            logger.error(f"Error Renaming Release <e{entry.id}> - {e}", exc_info=True)
         else:
             return new_path
 
@@ -384,7 +388,10 @@ class Downloader:
             try:
                 parsed = anitopy.parse(subpath.name)
             except Exception:
-                logger.debug(f"Anitopy - Could not parse `{subpath.name}`, skipping")
+                logger.error(
+                    f"Anitopy - Could not parse `{subpath.name}`, skipping",
+                    exc_info=True,
+                )
                 continue  # TODO: maybe ask user on UI to match manually
 
             if parsed is None:

@@ -243,7 +243,7 @@ class Encoder:
         try:
             ret = await self._encode(entry_id)
         except Exception as e:
-            logger.error(f"Failed to encode <e{entry_id}>: {e}")
+            logger.error(f"Failed to encode <e{entry_id}>: {e}", exc_info=True)
 
         if not ret:
             async with self.app.acquire_db() as con:
@@ -331,7 +331,10 @@ class Encoder:
         try:
             await create_subprocess_shell(cmd)
         except Exception as e:
-            logger.error(f"Failed starting new encode for entry <e{entry_id}>: {e}")
+            logger.error(
+                f"Failed starting new encode for entry <e{entry_id}>: {e}",
+                exc_info=True,
+            )
         else:
             self.__active_encodes += 1
             file_size = os.path.getsize(str(infile))

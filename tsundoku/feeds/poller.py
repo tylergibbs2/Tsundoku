@@ -107,9 +107,9 @@ class Poller:
             try:
                 await self.poll()
             except Exception:
-                import traceback
-
-                traceback.print_exc()
+                logger.error(
+                    "An error occurred while polling RSS sources.", exc_info=True
+                )
 
             logger.info(
                 f"Sleeping {self.interval} seconds before polling RSS sources again..."

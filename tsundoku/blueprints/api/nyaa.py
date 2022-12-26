@@ -26,7 +26,7 @@ class NyaaAPI(views.MethodView):
         try:
             results = await NyaaSearcher.search(app, query)
         except Exception as e:
-            logger.error(f"Nyaa API - Search Error: {e}")
+            logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
             return APIResponse(
                 status=400, error="Error searching for the specified query."
             )
