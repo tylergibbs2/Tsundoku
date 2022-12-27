@@ -173,14 +173,14 @@ const PostProcessingForm = ({
     <div className="box">
       {Object.keys(stats).length > 0 && (
         <div className="columns">
-          <div className="column is-one-fifth">
+          <div className="column is-one-fifth my-auto">
             <p>
               {_("encode-stats-total-encoded", {
                 total_encoded: stats.total_encoded,
               })}
             </p>
           </div>
-          <div className="column is-one-fifth">
+          <div className="column is-one-fifth my-auto">
             <p>
               {_("encode-stats-total-saved-gb", {
                 total_saved_gb: (stats.total_saved_bytes / 1024 ** 3).toFixed(
@@ -189,21 +189,21 @@ const PostProcessingForm = ({
               })}
             </p>
           </div>
-          <div className="column is-one-fifth">
+          <div className="column is-one-fifth my-auto">
             <p>
               {_("encode-stats-avg-saved-mb", {
                 avg_saved_mb: (stats.avg_saved_bytes / 1024 ** 2).toFixed(1),
               })}
             </p>
           </div>
-          <div className="column is-one-fifth">
+          <div className="column is-one-fifth my-auto">
             <p>
               {_("encode-stats-median-time-hours", {
                 median_time_hours: stats.median_time_spent_hours.toFixed(2),
               })}
             </p>
           </div>
-          <div className="column is-one-fifth">
+          <div className="column is-one-fifth my-auto">
             <p>
               {_("encode-stats-avg-time-hours", {
                 avg_time_hours: stats.avg_time_spent_hours.toFixed(2),
@@ -213,7 +213,7 @@ const PostProcessingForm = ({
         </div>
       )}
       <div className="columns">
-        <div className="column is-half">
+        <div className="column is-half my-auto">
           <h1 className="title is-5">{_("process-quality-title")}</h1>
           <h2 className="subtitle is-6">{_("process-quality-subtitle")}</h2>
           <div className="columns is-fullwidth mb-0">
@@ -244,7 +244,7 @@ const PostProcessingForm = ({
             onChange={inputQualityValue}
           ></input>
         </div>
-        <div className="column is-half">
+        <div className="column is-half my-auto">
           <h1 className="title is-5">{_("process-speed-title")}</h1>
           <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
           <div className="select is-fullwidth is-vcentered">
@@ -267,7 +267,7 @@ const PostProcessingForm = ({
         </div>
       </div>
       <div className="columns">
-        <div className="column is-one-third">
+        <div className="column is-one-third my-auto">
           <h1 className="title is-5">{_("process-max-encode-title")}</h1>
           <h2 className="subtitle is-6 mb-3">
             {_("process-max-encode-subtitle")}
@@ -281,7 +281,7 @@ const PostProcessingForm = ({
             disabled={disabled}
           ></input>
         </div>
-        <div className="column is-one-third">
+        <div className="column is-one-third my-auto">
           <h1 className="title is-5">{_("encode-time-title")}</h1>
           <h2 className="subtitle is-6">{_("encode-time-subtitle")}</h2>
           <div className="columns is-vcentered">

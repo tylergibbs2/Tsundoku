@@ -92,7 +92,7 @@ export const TorrentConfig = () => {
   return (
     <div className="box">
       <div className="columns">
-        <div className="column is-2">
+        <div className="column is-2 my-auto">
           <h1 className="title is-5">{_("torrent-client-title")}</h1>
           <h2 className="subtitle is-6">{_("torrent-client-subtitle")}</h2>
           <div className="select is-fullwidth">
@@ -103,7 +103,7 @@ export const TorrentConfig = () => {
             </select>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("torrent-host-title")}</h1>
           <h2 className="subtitle is-6">{_("torrent-host-subtitle")}</h2>
           <div className="field has-addons">
@@ -129,7 +129,7 @@ export const TorrentConfig = () => {
             </div>
           </div>
         </div>
-        <div className="column is-2">
+        <div className="column is-2 my-auto">
           <h1 className="title is-5">{_("torrent-username-title")}</h1>
           <h2 className="subtitle is-6">{_("torrent-username-subtitle")}</h2>
           <input
@@ -142,7 +142,7 @@ export const TorrentConfig = () => {
             autoComplete="off"
           />
         </div>
-        <div className="column is-2">
+        <div className="column is-2 my-auto">
           <h1 className="title is-5">{_("torrent-password-title")}</h1>
           <h2 className="subtitle is-6">{_("torrent-password-subtitle")}</h2>
           <input
@@ -155,7 +155,7 @@ export const TorrentConfig = () => {
             autoComplete="off"
           />
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("torrent-secure-title")}</h1>
           <h2 className="subtitle is-6">{_("torrent-secure-subtitle")}</h2>
           <div className="field">

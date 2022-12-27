@@ -55,7 +55,7 @@ export const FeedsConfig = () => {
   return (
     <div className="box">
       <div className="columns">
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("feeds-fuzzy-cutoff-title")}</h1>
           <h2 className="subtitle is-6">{_("feeds-fuzzy-cutoff-subtitle")}</h2>
           <div className="field has-addons">
@@ -75,7 +75,7 @@ export const FeedsConfig = () => {
             </div>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">
             <span
               className="has-tooltip-bottom has-tooltip-multiline"
@@ -103,7 +103,7 @@ export const FeedsConfig = () => {
             </div>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("feeds-completioncheck-title")}</h1>
           <h2 className="subtitle is-6">
             {_("feeds-completioncheck-subtitle")}
@@ -124,7 +124,7 @@ export const FeedsConfig = () => {
             </div>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("feeds-seedratio-title")}</h1>
           <h2 className="subtitle is-6">{_("feeds-seedratio-subtitle")}</h2>
           <div className="field">

@@ -72,7 +72,7 @@ export const GeneralConfigApp = () => {
   return (
     <div className="box">
       <div className="columns is-multiline">
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">
             <span
               className="has-tooltip-bottom"
@@ -105,7 +105,7 @@ export const GeneralConfigApp = () => {
             </div>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("general-loglevel-title")}</h1>
           <h2 className="subtitle is-6">{_("general-loglevel-subtitle")}</h2>
           <div className="select is-fullwidth">
@@ -120,7 +120,7 @@ export const GeneralConfigApp = () => {
             </select>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">
             <span
               className="has-tooltip-bottom"
@@ -138,7 +138,7 @@ export const GeneralConfigApp = () => {
             </select>
           </div>
         </div>
-        <div className="column is-3">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">
             <span
               className="has-tooltip-bottom"
@@ -159,7 +159,7 @@ export const GeneralConfigApp = () => {
             <label htmlFor="updateCheck">{_("checkbox-enabled")}</label>
           </div>
         </div>
-        <div className="column is-4">
+        <div className="column is-4 my-auto">
           <h1 className="title is-5">
             <span className="has-tooltip-bottom">
               {_("general-defaultformat-title")}
@@ -175,7 +175,7 @@ export const GeneralConfigApp = () => {
             onChange={inputDefaultDesiredFormat}
           />
         </div>
-        <div className="column is-4">
+        <div className="column is-4 my-auto">
           <h1 className="title is-5">
             <span className="has-tooltip-bottom">
               {_("general-defaultfolder-title")}
@@ -191,7 +191,7 @@ export const GeneralConfigApp = () => {
             onChange={inputDefaultDesiredFolder}
           />
         </div>
-        <div className="column is-4">
+        <div className="column is-4 my-auto">
           <h1 className="title is-5">{_("general-unwatchfinished-title")}</h1>
           <h2 className="subtitle is-6">
             {_("general-unwatchfinished-subtitle")}
