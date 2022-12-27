@@ -126,6 +126,13 @@ class Poller:
                     "An error occurred while polling RSS sources.", exc_info=True
                 )
 
+            try:
+                await SeenRelease.delete_old(self.app, days=30)
+            except Exception:
+                logger.error(
+                    "An error occurred while deleting old seen releases.", exc_info=True
+                )
+
             logger.info(
                 f"Sleeping {self.interval} seconds before polling RSS sources again..."
             )

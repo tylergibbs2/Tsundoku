@@ -159,6 +159,37 @@ class SeenRelease:
 
         return [SeenRelease(app, *row) for row in rows]
 
+    @staticmethod
+    async def delete_old(app: TsundokuApp, /, days: int) -> None:
+        """
+        Deletes all SeenReleases older than a certain number of days.
+
+        Parameters
+        ----------
+        days : int
+            The number of days.
+        """
+        logger.info(f"Deleting old SeenReleases... [days={days}]")
+        async with app.acquire_db() as con:
+            await con.execute(
+                """
+                    DELETE FROM
+                        seen_release as s1
+                    WHERE
+                        datetime('now', '-' || ? ||' day') > (SELECT
+                            MAX(seen_at)
+                            FROM seen_release
+                            WHERE
+                                title = s1.title AND
+                                release_group = s1.release_group
+                        );
+                """,
+                days,
+            )
+            deleted = await con.fetchval("SELECT changes();")
+
+        logger.info(f"Deleted {deleted} old SeenReleases.")
+
     @classmethod
     async def add(
         cls, app: TsundokuApp, anitopy_result: dict, torrent_destination: str
