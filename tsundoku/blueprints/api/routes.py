@@ -48,6 +48,10 @@ async def ensure_auth() -> Optional[APIResponse]:
     authed = False
     if request.headers.get("Authorization"):
         token = request.headers["Authorization"]
+        if not token.startswith("Bearer "):
+            return APIResponse(status=401, error="Invalid authorization header.")
+        token = token[7:]
+
         async with app.acquire_db() as con:
             try:
                 user = await con.fetchval(
