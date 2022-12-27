@@ -15,32 +15,29 @@ if TYPE_CHECKING:
 
 from yoyo import get_backend, read_migrations
 
-from . import asqlite
+from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
+from tsundoku import asqlite
 
 logger = logging.getLogger("tsundoku")
 
 
-if os.getenv("IS_DOCKER"):
-    fp = "data/tsundoku.db"
-else:
-    fp = "tsundoku.db"
-
-
 @asynccontextmanager
 async def acquire() -> AsyncIterator[Connection]:
-    async with asqlite.connect(fp) as con:
+    async with asqlite.connect(f"{DATA_DIR / DATABASE_FILE_NAME}") as con:
         yield con
 
 
 @contextmanager
 def sync_acquire() -> Iterator[sqlite3.Connection]:
-    with sqlite3.connect(fp) as con:
+    with sqlite3.connect(f"{DATA_DIR / DATABASE_FILE_NAME}") as con:
         con.row_factory = sqlite3.Row
         yield con
 
 
 def spawn_shell() -> None:
-    subprocess.run(["sqlite3", fp, "-header", "-column"])
+    subprocess.run(
+        ["sqlite3", f"{DATA_DIR / DATABASE_FILE_NAME}", "-header", "-column"]
+    )
 
 
 def get_cfg_value(parser: ConfigParser, key: str, value: str, default=None) -> Any:
@@ -175,8 +172,25 @@ async def transfer_config() -> None:
     path.rename(path.with_suffix(".old"))
 
 
+async def migrate_to_data_dir() -> None:
+    if Path(DATA_DIR).exists():
+        return
+
+    TO_MIGRATE = ("tsundoku.db", "tsundoku.log", "sources")
+
+    Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
+    for f in TO_MIGRATE:
+        if Path(f).exists():
+            Path(f).rename(Path(DATA_DIR) / f)
+
+
 async def migrate() -> None:
-    backend = get_backend(f"sqlite:///{fp}")
+    try:
+        await migrate_to_data_dir()
+    except Exception as e:
+        logger.error(f"Error migrating to data directory: {e}", exc_info=True)
+
+    backend = get_backend(f"sqlite:///{DATA_DIR / DATABASE_FILE_NAME}")
     migrations = read_migrations("migrations")
     migrations.items = migrations.items[14:]
 

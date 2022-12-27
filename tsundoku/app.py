@@ -38,6 +38,7 @@ from tsundoku.asqlite import Connection
 from tsundoku.blueprints.api import api_blueprint
 from tsundoku.blueprints.ux import ux_blueprint
 from tsundoku.config import GeneralConfig
+from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
@@ -114,19 +115,13 @@ class QuartConfig:
 
 
 app.config.from_object(QuartConfig())
-setup_logging(app)
 
 
 async def insert_user(username: str, password: str) -> None:
     await migrate()
 
-    if app.flags.IS_DOCKER:
-        fp = "data/tsundoku.db"
-    else:
-        fp = "tsundoku.db"
-
     pw_hash = PasswordHasher().hash(password)
-    async with tsundoku.asqlite.connect(fp) as con:
+    async with tsundoku.asqlite.connect(f"{DATA_DIR / DATABASE_FILE_NAME}") as con:
         await con.execute(
             """
             INSERT INTO
@@ -324,6 +319,7 @@ def get_bind() -> Tuple[str, int]:
 
 async def run() -> None:
     await migrate()
+    setup_logging(app)
 
     host, port = get_bind()
     logger.debug(f"Attempting to bind to {host}:{port}")

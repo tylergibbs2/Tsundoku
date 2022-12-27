@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import List, TYPE_CHECKING, AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -13,6 +13,8 @@ else:
     from quart import current_app as app
 
 import aiofiles
+
+from tsundoku.constants import DATA_DIR
 
 
 @dataclass
@@ -94,12 +96,9 @@ class Source:
 
 
 async def get_all_sources() -> AsyncGenerator[Source, None]:
-    if app.flags.IS_DOCKER:
-        source_path = Path.cwd() / "data" / "sources"
-    else:
-        source_path = Path.cwd() / "sources"
-
+    source_path = DATA_DIR / "sources"
     source_path.mkdir(exist_ok=True, parents=True)
+
     if not (source_path / "COPIED").exists():
         default_sources = Path("default_sources").glob("*.json")
         for source in default_sources:
@@ -114,7 +113,7 @@ async def get_all_sources() -> AsyncGenerator[Source, None]:
         async with aiofiles.open(source_path / "COPIED", "wb") as fp:
             await fp.write(b"")
 
-    sources = [f"{source_path / source}" for source in source_path.glob("*.json")]
+    sources = [f"{source_path / source.name}" for source in source_path.glob("*.json")]
     for source in sources:
         async with aiofiles.open(source, "r") as fp:
             yield Source.from_object(json.loads(await fp.read()))

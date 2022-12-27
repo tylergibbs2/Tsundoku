@@ -14,3 +14,4 @@ tsundoku.log
 tsundoku/blueprints/ux/static/js
 *.zip
 run.py
+data/

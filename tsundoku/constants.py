@@ -1,3 +1,7 @@
+import os
+from pathlib import Path
+
+
 VALID_SPEEDS = (
     "ultrafast",
     "superfast",
@@ -35,3 +39,7 @@ STATUS_HTML_MAP = {
     "unreleased": "<span class='img-overlay-span tag is-info noselect'>{}</span>",
     "upcoming": "<span class='img-overlay-span tag is-primary noselect'>{}</span>",
 }
+
+DATABASE_FILE_NAME = "tsundoku.db"
+
+DATA_DIR = Path(os.getenv("DATA_DIR", "data"))

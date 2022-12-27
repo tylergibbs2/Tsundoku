@@ -24,6 +24,7 @@ act
 tsundoku/blueprints/ux/static/js
 
 # Database
+data/
 tsundoku.db
 tsundoku.db-shm
 tsundoku.db-wal
