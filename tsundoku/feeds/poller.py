@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass
 from functools import partial, cmp_to_key
 from sqlite3 import Row
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, NamedTuple, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -43,6 +43,11 @@ class EntryMatch:
     passed_name: str
     matched_id: int
     match_percent: int
+
+
+class FoundEntry(NamedTuple):
+    show_id: int
+    episode: int
 
 
 @dataclass
@@ -125,7 +130,7 @@ class Poller:
         """
         self.source_cache.clear()
 
-    async def poll(self, force: bool = False) -> List[Tuple[int, int]]:
+    async def poll(self, force: bool = False) -> List[FoundEntry]:
         """
         Iterates through every installed RSS source
         and will check for new items to download.
@@ -140,7 +145,7 @@ class Poller:
 
         Returns
         -------
-        List[Tuple[int, int]]
+        List[FoundEntry]
             A list of tuples in the format (show_id, episode).
             These are newly found entries that have begun processing.
         """
@@ -172,9 +177,7 @@ class Poller:
         # this. See: tsundoku/blueprints/api/routes.py#check_for_releases
         return found
 
-    async def check_feed(
-        self, source: Source, items: List[dict]
-    ) -> List[Tuple[int, int]]:
+    async def check_feed(self, source: Source, items: List[dict]) -> List[FoundEntry]:
         """
         Iterates through the list of items in an
         RSS feed and will individually check each
@@ -188,7 +191,7 @@ class Poller:
 
         Returns
         -------
-        List[Tuple[int, int]]
+        List[FoundEntry]
             A list of tuples in the format (show_id, episode).
             These are newly found entries that have begun processing.
         """
@@ -295,7 +298,7 @@ class Poller:
 
         return None
 
-    async def check_item(self, source: Source, item: dict) -> Optional[Tuple[int, int]]:
+    async def check_item(self, source: Source, item: dict) -> Optional[FoundEntry]:
         """
         Checks an item to see if it is from a
         desired show entry, and will then begin
@@ -308,7 +311,7 @@ class Poller:
 
         Returns
         -------
-        Optional[Tuple[int, int]]
+        Optional[FoundEntry]
             A tuple with (show_id, episode)
         """
         filename = source.get_filename(item)
@@ -412,7 +415,7 @@ class Poller:
             match.matched_id, show_episode, magnet_url, release_version
         )
 
-        return (match.matched_id, show_episode)
+        return FoundEntry(match.matched_id, show_episode)
 
     def hash_rss_item(self, item: dict) -> str:
         """
