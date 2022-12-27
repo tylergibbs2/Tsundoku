@@ -16,7 +16,7 @@ Please check out the [wiki](https://github.com/tylergibbs2/Tsundoku/wiki) if you
   <img height="300" src="media/sample.jpg" />
 </p>
 
-## Key Features
+## 🚀 Key Features
 
 - Parse various RSS feeds for the latest anime
 - Rename and move downloaded files automatically
@@ -26,12 +26,12 @@ Please check out the [wiki](https://github.com/tylergibbs2/Tsundoku/wiki) if you
 - View airing status of shows
 - Full-fledged backend RESTful API for easy integration
 
-## Supported Download Clients
+## 🧲 Supported Download Clients
 
 - [Deluge](https://deluge-torrent.org/) with [WebAPI Plugin](https://github.com/idlesign/deluge-webapi)
 - [qBittorrent](https://www.qbittorrent.org/) with WebUI enabled
 - [Transmission](https://transmissionbt.com/)
 
-## Installation
+## 🎊 Installation
 
 Please refer to [Installing Tsundoku](https://github.com/tylergibbs2/Tsundoku/wiki/Installing-Tsundoku) on the wiki for detailed installation instructions.
