@@ -102,8 +102,14 @@ app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
 logger = logging.getLogger("tsundoku")
 
 
+if os.getenv("SECRET_KEY"):
+    secret_key = os.getenv("SECRET_KEY")
+else:
+    secret_key = secrets.token_urlsafe(16) if not app.flags.IS_DEBUG else "debug"
+
+
 class QuartConfig:
-    SECRET_KEY = secrets.token_urlsafe(16) if not app.flags.IS_DEBUG else "debug"
+    SECRET_KEY = secret_key
     QUART_AUTH_COOKIE_SECURE = False
 
 
