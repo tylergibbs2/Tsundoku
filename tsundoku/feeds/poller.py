@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-import hashlib
-import logging
 from dataclasses import dataclass
 from functools import partial, cmp_to_key
+import hashlib
+import logging
+import os
 from sqlite3 import Row
 from typing import Any, Dict, List, NamedTuple, Optional, TYPE_CHECKING
 
@@ -108,8 +109,16 @@ class Poller:
         """
         logger.debug("Poller task started.")
 
+        if os.getenv("DISABLE_POLL_ON_START"):
+            await self.update_config()
+            logger.info(
+                f"Polling disabled on start, waiting {self.interval} seconds before first poll..."
+            )
+            await asyncio.sleep(self.interval)
+
         while True:
             await self.update_config()
+
             try:
                 await self.poll()
             except Exception:
