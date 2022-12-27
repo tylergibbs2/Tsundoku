@@ -29,6 +29,7 @@ from quart_auth import current_user, login_required, login_user, logout_user
 
 from tsundoku import __version__ as version
 from tsundoku.blueprints.api import APIResponse
+from tsundoku.constants import DATA_DIR
 from tsundoku.user import User
 
 from .issues import get_issue_url
@@ -79,7 +80,7 @@ async def index() -> str:
 @login_required
 async def logs() -> Union[str, Response]:
     if request.args.get("dl"):
-        return await send_file("tsundoku.log", as_attachment=True)
+        return await send_file(f"{DATA_DIR / 'tsundoku.log'}", as_attachment=True)
 
     fluent = app.get_fluent()
     if app.flags.DL_CLIENT_CONNECTION_ERROR:
