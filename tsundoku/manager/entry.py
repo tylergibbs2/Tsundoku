@@ -9,10 +9,6 @@ from typing import List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
 from tsundoku.webhooks import Webhook
 
 
@@ -32,6 +28,20 @@ class EntryState(str, Enum):
 
 
 class Entry:
+    _app: TsundokuApp
+    _record: Row
+
+    id: int
+    show_id: int
+    episode: int
+    version: str
+    state: EntryState
+    torrent_hash: str
+    created_manually: bool
+    last_update: datetime
+
+    file_path: Optional[Path]
+
     def __init__(self, app: TsundokuApp, record: Row) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
