@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tsundoku API Docs</title>
+
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.css"
+      integrity="sha512-3ZF6q2IwJ/o3zbm5kBJX1RtjPFxnFcTBH+pa/jtnvvhygsYFcEqX+T9guR01rI8gozi4fPU95W+SZES6ew28qA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        margin: 0;
+        background: #fafafa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="swagger-ui"></div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js"
+      integrity="sha512-8FFvTCXo6KgUt72SMpgMgMHoHnNUOPxndku0/mc+B98qIeEfZ6dpPDYJv6a1TRWHoEZeMQAKQzcwSmQixM9v2w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"
+      integrity="sha512-D0LLkbspjpDlVcVweqnmQGAHf4evBLmiyTVFxvh+c/vnJduLdDtSwT2rHg4q9bPXIp4MtY4r6fbutZsTjnoYZA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script charset="utf-8" type="text/javascript">
+      window.onload = function () {
+        //<editor-fold desc="Changeable Configuration Block">
+
+        // the following lines will be replaced by docker/configurator, when it runs in a docker-container
+        window.ui = SwaggerUIBundle({
+          url: "/openapi.json",
+          dom_id: "#swagger-ui",
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+          layout: "BaseLayout",
+        });
+
+        //</editor-fold>
+      };
+    </script>
+  </body>
+</html>

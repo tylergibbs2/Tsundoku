@@ -1,0 +1,53 @@
+{
+  "get": {
+    "tags": ["Seen Releases"],
+    "description": "Returns seen releases that match the passed filters. Filters are applied as AND.",
+    "parameters": [
+      {
+        "name": "title",
+        "in": "query",
+        "description": "The title to filter by."
+      },
+      {
+        "name": "release_group",
+        "in": "query",
+        "description": "The release_group to filter by."
+      },
+      {
+        "name": "resolution",
+        "in": "query",
+        "description": "The resolution to filter by."
+      },
+      {
+        "name": "episode",
+        "in": "query",
+        "description": "The episode to filter by."
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../../components.json#/components/schemas/SeenRelease"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

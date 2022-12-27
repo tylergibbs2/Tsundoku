@@ -1,0 +1,28 @@
+{
+  "delete": {
+    "tags": ["Shows"],
+    "description": "Deletes a show's metadata cache.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Show"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

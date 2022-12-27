@@ -1,0 +1,89 @@
+{
+  "get": {
+    "tags": ["Show Entries"],
+    "description": "Returns all entries for a specified show.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../../components.json#/components/schemas/Entry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "post": {
+    "tags": ["Entries"],
+    "description": "Adds a new entry to the database.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["episode", "magnet"],
+            "properties": {
+              "episode": {
+                "type": "integer",
+                "description": "Episode number to add.",
+                "example": 3
+              },
+              "magnet": {
+                "type": "string",
+                "description": "Magnet URL for the torrent. If null, marks as complete instantly.",
+                "example": null,
+                "nullable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Entry"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

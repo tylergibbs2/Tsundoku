@@ -1,0 +1,62 @@
+{
+  "get": {
+    "tags": ["Show Entries"],
+    "description": "Returns a show entry with the specified ID.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Entry"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      }
+    }
+  },
+  "delete": {
+    "tags": ["Entries"],
+    "description": "Deletes a show entry with a specified ID.",
+    "responses": {
+      "200": {
+        "description": "The deletion request was successfully received.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "boolean",
+                  "description": "If the deletion request was received.",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

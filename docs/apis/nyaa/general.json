@@ -1,0 +1,113 @@
+{
+  "get": {
+    "tags": ["Nyaa"],
+    "description": "Searches Nyaa for potential query results.",
+    "parameters": [
+      {
+        "required": true,
+        "in": "query",
+        "name": "query",
+        "schema": {
+          "type": "string",
+          "description": "Nyaa search query.",
+          "example": "Attack on Titan"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../../components.json#/components/schemas/NyaaSearchResult"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "post": {
+    "tags": ["Nyaa"],
+    "description": "Adds a Nyaa search result to Tsundoku for processing.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["show_id", "torrent_link", "overwrite"],
+            "properties": {
+              "show_id": {
+                "type": "integer",
+                "description": "The ID of the show that the result is for.",
+                "example": 42
+              },
+              "torrent_link": {
+                "type": "string",
+                "description": "Link to the result's torrent file."
+              },
+              "overwrite": {
+                "type": "boolean",
+                "description": "Whether or not to overwrite any existing entries with the same episode numbers.",
+                "example": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Entry"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

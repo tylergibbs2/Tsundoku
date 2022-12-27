@@ -1,0 +1,75 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Tsundoku",
+    "version": "1",
+    "license": {
+      "name": "Mozilla Public License 2.0",
+      "url": "https://www.mozilla.org/en-US/MPL/2.0/"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://{host}:{port}/api/v1",
+      "variables": {
+        "host": {
+          "default": "localhost",
+          "description": "The location Tsundoku is hosted at."
+        },
+        "port": {
+          "default": "6439",
+          "description": "The port that Tsundoku is bound to."
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/shows": {
+      "$ref": "apis/shows/all.json"
+    },
+    "/shows/check": {
+      "$ref": "apis/shows/check.json"
+    },
+    "/shows/{id}": {
+      "$ref": "apis/shows/by_id.json"
+    },
+    "/shows/{id}/cache": {
+      "$ref": "apis/shows/delete_cache.json"
+    },
+    "/shows/{show_id}/entries": {
+      "$ref": "apis/entries/all.json"
+    },
+    "/shows/{show_id}/entries/{entry_id}": {
+      "$ref": "apis/entries/by_id.json"
+    },
+    "/shows/{show_id}/webhooks": {
+      "$ref": "apis/webhookshow/all.json"
+    },
+    "/shows/{show_id}/webhooks/{base_id}": {
+      "$ref": "apis/webhookshow/by_id.json"
+    },
+    "/entries/{entry_id}": {
+      "$ref": "apis/all_entries/by_id.json"
+    },
+    "/seen_releases/filter": {
+      "$ref": "apis/seen_releases/filter.json"
+    },
+    "/seen_releases/distinct": {
+      "$ref": "apis/seen_releases/distinct.json"
+    },
+    "/webhooks": {
+      "$ref": "apis/webhookbase/all.json"
+    },
+    "/webhooks/{id}": {
+      "$ref": "apis/webhookbase/by_id.json"
+    },
+    "/nyaa": {
+      "$ref": "apis/nyaa/general.json"
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

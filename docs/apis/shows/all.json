@@ -1,0 +1,123 @@
+{
+  "get": {
+    "tags": ["Shows"],
+    "description": "Returns all shows that are stored in the database.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../../components.json#/components/schemas/Show"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "post": {
+    "tags": ["Shows"],
+    "description": "Adds a new show to the database.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["title", "season"],
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "New show title.",
+                "example": "Attack on Titan"
+              },
+              "desired_format": {
+                "type": "string",
+                "description": "New show desired format.",
+                "example": "{n} - {s00e00}"
+              },
+              "desired_folder": {
+                "type": "string",
+                "description": "New show desired folder.",
+                "example": "/target/{n}/Season {s00}"
+              },
+              "season": {
+                "type": "integer",
+                "description": "New show season.",
+                "example": "1"
+              },
+              "episode_offset": {
+                "type": "integer",
+                "description": "New show episode offset.",
+                "example": "0"
+              },
+              "watch": {
+                "type": "boolean",
+                "description": "Whether or not to watch the new show.",
+                "example": true
+              },
+              "post_process": {
+                "description": "Whether or not to post-process entries for this show.",
+                "type": "boolean",
+                "example": true
+              },
+              "preferred_resolution": {
+                "description": "Preferred resolution that entries should be in for this show.",
+                "type": "string",
+                "example": "1080p"
+              },
+              "preferred_release_group": {
+                "description": "Preferred release group that entries should be in for this show.",
+                "type": "string",
+                "example": "SubsPlease"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Show"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

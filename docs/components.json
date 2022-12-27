@@ -1,0 +1,434 @@
+{
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "description": "The request body was invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "You are unauthorized to access this resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "The server encountered an unexpected error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "HTTP response code."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message."
+          }
+        }
+      },
+      "Show": {
+        "type": "object",
+        "required": [
+          "id_",
+          "title",
+          "desired_format",
+          "desired_folder",
+          "season",
+          "episode_offset",
+          "watch",
+          "post_process",
+          "preferred_resolution",
+          "preferred_release_group",
+          "created_at",
+          "metadata"
+        ],
+        "properties": {
+          "id_": {
+            "type": "integer",
+            "readOnly": true,
+            "example": 42
+          },
+          "title": {
+            "type": "string",
+            "example": "Attack on Titan"
+          },
+          "desired_format": {
+            "description": "Override for global file format.",
+            "type": "string",
+            "example": "{n} - {s00e00}"
+          },
+          "desired_folder": {
+            "description": "Override for global folder placement.",
+            "type": "string",
+            "example": "/target/{n}/Season {s00}"
+          },
+          "season": {
+            "description": "Season number for formatting.",
+            "type": "integer",
+            "example": 1
+          },
+          "episode_offset": {
+            "description": "Positive or negative value for offsetting the episode number when formatting.",
+            "type": "integer",
+            "example": 0
+          },
+          "watch": {
+            "description": "Whether or not to check RSS feeds for this show.",
+            "type": "boolean",
+            "example": true
+          },
+          "post_process": {
+            "description": "Whether or not to post-process entries for this show.",
+            "type": "boolean",
+            "example": true
+          },
+          "preferred_resolution": {
+            "description": "Preferred resolution that entries should be in for this show.",
+            "type": "string",
+            "example": "1080p"
+          },
+          "preferred_release_group": {
+            "description": "Preferred release group that entries should be in for this show.",
+            "type": "string",
+            "example": "SubsPlease"
+          },
+          "created_at": {
+            "description": "When the show was added to the database.",
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "example": "2021-04-11T06:37:36.812658"
+          },
+          "metadata": {
+            "description": "Object containing general show metadata.",
+            "$ref": "#/components/schemas/Metadata"
+          },
+          "entries": {
+            "type": "array",
+            "description": "List of entries for this show.",
+            "items": {
+              "$ref": "#/components/schemas/Entry"
+            }
+          },
+          "webhooks": {
+            "type": "array",
+            "description": "List of webhooks for this show.",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            }
+          }
+        }
+      },
+      "Metadata": {
+        "type": "object",
+        "required": ["show_id"],
+        "properties": {
+          "show_id": {
+            "description": "ID of the show that this object relates to.",
+            "type": "integer",
+            "readOnly": true,
+            "example": 42
+          },
+          "kitsu_id": {
+            "description": "ID of the show on Kitsu.",
+            "type": "integer",
+            "example": 7442
+          },
+          "slug": {
+            "description": "Shortened slug of show title.",
+            "type": "string",
+            "example": "attack-on-titan"
+          },
+          "status": {
+            "description": "Airing status of the show.",
+            "type": "string",
+            "enum": ["current", "finished", "tba", "unreleased", "upcoming"],
+            "example": "finished"
+          },
+          "poster": {
+            "description": "URL to a poster image of the show.",
+            "type": "string",
+            "example": "https://media.kitsu.io/anime/poster_images/7442/large.jpg"
+          }
+        }
+      },
+      "Entry": {
+        "type": "object",
+        "required": ["id", "show_id", "episode", "state", "last_update"],
+        "properties": {
+          "id": {
+            "description": "Internal entry identifier.",
+            "type": "integer",
+            "example": 120
+          },
+          "show_id": {
+            "description": "ID of the show that this object relates to.",
+            "type": "integer",
+            "example": 42
+          },
+          "episode": {
+            "description": "Episode that this entry relates to.",
+            "type": "integer",
+            "example": 3
+          },
+          "state": {
+            "description": "Internal state of the entry.",
+            "type": "string",
+            "enum": [
+              "downloading",
+              "downloaded",
+              "renamed",
+              "moved",
+              "completed"
+            ],
+            "example": "completed"
+          },
+          "torrent_hash": {
+            "description": "Hash of the torrent for this entry.",
+            "type": "string",
+            "example": "1d9d488ef8ef34c0e9a3d23198f0771ea1fb0725"
+          },
+          "file_path": {
+            "description": "Location of the entry on disk",
+            "type": "string",
+            "example": "/target/Attack on Titan/Season 01/Attack on Titan - s01e03.mkv"
+          },
+          "last_update": {
+            "description": "Last update time of the entry.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2021-04-11T06:40:29.874604"
+          }
+        }
+      },
+      "SeenRelease": {
+        "type": "object",
+        "required": [
+          "title",
+          "release_group",
+          "episode",
+          "resolution",
+          "version",
+          "torrent_destination",
+          "seen_at"
+        ],
+        "properties": {
+          "title": {
+            "description": "Title of the release.",
+            "type": "string",
+            "example": "Chainsaw Man"
+          },
+          "release_group": {
+            "description": "Release group of the release.",
+            "type": "string",
+            "example": "SubsPlease"
+          },
+          "episode": {
+            "description": "Episode of the release.",
+            "type": "integer",
+            "example": 3
+          },
+          "resolution": {
+            "description": "Resolution of the release.",
+            "type": "string",
+            "example": "1080p"
+          },
+          "version": {
+            "description": "Version of the release.",
+            "type": "string",
+            "example": "v2"
+          },
+          "torrent_destination": {
+            "description": "Destination of the torrent file.",
+            "type": "string",
+            "example": "https://nyaa.si/download/..."
+          },
+          "seen_at": {
+            "description": "Time that the release was seen.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2021-04-11T06:40:29.874604"
+          }
+        }
+      },
+      "WebhookBase": {
+        "type": "object",
+        "required": [
+          "base_id",
+          "name",
+          "service",
+          "url",
+          "content_fmt",
+          "default_triggers"
+        ],
+        "properties": {
+          "base_id": {
+            "description": "ID of the webhook base",
+            "type": "integer",
+            "example": 5
+          },
+          "name": {
+            "description": "Name of the webhook base.",
+            "type": "string",
+            "example": "My server - #tsundoku"
+          },
+          "service": {
+            "description": "Service that this webhook base posts to.",
+            "type": "string",
+            "enum": ["discord", "slack"],
+            "example": "discord"
+          },
+          "url": {
+            "description": "URL that this webhook base posts to.",
+            "type": "string",
+            "example": "https://discord.com/api/webhooks/123456789123456789/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+          },
+          "content_fmt": {
+            "description": "Content that will be formatted with entry information.",
+            "type": "string",
+            "example": "{name}, episode {episode}, has been marked as {state}"
+          },
+          "valid": {
+            "description": "Whether or not this webhook base is able to be posted to.",
+            "type": "boolean",
+            "example": true
+          },
+          "default_triggers": {
+            "description": "Default triggers to set when creating new shows.",
+            "type": "array",
+            "items": {
+              "maxLength": 6,
+              "type": "string",
+              "enum": [
+                "failed",
+                "downloading",
+                "downloaded",
+                "renamed",
+                "moved",
+                "completed"
+              ]
+            },
+            "example": ["downloading", "completed"]
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "required": ["show_id", "base", "triggers"],
+        "properties": {
+          "show_id": {
+            "description": "ID of the show that this webhook belongs to.",
+            "type": "integer",
+            "readOnly": true,
+            "example": 42
+          },
+          "base": {
+            "description": "The webhook base that this webhook belongs to.",
+            "$ref": "#/components/schemas/WebhookBase",
+            "readOnly": true,
+            "example": 5
+          },
+          "triggers": {
+            "description": "List of actions that trigger this webhook.",
+            "type": "array",
+            "items": {
+              "maxLength": 6,
+              "type": "string",
+              "enum": [
+                "failed",
+                "downloading",
+                "downloaded",
+                "renamed",
+                "moved",
+                "completed"
+              ]
+            },
+            "example": ["downloading", "completed"]
+          }
+        }
+      },
+      "NyaaSearchResult": {
+        "type": "object",
+        "properties": {
+          "show_id": {
+            "type": "integer",
+            "description": "Show ID that the result is for.",
+            "example": 42
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the search result."
+          },
+          "published": {
+            "type": "string",
+            "description": "Prettily formatted date string of publish date.",
+            "example": "20 Aug 2020"
+          },
+          "torrent_link": {
+            "type": "string",
+            "description": "URL to the result's torrent file.",
+            "format": "url"
+          },
+          "post_link": {
+            "type": "string",
+            "description": "URL to the post on Nyaa.",
+            "format": "url"
+          },
+          "size": {
+            "type": "string",
+            "description": "Prettily formatted string of the total file size.",
+            "example": "31.2 GiB"
+          },
+          "seeders": {
+            "type": "integer",
+            "description": "Total number of active seeders.",
+            "example": 33
+          },
+          "leechers": {
+            "type": "integer",
+            "description": "Total number of active leechers.",
+            "example": 5
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

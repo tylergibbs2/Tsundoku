@@ -1,0 +1,38 @@
+{
+  "get": {
+    "tags": ["Shows"],
+    "description": "Checks for new entries on the RSS feeds.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "description": "An array of 2-length tuples. The first index is the show ID, and the second is the episode number.",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "maxItems": 2,
+                      "minItems": 2
+                    },
+                    "example": [[42, 4]]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

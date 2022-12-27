@@ -1,0 +1,158 @@
+{
+  "get": {
+    "tags": ["Shows"],
+    "description": "Returns a show with the specified ID.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Show"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      }
+    }
+  },
+  "put": {
+    "tags": ["Shows"],
+    "description": "Updates an existing show in the database.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "New show title.",
+                "example": "Attack on Titan"
+              },
+              "desired_format": {
+                "type": "string",
+                "description": "New override for global file format.",
+                "example": "{n} - {s00e00}"
+              },
+              "desired_folder": {
+                "type": "string",
+                "description": "New override for global folder placement.",
+                "example": "/target/{n}/Season {s00}"
+              },
+              "season": {
+                "type": "integer",
+                "description": "New show season.",
+                "example": "1"
+              },
+              "episode_offset": {
+                "type": "integer",
+                "description": "New show episode offset.",
+                "example": "0"
+              },
+              "watch": {
+                "type": "boolean",
+                "description": "Whether or not to watch the new show.",
+                "example": true
+              },
+              "post_process": {
+                "description": "Whether or not to post-process entries for this show.",
+                "type": "boolean",
+                "example": true
+              },
+              "preferred_resolution": {
+                "description": "Preferred resolution that entries should be in for this show.",
+                "type": "string",
+                "example": "1080p"
+              },
+              "preferred_release_group": {
+                "description": "Preferred release group that entries should be in for this show.",
+                "type": "string",
+                "example": "SubsPlease"
+              },
+              "kitsu_id": {
+                "type": "integer",
+                "description": "New Kitsu metadata ID for the show.",
+                "example": 7442
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Show"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "delete": {
+    "tags": ["Shows"],
+    "description": "Deletes a show with a specified ID.",
+    "responses": {
+      "200": {
+        "description": "The deletion request was successfully received.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "boolean",
+                  "description": "If the deletion request was received.",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

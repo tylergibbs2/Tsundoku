@@ -1,0 +1,135 @@
+{
+  "get": {
+    "tags": ["Webhooks"],
+    "description": "Returns a webhook base with the specified ID.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/WebhookBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      }
+    }
+  },
+  "put": {
+    "tags": ["Webhooks"],
+    "description": "Updates an existing webhook base in the database.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["name", "service", "url", "content_fmt"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the base.",
+                "example": "My server - #tsundoku"
+              },
+              "service": {
+                "type": "string",
+                "description": "Service that the webhook posts to.",
+                "enum": ["discord", "slack"],
+                "example": "discord"
+              },
+              "url": {
+                "type": "string",
+                "description": "URL that the webhook posts to."
+              },
+              "content_fmt": {
+                "type": "string",
+                "description": "Content format string for the webhook.",
+                "example": "1"
+              },
+              "default_triggers": {
+                "type": "string",
+                "description": "Comma-separated list of default triggers this webhook should have.",
+                "example": "failed,completed"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/WebhookBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "delete": {
+    "tags": ["Webhooks"],
+    "description": "Deletes a webhook base with a specified ID.",
+    "responses": {
+      "200": {
+        "description": "The deletion request was successfully received.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/WebhookBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

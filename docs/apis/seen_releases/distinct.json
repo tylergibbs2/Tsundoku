@@ -1,0 +1,54 @@
+{
+  "get": {
+    "tags": ["Seen Releases"],
+    "description": "Returns distinct strings for a passed field that match the passed filters. Filters are applied as AND.",
+    "parameters": [
+      {
+        "name": "field",
+        "in": "query",
+        "description": "The field to return distinct values for. Must be one of: title, release_group, resolution.",
+        "required": true
+      },
+      {
+        "name": "title",
+        "in": "query",
+        "description": "The title to filter by."
+      },
+      {
+        "name": "release_group",
+        "in": "query",
+        "description": "The release_group to filter by."
+      },
+      {
+        "name": "resolution",
+        "in": "query",
+        "description": "The resolution to filter by."
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "get": {
+    "tags": ["Webhooks"],
+    "description": "Returns all webhook bases that are stored in the database.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "../../components.json#/components/schemas/WebhookBase"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  },
+  "post": {
+    "tags": ["Webhooks"],
+    "description": "Adds a new webhook base to the database.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["name", "service", "url", "content_fmt"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the base.",
+                "example": "My server - #tsundoku"
+              },
+              "service": {
+                "type": "string",
+                "description": "Service that the webhook posts to.",
+                "enum": ["discord", "slack"],
+                "example": "discord"
+              },
+              "url": {
+                "type": "string",
+                "description": "URL that the webhook posts to."
+              },
+              "content_fmt": {
+                "type": "string",
+                "description": "Content format string for the webhook.",
+                "example": "1"
+              },
+              "default_triggers": {
+                "type": "string",
+                "description": "Comma-separated list of default triggers this webhook should have.",
+                "example": "failed,completed"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/WebhookBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "../../components.json#/components/responses/BadRequest"
+      },
+      "500": {
+        "$ref": "../../components.json#/components/responses/ServerError"
+      }
+    }
+  }
+}

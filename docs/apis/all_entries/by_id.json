@@ -1,0 +1,31 @@
+{
+  "get": {
+    "tags": ["Entries"],
+    "description": "Returns a show entry with the specified ID.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "$ref": "../../components.json#/components/schemas/Entry"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "$ref": "../../components.json#/components/responses/NotFound"
+      }
+    }
+  }
+}
