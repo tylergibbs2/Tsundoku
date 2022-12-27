@@ -113,7 +113,6 @@ async def get_all_sources() -> AsyncGenerator[Source, None]:
         async with aiofiles.open(source_path / "COPIED", "wb") as fp:
             await fp.write(b"")
 
-    sources = [f"{source_path / source.name}" for source in source_path.glob("*.json")]
-    for source in sources:
+    for source in source_path.glob("*.json"):
         async with aiofiles.open(source, "r") as fp:
             yield Source.from_object(json.loads(await fp.read()))
