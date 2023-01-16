@@ -10,11 +10,10 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
 import aiofiles.os
-import anitopy
 
 from tsundoku.config import FeedsConfig, GeneralConfig
 from tsundoku.manager import Entry, EntryState
-from tsundoku.utils import ExprDict, move
+from tsundoku.utils import ExprDict, move, parse_anime_title
 
 logger = logging.getLogger("tsundoku")
 
@@ -386,7 +385,7 @@ class Downloader:
         root.resolve()
         for subpath in root.rglob("*"):
             try:
-                parsed = anitopy.parse(subpath.name)
+                parsed = parse_anime_title(subpath.name)
             except Exception:
                 logger.error(
                     f"Anitopy - Could not parse `{subpath.name}`, skipping",

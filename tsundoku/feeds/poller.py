@@ -13,14 +13,17 @@ from typing import Any, Dict, List, NamedTuple, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-import anitopy
 import feedparser
 
 from tsundoku.config import FeedsConfig
 from tsundoku.feeds.fuzzy import extract_one
 from tsundoku.manager import SeenRelease
 from tsundoku.sources import get_all_sources, Source
-from tsundoku.utils import compare_version_strings, normalize_resolution
+from tsundoku.utils import (
+    compare_version_strings,
+    normalize_resolution,
+    parse_anime_title,
+)
 
 logger = logging.getLogger("tsundoku")
 
@@ -333,7 +336,7 @@ class Poller:
         filename = source.get_filename(item)
 
         try:
-            parsed = anitopy.parse(filename)
+            parsed = parse_anime_title(filename)
         except Exception:
             logger.exception(
                 f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'",

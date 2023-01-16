@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 from functools import partial, wraps
 import shutil
-from typing import Any
+from typing import Any, TypedDict
+
+import anitopy
 
 
 def wrap(func: Any) -> Any:
@@ -23,6 +27,27 @@ move = wrap(shutil.move)
 class ExprDict(dict):
     def __missing__(self, value: str) -> str:
         return value
+
+
+class ParserResult(TypedDict, total=False):
+    anime_title: str
+    anime_year: str
+    audio_term: str
+    episode_number: str
+    episode_title: str
+    file_checksum: str
+    file_extension: str
+    file_name: str
+    release_group: str
+    release_version: str
+    video_resolution: str
+    video_term: str
+
+
+def parse_anime_title(title: str) -> ParserResult:
+    return anitopy.parse(
+        title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False}
+    )  # type: ignore
 
 
 def normalize_resolution(original: str) -> str:

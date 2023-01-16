@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
 from tsundoku.constants import VALID_RESOLUTIONS
-from tsundoku.manager import Show
-from tsundoku.utils import normalize_resolution, compare_version_strings
+from tsundoku.utils import normalize_resolution, compare_version_strings, ParserResult
 
 logger = logging.getLogger("tsundoku")
 
@@ -192,7 +191,7 @@ class SeenRelease:
 
     @classmethod
     async def add(
-        cls, app: TsundokuApp, anitopy_result: dict, torrent_destination: str
+        cls, app: TsundokuApp, anitopy_result: ParserResult, torrent_destination: str
     ) -> Optional[SeenRelease]:
         """
         Adds a new SeenRelease to the database.
@@ -201,7 +200,7 @@ class SeenRelease:
         ----------
         app : TsundokuApp
             The TsundokuApp instance.
-        anitopy_result : dict
+        anitopy_result : ParserResult
             The result of parsing a torrent's filename
             with Anitopy.
         torrent_destination : str
@@ -212,6 +211,22 @@ class SeenRelease:
         SeenRelease
             The SeenRelease that was added.
         """
+        if "file_name" not in anitopy_result:
+            logger.warn(
+                f"Not adding '{anitopy_result}' to seen releases because it has no file name."
+            )
+            return
+        elif "anime_title" not in anitopy_result:
+            logger.warn(
+                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title."
+            )
+            return
+        elif "episode_number" not in anitopy_result:
+            logger.warn(
+                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number."
+            )
+            return
+
         release_group = anitopy_result.get("release_group", "")
         if not release_group:
             logger.warn(

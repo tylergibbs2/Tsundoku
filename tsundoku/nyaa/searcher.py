@@ -11,10 +11,10 @@ if TYPE_CHECKING:
 
     app: TsundokuApp
 
-import anitopy
 import feedparser
 
 from tsundoku.manager import Entry, EntryState
+from tsundoku.utils import parse_anime_title
 
 logger = logging.getLogger("tsundoku")
 
@@ -127,7 +127,7 @@ class SearchResult:
         episodes = []
         for file in files:
             try:
-                parsed = anitopy.parse(file)
+                parsed = parse_anime_title(file)
             except Exception:
                 logger.error(
                     f"Anitopy - Could not Parse `{file}`, skipping", exc_info=True
@@ -288,7 +288,7 @@ class NyaaSearcher:
         found = []
         for item in feed["entries"]:
             try:
-                anitopy.parse(item["title"])
+                parse_anime_title(item["title"])
             except Exception:
                 logger.error(
                     f"Anitopy - Could not Parse `{item['title']}`, skipping",
