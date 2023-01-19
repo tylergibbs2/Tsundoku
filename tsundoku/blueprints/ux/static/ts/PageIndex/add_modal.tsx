@@ -200,6 +200,7 @@ const AlreadySeenAddFormComponent = ({
 }: AlreadySeenAddFormComponentParams) => {
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
+  const [previousTitle, setPreviousTitle] = useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
   const [selectedReleaseGroup, setSelectedReleaseGroup] = useState<
     string | null
@@ -264,8 +265,10 @@ const AlreadySeenAddFormComponent = ({
   const next = () => {
     if (!selectedValue) return;
 
-    if (!selectedTitle) setSelectedTitle(selectedValue);
-    else if (!selectedReleaseGroup) setSelectedReleaseGroup(selectedValue);
+    if (!selectedTitle) {
+      setSelectedTitle(selectedValue);
+      setPreviousTitle(selectedValue);
+    } else if (!selectedReleaseGroup) setSelectedReleaseGroup(selectedValue);
     else if (!selectedResolution) setSelectedResolution(selectedValue);
 
     setSelectedValue(null);
@@ -273,8 +276,11 @@ const AlreadySeenAddFormComponent = ({
 
   const back = () => {
     if (!selectedTitle) return;
-    else if (!selectedReleaseGroup) setSelectedTitle(null);
-    else if (!selectedResolution) setSelectedReleaseGroup(null);
+    else if (!selectedReleaseGroup) {
+      setSelectedTitle(null);
+      setSelectedValue(previousTitle);
+      return;
+    } else if (!selectedResolution) setSelectedReleaseGroup(null);
     else if (selectedResolution) setSelectedResolution(null);
 
     setSelectedValue(null);
@@ -357,7 +363,7 @@ const AlreadySeenAddFormComponent = ({
         style={{ height: "33vh" }}
       >
         <select
-          defaultValue={selectedValue}
+          value={selectedValue ? selectedValue : undefined}
           onChange={setSelection}
           size={8}
           style={{ height: "100%" }}
