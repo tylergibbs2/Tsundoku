@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+import os
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -29,7 +30,10 @@ class UpdateInformation:
 async def check_for_updates() -> Optional[UpdateInformation]:
     headers = {"accept": "application/vnd.github+json"}
 
-    url = REQUEST_URL.format(owner="tylergibbs2", repository="Tsundoku")
+    repo_owner = os.getenv("GITHUB_REPO_OWNER", "tylergibbs2")
+    repo_name = os.getenv("GITHUB_REPO_NAME", "Tsundoku")
+
+    url = REQUEST_URL.format(owner=repo_owner, repository=repo_name)
     async with app.session.get(url, headers=headers) as resp:
         data = await resp.json()
 
