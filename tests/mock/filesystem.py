@@ -16,3 +16,7 @@ async def mock_move(src: str, dst: str) -> None:
 
 def mock_symlink_to(dst: Path) -> None:
     ...
+
+
+def mock_mkdir(*_, **__) -> None:
+    ...

@@ -22,6 +22,7 @@ async def create_app(
     monkeypatch.setattr("tsundoku.feeds.poller.get_all_sources", mock_get_all_sources)
 
     monkeypatch.setattr("pathlib.Path.symlink_to", filesystem.mock_symlink_to)
+    monkeypatch.setattr("pathlib.Path.mkdir", filesystem.mock_mkdir)
     monkeypatch.setattr(
         "tsundoku.feeds.downloader.Downloader.resolve_file",
         filesystem.mock_resolve_file,
