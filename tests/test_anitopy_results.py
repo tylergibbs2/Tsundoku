@@ -82,3 +82,15 @@ def test_6():
             "release_information": "Batch",
         },
     )
+
+
+def test_7():
+    assertAnitopyResultContains(
+        "[ASW] Shadowverse Flame - 41 [1920x1080 HEVC x265 10Bit][AAC]",
+        {
+            "release_group": "ASW",
+            "anime_title": "Shadowverse Flame",
+            "episode_number": "41",
+            "video_resolution": "1080p",
+        },
+    )
