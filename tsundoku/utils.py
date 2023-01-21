@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from functools import partial, wraps
 import shutil
-from typing import Any, TypedDict
+from typing import Any, List, TypedDict
 
 import anitopy
 
@@ -33,13 +33,14 @@ class ParserResult(TypedDict, total=False):
     anime_title: str
     anime_year: str
     audio_term: str
-    episode_number: str
+    episode_number: List[str] | str
     episode_title: str
     file_checksum: str
     file_extension: str
     file_name: str
     release_group: str
     release_version: str
+    release_information: str
     video_resolution: str
     video_term: str
 

@@ -365,20 +365,20 @@ class Poller:
         #         f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
         #     )
         #     return None
-        elif "batch" in parsed.get("release_information", "").lower():
+        elif "batch" in parsed.get("release_information", "").lower() or isinstance(
+            parsed["episode_number"], list
+        ):
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'"
             )
             return None
-
-        try:
-            show_episode = int(parsed["episode_number"])
-        except (ValueError, TypeError):
-            logger.warning(
-                f"`{source.name}@{source.version}` - Failed to convert episode '{parsed['episode_number']}' to integer from '{filename}'"
+        elif not parsed["episode_number"].isdigit():
+            logger.info(
+                f"`{source.name}@{source.version}` - Episode '{parsed['episode_number']}' is not an integer '{filename}'"
             )
             return None
 
+        show_episode = int(parsed["episode_number"])
         match = await self.check_item_for_match(parsed["anime_title"])
 
         if match is None or match.match_percent < self.fuzzy_match_cutoff:

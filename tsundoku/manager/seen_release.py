@@ -250,8 +250,15 @@ class SeenRelease:
 
         version = anitopy_result.get("release_version", "v0")
 
-        # This should already be verified to be valid
-        # by the calling method.
+        if (
+            not isinstance(anitopy_result["episode_number"], str)
+            or not anitopy_result["episode_number"].isdigit()
+        ):
+            logger.warning(
+                f"Not adding '{anitopy_result['file_name']}' to seen releases episode number is not an integer."
+            )
+            return
+
         episode = int(anitopy_result["episode_number"])
 
         async with app.acquire_db() as con:

@@ -392,13 +392,16 @@ class Downloader:
                 )
                 continue  # TODO: maybe ask user on UI to match manually
 
-            if parsed is None:
+            if parsed is None or "episode_number" not in parsed:
                 continue
 
-            try:
-                found = int(parsed["episode_number"])
-            except (KeyError, ValueError, TypeError):
-                continue  # TODO: maybe handle this?
+            if (
+                not isinstance(parsed["episode_number"], str)
+                or not parsed["episode_number"].isdigit()
+            ):
+                continue
+
+            found = int(parsed["episode_number"])
             if found == episode:
                 return subpath
 

@@ -134,13 +134,20 @@ class SearchResult:
                 )
                 continue
 
-            if parsed is None or "anime_type" in parsed.keys():
+            if (
+                parsed is None
+                or "anime_type" in parsed
+                or "episode_number" not in parsed
+            ):
                 continue
 
-            try:
-                episodes.append(int(parsed["episode_number"]))
-            except (KeyError, ValueError, TypeError):
-                pass
+            if (
+                not isinstance(parsed["episode_number"], str)
+                or not parsed["episode_number"].isdigit()
+            ):
+                continue
+
+            episodes.append(int(parsed["episode_number"]))
 
         return episodes
 
