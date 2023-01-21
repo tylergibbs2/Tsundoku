@@ -499,12 +499,6 @@ class Poller:
         ):
             return feed["items"]
 
-        # Worst-case scenario, etag header and modified header weren't
-        # implemented on the server-side. Manually check unique item hashes
-        # for all items in the feed.
-        if not hasattr(source, "_most_recent_hash"):
-            self.source_cache[source.name].most_recent_hash = None
-
         new_items = []
 
         # Since new items in the RSS feed are inserted at index 0,
