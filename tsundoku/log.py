@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from asyncio import QueueFull
-from logging.config import dictConfig
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

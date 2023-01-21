@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from urllib.parse import quote_plus
 
 if TYPE_CHECKING:

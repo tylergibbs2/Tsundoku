@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
 from quart import Blueprint

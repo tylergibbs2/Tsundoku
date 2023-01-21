@@ -21,7 +21,6 @@ import aiohttp
 from .dl_client import MockDownloadManager
 from tsundoku.app import CustomFluentLocalization
 from tsundoku.asqlite import Connection, connect
-from tsundoku.dl_client import Manager
 from tsundoku.flags import Flags
 from tsundoku.feeds import Poller, Downloader, Encoder
 

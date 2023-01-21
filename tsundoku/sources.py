@@ -3,14 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncGenerator
-
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-    app: TsundokuApp
-else:
-    from quart import current_app as app
+from typing import AsyncGenerator
 
 import aiofiles
 

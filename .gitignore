@@ -2,8 +2,8 @@
 *.pyc
 .coverage
 
-# VS code settings
-\.vscode/
+# Ruff cache
+.ruff_cache
 
 # Virtual env
 .venv

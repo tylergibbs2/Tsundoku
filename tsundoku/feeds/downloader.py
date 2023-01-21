@@ -151,7 +151,7 @@ class Downloader:
             torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
         except Exception:
             logger.exception(
-                f"Failed to begin handling, could not connect to download client"
+                "Failed to begin handling, could not connect to download client"
             )
             self.app.flags.DL_CLIENT_CONNECTION_ERROR = True
             return None

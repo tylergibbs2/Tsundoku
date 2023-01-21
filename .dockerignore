@@ -16,3 +16,4 @@ tsundoku/blueprints/ux/static/js
 *.zip
 run.py
 data/
+.ruff_cache

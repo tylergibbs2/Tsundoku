@@ -4,6 +4,9 @@ tsundoku/blueprints/ux/static/js
 *.pyc
 .coverage
 
+# Ruff cache
+.ruff_cache
+
 # VS code settings
 \.vscode/
 

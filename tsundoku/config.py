@@ -48,7 +48,7 @@ class Config:
 
     def update(self, other: Dict[str, str]) -> None:
         if any(k not in self.valid_keys for k in self.valid_keys):
-            raise ConfigInvalidKey(f"Invalid configuration key.")
+            raise ConfigInvalidKey("Invalid configuration key.")
 
         self.keys.update(other)
 
