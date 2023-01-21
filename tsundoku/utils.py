@@ -45,9 +45,14 @@ class ParserResult(TypedDict, total=False):
 
 
 def parse_anime_title(title: str) -> ParserResult:
-    return anitopy.parse(
+    result: ParserResult = anitopy.parse(
         title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False}
     )  # type: ignore
+
+    if "video_resolution" in result:
+        result["video_resolution"] = normalize_resolution(result["video_resolution"])
+
+    return result
 
 
 def normalize_resolution(original: str) -> str:
