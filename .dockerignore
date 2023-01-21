@@ -1,6 +1,7 @@
 .git
 .github
 .venv
+.coverage
 __pycache__
 *.pyc
 *.pyo

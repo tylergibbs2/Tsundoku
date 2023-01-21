@@ -2,6 +2,7 @@ tsundoku/blueprints/ux/static/js
 
 # Python Cache Files
 *.pyc
+.coverage
 
 # VS code settings
 \.vscode/

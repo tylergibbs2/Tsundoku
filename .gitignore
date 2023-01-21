@@ -1,5 +1,6 @@
 # Python Cache Files
 *.pyc
+.coverage
 
 # VS code settings
 \.vscode/
