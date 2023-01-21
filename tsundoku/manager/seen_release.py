@@ -212,31 +212,31 @@ class SeenRelease:
             The SeenRelease that was added.
         """
         if "file_name" not in anitopy_result:
-            logger.warn(
+            logger.warning(
                 f"Not adding '{anitopy_result}' to seen releases because it has no file name."
             )
             return
         elif "anime_title" not in anitopy_result:
-            logger.warn(
+            logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title."
             )
             return
         elif "episode_number" not in anitopy_result:
-            logger.warn(
+            logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number."
             )
             return
 
         release_group = anitopy_result.get("release_group", "")
         if not release_group:
-            logger.warn(
+            logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no release group."
             )
             return
 
         resolution = anitopy_result.get("video_resolution", "")
         if not resolution:
-            logger.warn(
+            logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no resolution."
             )
             return
