@@ -928,7 +928,7 @@ class Webhook:
             The event that occurred, can be any `show_state`.
         """
         if not self.base.valid:
-            logger.warn(
+            logger.warning(
                 "Webhooks - Attempted to send webhook, but the base webhook was invalid"
             )
             return None
@@ -937,7 +937,7 @@ class Webhook:
         payload = await self.generate_payload(entry)
 
         if not payload:
-            logger.warn(
+            logger.warning(
                 f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>"
             )
             return None

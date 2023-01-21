@@ -171,14 +171,14 @@ class TransmissionClient(TorrentClient):
                     return json.loads(data)
                 elif resp.status == 409:
                     retries -= 1
-                    logger.warn(
+                    logger.warning(
                         f"Transmission - Invalid session ID, retrying {retries}"
                     )
                     self.session_id = resp.headers.get("X-Transmission-Session-Id", "")
                     continue
                 elif resp.status == 400:
                     retries -= 1
-                    logger.warn(f"Transmission - Bad Request, retrying {retries}")
+                    logger.warning(f"Transmission - Bad Request, retrying {retries}")
                     await asyncio.sleep(1)
                 else:
                     return {}

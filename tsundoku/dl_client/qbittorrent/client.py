@@ -131,7 +131,7 @@ class qBittorrentClient(TorrentClient):
                 logger.info("qBittorrent - Successfully Authenticated")
             else:
                 self.last_authed_user = None
-                logger.warn(f"qBittorrent - Failed to Authenticate, status {status}")
+                logger.warning(f"qBittorrent - Failed to Authenticate, status {status}")
 
         return status == 200
 
@@ -184,11 +184,11 @@ class qBittorrentClient(TorrentClient):
                     return data
                 elif r.status == 403:
                     retries -= 1
-                    logger.warn(f"qBittorrent - Forbidden, reauthorizing {retries}")
+                    logger.warning(f"qBittorrent - Forbidden, reauthorizing {retries}")
                     await self.login()
                 elif r.status == 400:
                     retries -= 1
-                    logger.warn(f"qBittorrent - Bad Request, retrying {retries}")
+                    logger.warning(f"qBittorrent - Bad Request, retrying {retries}")
                     await asyncio.sleep(1)
                 else:
                     return {}

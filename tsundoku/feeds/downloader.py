@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import shutil
 from pathlib import Path
 from typing import Any, Optional, TYPE_CHECKING
 
@@ -160,7 +159,7 @@ class Downloader:
         self.app.flags.DL_CLIENT_CONNECTION_ERROR = False
 
         if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet_url} to download client")
+            logger.warning(f"Failed to add Magnet URL {magnet_url} to download client")
             return None
 
         # TODO: handle entry insertion in the Entry class
@@ -284,7 +283,7 @@ class Downloader:
                 try:
                     entry.file_path.symlink_to(moved_file)
                 except Exception as e:
-                    logger.warn(
+                    logger.warning(
                         f"Failed to Create Trailing Symlink - {e}", exc_info=True
                     )
             else:

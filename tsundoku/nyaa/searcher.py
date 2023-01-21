@@ -210,7 +210,7 @@ class SearchResult:
         torrent_hash = await self._app.dl_client.add_torrent(magnet)
 
         if torrent_hash is None:
-            logger.warn(f"Failed to add Magnet URL {magnet} to download client")
+            logger.warning(f"Failed to add Magnet URL {magnet} to download client")
             return added
 
         async with self._app.acquire_db() as con:

@@ -196,7 +196,7 @@ async def setup_db() -> None:
         app.flags.LOCALE = locale
 
     if not users:
-        logger.warn(
+        logger.warning(
             "No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command."
         )
         app.flags.IS_FIRST_LAUNCH = True
@@ -267,7 +267,7 @@ async def cleanup() -> None:
         try:
             task.cancel()
         except Exception:
-            logger.warn(f"Could not cancel task '{task.get_name()}'!", exc_info=True)
+            logger.warning(f"Could not cancel task '{task.get_name()}'!", exc_info=True)
             failed_to_cancel += 1
         else:
             logger.debug(f"Cleanup: Task '{task.get_name()}' cancelled.")
@@ -278,7 +278,7 @@ async def cleanup() -> None:
     try:
         await app.session.close()
     except Exception:
-        logger.warn("Cleanup: Could not close aiohttp session!", exc_info=True)
+        logger.warning("Cleanup: Could not close aiohttp session!", exc_info=True)
     else:
         logger.debug("Cleanup: aiohttp session closed.")
 

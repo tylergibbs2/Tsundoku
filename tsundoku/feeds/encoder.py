@@ -303,12 +303,12 @@ class Encoder:
             )
 
         if entry["file_path"] is None:
-            logger.warn(
+            logger.warning(
                 f"Error when attempting to encode entry <e{entry_id}>: file path is None"
             )
             return False
         elif entry["current_state"] != "completed":
-            logger.warn(
+            logger.warning(
                 f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry"
             )
             return False
@@ -317,12 +317,12 @@ class Encoder:
 
         infile = Path(entry["file_path"])
         if not infile.exists():
-            logger.warn(
+            logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist"
             )
             return False
         elif not infile.is_file() or infile.is_symlink():
-            logger.warn(
+            logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
             )
             return False
@@ -427,7 +427,7 @@ class Encoder:
             )
 
             if entry_path is None:
-                logger.warn(
+                logger.warning(
                     f"Error when finalizing encode for entry <e{entry_id}>: file path is None"
                 )
                 return

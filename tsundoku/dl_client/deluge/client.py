@@ -122,7 +122,7 @@ class DelugeClient(TorrentClient):
 
             error = resp.get("error")
             if error or resp["result"] is False:
-                logger.warn("Deluge - Failed to Authenticate")
+                logger.warning("Deluge - Failed to Authenticate")
                 return None
 
         return result
