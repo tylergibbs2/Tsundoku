@@ -1,0 +1,29 @@
+{
+    "editor.stickyScroll.enabled": true,
+    "editor.bracketPairColorization.enabled": true,
+    "files.trimTrailingWhitespace": true,
+    "editor.linkedEditing": true,
+    "python.languageServer": "Pylance",
+    "[python]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": true
+        },
+    },
+    "python.formatting.provider": "black",
+    "files.exclude": {
+        ".vscode": false,
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        ".ruff_cache": true,
+        ".pytest_cache": true,
+        "**/__pycache__": true,
+        "*.pyc": true,
+        ".coverage": true
+    }
+}
