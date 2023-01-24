@@ -2,7 +2,13 @@ import * as React from "react";
 
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "react-query";
+import { toast } from "bulma-toast";
 
 import { IndexApp } from "./PageIndex/App";
 import { NyaaSearchApp } from "./PageNyaaSearch/App";
@@ -39,12 +45,35 @@ const router = createBrowserRouter([
   },
 ]);
 
+const displayErrorToast = (text: string) => {
+  toast({
+    message: text,
+    duration: 5000,
+    position: "bottom-right",
+    type: "is-danger",
+    dismissible: true,
+    animate: { in: "fadeIn", out: "fadeOut" },
+  });
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
     },
   },
+  mutationCache: new MutationCache({
+    onError: (error: unknown) => {
+      if (error instanceof Error) displayErrorToast(error.message);
+      else displayErrorToast("An error occurred.");
+    },
+  }),
+  queryCache: new QueryCache({
+    onError: (error: unknown) => {
+      if (error instanceof Error) displayErrorToast(error.message);
+      else displayErrorToast("An error occurred.");
+    },
+  }),
 });
 
 const RootApp = () => {

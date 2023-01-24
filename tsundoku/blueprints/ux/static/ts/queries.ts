@@ -1,3 +1,5 @@
+import { getReasonPhrase } from "http-status-codes";
+
 import {
   APIResponse,
   Entry,
@@ -22,7 +24,7 @@ export const fetchConfig = async <ConfigType>(
 
   let response = await fetch(`/api/v1/config/${config}`, request);
   if (!response.ok)
-    throw new Error(`${response.status}: ${response.statusText}}`);
+    throw new Error(`${response.status}: ${getReasonPhrase(response.status)}}`);
 
   let data: APIResponse<ConfigType> = await response.json();
   return data.result;
@@ -48,7 +50,9 @@ export const setConfig = async <ConfigType>(
   }
 
   throw new Error(
-    `Failed to set config, ${response.status}: ${response.statusText}`
+    `Failed to set config, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -65,7 +69,9 @@ export const fetchWebhookBases = async (): Promise<WebhookBase[]> => {
   }
 
   throw new Error(
-    `Failed to fetch webhook bases, ${response.status}: ${response.statusText}`
+    `Failed to fetch webhook bases, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -82,7 +88,9 @@ export const fetchShows = async (): Promise<Show[]> => {
   }
 
   throw new Error(
-    `Failed to get shows list, ${response.status}: ${response.statusText}`
+    `Failed to get shows list, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -99,7 +107,9 @@ export const fetchShowById = async (id: number): Promise<Show> => {
   }
 
   throw new Error(
-    `Failed to get show by ID '${id}', ${response.status}: ${response.statusText}`
+    `Failed to get show by ID '${id}', ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -116,7 +126,9 @@ export const fetchEntryById = async (id: number): Promise<Entry> => {
   }
 
   throw new Error(
-    `Failed to get entry by ID '${id}', ${response.status}: ${response.statusText}`
+    `Failed to get entry by ID '${id}', ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -134,7 +146,9 @@ export const addNewShow = async (formData: any): Promise<Show> => {
   }
 
   throw new Error(
-    `Failed to create new show, ${response.status}: ${response.statusText}`
+    `Failed to create new show, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -154,7 +168,9 @@ export const addNewWebhook = async (
   }
 
   throw new Error(
-    `Failed to create new webhook, ${response.status}: ${response.statusText}`
+    `Failed to create new webhook, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`
   );
 };
 
@@ -172,7 +188,9 @@ export const updateShowById = async (show: Show): Promise<Show> => {
   }
 
   throw new Error(
-    `Failed to update show by ID '${show.id_}', ${response.status}: ${response.statusText}`
+    `Failed to update show by ID '${show.id_}', ${
+      response.status
+    }: ${getReasonPhrase(response.status)}`
   );
 };
 
@@ -192,7 +210,9 @@ export const updateWebhookById = async (
   }
 
   throw new Error(
-    `Failed to update webhook by ID '${webhook.base_id}', ${response.status}: ${response.statusText}`
+    `Failed to update webhook by ID '${webhook.base_id}', ${
+      response.status
+    }: ${getReasonPhrase(response.status)}`
   );
 };
 
@@ -205,7 +225,9 @@ export const deleteShowById = async (id: number): Promise<void> => {
   let response = await fetch(`/api/v1/shows/${id}`, request);
   if (!response.ok)
     throw new Error(
-      `Failed to delete show, ${response.status}: ${response.statusText}`
+      `Failed to delete show, ${response.status}: ${getReasonPhrase(
+        response.status
+      )}`
     );
 };
 
@@ -218,7 +240,9 @@ export const deleteWebhookById = async (id: number): Promise<void> => {
   let response = await fetch(`/api/v1/webhooks/${id}`, request);
   if (!response.ok)
     throw new Error(
-      `Failed to delete webhook, ${response.status}: ${response.statusText}`
+      `Failed to delete webhook, ${response.status}: ${getReasonPhrase(
+        response.status
+      )}`
     );
 };
 
@@ -244,7 +268,9 @@ export const fetchDistinctSeenReleases = async (
   );
   if (!response.ok) {
     throw new Error(
-      `Failed to get distinct field '${field}' seen releases, ${response.status}: ${response.statusText}`
+      `Failed to get distinct field '${field}' seen releases, ${
+        response.status
+      }: ${getReasonPhrase(response.status)}`
     );
   }
 
@@ -274,7 +300,9 @@ export const fetchFilteredSeenReleases = async (
   );
   if (!response.ok) {
     throw new Error(
-      `Failed to get filtered seen releases, ${response.status}: ${response.statusText}`
+      `Failed to get filtered seen releases, ${
+        response.status
+      }: ${getReasonPhrase(response.status)}`
     );
   }
 
