@@ -27,6 +27,7 @@ from tsundoku.config import (
 )
 from tsundoku.decorators import deny_readonly
 from tsundoku.manager import Show
+from tsundoku.webhooks import WebhookBase
 
 from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
@@ -217,6 +218,20 @@ async def delete_show_cache(show_id: int) -> APIResponse:
     await show.refetch()
 
     return APIResponse(result=show.to_dict())
+
+
+@api_blueprint.route("/webhooks/<int:base_id>/valid", methods=["GET"])
+async def webhook_is_valid(base_id: int) -> APIResponse:
+    """
+    Checks if a Webhook is valid with the service it is for.
+    """
+    logger.info(f"API - Checking webhook validity for webhook ID {base_id}")
+
+    webhook = await WebhookBase.from_id(app, base_id)
+    if webhook is None:
+        return APIResponse(result=False)
+
+    return APIResponse(result=await webhook.is_valid())
 
 
 def setup_views() -> None:

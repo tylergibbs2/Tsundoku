@@ -376,6 +376,7 @@ webhooks-page-title = Webhooks
 webhooks-page-subtitle = Usable by your tracked shows
 
 webhook-status-valid = 🟢 Connected
+webhook-status-loading = 🟡 Loading...
 webhook-status-invalid = 🔴 Connection Error
 
 webhook-add-success = Webhook added successfully!

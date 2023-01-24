@@ -1,6 +1,9 @@
 import { Dispatch, SetStateAction } from "react";
 import { getInjector } from "../../fluent";
 import { WebhookBase } from "../../interfaces";
+import { useQuery } from "react-query";
+
+import { fetchWebhookValidityById } from "../../queries";
 
 interface WebhookCardParams {
   setActiveModal: Dispatch<SetStateAction<string | null>>;
@@ -15,6 +18,11 @@ export const WebhookCard = ({
   setActiveWebhook,
   webhook,
 }: WebhookCardParams) => {
+  const { data, isLoading } = useQuery(
+    ["webhook_validity", webhook.base_id],
+    async () => fetchWebhookValidityById(webhook.base_id)
+  );
+
   const openEditModal = () => {
     setActiveModal("edit");
     setActiveWebhook(webhook);
@@ -45,8 +53,9 @@ export const WebhookCard = ({
         </header>
         <div className="card-content">
           <p className="is-size-6 has-text-centered py-4">
-            {webhook.valid && <b>{_("webhook-status-valid")}</b>}
-            {!webhook.valid && <b>{_("webhook-status-invalid")}</b>}
+            {isLoading && <b>{_("webhook-status-loading")}</b>}
+            {!isLoading && data && <b>{_("webhook-status-valid")}</b>}
+            {!isLoading && !data && <b>{_("webhook-status-invalid")}</b>}
           </p>
         </div>
         <footer className="card-footer">

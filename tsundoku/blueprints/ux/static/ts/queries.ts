@@ -231,6 +231,27 @@ export const deleteShowById = async (id: number): Promise<void> => {
     );
 };
 
+export const fetchWebhookValidityById = async (
+  id: number
+): Promise<boolean> => {
+  let request = {
+    method: "GET",
+    headers: COMMON_HEADERS,
+  };
+
+  let response = await fetch(`/api/v1/webhooks/${id}/valid`, request);
+  if (response.ok) {
+    let data: APIResponse<boolean> = await response.json();
+    return data.result;
+  }
+
+  throw new Error(
+    `Failed to fetch webhook validity by ID '${id}', ${
+      response.status
+    }: ${getReasonPhrase(response.status)}`
+  );
+};
+
 export const deleteWebhookById = async (id: number): Promise<void> => {
   let request = {
     method: "DELETE",
