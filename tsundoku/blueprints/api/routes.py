@@ -7,13 +7,15 @@ from quart import Blueprint
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
+    from tsundoku.user import User
 
     app: TsundokuApp
+    current_user: User
 else:
     from quart import current_app as app
+    from quart_auth import current_user
 
 from quart import request
-from quart_auth import current_user
 
 from tsundoku.config import (
     ConfigCheckFailure,
@@ -23,6 +25,7 @@ from tsundoku.config import (
     GeneralConfig,
     TorrentConfig,
 )
+from tsundoku.decorators import deny_readonly
 from tsundoku.manager import Show
 
 from .show_entries import ShowEntriesAPI
@@ -41,6 +44,13 @@ logger = logging.getLogger("tsundoku")
 @api_blueprint.errorhandler(500)
 async def err_500(_) -> APIResponse:
     return APIResponse(status=500, error="Server encountered an unexpected error.")
+
+
+@api_blueprint.errorhandler(403)
+async def err_403(_) -> APIResponse:
+    return APIResponse(
+        status=403, error="You are forbidden from modifying this resource."
+    )
 
 
 @api_blueprint.before_request
@@ -76,6 +86,16 @@ async def ensure_auth() -> Optional[APIResponse]:
     if not authed:
         return APIResponse(
             status=401, result="You are not authorized to access this resource."
+        )
+
+    if await current_user.readonly and request.method in (
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+    ):
+        return APIResponse(
+            status=403, error="You are forbidden from modifying this resource."
         )
 
     return None
@@ -144,6 +164,7 @@ async def config_route(cfg_type: str) -> APIResponse:
 
 
 @api_blueprint.route("/config/torrent/test", methods=["GET"])
+@deny_readonly
 async def test_torrent_client() -> APIResponse:
     res = await app.dl_client.test_client()
     app.flags.DL_CLIENT_CONNECTION_ERROR = not res
@@ -161,6 +182,7 @@ async def get_encode_stats() -> APIResponse:
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])
+@deny_readonly
 async def check_for_releases() -> APIResponse:
     """
     Forces Tsundoku to check all enabled RSS feeds for new

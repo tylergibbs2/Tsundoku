@@ -8,7 +8,6 @@ from pathlib import Path
 import secrets
 import sqlite3
 from typing import (
-    Any,
     Optional,
     Tuple,
     MutableSet,
@@ -22,9 +21,8 @@ from uuid import uuid4
 import aiohttp
 from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
-from quart import Quart, redirect, url_for
-from quart_auth import AuthManager, Unauthorized
-from werkzeug import Response
+from quart import Quart
+from quart_auth import AuthManager
 
 try:
     from dotenv import load_dotenv
@@ -134,14 +132,6 @@ async def insert_user(username: str, password: str) -> None:
             pw_hash,
             str(uuid4()),
         )
-
-
-@app.errorhandler(Unauthorized)
-async def redirect_to_login(*_: Any) -> Response:
-    if app.flags.IS_FIRST_LAUNCH:
-        return redirect(url_for("ux.register"))
-
-    return redirect(url_for("ux.login"))
 
 
 @app.url_defaults

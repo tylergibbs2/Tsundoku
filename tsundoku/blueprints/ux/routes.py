@@ -7,7 +7,8 @@ from uuid import uuid4
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import Blueprint, Response
+from quart import Blueprint, Response as QuartResponse
+from werkzeug import Response
 
 if TYPE_CHECKING:
     import tsundoku.app
@@ -25,11 +26,18 @@ from quart import (
     url_for,
     websocket,
 )
-from quart_auth import current_user, login_required, login_user, logout_user
+from quart_auth import (
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+    Unauthorized,
+)
 
 from tsundoku import __version__ as version
 from tsundoku.blueprints.api import APIResponse
 from tsundoku.constants import DATA_DIR
+from tsundoku.decorators import deny_readonly
 from tsundoku.user import User
 
 from .issues import get_issue_url
@@ -44,6 +52,14 @@ ux_blueprint = Blueprint(
 hasher = PasswordHasher()
 
 
+@ux_blueprint.errorhandler(Unauthorized)
+async def redirect_to_login(*_: Any) -> Response:
+    if app.flags.IS_FIRST_LAUNCH:
+        return redirect(url_for("ux.register"))
+
+    return redirect(url_for("ux.login"))
+
+
 @ux_blueprint.context_processor
 async def update_context() -> dict:
     fluent = app.get_fluent()
@@ -54,6 +70,7 @@ async def update_context() -> dict:
 
 @ux_blueprint.route("/issue", methods=["POST"])
 @login_required
+@deny_readonly
 async def issue() -> APIResponse:
     data = await request.get_json()
 
@@ -78,7 +95,7 @@ async def index() -> str:
 
 @ux_blueprint.route("/logs", methods=["GET"])
 @login_required
-async def logs() -> Union[str, Response]:
+async def logs() -> Union[str, QuartResponse]:
     if request.args.get("dl"):
         return await send_file(f"{DATA_DIR / 'tsundoku.log'}", as_attachment=True)
 
@@ -90,6 +107,7 @@ async def logs() -> Union[str, Response]:
 
 
 @ux_blueprint.route("/register", methods=["GET", "POST"])
+@deny_readonly
 async def register() -> Any:
     if await current_user.is_authenticated or not app.flags.IS_FIRST_LAUNCH:
         return redirect("/")
