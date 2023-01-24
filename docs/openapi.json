@@ -63,6 +63,9 @@
     "/webhooks/{id}": {
       "$ref": "apis/webhookbase/by_id.json"
     },
+    "/webhooks/{id}/valid": {
+      "$ref": "apis/webhookbase/validity.json"
+    },
     "/nyaa": {
       "$ref": "apis/nyaa/general.json"
     }

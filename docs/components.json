@@ -318,11 +318,6 @@
             "type": "string",
             "example": "{name}, episode {episode}, has been marked as {state}"
           },
-          "valid": {
-            "description": "Whether or not this webhook base is able to be posted to.",
-            "type": "boolean",
-            "example": true
-          },
           "default_triggers": {
             "description": "Default triggers to set when creating new shows.",
             "type": "array",

@@ -1,0 +1,28 @@
+{
+  "get": {
+    "tags": ["Webhooks"],
+    "description": "Returns a boolean for whether or not the webhook can connect to its service.",
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "integer",
+                  "description": "Response status code.",
+                  "example": "200"
+                },
+                "result": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
