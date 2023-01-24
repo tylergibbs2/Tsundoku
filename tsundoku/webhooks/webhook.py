@@ -23,8 +23,6 @@ class WebhookBase:
     content_fmt: str
     default_triggers: List[str]
 
-    valid: Optional[bool]
-
     def to_dict(self) -> dict:
         """
         Return the WebhookBase object as a dict.
@@ -40,7 +38,6 @@ class WebhookBase:
             "service": self.service,
             "url": self.url,
             "content_fmt": self.content_fmt,
-            "valid": self.valid,
             "default_triggers": self.default_triggers,
         }
 
@@ -145,7 +142,6 @@ class WebhookBase:
         instance.service = service
         instance.url = url
         instance.content_fmt = new_base["content_fmt"]
-        instance.valid = await instance.is_valid()
 
         for trigger in default_triggers:
             await instance.add_default_trigger(trigger)
@@ -176,9 +172,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(
-        cls, app: TsundokuApp, base_id: int, with_validity: bool = True
-    ) -> Optional[WebhookBase]:
+    async def from_id(cls, app: TsundokuApp, base_id: int) -> Optional[WebhookBase]:
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -188,8 +182,6 @@ class WebhookBase:
             The app.
         base_id: int
             The WebhookBase's ID.
-        with_validity: bool
-            Whether or not to grab the WebhookBase valid state.
 
         Returns
         -------
@@ -239,17 +231,10 @@ class WebhookBase:
 
         await instance.get_default_triggers()
 
-        if with_validity:
-            instance.valid = await instance.is_valid()
-        else:
-            instance.valid = None
-
         return instance
 
     @classmethod
-    async def from_data(
-        cls, app: TsundokuApp, data: Dict[str, str], with_validity: bool = True
-    ) -> WebhookBase:
+    async def from_data(cls, app: TsundokuApp, data: Dict[str, str]) -> WebhookBase:
         """
         Returns a WebhookBase object from passed data.
 
@@ -259,8 +244,6 @@ class WebhookBase:
             The app.
         data: Dict[str, str]
             The data.
-        with_validity: bool
-            Whether or not to grab the WebhookBase valid state.
 
         Returns
         -------
@@ -279,17 +262,10 @@ class WebhookBase:
 
         await instance.get_default_triggers()
 
-        if with_validity:
-            instance.valid = await instance.is_valid()
-        else:
-            instance.valid = None
-
         return instance
 
     @classmethod
-    async def all(
-        cls, app: TsundokuApp, with_validity: bool = True
-    ) -> List[WebhookBase]:
+    async def all(cls, app: TsundokuApp) -> List[WebhookBase]:
         """
         Returns all WebhookBase rows from
         the database.
@@ -298,8 +274,6 @@ class WebhookBase:
         ----------
         app: TsundokuApp
             The app.
-        with_validity: bool
-            Whether to fetch if base is valid.
 
         Returns
         -------
@@ -320,9 +294,7 @@ class WebhookBase:
 
         instances: List[WebhookBase] = []
         for id_ in ids:
-            wh_base = await WebhookBase.from_id(
-                app, id_["id"], with_validity=with_validity
-            )
+            wh_base = await WebhookBase.from_id(app, id_["id"])
             if wh_base:
                 instances.append(wh_base)
 
@@ -532,9 +504,7 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(
-        cls, app: TsundokuApp, show_id: int, with_validity: bool = False
-    ) -> List[Webhook]:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> List[Webhook]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -544,8 +514,6 @@ class Webhook:
             The app.
         show_id: int
             The show's ID.
-        with_validity: bool
-            Whether to also retrieve the base webhook's validity.
 
         Returns
         -------
@@ -590,9 +558,7 @@ class Webhook:
         instances = []
 
         for wh in webhooks:
-            base = await WebhookBase.from_data(
-                app, dict(wh), with_validity=with_validity
-            )
+            base = await WebhookBase.from_data(app, dict(wh))
             if not base:
                 continue
 
@@ -645,7 +611,7 @@ class Webhook:
                 base_id,
             )
 
-        base = await WebhookBase.from_id(app, webhook["base"], with_validity=False)
+        base = await WebhookBase.from_id(app, webhook["base"])
         if not base:
             return None
 
@@ -927,7 +893,7 @@ class Webhook:
         event: str
             The event that occurred, can be any `show_state`.
         """
-        if not self.base.valid:
+        if not await self.base.is_valid():
             logger.warning(
                 "Webhooks - Attempted to send webhook, but the base webhook was invalid"
             )
