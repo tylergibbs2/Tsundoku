@@ -33,7 +33,8 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    api_key uuid NOT NULL
+    api_key uuid NOT NULL,
+    readonly BOOLEAN NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE seen_release (

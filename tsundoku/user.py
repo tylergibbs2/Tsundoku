@@ -12,11 +12,18 @@ from quart_auth import AuthUser
 
 
 class User(AuthUser):
+    _resolved: bool
+
+    _username: str
+    _api_key: str
+    _readonly: bool
+
     def __init__(self, auth_id: Optional[str]) -> None:
         super().__init__(auth_id)
         self._resolved = False
         self._username = ""
         self._api_key = ""
+        self._readonly = False
 
     async def _resolve(self) -> None:
         if not self._resolved:
@@ -25,7 +32,8 @@ class User(AuthUser):
                     """
                     SELECT
                         username,
-                        api_key
+                        api_key,
+                        readonly
                     FROM
                         users
                     WHERE id = ?;
@@ -34,6 +42,7 @@ class User(AuthUser):
                 )
             self._username = user["username"]
             self._api_key = user["api_key"]
+            self._readonly = user["readonly"]
             self._resolved = True
 
     @property
@@ -45,3 +54,8 @@ class User(AuthUser):
     async def api_key(self) -> str:
         await self._resolve()
         return self._api_key
+
+    @property
+    async def readonly(self) -> bool:
+        await self._resolve()
+        return self._readonly

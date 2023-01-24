@@ -1,0 +1,4 @@
+ALTER TABLE
+    users
+ADD COLUMN
+    readonly BOOLEAN NOT NULL DEFAULT '0';
