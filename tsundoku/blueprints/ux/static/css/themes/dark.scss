@@ -8,15 +8,20 @@ body.dark .background-gradient {
 }
 
 body.dark .dashboard-panel {
-  background-color: $black;
+  background-color: $black-ter;
+}
+
+body.dark a:hover:not(.is-active):not(.button):not(.ml-1),
+body.dark .tabs li:not(.is-active) a {
+  color: $white;
 }
 
 body.dark .subtitle,
 body.dark .title,
-body.dark a,
 body.dark .table tbody tr td,
 body.dark .table thead tr th,
 body.dark .modal-card-title,
+body.dark .menu-list li > a,
 body.dark span,
 body.dark p {
   color: $white;
@@ -45,6 +50,10 @@ body.dark .input,
 body.dark button {
   background-color: $grey-darker;
   color: $text-invert;
+}
+
+body.dark .dropdown-item:hover:not(.is-active) {
+  background-color: $black-ter;
 }
 
 body.dark .card,
@@ -101,14 +110,8 @@ body.dark footer.modal-card-foot {
   background-color: $black-ter;
 }
 
-body.dark a:hover:not(.is-active):not(.button):not(.ml-1) {
-  color: $white;
-  background-color: $scheme-invert-ter;
-}
-
 body.dark .card-footer-item > a:hover:not(.is-active) {
   color: $grey-light;
-  background-color: $scheme-invert;
 }
 
 body.dark .button:hover {
@@ -116,9 +119,6 @@ body.dark .button:hover {
   border: 1px solid findColorInvert($grey-light);
 }
 
-body.dark header.dashboard-panel-header {
+body.dark ul.menu-list li a:hover:not(.is-active) {
   background-color: $grey-darker;
-  border-radius: 5px;
-  padding-top: 5px;
-  padding-bottom: 5px;
 }
