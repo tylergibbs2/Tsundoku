@@ -65,7 +65,12 @@ async def update_context() -> dict:
     fluent = app.get_fluent()
     stats = {"version": version}
 
-    return {"stats": stats, "docker": app.flags.IS_DOCKER, "_": fluent.format_value}
+    return {
+        "stats": stats,
+        "docker": app.flags.IS_DOCKER,
+        "update_info": app.flags.UPDATE_INFO,
+        "_": fluent.format_value,
+    }
 
 
 @ux_blueprint.route("/issue", methods=["POST"])

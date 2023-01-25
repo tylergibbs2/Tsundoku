@@ -135,6 +135,12 @@
           <p class="mt-4">
             Tsundoku v{{ stats.version }} {% if docker %}🐋{% endif %}
           </p>
+          {% if update_info is not none %}
+          <p class="has-text-success">
+            New version available:
+            <a href="{{ update_info.url }}">v{{ update_info.version }}</a>
+          </p>
+          {% endif %}
           <p>
             <b>Tsundoku</b> is an
             <a href="https://github.com/tylergibbs2/Tsundoku"

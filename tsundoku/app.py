@@ -19,6 +19,8 @@ from typing import (
 from uuid import uuid4
 
 import aiohttp
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
 from quart import Quart
@@ -42,6 +44,7 @@ from tsundoku.dl_client import Manager
 from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.flags import Flags
 from tsundoku.fluent import CustomFluentLocalization
+from tsundoku.git import check_for_updates
 from tsundoku.log import setup_logging
 from tsundoku.user import User
 
@@ -51,12 +54,12 @@ auth.user_class = User
 
 class TsundokuApp(Quart):
     session: aiohttp.ClientSession
-    dl_client: Manager
+    scheduler: AsyncIOScheduler
 
     connected_websockets: MutableSet[Queue[str]]
-
     source_lock: asyncio.Lock
 
+    dl_client: Manager
     poller: Poller
     downloader: Downloader
     encoder: Encoder
@@ -72,6 +75,8 @@ class TsundokuApp(Quart):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.scheduler = AsyncIOScheduler()
 
         self.acquire_db = acquire
         self.sync_acquire_db = sync_acquire
@@ -222,6 +227,10 @@ async def setup_tasks() -> None:
 
     These tasks are added to the app's global task list.
     """
+    logger.debug("Starting APScheduler...")
+    app.scheduler.start()
+
+    app.scheduler.add_job(check_for_updates, CronTrigger.from_crontab("* 4 * * *"))
 
     async def poller() -> None:
         app.poller = Poller(app.app_context())
@@ -252,6 +261,8 @@ async def cleanup() -> None:
     """
     failed_to_cancel = 0
     logger.debug("Cleanup: Attempting to cancel tasks...")
+    app.scheduler.shutdown()
+
     for task in app._tasks:
         logger.debug(f"Cleanup: Attempting to cancel task '{task.get_name()}'...")
         try:

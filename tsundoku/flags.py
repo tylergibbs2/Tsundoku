@@ -1,4 +1,9 @@
+from __future__ import annotations
+
 import os
+from typing import Optional
+
+from tsundoku.git import UpdateInformation
 
 
 class Flags:
@@ -6,6 +11,7 @@ class Flags:
     IS_DEBUG: bool = bool(os.getenv("IS_DEBUG"))
     IS_FIRST_LAUNCH: bool = False
     DL_CLIENT_CONNECTION_ERROR: bool = False
+    UPDATE_INFO: Optional[UpdateInformation] = None
     LOCALE: str = "en"
 
     def __repr__(self) -> str:

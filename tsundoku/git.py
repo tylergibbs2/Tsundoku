@@ -11,6 +11,7 @@ else:
     from quart import current_app as app
 
 from tsundoku import __version__ as current_version
+from tsundoku.config import GeneralConfig
 from tsundoku.utils import compare_version_strings
 
 
@@ -28,6 +29,11 @@ class UpdateInformation:
 
 
 async def check_for_updates() -> Optional[UpdateInformation]:
+    config = await GeneralConfig.retrieve(app)
+    if not config.get("update_do_check", False):
+        logger.info("Update checks disabled by configuration, skipping.")
+        return
+
     headers = {"accept": "application/vnd.github+json"}
 
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "tylergibbs2")
@@ -57,6 +63,7 @@ async def check_for_updates() -> Optional[UpdateInformation]:
             return None
 
         logger.info(f"Update check: New version {version} is available.")
-        return UpdateInformation(version, data["html_url"])
+        app.flags.UPDATE_INFO = UpdateInformation(version, data["html_url"])
+        return app.flags.UPDATE_INFO
 
     logger.info("Update check: No new version is available.")
