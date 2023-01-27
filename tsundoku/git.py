@@ -39,6 +39,10 @@ async def check_for_updates() -> Optional[UpdateInformation]:
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "tylergibbs2")
     repo_name = os.getenv("GITHUB_REPO_NAME", "Tsundoku")
 
+    logger.info(
+        f"Update check: Checking for updates at github.com/{repo_owner}/{repo_name}"
+    )
+
     url = REQUEST_URL.format(owner=repo_owner, repository=repo_name)
     async with app.session.get(url, headers=headers) as resp:
         data = await resp.json()
