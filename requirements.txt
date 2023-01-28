@@ -9,5 +9,6 @@ feedparser==6.0.10
 fluent.runtime==0.3.1
 user-agents==2.2.0
 quart-auth==0.8.0
+quart-rate-limiter==0.8.0
 quart==0.18.3
 yoyo-migrations==8.1.0

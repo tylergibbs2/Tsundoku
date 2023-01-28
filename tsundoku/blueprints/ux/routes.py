@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from asyncio import Queue
+from datetime import timedelta
 from functools import wraps
 from typing import TYPE_CHECKING, Any, Union
 from uuid import uuid4
@@ -8,6 +9,7 @@ from uuid import uuid4
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from quart import Blueprint, Response as QuartResponse
+from quart_rate_limiter import rate_limit, RateLimitExceeded
 from werkzeug import Response
 
 if TYPE_CHECKING:
@@ -53,11 +55,21 @@ hasher = PasswordHasher()
 
 
 @ux_blueprint.errorhandler(Unauthorized)
-async def redirect_to_login(*_: Any) -> Response:
+async def redirect_to_login(_: Any) -> Response:
     if app.flags.IS_FIRST_LAUNCH:
         return redirect(url_for("ux.register"))
 
     return redirect(url_for("ux.login"))
+
+
+@ux_blueprint.errorhandler(429)
+async def err_429(e: Exception) -> Response:
+    error = "Too many requests."
+    if isinstance(e, RateLimitExceeded):
+        error += f" Try again in {e.retry_after} seconds."
+
+    await flash(error, category="error")
+    return redirect(request.url)
 
 
 @ux_blueprint.context_processor
@@ -186,65 +198,73 @@ async def register() -> Any:
         return redirect(url_for("ux.login"))
 
 
-@ux_blueprint.route("/login", methods=["GET", "POST"])
-async def login() -> Any:
+@ux_blueprint.route("/login", methods=["GET"])
+async def login() -> Response | str:
     if await current_user.is_authenticated:
         return redirect("/")
 
-    if request.method == "GET":
-        return await render_template("login.html")
-    else:
-        fluent = app.get_fluent()
-        form = await request.form
+    return await render_template("login.html")
 
-        username = form.get("username")
-        password = form.get("password")
-        if not username or not password:
-            await flash(fluent._("form-missing-data"), category="error")
-            return redirect(url_for("ux.login"))
 
+@ux_blueprint.route("/login", methods=["POST"])
+@rate_limit(1, timedelta(seconds=2))
+@rate_limit(10, timedelta(minutes=1))
+@rate_limit(20, timedelta(hours=1))
+async def login_post() -> Any:
+    if await current_user.is_authenticated:
+        return redirect("/")
+
+    fluent = app.get_fluent()
+    form = await request.form
+
+    username = form.get("username")
+    password = form.get("password")
+    if not username or not password:
+        await flash(fluent._("form-missing-data"), category="error")
+        return redirect(url_for("ux.login"))
+
+    async with app.acquire_db() as con:
+        user_data = await con.fetchone(
+            """
+            SELECT
+                id,
+                password_hash
+            FROM
+                users
+            WHERE LOWER(username) = ?;
+        """,
+            username.lower(),
+        )
+
+    if not user_data:
+        await flash(fluent._("invalid-credentials"), category="error")
+        return redirect(url_for("ux.login"))
+
+    try:
+        hasher.verify(user_data["password_hash"], password)
+    except VerifyMismatchError:
+        await flash(fluent._("invalid-credentials"), category="error")
+        return redirect(url_for("ux.login"))
+
+    if hasher.check_needs_rehash(user_data["password_hash"]):
         async with app.acquire_db() as con:
-            user_data = await con.fetchone(
+            await con.execute(
                 """
-                SELECT
-                    id,
-                    password_hash
-                FROM
+                UPDATE
                     users
-                WHERE LOWER(username) = ?;
+                SET
+                    password_hash=?
+                WHERE username=?;
             """,
-                username.lower(),
+                hasher.hash(password),
+                username,
             )
 
-        if not user_data:
-            await flash(fluent._("invalid-credentials"), category="error")
-            return redirect(url_for("ux.login"))
+    remember = form.get("remember", False)
 
-        try:
-            hasher.verify(user_data["password_hash"], password)
-        except VerifyMismatchError:
-            await flash(fluent._("invalid-credentials"), category="error")
-            return redirect(url_for("ux.login"))
+    login_user(User(user_data["id"]), remember=remember)
 
-        if hasher.check_needs_rehash(user_data["password_hash"]):
-            async with app.acquire_db() as con:
-                await con.execute(
-                    """
-                    UPDATE
-                        users
-                    SET
-                        password_hash=?
-                    WHERE username=?;
-                """,
-                    hasher.hash(password),
-                    username,
-                )
-
-        remember = form.get("remember", False)
-
-        login_user(User(user_data["id"]), remember=remember)
-
-        return redirect("/")
+    return redirect("/")
 
 
 @ux_blueprint.route("/logout", methods=["GET"])

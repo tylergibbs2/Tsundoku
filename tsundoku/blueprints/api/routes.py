@@ -16,6 +16,7 @@ else:
     from quart_auth import current_user
 
 from quart import request
+from quart_rate_limiter import RateLimitExceeded
 
 from tsundoku.config import (
     ConfigCheckFailure,
@@ -52,6 +53,14 @@ async def err_403(_) -> APIResponse:
     return APIResponse(
         status=403, error="You are forbidden from modifying this resource."
     )
+
+
+@api_blueprint.errorhandler(429)
+async def err_429(e: Exception) -> APIResponse:
+    error = "Too many requests."
+    if isinstance(e, RateLimitExceeded):
+        error += f" Try again in {e.retry_after} seconds."
+    return APIResponse(status=429, error=error)
 
 
 @api_blueprint.before_request

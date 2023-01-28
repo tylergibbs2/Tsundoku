@@ -25,6 +25,7 @@ from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
 from quart import Quart
 from quart_auth import AuthManager
+from quart_rate_limiter import RateLimiter
 
 try:
     from dotenv import load_dotenv
@@ -47,9 +48,6 @@ from tsundoku.fluent import CustomFluentLocalization
 from tsundoku.git import check_for_updates
 from tsundoku.log import setup_logging
 from tsundoku.user import User
-
-auth = AuthManager()
-auth.user_class = User
 
 
 class TsundokuApp(Quart):
@@ -102,6 +100,11 @@ class TsundokuApp(Quart):
 
 
 app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
+
+auth = AuthManager(app)
+rate_limiter = RateLimiter(app)
+
+auth.user_class = User
 
 logger = logging.getLogger("tsundoku")
 
@@ -324,7 +327,5 @@ async def run() -> None:
 
     host, port = get_bind()
     logger.debug(f"Attempting to bind to {host}:{port}")
-
-    auth.init_app(app)
 
     await app.run_task(host=host, port=port)
