@@ -356,7 +356,15 @@ class Poller:
                 f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'"
             )
             return None
-        elif "anime_title" not in parsed:
+
+        if isinstance(parsed.get("release_information", []), list):
+            release_info = [
+                info.lower() for info in parsed.get("release_information", [])
+            ]
+        else:
+            release_info = [parsed.get("release_information", "").lower()]
+
+        if "anime_title" not in parsed:
             logger.warning(
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'"
             )
@@ -372,9 +380,7 @@ class Poller:
         #         f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
         #     )
         #     return None
-        elif "batch" in parsed.get("release_information", "").lower() or isinstance(
-            parsed["episode_number"], list
-        ):
+        elif "batch" in release_info or isinstance(parsed["episode_number"], list):
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'"
             )
