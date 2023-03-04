@@ -217,9 +217,16 @@ class Poller:
         found_items = []
 
         for item in items:
-            found = await self.check_item(source, item)
-            if found:
-                found_items.append(found)
+            try:
+                found = await self.check_item(source, item)
+
+                if found:
+                    found_items.append(found)
+            except Exception:
+                logger.exception(
+                    f"`{source.name}@{source.version}` - poller failed to check item '{item!r}'",
+                    exc_info=True,
+                )
 
         return found_items
 
