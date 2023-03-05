@@ -275,19 +275,12 @@ class Downloader:
         else:
             moved_file = desired_folder / name
 
-            # For now, we simply ignore the creation of trailing symlinks
-            # if we're in a Docker environment. This is due to the fact that
-            # symlinks are relative and the symlink can be valid or invalid
-            # depending on which filesystem it's being checked from.
-            if not self.app.flags.IS_DOCKER:
-                try:
-                    entry.file_path.symlink_to(moved_file)
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to Create Trailing Symlink - {e}", exc_info=True
-                    )
-            else:
-                logger.debug("Not creating trailing symlink, Docker environment")
+            try:
+                entry.file_path.symlink_to(moved_file)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to Create Trailing Symlink - {e}", exc_info=True
+                )
 
             return moved_file
 
