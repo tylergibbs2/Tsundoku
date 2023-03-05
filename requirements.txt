@@ -11,4 +11,5 @@ user-agents==2.2.0
 quart-auth==0.8.0
 quart-rate-limiter==0.8.0
 quart==0.18.3
+typing-extensions==4.5.0
 yoyo-migrations==8.1.0

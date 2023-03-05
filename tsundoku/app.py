@@ -308,8 +308,8 @@ def get_bind() -> Tuple[str, int]:
     """
     cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
 
-    host = os.getenv("HOST", default="") if os.getenv("HOST") else cfg["host"]
-    port = os.getenv("PORT", default="") if os.getenv("PORT") else cfg["port"]
+    host = os.getenv("HOST", default="") if os.getenv("HOST") else cfg.host
+    port = os.getenv("PORT", default="") if os.getenv("PORT") else cfg.port
 
     if isinstance(port, str) and not port.isdigit():
         raise ValueError("Port must be a number!")

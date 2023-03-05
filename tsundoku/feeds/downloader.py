@@ -49,12 +49,12 @@ class Downloader:
         Updates the configuration for the task.
         """
         feed_cfg = await FeedsConfig.retrieve(self.app)
-        self.complete_check = feed_cfg["complete_check_interval"]
-        self.seed_ratio_limit = feed_cfg["seed_ratio_limit"]
+        self.complete_check = feed_cfg.complete_check_interval
+        self.seed_ratio_limit = feed_cfg.seed_ratio_limit
 
         general_cfg = await GeneralConfig.retrieve(self.app)
-        self.default_desired_format = general_cfg["default_desired_format"]
-        self.default_desired_folder = general_cfg["default_desired_folder"]
+        self.default_desired_format = general_cfg.default_desired_format
+        self.default_desired_folder = general_cfg.default_desired_folder
 
     async def start(self) -> None:
         logger.debug("Downloader task started.")

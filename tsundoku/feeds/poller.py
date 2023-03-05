@@ -102,8 +102,8 @@ class Poller:
         Updates the configuration for the task.
         """
         cfg = await FeedsConfig.retrieve(self.app)
-        self.interval = cfg["polling_interval"]
-        self.fuzzy_match_cutoff = cfg["fuzzy_cutoff"]
+        self.interval = cfg.polling_interval
+        self.fuzzy_match_cutoff = cfg.fuzzy_cutoff
 
     async def start(self) -> None:
         """

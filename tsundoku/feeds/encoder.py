@@ -170,7 +170,7 @@ class Encoder:
         protocol = "http"
 
         cfg = await GeneralConfig.retrieve(self.app)
-        domain, port = cfg["host"], cfg["port"]
+        domain, port = cfg.host, cfg.port
 
         url = f"{protocol}://{domain}:{port}/{route}"
 

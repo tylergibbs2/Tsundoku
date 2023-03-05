@@ -48,22 +48,22 @@ class Manager:
 
         self.__last_hash = hash_
 
-        host = cfg["host"]
-        port = cfg["port"]
-        secure = cfg["secure"]
+        host = cfg.host
+        port = cfg.port
+        secure = cfg.secure
 
-        username = cfg["username"]
-        password = cfg["password"]
+        username = cfg.username
+        password = cfg.password
 
         kwargs = {"host": host, "port": port, "secure": secure}
 
-        if cfg["client"] == "deluge":
+        if cfg.client == "deluge":
             kwargs["auth"] = password
             self._client = DelugeClient(self.session, **kwargs)
-        elif cfg["client"] == "qbittorrent":
+        elif cfg.client == "qbittorrent":
             kwargs["auth"] = {"username": username, "password": password}
             self._client = qBittorrentClient(self.session, **kwargs)
-        elif cfg["client"] == "transmission":
+        elif cfg.client == "transmission":
             kwargs["auth"] = {"username": username, "password": password}
             self._client = TransmissionClient(self.session, **kwargs)
 

@@ -485,7 +485,7 @@ class KitsuManager:
                 status,
                 self.kitsu_id,
             )
-            if cfg["unwatch_when_finished"] and status == "finished":
+            if cfg.unwatch_when_finished and status == "finished":
                 await con.execute(
                     """
                     UPDATE
