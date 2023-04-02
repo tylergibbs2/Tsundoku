@@ -29,11 +29,7 @@ class SocketHandler(logging.Handler):
 def setup_logging(app: TsundokuApp) -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
-    try:
-        cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
-        level = cfg.get("log_level") or "info"
-    except Exception:
-        level = "info"
+    cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
 
     logger.propagate = True
     logger.setLevel(logging.DEBUG)
@@ -49,13 +45,13 @@ def setup_logging(app: TsundokuApp) -> None:
     stream_handler = logging.StreamHandler()
     stream_handler.set_name("stream")
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(level.upper())
+    stream_handler.setLevel(cfg.log_level.upper())
     logger.addHandler(stream_handler)
 
     socket_handler = SocketHandler(app)
     socket_handler.set_name("socket")
     socket_handler.setFormatter(formatter)
-    socket_handler.setLevel(level.upper())
+    socket_handler.setLevel(cfg.log_level.upper())
     logger.addHandler(socket_handler)
 
     logger.debug("Logging successfully configured")
