@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
 from tsundoku.config import GeneralConfig
-from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
+from tsundoku.constants import DATA_DIR, LOGGING_FILE_NAME
 
 logger = logging.getLogger("tsundoku")
 
@@ -35,7 +35,7 @@ def setup_logging(app: TsundokuApp) -> None:
     logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler(
-        f"{DATA_DIR / DATABASE_FILE_NAME}", encoding="utf-8"
+        f"{DATA_DIR / LOGGING_FILE_NAME}", encoding="utf-8"
     )
     file_handler.set_name("file")
     file_handler.setFormatter(formatter)

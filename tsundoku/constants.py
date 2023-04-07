@@ -41,5 +41,6 @@ STATUS_HTML_MAP = {
 }
 
 DATABASE_FILE_NAME = "tsundoku.db"
+LOGGING_FILE_NAME = "tsundoku.log"
 
 DATA_DIR = Path(os.getenv("DATA_DIR", "data"))
