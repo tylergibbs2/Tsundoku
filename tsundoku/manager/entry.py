@@ -76,7 +76,7 @@ class Entry:
             "torrent_hash": self.torrent_hash,
             "file_path": str(self.file_path),
             "created_manually": self.created_manually,
-            "last_update": self.last_update.isoformat(),
+            "last_update": self.last_update,
         }
 
     @classmethod

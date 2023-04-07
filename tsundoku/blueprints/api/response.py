@@ -1,7 +1,19 @@
+from datetime import datetime
 import json
 from typing import Any, Optional
 
 from quart import Response
+
+
+def recursive_json_modify(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: recursive_json_modify(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [recursive_json_modify(item) for item in obj]
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+
+    return obj
 
 
 class APIResponse(Response):
@@ -33,4 +45,7 @@ class APIResponse(Response):
         elif result is None:
             return json.dumps({"status": status, "error": error}, ensure_ascii=False)
         else:
-            return json.dumps({"status": status, "result": result}, ensure_ascii=False)
+            return json.dumps(
+                {"status": status, "result": recursive_json_modify(result)},
+                ensure_ascii=False,
+            )

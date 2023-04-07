@@ -58,7 +58,7 @@ class Show:
             "post_process": self.post_process,
             "preferred_resolution": self.preferred_resolution,
             "preferred_release_group": self.preferred_release_group,
-            "created_at": self.created_at.isoformat(),
+            "created_at": self.created_at,
             "entries": [e.to_dict() for e in self._entries],
             "metadata": self.metadata.to_dict(),
             "webhooks": [wh.to_dict() for wh in self._webhooks],
