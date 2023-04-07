@@ -9,7 +9,7 @@ from typing_extensions import Self
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-from tsundoku.constants import VALID_SPEEDS
+from tsundoku.constants import VALID_SPEEDS, VALID_MINIMUM_FILE_SIZES
 
 logger = logging.getLogger("tsundoku")
 
@@ -211,6 +211,7 @@ class EncodeConfig(Config):
     timed_encoding: bool
     hour_start: int
     hour_end: int
+    minimum_file_size: str
 
     def check_maximum_encodes(self, value: str) -> bool:
         return int(value) >= 1
@@ -227,6 +228,9 @@ class EncodeConfig(Config):
             return int(hour_end) > int(value)
 
         return True
+
+    def check_minimum_file_size(self, value: str) -> bool:
+        return value in VALID_MINIMUM_FILE_SIZES
 
     def check_hour_end(self, value: str) -> bool:
         hour_start = self.hour_start

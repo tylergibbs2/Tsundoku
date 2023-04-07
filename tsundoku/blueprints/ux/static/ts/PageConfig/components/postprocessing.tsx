@@ -22,6 +22,7 @@ interface EncodeConfig {
   timed_encoding?: boolean;
   hour_start?: number;
   hour_end?: number;
+  minimum_file_size?: string;
   has_ffmpeg?: boolean;
 }
 
@@ -156,6 +157,13 @@ const PostProcessingForm = ({
   const inputTimedEncoding = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) updateConfig({ key: "timed_encoding", value: true });
     else updateConfig({ key: "timed_encoding", value: false });
+  };
+
+  const inputMinimumFileSize = (e: ChangeEvent<HTMLSelectElement>) => {
+    updateConfig({
+      key: "minimum_file_size",
+      value: e.target.options[e.target.selectedIndex].value,
+    });
   };
 
   const getQualityValue = () => {
@@ -334,6 +342,27 @@ const PostProcessingForm = ({
                 </select>
               </div>
             </div>
+          </div>
+        </div>
+        <div className="column is-one-third my-auto">
+          <h1 className="title is-5">{_("process-minimum-file-size-title")}</h1>
+          <h2 className="subtitle is-6 mb-3">
+            {_("process-minimum-file-size-subtitle")}
+          </h2>
+          <div className="select is-fullwidth is-vcentered">
+            <select
+              onChange={inputMinimumFileSize}
+              disabled={disabled}
+              defaultValue={config?.minimum_file_size}
+            >
+              <option value="any">{_("process-mfs-no-minimum")}</option>
+              <option value="250mb">250 MB</option>
+              <option value="500mb">500 MB</option>
+              <option value="750mb">750 MB</option>
+              <option value="1000mb">1 GB</option>
+              <option value="1250mb">1.25 GB</option>
+              <option value="1500mb">1.5 GB</option>
+            </select>
           </div>
         </div>
       </div>

@@ -291,8 +291,10 @@ encode-speed-veryslow = Very Slow
 process-max-encode-title = Maximum Active Encodes
 process-max-encode-subtitle = Number of possible concurrent encode operations
 
-process-retry-title = Retry on Failure
-process-retry-subtitle = Whether or not to retry on encoding failure
+process-minimum-file-size-title = Minimum File Size
+process-minimum-file-size-subtitle = Do not encode if the file is below this size
+
+process-mfs-no-minimum = No Minimum File Size
 
 checkbox-enabled = Enabled
 ffmpeg-missing = FFmpeg Not Installed

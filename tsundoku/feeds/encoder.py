@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 from quart import request
 
-from tsundoku.config import GeneralConfig
-from tsundoku.constants import VALID_SPEEDS
+from tsundoku.config import GeneralConfig, EncodeConfig
+from tsundoku.constants import VALID_MINIMUM_FILE_SIZES
 from tsundoku.utils import move
 
 logger = logging.getLogger("tsundoku")
@@ -51,6 +51,7 @@ class Encoder:
     MAX_ENCODES: int
     CRF: int
     SPEED_PRESET: str
+    MIN_FILE_BYTES: int
 
     TIMED_ENCODING: bool
     HOUR_START: int
@@ -75,6 +76,7 @@ class Encoder:
         self.MAX_ENCODES = 2
         self.CRF = 21
         self.SPEED_PRESET = "medium"
+        self.MIN_FILE_BYTES = 0
 
         self.TIMED_ENCODING = False
         self.HOUR_START = 3
@@ -89,48 +91,20 @@ class Encoder:
         Updates the instances config with what
         is in the database.
         """
-        async with self.app.acquire_db() as con:
-            await con.execute(
-                """
-                INSERT OR IGNORE INTO
-                    encode_config (
-                        id
-                    )
-                VALUES
-                    (0);
-            """
-            )
-            cfg = await con.fetchone(
-                """
-                SELECT
-                    enabled,
-                    quality_preset,
-                    speed_preset,
-                    maximum_encodes,
-                    timed_encoding,
-                    hour_start,
-                    hour_end
-                FROM
-                    encode_config;
-            """
-            )
+        cfg = await EncodeConfig.retrieve(self.app)
 
-        self.CRF = {"high": 18, "moderate": 21, "low": 24}.get(
-            cfg["quality_preset"], 21
-        )
+        self.CRF = {"high": 18, "moderate": 21, "low": 24}.get(cfg.quality_preset, 21)
 
-        if cfg["speed_preset"] not in VALID_SPEEDS:
-            self.SPEED_PRESET = "medium"
-        else:
-            self.SPEED_PRESET = cfg["speed_preset"]
+        self.SPEED_PRESET = cfg.speed_preset
+        self.MIN_FILE_BYTES = VALID_MINIMUM_FILE_SIZES[cfg.minimum_file_size]
 
-        self.ENABLED = cfg["enabled"]
-        self.MAX_ENCODES = cfg["maximum_encodes"] if cfg["maximum_encodes"] > 0 else 1
-        self.TIMED_ENCODING = cfg["timed_encoding"]
-        self.HOUR_START = cfg["hour_start"]
-        self.HOUR_END = cfg["hour_end"]
+        self.ENABLED = cfg.enabled
+        self.MAX_ENCODES = cfg.maximum_encodes if cfg.maximum_encodes > 0 else 1
+        self.TIMED_ENCODING = cfg.timed_encoding
+        self.HOUR_START = cfg.hour_start
+        self.HOUR_END = cfg.hour_end
 
-        logger.debug(f"Encode config updated: {dict(cfg)}")
+        logger.debug("Encode config updated")
 
     async def resume(self) -> None:
         """
@@ -324,6 +298,13 @@ class Encoder:
         elif not infile.is_file() or infile.is_symlink():
             logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
+            )
+            return False
+
+        file_bytecount = infile.stat().st_size
+        if file_bytecount < self.MIN_FILE_BYTES:
+            logger.info(
+                f"Skipping encode for <e{entry_id}>. Byte count is `{file_bytecount}`, does not meet minimum of `{self.MIN_FILE_BYTES}`."
             )
             return False
 

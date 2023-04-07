@@ -14,6 +14,17 @@ VALID_SPEEDS = (
     "veryslow",
 )
 
+# display size -> bytes
+VALID_MINIMUM_FILE_SIZES = {
+    "any": 0,
+    "250mb": 250 * 1e6,
+    "500mb": 500 * 1e6,
+    "750mb": 750 * 1e6,
+    "1000mb": 1000 * 1e6,
+    "1250mb": 1250 * 1e6,
+    "1500mb": 1500 * 1e6,
+}
+
 VALID_SERVICES = ("discord", "slack", "custom")
 
 VALID_TRIGGERS = (
