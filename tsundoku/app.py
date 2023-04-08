@@ -174,6 +174,10 @@ async def setup_db() -> None:
     Creates a database pool for database interaction.
     """
     async with app.acquire_db() as con:
+        logger.debug("VACUUMing database...")
+        await con.execute("VACUUM;")
+        logger.debug("Database VACUUM'd.")
+
         users = await con.fetchval(
             """
             SELECT
