@@ -265,24 +265,23 @@ class Downloader:
         desired_folder = Path(expressive_folder)
 
         name = entry.file_path.name
+        desired_path = desired_folder / name
 
         try:
-            await move(str(entry.file_path), str(desired_folder / name))
+            await move(str(entry.file_path), str(desired_path))
         except PermissionError:
             logger.error(f"Error Moving Release <e{entry.id}> - Invalid Permissions")
         except Exception as e:
             logger.error(f"Error Moving Release <e{entry.id}> - {e}", exc_info=True)
         else:
-            moved_file = desired_folder / name
-
             try:
-                entry.file_path.symlink_to(moved_file)
+                entry.file_path.symlink_to(desired_path)
             except Exception as e:
                 logger.warning(
                     f"Failed to Create Trailing Symlink - {e}", exc_info=True
                 )
 
-            return moved_file
+            return desired_path
 
         return None
 

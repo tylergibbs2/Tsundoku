@@ -27,7 +27,6 @@ from tsundoku.config import (
     TorrentConfig,
 )
 from tsundoku.decorators import deny_readonly
-from tsundoku.manager import Show
 from tsundoku.webhooks import WebhookBase
 
 from .show_entries import ShowEntriesAPI
@@ -190,6 +189,24 @@ async def get_encode_stats() -> APIResponse:
     :returns: Dict[:class:`str`, :class:`float`]
     """
     return APIResponse(result=await app.encoder.get_stats())
+
+
+@api_blueprint.route("/encode/queue", methods=["GET"])
+async def get_encode_queue() -> APIResponse:
+    """
+    Returns the encoding queue.
+
+    :returns: List[:class:`Dict`]
+    """
+    page = request.args.get("page", "0")
+    if not page.isdigit():
+        page = 0
+    elif int(page) < 1:
+        page = 0
+    else:
+        page = int(page)
+
+    return APIResponse(result=await app.encoder.get_queue(page))
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])

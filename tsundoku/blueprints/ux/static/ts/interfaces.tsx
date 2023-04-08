@@ -19,6 +19,14 @@ export interface WebhookBase {
   default_triggers: string[];
 }
 
+export interface EntryEncodeInfo {
+  initial_size: number;
+  final_size: number;
+  queued_at: string;
+  started_at: string;
+  ended_at: string;
+}
+
 export interface Entry {
   id: number;
   show_id: number;
@@ -29,6 +37,7 @@ export interface Entry {
   file_path?: string;
   created_manually: boolean;
   last_update: string;
+  encode: EntryEncodeInfo | null;
 }
 
 export interface Webhook {

@@ -17,7 +17,13 @@ import {
   Webhook,
   APIResponse,
   GeneralConfig,
+  EntryEncodeInfo,
 } from "../interfaces";
+import {
+  formatBytes,
+  localizePythonTimeAbsolute,
+  localizePythonTimeRelative,
+} from "../utils";
 import { IonIcon } from "../icon";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, updateShowById } from "../queries";
@@ -711,6 +717,7 @@ const EditShowEntries = ({
       magnet: data.magnet,
       created_manually: true,
       last_update: new Date().toISOString(),
+      encode: null,
     };
     let temp = [entry, ...entries];
 
@@ -751,6 +758,7 @@ const EditShowEntries = ({
             <tr>
               <th>{_("edit-entries-th-episode")}</th>
               <th>{_("edit-entries-th-status")}</th>
+              <th>{_("edit-entries-th-encode-status")}</th>
               <th>{_("edit-entries-th-last-update")}</th>
             </tr>
           </thead>
@@ -819,23 +827,97 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
     bufferRemoveEntry(entry);
   };
 
-  let timeString =
-    entry.last_update + (entry.last_update.endsWith("Z") ? "" : "Z");
+  const localized = localizePythonTimeRelative(entry.last_update);
+  const localizedTitle = localizePythonTimeAbsolute(entry.last_update);
 
-  const lastUpdate = new Date(timeString);
-  const diff = lastUpdate.getTime() - Date.now();
+  const getEncodeStatusTd = (): JSX.Element => {
+    let content = getEncodeStatusDropdownContent(entry?.encode);
+    let trigger = getEncodeStatusDropdownTrigger(
+      entry?.encode,
+      content !== null
+    );
 
-  const localized = humanizeDuration(diff, {
-    language: window["LOCALE"],
-    fallbacks: ["en"],
-    round: true,
-    largest: 2,
-  });
-  const localizedTitle = new Intl.DateTimeFormat(window["LOCALE"], {
-    // @ts-ignore
-    dateStyle: "full",
-    timeStyle: "medium",
-  }).format(lastUpdate);
+    if (content === null) return trigger;
+
+    return (
+      <div className="dropdown is-hoverable">
+        <div className="dropdown-trigger">{trigger}</div>
+        <div className="dropdown-menu">{content}</div>
+      </div>
+    );
+  };
+
+  const getEncodeStatusDropdownTrigger = (
+    encode: EntryEncodeInfo,
+    withUnderline: boolean
+  ): JSX.Element => {
+    let style = withUnderline ? { borderBottom: "1px dashed #dbdbdb" } : {};
+
+    if (!encode?.queued_at)
+      return (
+        <span style={style}>{_("edit-entries-encode-status-notqueued")}</span>
+      );
+    else if (encode?.ended_at)
+      return (
+        <span style={style}>{_("edit-entries-encode-status-finished")}</span>
+      );
+    else if (encode?.started_at)
+      return (
+        <span style={style}>{_("edit-entries-encode-status-encoding")}</span>
+      );
+    else if (encode?.queued_at)
+      return (
+        <span style={style}>{_("edit-entries-encode-status-queued")}</span>
+      );
+
+    return <span style={style}>{_("edit-entries-encode-status-unknown")}</span>;
+  };
+
+  const getEncodeStatusDropdownContent = (
+    encode: EntryEncodeInfo
+  ): JSX.Element | null => {
+    if (!encode?.queued_at) return null;
+    else if (encode?.ended_at) {
+      return (
+        <div className="dropdown-content">
+          <div className="dropdown-item">
+            <p>
+              Finished at{" "}
+              {localizePythonTimeAbsolute(encode.ended_at, "short", "short")}
+            </p>
+          </div>
+          <div className="dropdown-item">
+            <p>
+              {formatBytes(encode.initial_size)} {" -> "}{" "}
+              {formatBytes(encode.final_size)}
+            </p>
+          </div>
+        </div>
+      );
+    } else if (encode?.started_at) {
+      return (
+        <div className="dropdown-content">
+          <div className="dropdown-item">
+            <p>
+              Started at{" "}
+              {localizePythonTimeAbsolute(encode.started_at, "short", "short")}
+            </p>
+          </div>
+        </div>
+      );
+    } else if (encode?.queued_at) {
+      return (
+        <div className="dropdown-content">
+          <div className="dropdown-item">
+            <p>
+              Queued at{" "}
+              {localizePythonTimeAbsolute(encode.queued_at, "short", "short")}
+            </p>
+          </div>
+        </div>
+      );
+    }
+  };
 
   return (
     <tr>
@@ -844,6 +926,7 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
         {entry.version}
       </td>
       <td>{_(`entry-status-${entry.state}`)}</td>
+      <td>{getEncodeStatusTd()}</td>
       <td title={localizedTitle}>
         {_("edit-entries-last-update", { time: localized })}
       </td>

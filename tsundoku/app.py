@@ -266,8 +266,10 @@ async def cleanup() -> None:
     """
     Attempts to cancel any running tasks and close the aiohttp session.
     """
-    failed_to_cancel = 0
+    app.encoder.cleanup()
+
     logger.debug("Cleanup: Attempting to cancel tasks...")
+    failed_to_cancel = 0
     app.scheduler.shutdown()
 
     for task in app._tasks:

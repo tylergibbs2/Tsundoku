@@ -40,6 +40,7 @@ class Entry:
     created_manually: bool
     last_update: datetime
 
+    encode: Optional[dict]
     file_path: Optional[Path]
 
     def __init__(self, app: TsundokuApp, record: Row) -> None:
@@ -51,6 +52,17 @@ class Entry:
         self.torrent_hash: str = record["torrent_hash"]
         self.created_manually: bool = record["created_manually"]
         self.last_update: datetime = record["last_update"]
+
+        if "queued_at" in dict(record):
+            self.encode = {
+                "initial_size": record["initial_size"],
+                "final_size": record["final_size"],
+                "queued_at": record["queued_at"] if record["queued_at"] else None,
+                "started_at": record["started_at"] if record["started_at"] else None,
+                "ended_at": record["ended_at"] if record["ended_at"] else None,
+            }
+        else:
+            self.encode = None
 
         fp = record["file_path"]
         self.file_path: Optional[Path] = Path(fp) if fp is not None else None
@@ -77,6 +89,7 @@ class Entry:
             "file_path": str(self.file_path),
             "created_manually": self.created_manually,
             "last_update": self.last_update,
+            "encode": self.encode,
         }
 
     @classmethod
@@ -101,17 +114,26 @@ class Entry:
             entries = await con.fetchall(
                 """
                 SELECT
-                    id,
-                    show_id,
-                    episode,
-                    version,
-                    current_state,
-                    torrent_hash,
-                    file_path,
-                    created_manually,
-                    last_update
+                    se.id,
+                    se.show_id,
+                    se.episode,
+                    se.version,
+                    se.current_state,
+                    se.torrent_hash,
+                    se.file_path,
+                    se.created_manually,
+                    se.last_update,
+                    e.initial_size,
+                    e.final_size,
+                    e.queued_at,
+                    e.started_at,
+                    e.ended_at
                 FROM
-                    show_entry
+                    show_entry AS se
+                LEFT JOIN
+                    encode as e
+                ON
+                    se.id = e.entry_id
                 WHERE
                     show_id=?
                 ORDER BY
@@ -121,6 +143,55 @@ class Entry:
             )
 
         return [Entry(app, entry) for entry in entries]
+
+    @classmethod
+    async def from_entry_id(cls, app: TsundokuApp, entry_id: int) -> Entry:
+        """
+        Retrieves an Entry by its ID.
+
+        Parameters
+        ----------
+        app: TsundokuApp
+            The Quart app.
+        entry_id: int
+            The Entry's ID.
+
+        Returns
+        -------
+        Entry
+            The Entry.
+        """
+        async with app.acquire_db() as con:
+            entry = await con.fetchone(
+                """
+                SELECT
+                    se.id,
+                    se.show_id,
+                    se.episode,
+                    se.version,
+                    se.current_state,
+                    se.torrent_hash,
+                    se.file_path,
+                    se.created_manually,
+                    se.last_update,
+                    e.initial_size,
+                    e.final_size,
+                    e.queued_at,
+                    e.started_at,
+                    e.ended_at
+                FROM
+                    show_entry AS se
+                LEFT JOIN
+                    encode as e
+                ON
+                    se.id = e.entry_id
+                WHERE
+                    se.id=?;
+            """,
+                entry_id,
+            )
+
+        return Entry(app, entry)
 
     async def should_encode(self) -> bool:
         """
@@ -173,7 +244,7 @@ class Entry:
             )
 
         if await self.should_encode():
-            self._app.encoder.encode_task(self.id)
+            await self._app.encoder.queue(self.id)
 
         await self._handle_webhooks()
 

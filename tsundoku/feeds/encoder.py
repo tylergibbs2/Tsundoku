@@ -16,6 +16,7 @@ from quart import request
 
 from tsundoku.config import GeneralConfig, EncodeConfig
 from tsundoku.constants import VALID_MINIMUM_FILE_SIZES, VALID_ENCODERS
+from tsundoku.manager import Entry
 from tsundoku.utils import move
 
 logger = logging.getLogger("tsundoku")
@@ -56,8 +57,8 @@ class Encoder:
     HOUR_START: int
     HOUR_END: int
 
-    __encode_queue: List[int]
-    __active_encodes: int
+    __start_lock: asyncio.Lock
+    __ffmpeg_procs: Dict[int, asyncio.subprocess.Process]
     __available_encoders: set[str]
 
     def __init__(self, app_context: Any) -> None:
@@ -65,7 +66,7 @@ class Encoder:
 
         self.app.add_url_rule(
             "/api/v1/encode/<int:entry_id>",
-            view_func=self.encode_progress,
+            view_func=self.receive_encode_progress,
             methods=["POST"],
         )
 
@@ -81,8 +82,8 @@ class Encoder:
         self.HOUR_START = 3
         self.HOUR_END = 6
 
-        self.__encode_queue: List[int] = []
-        self.__active_encodes = 0
+        self.__start_lock = asyncio.Lock()
+        self.__ffmpeg_procs = {}
         self.__available_encoders = set()
 
     async def update_config(self) -> None:
@@ -108,26 +109,39 @@ class Encoder:
 
     async def resume(self) -> None:
         """
-        Starts watching for new media to encode
-        and also starts the encoding process.
+        Resumes the encoder process.
+
+        Pulls items from the encode table where the
+        `ended_at` column is null and begins encoding
+        them.
         """
-        logger.debug("Encoder task started.")
+        logger.debug("Encoder task resuming...")
+
+        await self.update_config()
+        available_encoders = await self.get_available_encoders()
+        if self.ENCODER not in available_encoders:
+            cfg = await EncodeConfig.retrieve(self.app)
+            for encoder in VALID_ENCODERS.values():
+                if encoder in available_encoders:
+                    cfg.encoder = self.ENCODER = encoder
+                    await cfg.save()
+                    break
 
         async with self.app.acquire_db() as con:
-            leftovers = await con.fetchall(
+            # Remove any partial encodes
+            await con.execute(
                 """
-                SELECT
-                    entry_id
-                FROM
+                UPDATE
                     encode
+                SET
+                    started_at = NULL
                 WHERE
-                    ended_at IS NULL
-                ORDER BY started_at ASC;
-            """
+                    ended_at IS NULL;
+                """
             )
 
-        for entry in leftovers:
-            await self.encode(entry["entry_id"])
+        await self.process_next()
+        logger.debug("Encoder task resumed.")
 
     async def build_cmd(self, entry_id: int, infile: Path) -> str:
         """
@@ -155,21 +169,45 @@ class Encoder:
             f' -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y "{outfile}"'
         )
 
-    def encode_task(self, entry_id: int) -> None:
+    async def queue(self, entry_id: int) -> None:
         """
-        Launches an encode task.
+        Queues an entry to be encoded.
+
+        Parameters
+        ----------
+        entry_id:
+            The entry to be encoded.
+        """
+        async with self.app.acquire_db() as con:
+            await con.execute(
+                """
+                INSERT OR IGNORE INTO
+                    encode (
+                        entry_id
+                    )
+                VALUES (?);
+            """,
+                entry_id,
+            )
+
+        if not self.__ffmpeg_procs:
+            await self.process_next()
+
+    def launch_process_task(self, entry_id: int) -> None:
+        """
+        Launches a process task.
 
         Parameters
         ----------
         entry_id: int
-            THe entry ID to encode.
+            The entry ID to encode.
         """
-        logger.debug(f"Launching new encode task for <e{entry_id}>")
+        logger.debug(f"Launching new process task for <e{entry_id}>")
         self.app._tasks.append(
-            asyncio.create_task(self.encode(entry_id), name=f"encode-{entry_id}")
+            asyncio.create_task(self.process(entry_id), name=f"encode-{entry_id}")
         )
 
-    async def encode(self, entry_id: int) -> None:
+    async def process(self, entry_id: int) -> None:
         """
         Either starts an encode process or adds
         the encode to the queue.
@@ -188,18 +226,6 @@ class Encoder:
             logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
             return
 
-        async with self.app.acquire_db() as con:
-            await con.execute(
-                """
-                INSERT OR IGNORE INTO
-                    encode (
-                        entry_id
-                    )
-                VALUES (?);
-            """,
-                entry_id,
-            )
-
         if self.TIMED_ENCODING:
             to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
             logger.debug(
@@ -207,44 +233,54 @@ class Encoder:
             )
             await asyncio.sleep(to_sleep)
 
-        if self.__active_encodes >= self.MAX_ENCODES:
-            logger.debug(f"Reached maximum encodes, queuing <e{entry_id}>")
-            self.__encode_queue.append(entry_id)
+        if len(self.__ffmpeg_procs) >= self.MAX_ENCODES:
+            logger.debug(
+                f"Reached maximum encodes when processing, <e{entry_id}> is queued."
+            )
             return
 
-        ret = False
-        try:
-            ret = await self._encode(entry_id)
-        except Exception as e:
-            logger.error(f"Failed to encode <e{entry_id}>: {e}", exc_info=True)
-
-        if not ret:
-            async with self.app.acquire_db() as con:
-                await con.execute(
-                    """
-                    DELETE FROM
-                        encode
-                    WHERE
-                        entry_id = ?;
-                """,
-                    entry_id,
+        async with self.__start_lock:
+            ret = False
+            try:
+                ret = await self.launch_ffmpeg(entry_id)
+            except Exception as e:
+                logger.error(
+                    f"Failed to launch ffmpeg process for <e{entry_id}>: {e}",
+                    exc_info=True,
                 )
 
-            await self.encode_next()
+            if not ret:
+                async with self.app.acquire_db() as con:
+                    await con.execute(
+                        """
+                        DELETE FROM
+                            encode
+                        WHERE
+                            entry_id = ?;
+                    """,
+                        entry_id,
+                    )
 
-    async def encode_next(self) -> None:
+                await self.process_next()
+
+    async def process_next(self) -> None:
         """
         Attempts to retrieve the next item to encode and
         then start the task.
         """
-        try:
-            next_ = self.__encode_queue.pop(0)
-        except IndexError:
+        if len(self.__ffmpeg_procs) >= self.MAX_ENCODES:
+            logger.debug("Reached maximum encodes, skipping request to process next.")
             return
 
-        await self.encode(next_)
+        queue = await self.get_queue()
+        if not queue:
+            logger.debug("Encode queue is empty, nothing to process next.")
+            return
 
-    async def _encode(self, entry_id: int) -> bool:
+        next_ = int(queue[0]["entry_id"])
+        self.launch_process_task(next_)
+
+    async def launch_ffmpeg(self, entry_id: int) -> bool:
         """
         Starts the ffmpeg encoding subprocess.
 
@@ -285,6 +321,11 @@ class Encoder:
                 f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry"
             )
             return False
+        elif entry_id in self.__ffmpeg_procs:
+            logger.warning(
+                f"Error when attempting to encode entry <e{entry_id}>: entry is already being encoded"
+            )
+            return False
 
         logger.debug(f"Starting new encode process for entry <e{entry_id}>...")
 
@@ -309,33 +350,34 @@ class Encoder:
 
         cmd = await self.build_cmd(entry_id, infile)
         try:
-            await create_subprocess_shell(cmd)
+            proc = await create_subprocess_shell(cmd)
         except Exception as e:
             logger.error(
                 f"Failed starting new encode for entry <e{entry_id}>: {e}",
                 exc_info=True,
             )
         else:
-            self.__active_encodes += 1
-            file_size = os.path.getsize(str(infile))
+            self.__ffmpeg_procs[entry_id] = proc
             async with self.app.acquire_db() as con:
                 await con.execute(
                     """
                     UPDATE
                         encode
                     SET
-                        initial_size = ?
+                        initial_size = ?,
+                        started_at = CURRENT_TIMESTAMP
                     WHERE
                         entry_id = ?;
                 """,
-                    file_size,
+                    file_bytecount,
                     entry_id,
                 )
             return True
 
         return False
 
-    def process_progress_data(self, data: bytes) -> Dict[str, str]:
+    @staticmethod
+    def process_progress_data(data: bytes) -> Dict[str, str]:
         """
         Processes the byte data of an ffmpeg progress stream.
 
@@ -361,7 +403,7 @@ class Encoder:
 
         return out
 
-    async def encode_progress(self, entry_id: int) -> str:
+    async def receive_encode_progress(self, entry_id: int) -> str:
         """
         Receives encode progress data from ffmpeg to
         track the overall progress of an encode.
@@ -380,19 +422,30 @@ class Encoder:
         last_received = {}
         async for data in request.body:
             last_received = self.process_progress_data(data)
-            logger.debug(
-                f"Encode progress entry <e{entry_id}>: `{last_received.get('out_time')}`"
+            logger.debug(f"Encode progress entry <e{entry_id}>: `{last_received}`")
+
+        ret = await self.__ffmpeg_procs[entry_id].wait()
+        del self.__ffmpeg_procs[entry_id]
+
+        if ret != 0:
+            logger.error(
+                f"Error occurred with end of ffmpeg process for entry <e{entry_id}>: error code {ret}"
             )
 
-        self.__active_encodes -= 1
-        await self.encode_next()
-        if last_received.get("progress") == "end":
-            await self.handle_finished(entry_id)
+        try:
+            if last_received.get("progress") == "end":
+                await self.handle_encode_finished(entry_id)
+        except Exception:
+            logger.exception(
+                f"Error occurred when handling finished encode for entry <e{entry_id}>"
+            )
+        finally:
+            await self.process_next()
 
         return "{}"
 
-    async def handle_finished(self, entry_id: int) -> None:
-        logger.debug(f"Encode finished for entry <e{entry_id}>")
+    async def handle_encode_finished(self, entry_id: int) -> None:
+        logger.debug(f"Encode finished for entry <e{entry_id}>, move required")
         async with self.app.acquire_db() as con:
             entry_path = await con.fetchval(
                 """
@@ -415,7 +468,7 @@ class Encoder:
             original = Path(entry_path)
             encoded = original.with_suffix(self.TEMP_SUFFIX)
 
-            encoded_size = os.path.getsize(str(encoded))
+            encoded_size = os.path.getsize(encoded)
             await con.execute(
                 """
                 UPDATE
@@ -430,8 +483,28 @@ class Encoder:
                 entry_id,
             )
 
-        await move(encoded, original)
-        logger.debug(f"Encode moved for entry <e{entry_id}>")
+        # The torrent has to be removed from the download client
+        # because the contents of the file will be completely
+        # different after encoding, and we cannot move the encoded
+        # file to the new file if it is in use by the dl client process.
+        entry = await Entry.from_entry_id(self.app, entry_id)
+        try:
+            await self.app.dl_client.delete_torrent(entry.torrent_hash)
+        except Exception:
+            pass
+
+        original = original.resolve()
+        try:
+            original.unlink(missing_ok=True)
+        except Exception:
+            logger.exception(
+                f"Failed moving finished encode for entry <e{entry_id}>: could not remove original file"
+            )
+        else:
+            await move(encoded.resolve(), original)
+            logger.debug(
+                f"Encode moved for entry <e{entry_id}>: encoding process finished"
+            )
 
     async def has_ffmpeg(self) -> bool:
         """
@@ -479,6 +552,47 @@ class Encoder:
         self.__available_encoders = res
         return res
 
+    async def get_queue(self, page: int = 0) -> List[Dict[str, str]]:
+        """
+        Returns the active encode queue.
+
+        Keys:
+        queued_at   - time the encode was queued at
+        started_at  - time the encode was started at (possibly null)
+        title       - name of the show that is being encoded
+        episode     - episode of the show that is being encoded
+        entry_id    - id of the entry that is being encoded
+        """
+        logger.debug("Retrieving encode queue...")
+
+        async with self.app.acquire_db() as con:
+            queue = await con.fetchall(
+                """
+                SELECT
+                    encode.queued_at,
+                    encode.started_at,
+                    show_entry.id as entry_id,
+                    show_entry.episode,
+                    shows.title
+                FROM
+                    encode
+                JOIN
+                    show_entry ON encode.entry_id = show_entry.id
+                JOIN
+                    shows ON show_entry.show_id = shows.id
+                WHERE
+                    encode.ended_at IS NULL
+                AND
+                    encode.started_at IS NULL
+                ORDER BY
+                    encode.queued_at ASC
+                LIMIT ?, 15;
+            """,
+                (page * 15),
+            )
+
+        return [dict(item) for item in queue]
+
     async def get_stats(self) -> Dict[str, float]:
         """
         Returns global encoding statistics.
@@ -518,6 +632,8 @@ class Encoder:
                 FROM
                     encode
                 WHERE
+                    started_at IS NOT NULL
+                AND
                     ended_at IS NOT NULL;
             """
             )
@@ -534,3 +650,25 @@ class Encoder:
             stats["avg_time_spent_hours"] = 0
 
         return stats
+
+    def cleanup(self) -> None:
+        """
+        Cancels all active ffmpeg processes.
+        """
+        logger.debug("Cleanup: Attempting to terminate encoding processes...")
+        failed_to_cancel = 0
+        for entry_id, proc in self.__ffmpeg_procs.items():
+            try:
+                proc.terminate()
+                del self.__ffmpeg_procs[entry_id]
+            except Exception:
+                logger.warning(
+                    f"Could not cancel encode process for entry {entry_id}!",
+                    exc_info=True,
+                )
+                failed_to_cancel += 1
+            else:
+                logger.debug(f"Cleanup: Encode process for entry {entry_id} cancelled.")
+        logger.debug(
+            f"Cleanup: Encode processes cancelled. [{failed_to_cancel} failed to cancel]"
+        )

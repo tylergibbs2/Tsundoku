@@ -117,11 +117,18 @@ edit-tab-entries = Entries
 edit-tab-webhooks = Webhooks
 
 edit-entries-th-episode = Episode
-edit-entries-th-status = Status
+edit-entries-th-status = Entry Status
 edit-entries-th-last-update = Updated
+edit-entries-th-encode-status = Encode Status
 
 edit-entries-is-empty = No entries yet!
 edit-entries-last-update = {$time} ago
+
+edit-entries-encode-status-notqueued = Not Queued
+edit-entries-encode-status-queued = Queued
+edit-entries-encode-status-encoding = Encoding
+edit-entries-encode-status-finished = Finished
+edit-entries-encode-status-unknown = Unknown
 
 edit-entries-form-episode = Episode
 edit-entries-form-magnet = Magnet URL
