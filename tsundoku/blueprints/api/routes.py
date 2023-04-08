@@ -217,17 +217,26 @@ async def check_for_releases() -> APIResponse:
 @api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
 async def delete_show_cache(show_id: int) -> APIResponse:
     """
-    Force Tsundoku to delete the metadata cache for a show.
+    Force Tsundoku to delete the poster cache for a show.
 
-    .. :quickref: Shows; Deletes show metadata.
+    .. :quickref: Shows; Deletes show poster cache.
     """
-    logger.info(f"API - Deleting cache for Show <s{show_id}>")
+    logger.info(f"API - Deleting poster cache for Show <s{show_id}>")
 
-    show = await Show.from_id(app, show_id)
-    await show.metadata.clear_cache()
-    await show.refetch()
+    async with app.acquire_db() as con:
+        await con.execute(
+            """
+            UPDATE
+                kitsu_info
+            SET
+                cached_poster_url = NULL
+            WHERE
+                show_id = ?;
+        """,
+            (show_id,),
+        )
 
-    return APIResponse(result=show.to_dict())
+    return APIResponse(result=True)
 
 
 @api_blueprint.route("/webhooks/<int:base_id>/valid", methods=["GET"])

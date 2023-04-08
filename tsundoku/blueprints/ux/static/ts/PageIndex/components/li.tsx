@@ -1,10 +1,13 @@
-import { Dispatch, SetStateAction } from "react";
+import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
 import ReactHtmlParser from "react-html-parser";
 import { getInjector } from "../../fluent";
-import humanizeDuration from "humanize-duration";
 
 import { Entry, Show } from "../../interfaces";
 import { IonIcon } from "../../icon";
+import {
+  localizePythonTimeAbsolute,
+  localizePythonTimeRelative,
+} from "../../utils";
 
 const _ = getInjector();
 
@@ -57,22 +60,9 @@ export const ListItem = ({
   if (show.entries.length !== 0) {
     let sorted = [...show.entries].sort(sortByDate);
     let entry = sorted[0];
-    let timeString = entry.last_update + "Z";
 
-    const lastUpdate = new Date(timeString);
-    const diff = lastUpdate.getTime() - Date.now();
-
-    const localized = humanizeDuration(diff, {
-      language: window["LOCALE"],
-      fallbacks: ["en"],
-      round: true,
-      largest: 2,
-    });
-    const localizedTitle = new Intl.DateTimeFormat(window["LOCALE"], {
-      // @ts-ignore
-      dateStyle: "full",
-      timeStyle: "medium",
-    }).format(lastUpdate);
+    const localized = localizePythonTimeRelative(entry.last_update);
+    const localizedTitle = localizePythonTimeAbsolute(entry.last_update);
     timeDisplay = (
       <span title={localizedTitle}>
         {_("edit-entries-last-update", { time: localized })}
@@ -90,12 +80,27 @@ export const ListItem = ({
     setCurrentModal("delete");
   };
 
+  const reportPoster404 = async (err: BaseSyntheticEvent) => {
+    let request = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    await fetch(`/api/v1/shows/${show.id_}/cache`, request);
+  };
+
   return (
     <tr className={shouldShow ? "" : "is-hidden"}>
       <td className="is-vcentered">
         <a href={show.metadata.link}>
           <figure className="image is-3by4">
-            <img src={show.metadata.poster} loading="lazy" />
+            <img
+              src={show.metadata.poster}
+              loading="lazy"
+              onError={reportPoster404}
+            />
           </figure>
         </a>
       </td>

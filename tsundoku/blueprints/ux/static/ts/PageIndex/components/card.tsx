@@ -1,5 +1,5 @@
 import { getInjector } from "../../fluent";
-import { Dispatch, SetStateAction } from "react";
+import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
 import { Show } from "../../interfaces";
 
 import ReactHtmlParser from "react-html-parser";
@@ -50,6 +50,17 @@ export const Card = ({
     setCurrentModal("delete");
   };
 
+  const reportPoster404 = async (err: BaseSyntheticEvent) => {
+    let request = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    await fetch(`/api/v1/shows/${show.id_}/cache`, request);
+  };
+
   return (
     <div
       className={
@@ -64,7 +75,11 @@ export const Card = ({
               ReactHtmlParser(show.metadata.html_status)}
             <a href={show.metadata.link}>
               <figure className="image is-3by4">
-                <img src={show.metadata.poster} loading="lazy" />
+                <img
+                  src={show.metadata.poster}
+                  loading="lazy"
+                  onError={reportPoster404}
+                />
               </figure>
             </a>
           </div>
