@@ -61,7 +61,6 @@ edit-tab-info = Информация
 edit-tab-entries = Записи
 edit-tab-webhooks = Веб-перехватчики
 edit-entries-th-episode = Эпизод
-edit-entries-th-status = Статус
 edit-entries-form-episode = Эпизод
 edit-entries-form-magnet = URL-адрес магнита
 edit-entries-form-exists = Этот выпуск уже отслеживается.
