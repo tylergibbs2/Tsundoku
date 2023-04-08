@@ -288,13 +288,13 @@ class Encoder:
 
         logger.debug(f"Starting new encode process for entry <e{entry_id}>...")
 
-        infile = Path(entry["file_path"])
+        infile = Path(entry["file_path"]).resolve()
         if not infile.exists():
             logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist"
             )
             return False
-        elif not infile.is_file() or infile.is_symlink():
+        elif not infile.is_file():
             logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
             )
