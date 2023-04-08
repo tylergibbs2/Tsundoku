@@ -8,7 +8,7 @@ from quart import Response
 def recursive_json_modify(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {k: recursive_json_modify(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
+    elif isinstance(obj, list) or isinstance(obj, set):
         return [recursive_json_modify(item) for item in obj]
     elif isinstance(obj, datetime):
         return obj.isoformat()

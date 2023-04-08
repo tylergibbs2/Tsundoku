@@ -115,6 +115,7 @@ CREATE TABLE torrent_config (
 CREATE TABLE encode_config (
     id INTEGER PRIMARY KEY CHECK (id = 0),
     enabled BOOLEAN NOT NULL DEFAULT '0',
+    encoder TEXT NOT NULL DEFAULT 'libx264',
     quality_preset TEXT NOT NULL DEFAULT 'moderate',
     speed_preset TEXT NOT NULL DEFAULT 'medium',
     maximum_encodes INTEGER NOT NULL DEFAULT 2,

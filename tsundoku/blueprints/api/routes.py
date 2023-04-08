@@ -169,6 +169,7 @@ async def config_route(cfg_type: str) -> APIResponse:
 
     if cfg_type == "encode":
         cfg.keys["has_ffmpeg"] = await app.encoder.has_ffmpeg()
+        cfg.keys["available_encoders"] = await app.encoder.get_available_encoders()
 
     return APIResponse(status=200, result=cfg.keys)
 

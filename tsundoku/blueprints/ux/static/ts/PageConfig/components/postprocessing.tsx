@@ -16,6 +16,7 @@ const _ = getInjector();
 
 interface EncodeConfig {
   enabled?: boolean;
+  encoder?: string;
   quality_preset?: string;
   speed_preset?: string;
   maximum_encodes?: number;
@@ -24,6 +25,7 @@ interface EncodeConfig {
   hour_end?: number;
   minimum_file_size?: string;
   has_ffmpeg?: boolean;
+  available_encoders?: string[];
 }
 
 interface EncodeStats {
@@ -140,6 +142,13 @@ const PostProcessingForm = ({
     });
   };
 
+  const inputEncoder = (e: ChangeEvent<HTMLSelectElement>) => {
+    updateConfig({
+      key: "encoder",
+      value: e.target.options[e.target.selectedIndex].value,
+    });
+  };
+
   const inputHourStart = (e: ChangeEvent<HTMLSelectElement>) => {
     updateConfig({
       key: "hour_start",
@@ -175,6 +184,10 @@ const PostProcessingForm = ({
       default:
         return 0;
     }
+  };
+
+  const encoderIsUnavailable = (encoder: string): boolean => {
+    return !config?.available_encoders?.includes(encoder);
   };
 
   return (
@@ -252,7 +265,7 @@ const PostProcessingForm = ({
             onChange={inputQualityValue}
           ></input>
         </div>
-        <div className="column is-half my-auto">
+        <div className="column is-3 my-auto">
           <h1 className="title is-5">{_("process-speed-title")}</h1>
           <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
           <div className="select is-fullwidth is-vcentered">
@@ -270,6 +283,30 @@ const PostProcessingForm = ({
               <option value="slow">{_("encode-speed-slow")}</option>
               <option value="slower">{_("encode-speed-slower")}</option>
               <option value="veryslow">{_("encode-speed-veryslow")}</option>
+            </select>
+          </div>
+        </div>
+        <div className="column is-3 my-auto">
+          <h1 className="title is-5">{_("encode-encoder-title")}</h1>
+          <h2 className="subtitle is-6">{_("encode-encoder-subtitle")}</h2>
+          <div className="select is-fullwidth is-vcentered">
+            <select
+              onChange={inputEncoder}
+              disabled={disabled}
+              defaultValue={config?.encoder}
+            >
+              <option
+                disabled={encoderIsUnavailable("libx264")}
+                value="libx264"
+              >
+                H.264
+              </option>
+              <option
+                disabled={encoderIsUnavailable("libx265")}
+                value="libx265"
+              >
+                H.265
+              </option>
             </select>
           </div>
         </div>

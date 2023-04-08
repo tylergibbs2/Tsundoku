@@ -288,6 +288,9 @@ encode-speed-slow = Slow
 encode-speed-slower = Slower
 encode-speed-veryslow = Very Slow
 
+encode-encoder-title = Encoder
+encode-encoder-subtitle = Which video codec to re-encode to
+
 process-max-encode-title = Maximum Active Encodes
 process-max-encode-subtitle = Number of possible concurrent encode operations
 

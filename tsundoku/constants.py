@@ -25,6 +25,8 @@ VALID_MINIMUM_FILE_SIZES = {
     "1500mb": 1500 * 1e6,
 }
 
+VALID_ENCODERS = {"--enable-libx264": "libx264", "--enable-libx265": "libx265"}
+
 VALID_SERVICES = ("discord", "slack", "custom")
 
 VALID_TRIGGERS = (

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 from quart import request
 
 from tsundoku.config import GeneralConfig, EncodeConfig
-from tsundoku.constants import VALID_MINIMUM_FILE_SIZES
+from tsundoku.constants import VALID_MINIMUM_FILE_SIZES, VALID_ENCODERS
 from tsundoku.utils import move
 
 logger = logging.getLogger("tsundoku")
@@ -36,18 +36,17 @@ def seconds_until(start: int, end: int) -> int:
 class Encoder:
     """
     Handles the post-process encoding of downloaded
-    media. In order to be considered for encoding,
-    media must pass a certain, configurable bitrate
-    threshold.
+    media.
 
-    If such media passes this threshold, then it will
-    be re-encoded to the h.264 video encoding format
-    at a user-specified Constant Rate Factor (CRF).
+    Media will be re-encoded to the h.264 or h.265
+    video encoding format at a user-specified
+    Constant Rate Factor (CRF).
     """
 
     app: TsundokuApp
 
     ENABLED: bool
+    ENCODER: str
     MAX_ENCODES: int
     CRF: int
     SPEED_PRESET: str
@@ -59,7 +58,7 @@ class Encoder:
 
     __encode_queue: List[int]
     __active_encodes: int
-    __has_ffmpeg: bool
+    __available_encoders: set[str]
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
@@ -84,7 +83,7 @@ class Encoder:
 
         self.__encode_queue: List[int] = []
         self.__active_encodes = 0
-        self.__has_ffmpeg = False
+        self.__available_encoders = set()
 
     async def update_config(self) -> None:
         """
@@ -99,6 +98,7 @@ class Encoder:
         self.MIN_FILE_BYTES = VALID_MINIMUM_FILE_SIZES[cfg.minimum_file_size]
 
         self.ENABLED = cfg.enabled
+        self.ENCODER = cfg.encoder
         self.MAX_ENCODES = cfg.maximum_encodes if cfg.maximum_encodes > 0 else 1
         self.TIMED_ENCODING = cfg.timed_encoding
         self.HOUR_START = cfg.hour_start
@@ -148,11 +148,10 @@ class Encoder:
 
         url = f"{protocol}://{domain}:{port}/{route}"
 
-        encoder = "libx264"
-
         outfile = infile.with_suffix(self.TEMP_SUFFIX)
+
         return (
-            f'ffmpeg -hide_banner -loglevel error -i "{infile}" -map 0 -c copy -c:v {encoder} -crf {self.CRF}'
+            f'ffmpeg -hide_banner -loglevel error -i "{infile}" -map 0 -c copy -c:v {self.ENCODER} -crf {self.CRF}'
             f' -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y "{outfile}"'
         )
 
@@ -443,8 +442,23 @@ class Encoder:
         bool
             If ffmpeg is available.
         """
-        if self.__has_ffmpeg:
-            return self.__has_ffmpeg
+        await self.get_available_encoders()
+        return bool(self.__available_encoders)
+
+    async def get_available_encoders(self) -> set[str]:
+        """
+        Returns all available ffmpeg video encoders.
+        Also sets the __available_encoders class attribute.
+
+        Possible encoders: libx264, libx265
+
+        Returns
+        -------
+        set[str]
+            Available video encoders.
+        """
+        if self.__available_encoders:
+            return self.__available_encoders
 
         proc = await asyncio.create_subprocess_shell(
             "ffmpeg -buildconf",
@@ -453,12 +467,17 @@ class Encoder:
         )
         stdout, _ = await proc.communicate()
         if proc.returncode != 0:
-            self.__has_ffmpeg = False
-            return self.__has_ffmpeg
+            return set()
 
         output = stdout.decode("utf-8")
-        self.__has_ffmpeg = "--enable-libx264" in output
-        return self.__has_ffmpeg
+
+        res = set()
+        for encoder in VALID_ENCODERS.keys():
+            if encoder in output:
+                res.add(VALID_ENCODERS[encoder])
+
+        self.__available_encoders = res
+        return res
 
     async def get_stats(self) -> Dict[str, float]:
         """

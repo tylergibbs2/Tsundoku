@@ -205,6 +205,7 @@ class EncodeConfig(Config):
     TABLE_NAME = "encode_config"
 
     enabled: bool
+    encoder: str
     quality_preset: str
     speed_preset: str
     maximum_encodes: int
@@ -212,6 +213,9 @@ class EncodeConfig(Config):
     hour_start: int
     hour_end: int
     minimum_file_size: str
+
+    async def check_encoder(self, value: str) -> bool:
+        return value in await self.app.encoder.get_available_encoders()
 
     def check_maximum_encodes(self, value: str) -> bool:
         return int(value) >= 1
