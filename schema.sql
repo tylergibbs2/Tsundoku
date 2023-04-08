@@ -76,7 +76,7 @@ CREATE TABLE show_entry (
 
 CREATE TABLE encode (
     entry_id INTEGER PRIMARY KEY REFERENCES show_entry(id) ON DELETE CASCADE,
-    initial_size INTEGER NOT NULL,
+    initial_size INTEGER,
     final_size INTEGER,
     started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP
