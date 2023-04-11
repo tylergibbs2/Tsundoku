@@ -16,6 +16,7 @@ else:
     from quart_auth import current_user
 
 from quart import request
+from quart_auth import login_user
 from quart_rate_limiter import RateLimitExceeded
 
 from tsundoku.config import (
@@ -28,6 +29,7 @@ from tsundoku.config import (
 )
 from tsundoku.decorators import deny_readonly
 from tsundoku.webhooks import WebhookBase
+from tsundoku.user import User
 
 from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
@@ -64,7 +66,6 @@ async def err_429(e: Exception) -> APIResponse:
 
 @api_blueprint.before_request
 async def ensure_auth() -> Optional[APIResponse]:
-    authed = False
     if request.headers.get("Authorization"):
         token = request.headers["Authorization"]
         if not token.startswith("Bearer "):
@@ -73,7 +74,7 @@ async def ensure_auth() -> Optional[APIResponse]:
 
         async with app.acquire_db() as con:
             try:
-                user = await con.fetchval(
+                user_id = await con.fetchval(
                     """
                     SELECT
                         id
@@ -85,14 +86,14 @@ async def ensure_auth() -> Optional[APIResponse]:
                     token,
                 )
 
-                if user:
-                    authed = True
+                if user_id:
+                    login_user(User(user_id))
             except Exception:
-                pass
-    if not authed and await current_user.is_authenticated:
-        authed = True
+                return APIResponse(
+                    status=401, result="You are not authorized to access this resource."
+                )
 
-    if not authed:
+    if not await current_user.is_authenticated:
         return APIResponse(
             status=401, result="You are not authorized to access this resource."
         )
@@ -131,7 +132,7 @@ async def config_token() -> APIResponse:
     else:
         new_key = api_key
 
-    return APIResponse(status=200, result=str(new_key))
+    return APIResponse(status=200, result=new_key)
 
 
 @api_blueprint.route("/config/<string:cfg_type>", methods=["GET", "PATCH"])
