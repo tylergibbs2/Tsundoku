@@ -146,7 +146,7 @@ class GeneralConfig(Config):
     unwatch_when_finished: bool
 
     def check_port(self, value: str) -> bool:
-        return 1 <= int(value) <= 65535
+        return 1024 <= int(value) <= 65535
 
     def check_log_level(self, value: str) -> bool:
         if value in ("error", "warning", "info", "debug"):

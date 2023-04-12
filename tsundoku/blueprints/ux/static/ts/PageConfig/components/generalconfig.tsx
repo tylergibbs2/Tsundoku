@@ -97,7 +97,7 @@ export const GeneralConfigApp = () => {
                 className="input"
                 type="number"
                 placeholder="6439"
-                min="1"
+                min="1024"
                 max="65535"
                 defaultValue={config?.data?.port}
                 onChange={inputPort}
