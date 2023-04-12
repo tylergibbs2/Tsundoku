@@ -8,6 +8,7 @@ import {
   TreeResponse,
   WebhookBase,
 } from "./interfaces";
+import { APIError } from "./errors";
 import { AddWebhookFormValues } from "./PageWebhooks/add_modal";
 import { EditWebhookFormValues } from "./PageWebhooks/edit_modal";
 
@@ -45,15 +46,14 @@ export const setConfig = async <ConfigType>(
   };
 
   let response = await fetch(`/api/v1/config/${config}`, request);
-  if (response.ok) {
-    let data: APIResponse<ConfigType> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<ConfigType> = await response.json();
+  if (response.ok) return data.result;
 
-  throw new Error(
+  throw new APIError(
     `Failed to set config, ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -64,15 +64,14 @@ export const fetchWebhookBases = async (): Promise<WebhookBase[]> => {
   };
 
   let response = await fetch("/api/v1/webhooks", request);
-  if (response.ok) {
-    let data: APIResponse<WebhookBase[]> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<WebhookBase[]> = await response.json();
+  if (response.ok) return data.result;
 
-  throw new Error(
+  throw new APIError(
     `Failed to fetch webhook bases, ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -83,15 +82,14 @@ export const fetchShows = async (): Promise<Show[]> => {
   };
 
   let response = await fetch("/api/v1/shows", request);
-  if (response.ok) {
-    let data: APIResponse<Show[]> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Show[]> = await response.json();
+  if (response.ok) return data.result;
 
-  throw new Error(
+  throw new APIError(
     `Failed to get shows list, ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -102,15 +100,14 @@ export const fetchShowById = async (id: number): Promise<Show> => {
   };
 
   let response = await fetch(`/api/v1/shows/${id}`, request);
-  if (response.ok) {
-    let data: APIResponse<Show> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Show> = await response.json();
+  if (response.ok) return data.result;
 
-  throw new Error(
+  throw new APIError(
     `Failed to get show by ID '${id}', ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -121,15 +118,15 @@ export const fetchEntryById = async (id: number): Promise<Entry> => {
   };
 
   let response = await fetch(`/api/v1/entries/${id}`, request);
-  if (response.ok) {
-    let data: APIResponse<Entry> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Entry> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to get entry by ID '${id}', ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -141,15 +138,15 @@ export const addNewShow = async (formData: any): Promise<Show> => {
   };
 
   let response = await fetch("/api/v1/shows", request);
-  if (response.ok) {
-    let data: APIResponse<Show> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Show> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to create new show, ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -163,15 +160,15 @@ export const addNewWebhook = async (
   };
 
   let response = await fetch("/api/v1/webhooks", request);
-  if (response.ok) {
-    let data: APIResponse<Show> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Show> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to create new webhook, ${response.status}: ${getReasonPhrase(
       response.status
-    )}`
+    )}`,
+    data?.error
   );
 };
 
@@ -183,15 +180,15 @@ export const updateShowById = async (show: Show): Promise<Show> => {
   };
 
   let response = await fetch(`/api/v1/shows/${show.id_}`, request);
-  if (response.ok) {
-    let data: APIResponse<Show> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<Show> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to update show by ID '${show.id_}', ${
       response.status
-    }: ${getReasonPhrase(response.status)}`
+    }: ${getReasonPhrase(response.status)}`,
+    data?.error
   );
 };
 
@@ -205,15 +202,15 @@ export const updateWebhookById = async (
   };
 
   let response = await fetch(`/api/v1/webhooks/${webhook.base_id}`, request);
-  if (response.ok) {
-    let data: APIResponse<WebhookBase> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<WebhookBase> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to update webhook by ID '${webhook.base_id}', ${
       response.status
-    }: ${getReasonPhrase(response.status)}`
+    }: ${getReasonPhrase(response.status)}`,
+    data?.error
   );
 };
 
@@ -241,15 +238,15 @@ export const fetchWebhookValidityById = async (
   };
 
   let response = await fetch(`/api/v1/webhooks/${id}/valid`, request);
-  if (response.ok) {
-    let data: APIResponse<boolean> = await response.json();
-    return data.result;
-  }
+  let data: APIResponse<boolean> = await response.json();
 
-  throw new Error(
+  if (response.ok) return data.result;
+
+  throw new APIError(
     `Failed to fetch webhook validity by ID '${id}', ${
       response.status
-    }: ${getReasonPhrase(response.status)}`
+    }: ${getReasonPhrase(response.status)}`,
+    data?.error
   );
 };
 
@@ -288,15 +285,17 @@ export const fetchDistinctSeenReleases = async (
     `/api/v1/seen_releases/distinct?${params.toString()}`,
     request
   );
+  let data: APIResponse<string[]> = await response.json();
+
   if (!response.ok) {
-    throw new Error(
+    throw new APIError(
       `Failed to get distinct field '${field}' seen releases, ${
         response.status
-      }: ${getReasonPhrase(response.status)}`
+      }: ${getReasonPhrase(response.status)}`,
+      data?.error
     );
   }
 
-  let data: APIResponse<string[]> = await response.json();
   return data.result;
 };
 
@@ -320,15 +319,17 @@ export const fetchFilteredSeenReleases = async (
     `/api/v1/seen_releases/filter?${params.toString()}`,
     request
   );
+  let data: APIResponse<SeenRelease[]> = await response.json();
+
   if (!response.ok) {
-    throw new Error(
+    throw new APIError(
       `Failed to get filtered seen releases, ${
         response.status
-      }: ${getReasonPhrase(response.status)}`
+      }: ${getReasonPhrase(response.status)}`,
+      data?.error
     );
   }
 
-  let data: APIResponse<SeenRelease[]> = await response.json();
   return data.result;
 };
 
@@ -346,12 +347,14 @@ export const fetchTree = async (
   };
 
   let response = await fetch("/api/v1/tree", request);
+  let data: APIResponse<TreeResponse> = await response.json();
+
   if (!response.ok) {
-    throw new Error(
-      `Failed to get tree, ${response.status}: ${await response.text()}}`
+    throw new APIError(
+      `Failed to get tree, ${response.status}: ${await response.text()}}`,
+      data?.error
     );
   }
 
-  let data: APIResponse<TreeResponse> = await response.json();
   return data.result;
 };

@@ -21,6 +21,7 @@ import "bulma-dashboard/dist/bulma-dashboard.min.css";
 import "bulma-extensions/dist/css/bulma-extensions.min.css";
 
 import "../css/styles.scss";
+import { APIError } from "./errors";
 
 const router = createBrowserRouter([
   {
@@ -45,9 +46,9 @@ const router = createBrowserRouter([
   },
 ]);
 
-const displayErrorToast = (text: string) => {
+const displayErrorToast = (text: string, subtext: string | null = null) => {
   toast({
-    message: text,
+    message: text + (subtext ? `\n${subtext}` : ""),
     duration: 5000,
     position: "bottom-right",
     type: "is-danger",
@@ -64,13 +65,17 @@ const queryClient = new QueryClient({
   },
   mutationCache: new MutationCache({
     onError: (error: unknown) => {
-      if (error instanceof Error) displayErrorToast(error.message);
+      if (error instanceof APIError)
+        displayErrorToast(error.message, error.subtext);
+      else if (error instanceof Error) displayErrorToast(error.message);
       else displayErrorToast("An error occurred.");
     },
   }),
   queryCache: new QueryCache({
     onError: (error: unknown) => {
-      if (error instanceof Error) displayErrorToast(error.message);
+      if (error instanceof APIError)
+        displayErrorToast(error.message, error.subtext);
+      else if (error instanceof Error) displayErrorToast(error.message);
       else displayErrorToast("An error occurred.");
     },
   }),
