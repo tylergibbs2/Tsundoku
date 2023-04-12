@@ -212,10 +212,10 @@ general-updatecheck-tooltip = Checks daily
 general-updatecheck-subtitle = Whether or not to periodically check for updates
 
 general-defaultformat-title = File Name Format
-general-defaultformat-subtitle = The format to use when naming the completed file.
+general-defaultformat-subtitle = The format to use when naming the completed file
 
 general-defaultfolder-title = Folder Placement
-general-defaultfolder-subtitle = Which folder to place the completed file in.
+general-defaultfolder-subtitle = Which folder to place the completed file in
 
 general-unwatchfinished-title = Unwatch When Finished
 general-unwatchfinished-subtitle = Unwatch shows after they are marked as finished
