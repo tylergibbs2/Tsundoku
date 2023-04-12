@@ -20,11 +20,12 @@ import sys
 
 if sys.version_info < (3, 8):
     print("Please update Python to use version 3.8+")
-    exit(1)
+    sys.exit(1)
 
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 
 try:
@@ -33,7 +34,7 @@ except ImportError:
     print(
         "The main Tsundoku module is missing. Are you sure you're in the right directory?"
     )
-    exit(1)
+    sys.exit(1)
 
 
 RUN_SCRIPT = """
@@ -42,7 +43,7 @@ import sys
 
 if sys.version_info < (3, 8):
     print("Please update Python to use version 3.8+")
-    exit(1)
+    sys.exit(1)
 
 import os
 from pathlib import Path
@@ -62,11 +63,11 @@ class Runner:
     def start(self) -> None:
         if not self.python_executable.exists():
             print("Virtual environment not found, please run `install.py` first.")
-            exit(1)
+            sys.exit(1)
 
         print(f"Starting Tsundoku under virtual environment '{self.virtual_dir}'...")
         subprocess.run([self.python_executable, "-m", "tsundoku"] + sys.argv[1:])
-        exit(0)
+        sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -117,7 +118,7 @@ class Installer:
 
         if "version" not in package_info:
             print("Malformed package.json")
-            exit(1)
+            sys.exit(1)
 
         return package_info["version"] != version
 
@@ -130,14 +131,14 @@ class Installer:
         proc = subprocess.run([sys.executable, "-m", "venv", self.virtual_dir])
         if proc.returncode != 0:
             print(f"Failed to create virtual environment. Exit code {proc.returncode}")
-            exit(1)
+            sys.exit(1)
 
         print("Virtual environment created.")
 
     def restart_under_venv(self) -> None:
         print(f"Restarting under virtual environment '{self.virtual_dir}'...")
         subprocess.run([self.python_executable, __file__] + sys.argv[1:])
-        exit(0)
+        sys.exit(0)
 
     def check_required_files(self) -> None:
         missing = []
@@ -150,14 +151,14 @@ class Installer:
             for fp in missing:
                 print(f" - {fp}")
 
-            exit(1)
+            sys.exit(1)
 
     def check_yarn_installed(self) -> None:
         print("Checking if Yarn is installed...")
         proc = subprocess.run(["yarn", "--version"], shell=True)
         if proc.returncode != 0:
             print("Yarn is not installed. Please install it before continuing.")
-            exit(1)
+            sys.exit(1)
 
         print("Yarn is installed.")
 
@@ -166,14 +167,14 @@ class Installer:
         proc = subprocess.run([self.pip_executable, "install", "wheel==0.38.4"])
         if proc.returncode != 0:
             print(f"Failed to install wheel. Exit code {proc.returncode}")
-            exit(1)
+            sys.exit(1)
 
         proc = subprocess.run(
             [self.pip_executable, "install", "-r", "requirements.txt"]
         )
         if proc.returncode != 0:
             print(f"Failed to install requirements. Exit code {proc.returncode}")
-            exit(1)
+            sys.exit(1)
 
         print("Requirements installed.")
 
@@ -182,7 +183,7 @@ class Installer:
         proc = subprocess.run(["yarn"], shell=True)
         if proc.returncode != 0:
             print(f"Failed to install Yarn requirements. Exit code {proc.returncode}")
-            exit(1)
+            sys.exit(1)
 
         print("Yarn requirements installed.")
 
@@ -191,7 +192,7 @@ class Installer:
         proc = subprocess.run(["yarn", "build"], shell=True)
         if proc.returncode != 0:
             print(f"Failed to build frontend. Exit code {proc.returncode}")
-            exit(1)
+            sys.exit(1)
 
         print("Frontend built.")
 
@@ -203,6 +204,9 @@ class Installer:
         print("Run script created.")
 
     def run(self) -> None:
+        if "--force-new-venv" in sys.argv:
+            shutil.rmtree(self.virtual_dir, ignore_errors=True)
+
         if self.is_yarn_required():
             self.REQUIRED_FILES += ["yarn.lock", "package.json", "l10n"]
 
@@ -212,7 +216,12 @@ class Installer:
             self.create_venv()
             self.restart_under_venv()  # exits this process
 
-        self.install_python_requirements()
+        try:
+            self.install_python_requirements()
+        except FileNotFoundError:
+            print("There was an error with your installation.")
+            print("Please run again with the '--force-new-venv' flag.")
+            sys.exit(1)
 
         # Depending on how the user downloaded the source, the frontend may or may not be built.
         if self.is_yarn_required():
