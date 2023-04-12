@@ -15,7 +15,11 @@ logger = logging.getLogger("tsundoku")
 
 
 class ConfigCheckFailure(Exception):
-    ...
+    message: str
+
+    def __init__(self, message: str, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.message = message
 
 
 class ConfigInvalidKey(Exception):
@@ -108,16 +112,10 @@ class Config:
             if func is None:
                 continue
 
-            try:
-                if inspect.iscoroutinefunction(func):
-                    res = await func(value)
-                else:
-                    res = func(value)
-            except Exception:
-                raise ConfigCheckFailure(f"'{key}' failed when checking.")
-
-            if res is False:
-                raise ConfigCheckFailure(f"'{key}' is invalid.")
+            if inspect.iscoroutinefunction(func):
+                await func(value)
+            else:
+                func(value)
 
         sets = ", ".join(f"{col} = ?" for col in self.keys)
         async with self.app.acquire_db() as con:
@@ -145,22 +143,28 @@ class GeneralConfig(Config):
     default_desired_folder: str
     unwatch_when_finished: bool
 
-    def check_port(self, value: str) -> bool:
-        return 1024 <= int(value) <= 65535
+    def check_port(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
 
-    def check_log_level(self, value: str) -> bool:
+        port = int(value)
+        if port < 1024:
+            raise ConfigCheckFailure(f"'{port}' is less than 1024")
+        elif port > 65535:
+            raise ConfigCheckFailure(f"'{port}' is greater than 65535")
+
+    def check_log_level(self, value: str) -> None:
         if value in ("error", "warning", "info", "debug"):
             for handler in logger.handlers:
                 if handler.name in ("stream", "socket"):
                     handler.setLevel(value.upper())
 
-            return True
+            return
 
-        return False
+        raise ConfigCheckFailure(f"'{value}' is not a valid log level")
 
-    def check_locale(self, value: str) -> bool:
+    def check_locale(self, value: str) -> None:
         self.app.flags.LOCALE = value
-        return True
 
 
 class FeedsConfig(Config):
@@ -171,17 +175,40 @@ class FeedsConfig(Config):
     fuzzy_cutoff: int
     seed_ratio_limit: float
 
-    def check_polling_interval(self, value: str) -> bool:
-        return int(value) >= 180
+    def check_polling_interval(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
 
-    def check_complete_check_interval(self, value: str) -> bool:
-        return int(value) >= 1
+        if int(value) < 180:
+            raise ConfigCheckFailure("Polling interval must be at least 180 seconds")
 
-    def check_fuzzy_cutoff(self, value: str) -> bool:
-        return 0 <= int(value) <= 100
+    def check_complete_check_interval(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
 
-    def check_seed_ratio_limit(self, value: str) -> bool:
-        return float(value) >= 0.0
+        if int(value) < 10:
+            raise ConfigCheckFailure(
+                "Completion check interval must be at least 10 seconds"
+            )
+
+    def check_fuzzy_cutoff(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
+
+        cutoff = int(value)
+        if cutoff < 50:
+            raise ConfigCheckFailure("Fuzzy cutoff percent must be at least 50%")
+        elif cutoff > 100:
+            raise ConfigCheckFailure("Fuzzy cutoff percent can be at most 100%")
+
+    def check_seed_ratio_limit(self, value: str) -> None:
+        try:
+            ratio = float(value)
+        except ValueError:
+            raise ConfigCheckFailure(f"'{value}' is not a valid float")
+
+        if ratio < 0.0:
+            raise ConfigCheckFailure("Seed ratio limit must be at least 0.0")
 
 
 class TorrentConfig(Config):
@@ -194,11 +221,19 @@ class TorrentConfig(Config):
     password: Optional[str]
     secure: bool
 
-    def check_client(self, value: str) -> bool:
-        return value in ("deluge", "transmission", "qbittorrent")
+    def check_client(self, value: str) -> None:
+        if value not in ("deluge", "transmission", "qbittorrent"):
+            raise ConfigCheckFailure(f"'{value}' is not a valid download client")
 
-    def check_port(self, value: str) -> bool:
-        return 1 <= int(value) <= 65535
+    def check_port(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
+
+        port = int(value)
+        if port < 1:
+            raise ConfigCheckFailure(f"'{port}' is less than 1")
+        elif port > 65535:
+            raise ConfigCheckFailure(f"'{port}' is greater than 65535")
 
 
 class EncodeConfig(Config):
@@ -214,31 +249,49 @@ class EncodeConfig(Config):
     hour_end: int
     minimum_file_size: str
 
-    async def check_encoder(self, value: str) -> bool:
-        return value in await self.app.encoder.get_available_encoders()
+    async def check_encoder(self, value: str) -> None:
+        if value not in await self.app.encoder.get_available_encoders():
+            raise ConfigCheckFailure(f"'{value}' is not available for encoding")
 
-    def check_maximum_encodes(self, value: str) -> bool:
-        return int(value) >= 1
+    def check_maximum_encodes(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
 
-    def check_speed_preset(self, value: str) -> bool:
-        return value in VALID_SPEEDS
+        max_encodes = int(value)
+        if max_encodes < 1:
+            raise ConfigCheckFailure("Maximum encodes must be at least 1")
 
-    def check_quality_preset(self, value: str) -> bool:
-        return value in ("high", "low", "moderate")
+    def check_speed_preset(self, value: str) -> None:
+        if value not in VALID_SPEEDS:
+            raise ConfigCheckFailure(f"'{value}' is not a valid speed preset")
 
-    def check_hour_start(self, value: str) -> bool:
+    def check_quality_preset(self, value: str) -> None:
+        if value not in ("high", "low", "moderate"):
+            raise ConfigCheckFailure(f"'{value}' is not a valid quality preset")
+
+    def check_hour_start(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
+
+        hour_start = int(value)
         hour_end = self.hour_end
-        if hour_end:
-            return int(hour_end) > int(value)
+        if hour_end and hour_end <= hour_start:
+            raise ConfigCheckFailure(
+                "Encode time end must be greater than encode time start"
+            )
 
-        return True
+    def check_minimum_file_size(self, value: str) -> None:
+        if value not in VALID_MINIMUM_FILE_SIZES:
+            raise ConfigCheckFailure(f"'{value}' is not a valid file size")
 
-    def check_minimum_file_size(self, value: str) -> bool:
-        return value in VALID_MINIMUM_FILE_SIZES
+    def check_hour_end(self, value: str) -> None:
+        if isinstance(value, str) and not value.isdigit():
+            raise ConfigCheckFailure(f"'{value}' is not a valid integer")
 
-    def check_hour_end(self, value: str) -> bool:
+        hour_end = int(value)
+
         hour_start = self.hour_start
-        if hour_start:
-            return int(hour_start) < int(value)
-
-        return True
+        if hour_start and hour_start >= hour_end:
+            raise ConfigCheckFailure(
+                "Encode time start must be less than encode time end"
+            )

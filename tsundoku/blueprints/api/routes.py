@@ -196,10 +196,12 @@ async def config_route(cfg_type: str) -> APIResponse:
 
         try:
             await cfg.save()
-        except (ConfigCheckFailure, sqlite3.IntegrityError):
+        except sqlite3.IntegrityError:
             return APIResponse(
                 status=400, error="Error inserting new configuration data."
             )
+        except ConfigCheckFailure as e:
+            return APIResponse(status=400, error=e.message)
 
     if cfg_type == "encode":
         cfg.keys["has_ffmpeg"] = await app.encoder.has_ffmpeg()
