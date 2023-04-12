@@ -33,7 +33,7 @@ def deny_readonly(func: Callable) -> Callable:
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        if await current_user.readonly:
+        if await current_user.is_authenticated and await current_user.readonly:
             abort(403)
         else:
             return await current_app.ensure_async(func)(*args, **kwargs)
