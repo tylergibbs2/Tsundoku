@@ -6,3 +6,7 @@ body.do-theme-transition {
 
 @import "./themes/light.scss";
 @import "./themes/dark.scss";
+
+div.folder-item:hover span {
+  color: $cyan;
+}

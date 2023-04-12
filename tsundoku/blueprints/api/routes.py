@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import sqlite3
 from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
@@ -30,6 +31,7 @@ from tsundoku.config import (
 from tsundoku.decorators import deny_readonly
 from tsundoku.webhooks import WebhookBase
 from tsundoku.user import User
+from tsundoku.utils import directory_is_writable
 
 from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
@@ -109,6 +111,38 @@ async def ensure_auth() -> Optional[APIResponse]:
         )
 
     return None
+
+
+@api_blueprint.route("/tree", methods=["POST"])
+async def tree() -> APIResponse:
+    data = await request.get_json()
+    if "dir" not in data:
+        return APIResponse(status=400, error="Missing 'dir' key in request body.")
+
+    location = Path(data["dir"]).resolve()
+    if "subdir" in data and data["subdir"]:
+        try:
+            location = (location / data["subdir"]).resolve()
+        except PermissionError:
+            pass
+
+    dirs = []
+    for dir in location.glob("*"):
+        if not dir.is_dir():
+            continue
+
+        dirs.append(dir.name)
+
+    can_go_back = location.parent != location
+    return APIResponse(
+        status=200,
+        result={
+            "root_is_writable": directory_is_writable(location),
+            "can_go_back": can_go_back,
+            "current_path": str(location),
+            "children": dirs,
+        },
+    )
 
 
 @api_blueprint.route("/config/token", methods=["GET", "POST"])

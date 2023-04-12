@@ -112,3 +112,10 @@ export interface SeenRelease {
   torrent_destination: string;
   seen_at: string;
 }
+
+export interface TreeResponse {
+  root_is_writable: boolean;
+  can_go_back: boolean;
+  current_path: string;
+  children: string[];
+}

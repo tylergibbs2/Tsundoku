@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import asyncio
 from functools import partial, wraps
+import logging
+from pathlib import Path
 import shutil
 from typing import Any, List, TypedDict
+from uuid import uuid4
 
 import anitopy
 
@@ -22,6 +25,7 @@ def wrap(func: Any) -> Any:
 
 
 move = wrap(shutil.move)
+logger = logging.getLogger("tsundoku")
 
 
 class ExprDict(dict):
@@ -143,3 +147,15 @@ def compare_version_strings(first: str, second: str) -> int:
             return -1
 
     return 0
+
+
+def directory_is_writable(dir: Path) -> bool:
+    logger.debug(f"Checking if directory '{dir}' is writable...")
+    try:
+        canary = dir / str(uuid4())
+        canary.write_bytes(b"\0")
+        canary.unlink(missing_ok=True)
+    except Exception:
+        return False
+
+    return True

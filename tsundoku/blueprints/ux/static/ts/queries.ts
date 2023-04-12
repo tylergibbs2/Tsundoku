@@ -5,6 +5,7 @@ import {
   Entry,
   SeenRelease,
   Show,
+  TreeResponse,
   WebhookBase,
 } from "./interfaces";
 import { AddWebhookFormValues } from "./PageWebhooks/add_modal";
@@ -328,5 +329,29 @@ export const fetchFilteredSeenReleases = async (
   }
 
   let data: APIResponse<SeenRelease[]> = await response.json();
+  return data.result;
+};
+
+export const fetchTree = async (
+  dir: string,
+  subdir: string | null = null
+): Promise<TreeResponse> => {
+  let request = {
+    method: "POST",
+    headers: COMMON_HEADERS,
+    body: JSON.stringify({
+      dir: dir,
+      subdir: subdir,
+    }),
+  };
+
+  let response = await fetch("/api/v1/tree", request);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to get tree, ${response.status}: ${await response.text()}}`
+    );
+  }
+
+  let data: APIResponse<TreeResponse> = await response.json();
   return data.result;
 };
