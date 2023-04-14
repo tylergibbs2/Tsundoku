@@ -36,8 +36,7 @@ except ImportError:
 
 import tsundoku.asqlite
 from tsundoku.asqlite import Connection
-from tsundoku.blueprints.api import api_blueprint
-from tsundoku.blueprints.ux import ux_blueprint
+from tsundoku.blueprints import api_blueprint, ux_blueprint
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 from tsundoku.database import acquire, migrate, sync_acquire
