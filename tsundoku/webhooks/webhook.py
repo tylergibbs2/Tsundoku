@@ -23,7 +23,7 @@ class WebhookBase:
     content_fmt: str
     default_triggers: List[str]
 
-    def to_dict(self) -> dict:
+    def to_dict(self, /, secure: bool = False) -> dict:
         """
         Return the WebhookBase object as a dict.
 
@@ -36,7 +36,7 @@ class WebhookBase:
             "base_id": self.base_id,
             "name": self.name,
             "service": self.service,
-            "url": self.url,
+            "url": self.url if not secure else "********",
             "content_fmt": self.content_fmt,
             "default_triggers": self.default_triggers,
         }

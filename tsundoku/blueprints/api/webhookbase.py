@@ -2,10 +2,13 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
+    from tsundoku.user import User
 
     app: TsundokuApp
+    current_user: User
 else:
     from quart import current_app as app
+    from quart_auth import current_user
 
 from quart import request, views
 
@@ -17,14 +20,18 @@ from .response import APIResponse
 
 class WebhookBaseAPI(views.MethodView):
     async def get(self, base_id: Optional[int] = None) -> APIResponse:
+        hidden_url = await current_user.readonly
         if not base_id:
             return APIResponse(
-                result=[base.to_dict() for base in await WebhookBase.all(app)]
+                result=[
+                    base.to_dict(secure=hidden_url)
+                    for base in await WebhookBase.all(app)
+                ]
             )
 
         base = await WebhookBase.from_id(app, base_id)
         if base:
-            return APIResponse(result=[base.to_dict()])
+            return APIResponse(result=[base.to_dict(secure=hidden_url)])
 
         return APIResponse(
             status=404, error="BaseWebhook with specified ID does not exist."
