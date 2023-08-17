@@ -5,11 +5,7 @@
     "editor.linkedEditing": true,
     "python.languageServer": "Pylance",
     "[python]": {
-        "editor.wordBasedSuggestions": false,
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll": true
-        },
+        "editor.wordBasedSuggestions": false
     },
     "python.formatting.provider": "black",
     "files.exclude": {
