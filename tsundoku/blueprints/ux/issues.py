@@ -41,6 +41,9 @@ Add any other context about the problem here.
 
 
 def get_issue_url(issue_type: str, useragent: str) -> str:
+    repo_owner = os.getenv("GITHUB_REPO_OWNER", "tylergibbs2")
+    repo_name = os.getenv("GITHUB_REPO_NAME", "Tsundoku")
+
     if issue_type == "bug":
         parsed_ua = parse(useragent)
         linux_version = " ".join(distro.linux_distribution()).split()
@@ -56,8 +59,8 @@ def get_issue_url(issue_type: str, useragent: str) -> str:
         body = quote(BUG_REPORT.format(**ctx))
 
         return (
-            "https://github.com/tylergibbs2/Tsundoku/issues/new?labels=bug&title=&body="
+            f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=bug&title=&body="
             + body
         )
 
-    return "https://github.com/tylergibbs2/Tsundoku/issues/new?labels=feature%20request&template=feature_request.md"
+    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=feature%20request&template=feature_request.md"
