@@ -19,7 +19,7 @@ class ShowCollection:
     def __len__(self) -> int:
         return len(self._shows)
 
-    def __iter__(self) -> Generator[None, None, Show]:
+    def __iter__(self) -> Generator[Show, None, None]:
         for show in self._shows:
             yield show
 
