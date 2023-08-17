@@ -490,15 +490,17 @@ class Encoder:
         entry = await Entry.from_entry_id(self.app, entry_id)
         try:
             await self.app.dl_client.delete_torrent(entry.torrent_hash)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                f"Failed removing entry <e{entry_id}> from torrent client: {e}"
+            )
 
         original = original.resolve()
         try:
             original.unlink(missing_ok=True)
-        except Exception:
+        except Exception as e:
             logger.exception(
-                f"Failed moving finished encode for entry <e{entry_id}>: could not remove original file"
+                f"Failed moving finished encode for entry <e{entry_id}>: {e}"
             )
         else:
             await move(encoded.resolve(), original)
