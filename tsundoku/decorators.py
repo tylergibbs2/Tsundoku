@@ -6,7 +6,7 @@ from quart import current_app, abort
 if TYPE_CHECKING:
     from tsundoku.user import User
 
-    current_user: User
+    current_user = User(None)
 else:
     from quart_auth import current_user
 

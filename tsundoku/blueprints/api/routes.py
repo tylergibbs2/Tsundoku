@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
     from tsundoku.user import User
 
-    app: TsundokuApp
-    current_user: User
+    app = TsundokuApp()
+    current_user = User(None)
 else:
     from quart import current_app as app
     from quart_auth import current_user

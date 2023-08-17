@@ -15,7 +15,7 @@ from werkzeug import Response
 if TYPE_CHECKING:
     import tsundoku.app
 
-    app: tsundoku.app.TsundokuApp
+    app = tsundoku.app.TsundokuApp()
 else:
     from quart import current_app as app
 
