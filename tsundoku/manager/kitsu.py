@@ -8,8 +8,6 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
     app: TsundokuApp
-else:
-    from quart import current_app as app
 
 import aiohttp
 from quart import url_for
@@ -26,6 +24,8 @@ class KitsuManager:
         "Accept": "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
     }
+
+    app: TsundokuApp
 
     show_id: int
 
@@ -47,7 +47,7 @@ class KitsuManager:
         dict
             The serialized object.
         """
-        fluent = app.get_fluent()
+        fluent = self.app.get_fluent()
 
         return {
             "show_id": self.show_id,
@@ -64,7 +64,9 @@ class KitsuManager:
         }
 
     @classmethod
-    async def fetch(cls, show_id: int, show_name: str) -> KitsuManager:
+    async def fetch(
+        cls, app: TsundokuApp, show_id: int, show_name: str
+    ) -> KitsuManager:
         """
         Attempts to retrieve Kitsu information
         for a specified show name from the Kitsu API.
@@ -98,6 +100,7 @@ class KitsuManager:
         attributes = result.get("attributes", {})
 
         instance = cls()
+        instance.app = app
         instance.show_id = show_id
         instance.kitsu_id = int(result["id"]) if result else None
         instance.slug = attributes.get("slug")
@@ -138,7 +141,9 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def fetch_by_kitsu(cls, show_id: int, kitsu_id: int) -> KitsuManager:
+    async def fetch_by_kitsu(
+        cls, app: TsundokuApp, show_id: int, kitsu_id: int
+    ) -> KitsuManager:
         """
         Attempts to retrieve Kitsu information
         for a specified show ID from the Kitsu API.
@@ -172,6 +177,7 @@ class KitsuManager:
         attributes = result.get("attributes", {})
 
         instance = cls()
+        instance.app = app
         instance.show_id = show_id
         instance.kitsu_id = int(result["id"]) if result else None
         instance.slug = attributes.get("slug")
@@ -212,7 +218,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_show_id(cls, show_id: int) -> KitsuManager:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> KitsuManager:
         """
         Retrieves Kitsu information from the database based
         on a show's ID.
@@ -253,9 +259,10 @@ class KitsuManager:
                 """,
                     show_id,
                 )
-                return await KitsuManager.fetch(show_id, show_name)
+                return await KitsuManager.fetch(app, show_id, show_name)
 
         instance = cls()
+        instance.app = app
         instance.show_id = show_id
         instance.kitsu_id = row["kitsu_id"]
         instance.slug = row["slug"]
@@ -266,7 +273,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_data(cls, data: Dict[str, str]) -> KitsuManager:
+    async def from_data(cls, app: TsundokuApp, data: Dict[str, str]) -> KitsuManager:
         """
         Creates a metadata object from already queried SQL
         data.
@@ -296,9 +303,10 @@ class KitsuManager:
                 """,
                     show_id,
                 )
-                return await KitsuManager.fetch(show_id, show_name)
+                return await KitsuManager.fetch(app, show_id, show_name)
 
         instance = cls()
+        instance.app = app
         instance.show_id = show_id
         instance.kitsu_id = int(data["kitsu_id"]) if data.get("kitsu_id") else None
         instance.slug = data.get("slug")
@@ -331,7 +339,7 @@ class KitsuManager:
         """
         Clears the cached data for a show.
         """
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             await con.execute(
                 """
                 DELETE FROM
@@ -369,7 +377,7 @@ class KitsuManager:
         if self.kitsu_id is None or poster_images is None:
             return url_for("ux.static", filename="img/missing.png")
 
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             url = await con.fetchval(
                 """
                 SELECT
@@ -398,7 +406,7 @@ class KitsuManager:
             logger.info(f"Unable to find new poster for <s{self.show_id}>")
             return url_for("ux.static", filename="img/missing.png")
 
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             await con.execute(
                 """
                 UPDATE
@@ -432,7 +440,7 @@ class KitsuManager:
         if self.kitsu_id is None:
             return False
 
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             row = await con.fetchone(
                 """
                 SELECT
@@ -469,10 +477,10 @@ class KitsuManager:
         if self.kitsu_id is None:
             return
 
-        cfg = await GeneralConfig.retrieve(app)
+        cfg = await GeneralConfig.retrieve(self.app)
 
         self.status = status
-        async with app.acquire_db() as con:
+        async with self.app.acquire_db() as con:
             await con.execute(
                 """
                 UPDATE

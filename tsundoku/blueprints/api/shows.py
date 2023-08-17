@@ -223,7 +223,7 @@ class ShowsAPI(views.MethodView):
                 return APIResponse(status=400, error="Kitsu ID is not a valid integer.")
 
             if old_kitsu != new_kitsu:
-                await show.metadata.fetch_by_kitsu(show_id, new_kitsu)
+                await show.metadata.fetch_by_kitsu(app, show_id, new_kitsu)
 
         if arguments.get("title"):
             show.title = arguments["title"]

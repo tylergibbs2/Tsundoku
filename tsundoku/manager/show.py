@@ -88,7 +88,7 @@ class Show:
             "show_status": data_dict.pop("show_status", None),
             "cached_poster_url": data_dict.pop("cached_poster_url", None),
         }
-        metadata = await KitsuManager.from_data(metadata_dict)
+        metadata = await KitsuManager.from_data(app, metadata_dict)
 
         instance = cls(app, **data_dict, metadata=metadata, _entries=[], _webhooks=[])
 
