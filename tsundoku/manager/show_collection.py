@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, Generator, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -18,6 +18,10 @@ class ShowCollection:
 
     def __len__(self) -> int:
         return len(self._shows)
+
+    def __iter__(self) -> Generator[None, None, Show]:
+        for show in self._shows:
+            yield show
 
     def to_list(self) -> List[dict]:
         """
