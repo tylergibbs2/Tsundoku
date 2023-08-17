@@ -94,3 +94,14 @@ def test_7():
             "video_resolution": "1080p",
         },
     )
+
+
+def test_8():
+    assertAnitopyResultContains(
+        "[M-L-Stuffs] Futari wa Precure (Pretty Cure) 01",
+        {
+            "release_group": "M-L-Stuffs",
+            "anime_title": "Futari wa Precure (Pretty Cure)",
+            "episode_number": "01",
+        },
+    )
