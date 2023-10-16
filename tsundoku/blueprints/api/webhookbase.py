@@ -12,7 +12,7 @@ else:
 
 from quart import request, views
 
-from tsundoku.constants import VALID_TRIGGERS
+from tsundoku.constants import VALID_TRIGGERS, VALID_SERVICES
 from tsundoku.webhooks import WebhookBase
 
 from .response import APIResponse
@@ -72,7 +72,6 @@ class WebhookBaseAPI(views.MethodView):
             )
 
     async def put(self, base_id: int) -> APIResponse:
-        wh_services = ("discord", "slack")
         arguments = await request.get_json()
 
         name = arguments.get("name")
@@ -86,7 +85,7 @@ class WebhookBaseAPI(views.MethodView):
             return APIResponse(
                 status=404, error="WebhookBase with specified ID does not exist."
             )
-        elif service not in wh_services:
+        elif service not in VALID_SERVICES:
             return APIResponse(status=400, error="Invalid webhook service.")
         elif not url:
             return APIResponse(status=400, error="Invalid webhook URL.")
