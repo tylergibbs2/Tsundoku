@@ -126,7 +126,7 @@ async def logs() -> Union[str, QuartResponse]:
 @ux_blueprint.route("/register", methods=["GET", "POST"])
 @deny_readonly
 async def register() -> Any:
-    if await current_user.is_authenticated or not app.flags.IS_FIRST_LAUNCH:
+    if not app.flags.IS_FIRST_LAUNCH or await current_user.is_authenticated:
         return redirect("/")
 
     if request.method == "GET":
