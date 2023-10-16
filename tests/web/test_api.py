@@ -15,6 +15,14 @@ async def test_unauthorized_index(app: MockTsundokuApp, caplog: LogCaptureFixtur
     assert response.status_code == 302
 
 
+async def test_unauthorized_shows_list(app: MockTsundokuApp, caplog: LogCaptureFixture):
+    caplog.set_level(logging.ERROR, logger="tsundoku")
+
+    client = await app.test_client(user_type=None)
+    response = await client.get("/api/v1/shows")
+    assert response.status_code == 401
+
+
 async def test_authorized_index_regular(
     app: MockTsundokuApp, caplog: LogCaptureFixture
 ):
@@ -22,6 +30,14 @@ async def test_authorized_index_regular(
 
     client = await app.test_client(user_type=UserType.REGULAR)
     response = await client.get("/")
+    assert response.status_code == 200
+
+
+async def test_authorized_shows_list(app: MockTsundokuApp, caplog: LogCaptureFixture):
+    caplog.set_level(logging.ERROR, logger="tsundoku")
+
+    client = await app.test_client(user_type=UserType.REGULAR)
+    response = await client.get("/api/v1/shows")
     assert response.status_code == 200
 
 
