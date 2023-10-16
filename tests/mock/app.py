@@ -131,6 +131,7 @@ class MockTsundokuApp(Quart):
     ) -> TestClientProtocol:
         client = super().test_client(use_cookies=True)
         if user_type is None:
+            self.flags.IS_FIRST_LAUNCH = True
             return client
         elif user_type == UserType.REGULAR:
             await self.__create_user(readonly=False)
