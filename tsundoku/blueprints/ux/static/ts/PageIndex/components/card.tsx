@@ -73,7 +73,7 @@ export const Card = ({
           <div className="card-image">
             {show.metadata.html_status &&
               ReactHtmlParser(show.metadata.html_status)}
-            <a href={show.metadata.link}>
+            <a href={show.metadata.link} target="_blank">
               <figure className="image is-3by4">
                 <img
                   src={show.metadata.poster}

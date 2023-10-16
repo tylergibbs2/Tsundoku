@@ -36,7 +36,12 @@ export const ListItem = ({
   let title: any;
   if (show.metadata.link)
     title = (
-      <a className="ml-1" title={show.title} href={show.metadata.link}>
+      <a
+        className="ml-1"
+        title={show.title}
+        href={show.metadata.link}
+        target="_blank"
+      >
         <b>{show.title}</b>
       </a>
     );
@@ -94,7 +99,7 @@ export const ListItem = ({
   return (
     <tr className={shouldShow ? "" : "is-hidden"}>
       <td className="is-vcentered">
-        <a href={show.metadata.link}>
+        <a href={show.metadata.link} target="_blank">
           <figure className="image is-3by4">
             <img
               src={show.metadata.poster}
