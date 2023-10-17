@@ -128,33 +128,38 @@ class ShowsAPI(views.MethodView):
         for webhook in await show.webhooks():
             await webhook.import_default_triggers()
 
-        logger.info(
-            f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
-        )
-
-        # Find already seen releases. Must be done before triggering the poller
-        if (
-            show.preferred_resolution is not None
-            and show.preferred_release_group is not None
-        ):
-            seen_releases = await SeenRelease.filter(
-                app,
-                title=show.title,
-                resolution=show.preferred_resolution,
-                release_group=show.preferred_release_group,
+        if show.watch:
+            logger.info(
+                f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
             )
-            for seen_release in seen_releases:
-                magnet = await app.dl_client.get_magnet(
-                    seen_release.torrent_destination
-                )
-                await app.downloader.begin_handling(
-                    show.id_, seen_release.episode, magnet, seen_release.version
-                )
-        else:
-            await app.poller.poll(force=True)
 
-        # Refetch entries in case they were added during the poll
-        await show.entries()
+            # Find already seen releases. Must be done before triggering the poller
+            if (
+                show.preferred_resolution is not None
+                and show.preferred_release_group is not None
+            ):
+                seen_releases = await SeenRelease.filter(
+                    app,
+                    title=show.title,
+                    resolution=show.preferred_resolution,
+                    release_group=show.preferred_release_group,
+                )
+                for seen_release in seen_releases:
+                    magnet = await app.dl_client.get_magnet(
+                        seen_release.torrent_destination
+                    )
+                    await app.downloader.begin_handling(
+                        show.id_, seen_release.episode, magnet, seen_release.version
+                    )
+            else:
+                await app.poller.poll(force=True)
+
+            # Refetch entries in case they were added during the poll
+            await show.entries()
+        else:
+            logger.info(
+                f"New Show Added, <s{show.id_}> - Watch flag not set, not checking for new releases"
+            )
 
         return APIResponse(result=show.to_dict())
 
