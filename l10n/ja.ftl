@@ -87,7 +87,6 @@ edit-tab-info = 情報
 edit-tab-entries = 項目
 edit-tab-webhooks = ウェブフック
 edit-entries-th-episode = エピソード
-edit-entries-th-status = ステータス
 edit-entries-th-last-update = 更新
 edit-entries-is-empty = エントリーはありません
 edit-entries-last-update = {$time} 前
