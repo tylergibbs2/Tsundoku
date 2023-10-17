@@ -51,9 +51,10 @@ class ShowCollection:
                 """
                 SELECT
                     s.id as id_,
+                    s.library_id,
                     s.title,
+                    s.title_local,
                     s.desired_format,
-                    s.desired_folder,
                     s.season,
                     s.episode_offset,
                     s.watch,

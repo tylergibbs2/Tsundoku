@@ -35,6 +35,7 @@ from tsundoku.utils import directory_is_writable
 
 from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
+from .libraries import LibrariesAPI
 from .nyaa import NyaaAPI
 from .response import APIResponse
 from .shows import ShowsAPI
@@ -376,6 +377,17 @@ def setup_views() -> None:
     nyaa_view = NyaaAPI.as_view("nyaa_api")
 
     api_blueprint.add_url_rule("/nyaa", view_func=nyaa_view, methods=["GET", "POST"])
+
+    libraries_view = LibrariesAPI.as_view("libraries_api")
+
+    api_blueprint.add_url_rule(
+        "/libraries", view_func=libraries_view, methods=["GET", "POST"]
+    )
+    api_blueprint.add_url_rule(
+        "/libraries/<int:library_id>",
+        view_func=libraries_view,
+        methods=["GET", "PUT", "DELETE"],
+    )
 
 
 setup_views()

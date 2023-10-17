@@ -4,6 +4,7 @@ import { getInjector } from "../../fluent";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, setConfig } from "../../queries";
 import { GlobalLoading } from "../../Components/GlobalLoading";
+import { DirectorySelect } from "../../Components/DirectorySelect";
 
 const _ = getInjector();
 
@@ -59,8 +60,10 @@ export const GeneralConfigApp = () => {
     mutation.mutate({ key: "default_desired_format", value: e.target.value });
   };
 
-  const inputDefaultDesiredFolder = (e: ChangeEvent<HTMLInputElement>) => {
-    mutation.mutate({ key: "default_desired_folder", value: e.target.value });
+  const inputUseSeasonFolder = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked)
+      mutation.mutate({ key: "use_season_folder", value: true });
+    else mutation.mutate({ key: "use_season_folder", value: false });
   };
 
   const inputUnwatchWhenFinished = (e: ChangeEvent<HTMLInputElement>) => {
@@ -176,20 +179,20 @@ export const GeneralConfigApp = () => {
           />
         </div>
         <div className="column is-4 my-auto">
-          <h1 className="title is-5">
-            <span className="has-tooltip-bottom">
-              {_("general-defaultfolder-title")}
-            </span>
-          </h1>
+          <h1 className="title is-5">Use Season Folder</h1>
           <h2 className="subtitle is-6">
-            {_("general-defaultfolder-subtitle")}
+            Whether or not a season folder should be created when moving a show
           </h2>
-          <input
-            className="input"
-            type="text"
-            defaultValue={config?.data?.default_desired_folder}
-            onChange={inputDefaultDesiredFolder}
-          />
+          <div className="field">
+            <input
+              id="seasonFolderCheck"
+              type="checkbox"
+              className="switch"
+              defaultChecked={config?.data?.use_season_folder}
+              onChange={inputUseSeasonFolder}
+            />
+            <label htmlFor="seasonFolderCheck">{_("checkbox-enabled")}</label>
+          </div>
         </div>
         <div className="column is-4 my-auto">
           <h1 className="title is-5">{_("general-unwatchfinished-title")}</h1>

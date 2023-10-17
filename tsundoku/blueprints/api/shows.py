@@ -32,8 +32,10 @@ class ShowsAPI(views.MethodView):
         else:
             try:
                 show = await Show.from_id(app, show_id)
-            except Exception:
+            except ValueError:
                 return APIResponse(status=404, error="Show with passed ID not found.")
+            except Exception as e:
+                return APIResponse(status=500, error=f"An unknown error occurred: {e}")
 
             return APIResponse(result=show.to_dict())
 
@@ -48,12 +50,18 @@ class ShowsAPI(views.MethodView):
             await request.get_data()
             arguments = await request.form
 
+        library_id = arguments.get("library_id")
+        if not library_id:
+            return APIResponse(status=400, error="Missing library id argument.")
+
+        try:
+            library_id = int(library_id)
+        except ValueError:
+            return APIResponse(status=400, error="Library id is not an integer.")
+
         desired_format = arguments.get("desired_format")
-        desired_folder = arguments.get("desired_folder")
         if not desired_format:
             desired_format = None
-        if not desired_folder:
-            desired_folder = None
 
         season = arguments.get("season")
         if season is None:
@@ -93,9 +101,10 @@ class ShowsAPI(views.MethodView):
 
         show = await Show.insert(
             app,
+            library_id=library_id,
             title=arguments["title"],
+            title_local=arguments["title_local"],
             desired_format=desired_format,
-            desired_folder=desired_folder,
             season=season,
             episode_offset=episode_offset,
             watch=arguments.get("watch", True),
@@ -169,6 +178,17 @@ class ShowsAPI(views.MethodView):
                 status=400, error="Preferred resolution is not a valid resolution."
             )
 
+        library_id = arguments.get("library_id")
+        if not library_id:
+            return APIResponse(status=400, error="Missing library id argument.")
+
+        try:
+            library_id = int(library_id)
+        except ValueError:
+            return APIResponse(status=400, error="Library id is not an integer.")
+
+        show.library_id = library_id
+
         show.preferred_resolution = preferred_resolution
 
         preferred_release_group = arguments.get("preferred_release_group")
@@ -182,12 +202,6 @@ class ShowsAPI(views.MethodView):
             show.desired_format = None
         else:
             show.desired_format = desired_format
-
-        desired_folder = arguments.get("desired_folder")
-        if not desired_folder:
-            show.desired_folder = None
-        else:
-            show.desired_folder = desired_folder
 
         if "season" in arguments:
             try:
@@ -214,7 +228,7 @@ class ShowsAPI(views.MethodView):
 
         if old_title != arguments["title"]:
             do_poll = True
-            await show.metadata.fetch(show_id, arguments["title"])
+            await show.metadata.fetch(app, show_id, arguments["title"])
 
         if "kitsu_id" in arguments:
             try:
@@ -241,6 +255,11 @@ class ShowsAPI(views.MethodView):
                 )
 
             show.post_process = arguments["post_process"]
+
+        if "title_local" in arguments and arguments["title_local"]:
+            show.title_local = arguments["title_local"]
+        else:
+            show.title_local = None
 
         await show.update()
 

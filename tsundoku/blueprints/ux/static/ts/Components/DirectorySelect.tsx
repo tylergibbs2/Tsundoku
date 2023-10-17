@@ -34,7 +34,7 @@ export const DirectorySelect = ({
   const save = () => {
     if (isLoading) return;
 
-    onChange(currentState.current_path);
+    if (onChange) onChange(currentState.current_path);
     setIsActive(false);
   };
 

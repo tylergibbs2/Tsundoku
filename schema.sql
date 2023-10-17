@@ -48,11 +48,18 @@ CREATE TABLE seen_release (
     PRIMARY KEY (title, release_group, episode, resolution)
 );
 
+CREATE TABLE library (
+    id INTEGER PRIMARY KEY,
+    folder TEXT NOT NULL,
+    is_default BOOLEAN NOT NULL
+);
+
 CREATE TABLE shows (
     id INTEGER PRIMARY KEY,
+    library_id INTEGER REFERENCES library(id) ON DELETE SET NULL,
     title TEXT NOT NULL,
+    title_local TEXT,
     desired_format TEXT,
-    desired_folder TEXT,
     season INTEGER NOT NULL,
     episode_offset INTEGER NOT NULL DEFAULT 0,
     watch BOOLEAN NOT NULL DEFAULT '1',
@@ -85,14 +92,14 @@ CREATE TABLE encode (
 
 CREATE TABLE general_config (
     id INTEGER PRIMARY KEY CHECK (id = 0),
-    host TEXT NOT NULL DEFAULT 'localhost',
+    host TEXT NOT NULL DEFAULT '0.0.0.0',
     port INTEGER NOT NULL DEFAULT 6439,
     update_do_check BOOLEAN NOT NULL DEFAULT '0',
     locale TEXT NOT NULL DEFAULT 'en',
     log_level TEXT NOT NULL DEFAULT 'info',
     default_desired_format TEXT NOT NULL DEFAULT '{n} - {s00e00}',
-    default_desired_folder TEXT NOT NULL DEFAULT '{n}/Season {s00}',
-    unwatch_when_finished BOOLEAN NOT NULL DEFAULT '0'
+    unwatch_when_finished BOOLEAN NOT NULL DEFAULT '0',
+    use_season_folder BOOLEAN NOT NULL DEFAULT '1'
 );
 
 CREATE TABLE feeds_config (

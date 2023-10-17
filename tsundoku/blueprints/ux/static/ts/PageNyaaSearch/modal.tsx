@@ -312,8 +312,8 @@ const AddToExistingShowForm = ({
 
 interface AddShowFormInputs {
   title: string;
+  title_local: string;
   desired_format: string;
-  desired_folder: string;
   season: string;
   episode_offset: string;
 }
@@ -335,8 +335,8 @@ const AddShowForm = ({
 }: AddShowFormParams) => {
   let defaultValues = {
     title: "",
+    title_local: "",
     desired_format: generalConfig?.default_desired_format,
-    desired_folder: generalConfig?.default_desired_folder,
     season: 1,
     episode_offset: 0,
     watch: true,
@@ -432,14 +432,14 @@ const AddShowForm = ({
             <label className="label">
               <span
                 className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("desired-folder-tt")}
+                data-tooltip="Override title"
               >
-                {_("desired-folder-field")}
+                Local Title Override
               </span>
             </label>
             <div className="control">
               <input
-                {...register("desired_folder")}
+                {...register("title_local")}
                 className="input"
                 type="text"
               />

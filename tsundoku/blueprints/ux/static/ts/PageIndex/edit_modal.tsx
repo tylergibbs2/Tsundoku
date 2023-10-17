@@ -6,7 +6,7 @@ import {
   SetStateAction,
   ChangeEvent,
 } from "react";
-import { useForm } from "react-hook-form";
+import { UseFormRegister, useForm } from "react-hook-form";
 
 import humanizeDuration from "humanize-duration";
 
@@ -28,6 +28,7 @@ import { IonIcon } from "../icon";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, updateShowById } from "../queries";
 import { toast } from "bulma-toast";
+import { LibrarySelect } from "./components/library_select";
 
 const _ = getInjector();
 
@@ -88,8 +89,9 @@ export const EditModal = ({
       setTab("info");
       reset({
         title: activeShow.title,
+        library_id: activeShow.library_id,
+        title_local: activeShow.title_local,
         desired_format: activeShow.desired_format,
-        desired_folder: activeShow.desired_folder,
         season: activeShow.season,
         episode_offset: activeShow.episode_offset,
         watch: activeShow.watch,
@@ -610,6 +612,22 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
         </div>
 
         <div className="column is-full">
+          <div className="field">
+            <label className="label">
+              <span
+                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                data-tooltip={_("edit-form-library-tt")}
+              >
+                {_("edit-form-library-field")}
+              </span>
+            </label>
+            <div className="control">
+              <LibrarySelect register={register} />
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-full">
           <details>
             <summary>{_("edit-form-advanced")}</summary>
 
@@ -644,21 +662,16 @@ const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
                   <label className="label">
                     <span
                       className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
-                      data-tooltip={_("edit-form-desired-folder-tt")}
+                      data-tooltip={_("edit-form-local-title-tt")}
                     >
-                      {_("edit-form-desired-folder-field")}
+                      {_("edit-form-local-title-field")}
                     </span>
                   </label>
                   <div className="control">
                     <input
-                      {...register("desired_folder")}
+                      {...register("title_local")}
                       className="input"
                       type="text"
-                      placeholder={
-                        generalConfig.isLoading
-                          ? "..."
-                          : generalConfig.data?.default_desired_folder
-                      }
                     />
                   </div>
                 </div>

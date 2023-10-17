@@ -56,11 +56,18 @@ export interface Metadata {
   link?: string;
 }
 
+export interface Library {
+  id_: number;
+  folder: string;
+  is_default: boolean;
+}
+
 export interface Show {
   id_: number;
+  library_id: number;
   title: string;
+  title_local: string | null;
   desired_format: string | null;
-  desired_folder: string | null;
   season: number;
   episode_offset: number;
   watch: boolean;
@@ -98,9 +105,9 @@ export interface GeneralConfig {
   update_do_check?: boolean;
   locale?: string;
   log_level?: string;
-  default_desired_folder?: string;
-  default_desired_format?: string;
+  default_desired_format: string;
   unwatch_when_finished?: boolean;
+  use_season_folder?: boolean;
 }
 
 export interface SeenRelease {

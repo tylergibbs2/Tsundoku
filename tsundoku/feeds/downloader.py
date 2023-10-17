@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 import aiofiles.os
 
 from tsundoku.config import FeedsConfig, GeneralConfig
-from tsundoku.manager import Entry, EntryState
+from tsundoku.manager import Entry, EntryState, Library
 from tsundoku.utils import ExprDict, move, parse_anime_title
 
 logger = logging.getLogger("tsundoku")
@@ -39,7 +39,7 @@ class Downloader:
     seed_ratio_limit: float
 
     default_desired_format: str
-    default_desired_folder: str
+    use_season_folder: bool
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
@@ -54,7 +54,7 @@ class Downloader:
 
         general_cfg = await GeneralConfig.retrieve(self.app)
         self.default_desired_format = general_cfg.default_desired_format
-        self.default_desired_folder = general_cfg.default_desired_folder
+        self.use_season_folder = general_cfg.use_season_folder
 
     async def start(self) -> None:
         logger.debug("Downloader task started.")
@@ -237,9 +237,9 @@ class Downloader:
             show_info = await con.fetchone(
                 """
                 SELECT
+                    library_id,
                     title,
-                    desired_folder,
-                    episode_offset,
+                    title_local,
                     season
                 FROM
                     shows
@@ -249,20 +249,18 @@ class Downloader:
             )
 
         season = str(show_info["season"])
-        episode = str(entry.episode + show_info["episode_offset"])
-
-        expressions = self.get_expression_mapping(
-            show_info["title"], season, episode, entry.version
+        title = (
+            show_info["title_local"]
+            if show_info["title_local"] is not None
+            else show_info["title"]
         )
 
-        desired_folder = (
-            show_info["desired_folder"]
-            if show_info["desired_folder"]
-            else self.default_desired_folder
-        )
-        expressive_folder = desired_folder.format_map(expressions)
-        Path(expressive_folder).mkdir(parents=True, exist_ok=True)
-        desired_folder = Path(expressive_folder)
+        library: Library = await Library.from_id(self.app, show_info["library_id"])
+        desired_folder = library.folder / title
+        if self.use_season_folder:
+            desired_folder /= f"Season {season}"
+
+        desired_folder.mkdir(parents=True, exist_ok=True)
 
         name = entry.file_path.name
         desired_path = desired_folder / name
@@ -311,6 +309,7 @@ class Downloader:
                 """
                 SELECT
                     title,
+                    title_local,
                     desired_format,
                     season,
                     episode_offset
@@ -328,10 +327,15 @@ class Downloader:
 
         suffix = entry.file_path.suffix
 
+        title = (
+            show_info["title_local"]
+            if show_info["title_local"] is not None
+            else show_info["title"]
+        )
         episode = str(entry.episode + show_info["episode_offset"])
 
         expressions = self.get_expression_mapping(
-            show_info["title"],
+            title,
             str(show_info["season"]),
             episode,
             entry.version,
@@ -485,6 +489,24 @@ class Downloader:
             await entry.set_state(EntryState.renamed)
             await entry.set_path(renamed_path)
             logger.info(f"Release Marked as Renamed - <e{entry.id}>")
+
+        async with self.app.acquire_db() as con:
+            library_id = await con.fetchval(
+                """
+                SELECT
+                    library_id
+                FROM
+                    shows
+                WHERE id=?;
+            """,
+                entry.show_id,
+            )
+
+        if library_id is None:
+            logger.error(
+                f"Show <s{entry.show_id}> is missing a library. Cannot process entry <e{entry.id}>"
+            )
+            return
 
         if entry.state == EntryState.renamed:
             logger.info(f"Preparing to Move Release - <e{entry.id}>")

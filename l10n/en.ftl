@@ -93,14 +93,19 @@ add-form-name-placeholder = Attack on Titan
 add-form-desired-format-tt = Desired name of the file after it is renamed.
 add-form-desired-format-field = Desired Format
 
-add-form-desired-folder-tt = Folder which to place the completed file.
-add-form-desired-folder-field = Desired Folder
-
 add-form-season-tt = Value to use for the season of the series when renaming.
 add-form-season-field = Season
 
 add-form-episode-offset-tt = Positive or negative value by which to modify the episode number as it appears in the RSS feed.
 add-form-episode-offset-field = Episode Offset
+
+add-form-library-tt = Which library to move entries from this show to
+add-form-library-field = Library
+
+add-form-advanced = Advanced Settings
+
+add-form-local-title-tt = Override the title of the show when moving and renaming
+add-form-local-title-field = Local Title Override
 
 add-form-add-button = Add show
 add-form-cancel-button = Cancel
@@ -169,6 +174,12 @@ edit-form-season-field = Season
 edit-form-episode-offset-tt = Positive or negative value by which to modify the episode number as it appears in the RSS feed.
 edit-form-episode-offset-field = Episode Offset
 
+edit-form-library-tt = Which library to move entries from this show to
+edit-form-library-field = Library
+
+edit-form-local-title-tt = Override the title of the show when moving and renaming
+edit-form-local-title-field = Local Title Override
+
 edit-form-cancel-button = Cancel
 
 list-view-actions-header = Actions
@@ -196,6 +207,18 @@ feedback-bug = Report a Bug
 section-general-title = General
 section-general-subtitle = General app settings and configuration
 
+section-libraries-title = Libraries
+section-libraries-subtitle = File paths where downloads are moved to
+
+libraries-th-directory = Directory
+libraries-th-actions = Actions
+
+libraries-td-set-default = Set Default
+libraries-td-default = Default
+
+libraries-delete-success = Library deleted successfully.
+libraries-update-success = Library updated successfully.
+
 general-host-title = Server Host
 general-host-tooltip = Changes require application restart
 general-host-subtitle = Address and port to bind to
@@ -213,9 +236,6 @@ general-updatecheck-subtitle = Whether or not to periodically check for updates
 
 general-defaultformat-title = File Name Format
 general-defaultformat-subtitle = The format to use when naming the completed file
-
-general-defaultfolder-title = Folder Placement
-general-defaultfolder-subtitle = Which folder to place the completed file in
 
 general-unwatchfinished-title = Unwatch When Finished
 general-unwatchfinished-subtitle = Unwatch shows after they are marked as finished

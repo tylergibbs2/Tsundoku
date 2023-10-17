@@ -3,6 +3,7 @@ import { getReasonPhrase } from "http-status-codes";
 import {
   APIResponse,
   Entry,
+  Library,
   SeenRelease,
   Show,
   TreeResponse,
@@ -93,6 +94,24 @@ export const fetchShows = async (): Promise<Show[]> => {
   );
 };
 
+export const fetchLibraries = async (): Promise<Library[]> => {
+  let request = {
+    method: "GET",
+    headers: COMMON_HEADERS,
+  };
+
+  let response = await fetch("/api/v1/libraries", request);
+  let data: APIResponse<Library[]> = await response.json();
+  if (response.ok) return data.result;
+
+  throw new APIError(
+    `Failed to get libraries list, ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`,
+    data?.error
+  );
+};
+
 export const fetchShowById = async (id: number): Promise<Show> => {
   let request = {
     method: "GET",
@@ -105,6 +124,24 @@ export const fetchShowById = async (id: number): Promise<Show> => {
 
   throw new APIError(
     `Failed to get show by ID '${id}', ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`,
+    data?.error
+  );
+};
+
+export const fetchLibraryById = async (id: number): Promise<Library> => {
+  let request = {
+    method: "GET",
+    headers: COMMON_HEADERS,
+  };
+
+  let response = await fetch(`/api/v1/libraries/${id}`, request);
+  let data: APIResponse<Library> = await response.json();
+  if (response.ok) return data.result;
+
+  throw new APIError(
+    `Failed to get library by ID '${id}', ${response.status}: ${getReasonPhrase(
       response.status
     )}`,
     data?.error
@@ -124,6 +161,26 @@ export const fetchEntryById = async (id: number): Promise<Entry> => {
 
   throw new APIError(
     `Failed to get entry by ID '${id}', ${response.status}: ${getReasonPhrase(
+      response.status
+    )}`,
+    data?.error
+  );
+};
+
+export const addNewLibrary = async (formData: any): Promise<Library> => {
+  let request = {
+    method: "POST",
+    headers: COMMON_HEADERS,
+    body: JSON.stringify(formData),
+  };
+
+  let response = await fetch("/api/v1/libraries", request);
+  let data: APIResponse<Library> = await response.json();
+
+  if (response.ok) return data.result;
+
+  throw new APIError(
+    `Failed to create new library, ${response.status}: ${getReasonPhrase(
       response.status
     )}`,
     data?.error
@@ -192,6 +249,26 @@ export const updateShowById = async (show: Show): Promise<Show> => {
   );
 };
 
+export const updateLibraryById = async (library: Library): Promise<Library> => {
+  let request = {
+    method: "PUT",
+    headers: COMMON_HEADERS,
+    body: JSON.stringify(library),
+  };
+
+  let response = await fetch(`/api/v1/libraries/${library.id_}`, request);
+  let data: APIResponse<Library> = await response.json();
+
+  if (response.ok) return data.result;
+
+  throw new APIError(
+    `Failed to update library by ID '${library.id_}', ${
+      response.status
+    }: ${getReasonPhrase(response.status)}`,
+    data?.error
+  );
+};
+
 export const updateWebhookById = async (
   webhook: EditWebhookFormValues
 ): Promise<WebhookBase> => {
@@ -224,6 +301,25 @@ export const deleteShowById = async (id: number): Promise<void> => {
   if (!response.ok)
     throw new Error(
       `Failed to delete show, ${response.status}: ${getReasonPhrase(
+        response.status
+      )}`
+    );
+};
+
+export const deleteLibraryById = async (id: number): Promise<Library> => {
+  let request = {
+    method: "DELETE",
+    headers: COMMON_HEADERS,
+  };
+
+  let response = await fetch(`/api/v1/libraries/${id}`, request);
+  let data: APIResponse<Library> = await response.json();
+
+  if (response.ok) return data.result;
+
+  if (!response.ok)
+    throw new Error(
+      `Failed to delete library, ${response.status}: ${getReasonPhrase(
         response.status
       )}`
     );

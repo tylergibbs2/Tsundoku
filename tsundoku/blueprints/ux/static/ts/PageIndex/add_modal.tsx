@@ -20,8 +20,10 @@ import {
   addNewShow,
   fetchDistinctSeenReleases,
   fetchFilteredSeenReleases,
+  fetchLibraries,
 } from "../queries";
 import { ShowToggleButton } from "./components/show_toggle_button";
+import { LibrarySelect } from "./components/library_select";
 
 const _ = getInjector();
 
@@ -31,10 +33,11 @@ interface AddModalParams {
   generalConfig: GeneralConfig;
 }
 
-type AddShowFormValues = {
+export type AddShowFormValues = {
   title: string;
+  library_id: number | null;
   desired_format: string;
-  desired_folder: string;
+  title_local: string;
   season: number;
   episode_offset: number;
   watch: boolean;
@@ -69,10 +72,18 @@ export const AddModal = ({
     },
   });
 
+  const libraries = useQuery(["libraries"], async () => {
+    return await fetchLibraries();
+  });
+
+  let defaultLibrary = libraries.data?.filter((l) => l.is_default);
+  defaultLibrary ??= [];
+
   let defaultValues = {
     title: "",
+    library_id: defaultLibrary.length > 0 ? defaultLibrary[0].id_ : null,
+    title_local: "",
     desired_format: "",
-    desired_folder: "",
     season: 1,
     episode_offset: 0,
     watch: true,
@@ -530,8 +541,24 @@ const ManualAddFormComponent = ({
         </div>
 
         <div className="column is-full">
+          <div className="field">
+            <label className="label">
+              <span
+                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
+                data-tooltip={_("add-form-library-tt")}
+              >
+                {_("add-form-library-field")}
+              </span>
+            </label>
+            <div className="control">
+              <LibrarySelect register={register} />
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-full">
           <details>
-            <summary>{_("edit-form-advanced")}</summary>
+            <summary>{_("add-form-advanced")}</summary>
 
             <div className="columns mt-2">
               <div className="column">
@@ -539,9 +566,9 @@ const ManualAddFormComponent = ({
                   <label className="label">
                     <span
                       className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                      data-tooltip={_("edit-form-desired-format-tt")}
+                      data-tooltip={_("add-form-desired-format-tt")}
                     >
-                      {_("edit-form-desired-format-field")}
+                      {_("add-form-desired-format-field")}
                     </span>
                   </label>
                   <div className="control">
@@ -560,17 +587,16 @@ const ManualAddFormComponent = ({
                   <label className="label">
                     <span
                       className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
-                      data-tooltip={_("edit-form-desired-folder-tt")}
+                      data-tooltip={_("add-form-local-title-tt")}
                     >
-                      {_("edit-form-desired-folder-field")}
+                      {_("add-form-local-title-field")}
                     </span>
                   </label>
                   <div className="control">
                     <input
-                      {...register("desired_folder")}
+                      {...register("title_local")}
                       className="input"
                       type="text"
-                      placeholder={generalConfig.default_desired_folder}
                     />
                   </div>
                 </div>

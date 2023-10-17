@@ -140,8 +140,8 @@ class GeneralConfig(Config):
     locale: str
     log_level: str
     default_desired_format: str
-    default_desired_folder: str
     unwatch_when_finished: bool
+    use_season_folder: bool
 
     def check_port(self, value: str) -> None:
         if isinstance(value, str) and not value.isdigit():

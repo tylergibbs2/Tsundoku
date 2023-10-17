@@ -13,6 +13,7 @@ from tsundoku.webhooks.webhook import Webhook
 
 from .entry import Entry
 from .kitsu import KitsuManager
+from .library import Library
 
 logger = logging.getLogger("tsundoku")
 
@@ -22,9 +23,10 @@ class Show:
     app: TsundokuApp
 
     id_: int
+    library_id: int
     title: str
+    title_local: Optional[str]
     desired_format: Optional[str]
-    desired_folder: Optional[str]
     season: int
     episode_offset: int
     watch: bool
@@ -49,9 +51,10 @@ class Show:
         """
         return {
             "id_": self.id_,
+            "library_id": self.library_id,
             "title": self.title,
+            "title_local": self.title_local,
             "desired_format": self.desired_format,
-            "desired_folder": self.desired_folder,
             "season": self.season,
             "episode_offset": self.episode_offset,
             "watch": self.watch,
@@ -118,9 +121,10 @@ class Show:
                 """
                 SELECT
                     id as id_,
+                    library_id,
                     title,
+                    title_local,
                     desired_format,
-                    desired_folder,
                     season,
                     episode_offset,
                     watch,
@@ -137,9 +141,9 @@ class Show:
 
         if not show:
             logger.error(f"Failed to retrieve show with ID #{id_}")
-            raise Exception(f"Failed to retrieve show with ID #{id_}")
+            raise ValueError(f"Failed to retrieve show with ID #{id_}")
 
-        metadata = await KitsuManager.from_show_id(show["id_"])
+        metadata = await KitsuManager.from_show_id(app, show["id_"])
 
         instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
 
@@ -153,15 +157,25 @@ class Show:
         Refetches the Show's metadata and applies
         it to the current instance.
         """
-        self.metadata = await KitsuManager.from_show_id(self.id_)
+        self.metadata = await KitsuManager.from_show_id(self.app, self.id_)
+
+    async def get_library(self) -> Library:
+        """
+        Retrieves the Library for the show.
+        """
+        if self.library_id is None:
+            raise ValueError(f"Show '{self.id_}' has no library")
+
+        return await Library.from_id(self.app, self.library_id)
 
     @staticmethod
     async def insert(
         app: TsundokuApp,
         /,
+        library_id: int,
         title: str,
+        title_local: Optional[str],
         desired_format: Optional[str],
-        desired_folder: Optional[str],
         season: int,
         episode_offset: int,
         watch: bool,
@@ -191,9 +205,10 @@ class Show:
                     INSERT INTO
                         shows
                     (
+                        library_id,
                         title,
+                        title_local,
                         desired_format,
-                        desired_folder,
                         season,
                         episode_offset,
                         watch,
@@ -202,11 +217,12 @@ class Show:
                         preferred_release_group
                     )
                     VALUES
-                        (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
+                    library_id,
                     title,
+                    title_local,
                     desired_format,
-                    desired_folder,
                     season,
                     episode_offset,
                     watch,
@@ -232,9 +248,10 @@ class Show:
                 UPDATE
                     shows
                 SET
+                    library_id=?,
                     title=?,
+                    title_local=?,
                     desired_format=?,
-                    desired_folder=?,
                     season=?,
                     episode_offset=?,
                     watch=?,
@@ -244,9 +261,10 @@ class Show:
                 WHERE
                     id=?
             """,
+                self.library_id,
                 self.title,
+                self.title_local,
                 self.desired_format,
-                self.desired_folder,
                 self.season,
                 self.episode_offset,
                 self.watch,
