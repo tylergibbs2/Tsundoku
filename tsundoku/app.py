@@ -24,7 +24,7 @@ from apscheduler.triggers.cron import CronTrigger
 from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
 from quart import Quart
-from quart_auth import QuartAuth
+from quart_auth import AuthManager
 from quart_rate_limiter import RateLimiter
 
 try:
@@ -100,7 +100,7 @@ class TsundokuApp(Quart):
 
 app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
 
-auth = QuartAuth(app)
+auth = AuthManager(app)
 rate_limiter = RateLimiter(app)
 
 auth.user_class = User

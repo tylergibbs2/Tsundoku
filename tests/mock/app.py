@@ -22,7 +22,7 @@ from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
 from quart import Quart
 from quart.typing import TestClientProtocol
-from quart_auth import QuartAuth
+from quart_auth import AuthManager
 from quart_rate_limiter import RateLimiter
 
 from .dl_client import MockDownloadManager
@@ -68,7 +68,7 @@ class MockTsundokuApp(Quart):
     def __init__(self):
         super().__init__("Tsundoku", static_folder=None)
 
-        auth = QuartAuth(self)
+        auth = AuthManager(self)
         RateLimiter(self)
 
         auth.user_class = User

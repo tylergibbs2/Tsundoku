@@ -8,7 +8,7 @@ distro==1.8.0
 feedparser==6.0.10
 fluent.runtime==0.4.0
 user-agents==2.2.0
-quart-auth==0.9.0
+quart-auth==0.8.0
 quart-rate-limiter==0.9.0
 quart==0.19.3
 typing-extensions==4.5.0
