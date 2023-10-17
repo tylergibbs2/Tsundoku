@@ -7,6 +7,7 @@ import sqlite3
 from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
+import shutil
 import subprocess
 from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING
 
@@ -189,6 +190,12 @@ async def migrate() -> None:
         await migrate_to_data_dir()
     except Exception as e:
         logger.error(f"Error migrating to data directory: {e}", exc_info=True)
+
+    logger.info("Backing up database before performing migrations...")
+    shutil.copy(
+        DATA_DIR / DATABASE_FILE_NAME,
+        (DATA_DIR / DATABASE_FILE_NAME).with_suffix(".db.autobak"),
+    )
 
     backend = get_backend(f"sqlite:///{DATA_DIR / DATABASE_FILE_NAME}")
     migrations = read_migrations("migrations")
