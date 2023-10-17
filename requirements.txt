@@ -13,3 +13,4 @@ quart-rate-limiter==0.8.0
 quart==0.18.3
 typing-extensions==4.5.0
 yoyo-migrations==8.2.0
+Werkzeug==2.2.2
