@@ -97,6 +97,7 @@ class MockTsundokuApp(Quart):
         self.__sync_db_connection = sqlite3.connect(
             "file::memory:?cache=shared", uri=True
         )
+        self.__sync_db_connection.row_factory = sqlite3.Row
 
         async with self.acquire_db() as con:
             async with aiofiles.open("schema.sql", "r") as fp:
