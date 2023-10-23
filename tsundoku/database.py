@@ -192,10 +192,16 @@ async def migrate() -> None:
         logger.error(f"Error migrating to data directory: {e}", exc_info=True)
 
     logger.info("Backing up database before performing migrations...")
-    shutil.copy(
-        DATA_DIR / DATABASE_FILE_NAME,
-        (DATA_DIR / DATABASE_FILE_NAME).with_suffix(".db.autobak"),
-    )
+
+    try:
+        shutil.copy(
+            DATA_DIR / DATABASE_FILE_NAME,
+            (DATA_DIR / DATABASE_FILE_NAME).with_suffix(".db.autobak"),
+        )
+    except FileNotFoundError:
+        logger.info("No existing database found, skipping backup.")
+    except Exception as e:
+        logger.error(f"Failed to backup database: {e}")
 
     backend = get_backend(f"sqlite:///{DATA_DIR / DATABASE_FILE_NAME}")
     migrations = read_migrations("migrations")
