@@ -38,7 +38,11 @@ def grab_default_library(con: Connection):
     """
     )
     config = cur.fetchone()
-    default_folder = Path(config[0])
+    if config is None:
+        default_folder = Path("/")
+    else:
+        default_folder = Path(config[0])
+
     use_season_folder = any(
         any(s in part for s in VALID_SEASON_REPLACEMENTS)
         for part in default_folder.parts
