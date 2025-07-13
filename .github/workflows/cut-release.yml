@@ -42,7 +42,7 @@ jobs:
           echo "✅ All versions match: $PYPROJECT_VERSION"
           echo "version=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
 
-    check-dockerhub:
+  check-dockerhub:
     runs-on: ubuntu-latest
     needs: validate-versions
 
