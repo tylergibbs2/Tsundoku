@@ -132,9 +132,13 @@ const CardView = ({
   sortKey,
   setCurrentModal,
 }: ViewTypeParams) => {
+  const sortedShows = getSortedShows(shows, sortDirection, sortKey);
+
+  let isOnlyCardInRow = sortedShows.length % 6 === 0;
+
   return (
     <div className="columns is-mobile is-multiline">
-      {getSortedShows(shows, sortDirection, sortKey).map((show: Show) => (
+      {sortedShows.map((show: Show) => (
         <Card
           key={show.id_}
           textFilter={textFilter}
@@ -144,8 +148,7 @@ const CardView = ({
           setActiveShow={setActiveShow}
         />
       ))}
-
-      <AddShowCard setCurrentModal={setCurrentModal} />
+      <AddShowCard setCurrentModal={setCurrentModal} isOnlyCardInRow={isOnlyCardInRow} />
     </div>
   );
 };

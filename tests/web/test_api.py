@@ -38,6 +38,20 @@ async def test_authorized_shows_list(app: MockTsundokuApp, caplog: pytest.LogCap
     assert response.status_code == 200
 
 
+async def test_authorized_shows_list_pagination(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.ERROR, logger="tsundoku")
+
+    client = await app.test_client(user_type=UserType.REGULAR)
+    response = await client.get("/api/v1/shows?page=1&limit=5")
+    assert response.status_code == 200
+
+    data = await response.json
+    assert "shows" in data["result"]
+    assert "pagination" in data["result"]
+    assert data["result"]["pagination"]["page"] == 1
+    assert data["result"]["pagination"]["limit"] == 5
+
+
 async def test_authorized_index_readonly(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 

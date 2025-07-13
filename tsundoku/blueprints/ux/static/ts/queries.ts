@@ -8,6 +8,7 @@ import {
   Show,
   TreeResponse,
   WebhookBase,
+  PaginatedShowsResponse,
 } from "./interfaces";
 import { APIError } from "./errors";
 import { AddWebhookFormValues } from "./PageWebhooks/add_modal";
@@ -76,14 +77,19 @@ export const fetchWebhookBases = async (): Promise<WebhookBase[]> => {
   );
 };
 
-export const fetchShows = async (): Promise<Show[]> => {
+export const fetchShows = async (page: number = 1, limit: number = 17): Promise<PaginatedShowsResponse> => {
   let request = {
     method: "GET",
     headers: COMMON_HEADERS,
   };
 
-  let response = await fetch("/api/v1/shows", request);
-  let data: APIResponse<Show[]> = await response.json();
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+
+  let response = await fetch(`/api/v1/shows?${params}`, request);
+  let data: APIResponse<PaginatedShowsResponse> = await response.json();
   if (response.ok) return data.result;
 
   throw new APIError(

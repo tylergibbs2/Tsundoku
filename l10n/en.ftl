@@ -192,6 +192,12 @@ sort-key-title = Title
 sort-key-update = Last Update
 sort-key-date-added = Date Added
 
+pagination-previous = Previous
+pagination-next = Next
+pagination-showing = Showing
+pagination-of = of
+pagination-items = items
+
 ## Configuration Page
 
 config-page-title = Configuration

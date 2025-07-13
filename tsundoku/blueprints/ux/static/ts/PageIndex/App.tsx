@@ -4,10 +4,11 @@ import { useQuery } from "react-query";
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
-import { Show, GeneralConfig } from "../interfaces";
+import { Show, GeneralConfig, PaginatedShowsResponse } from "../interfaces";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
+import { Pagination } from "./components/pagination";
 import { fetchConfig, fetchShows } from "../queries";
 
 import "../../css/index.css";
@@ -23,11 +24,13 @@ export const IndexApp = () => {
 
   let storedSortDirection = localStorage.getItem("sortDirection");
   let storedSortKey = localStorage.getItem("sortKey");
+  let storedPage = localStorage.getItem("currentPage");
 
   const [activeShow, setActiveShow] = useState<Show | null>(null);
   const [currentModal, setCurrentModal] = useState<string | null>(null);
 
   const [viewType, setViewType] = useState<string>(storedViewType || "cards");
+  const [currentPage, setCurrentPage] = useState<number>(parseInt(storedPage || "1"));
 
   const [filters, setFilters] = useState<string[]>(
     JSON.parse(storedFilters) || [
@@ -49,21 +52,37 @@ export const IndexApp = () => {
     return await fetchConfig<GeneralConfig>("general");
   });
 
-  const shows = useQuery(["shows"], fetchShows);
+  const shows = useQuery(
+    ["shows", currentPage],
+    async () => {
+      return await fetchShows(currentPage, 17);
+    },
+    {
+      keepPreviousData: true,
+    }
+  );
 
   useEffect(() => {
     localStorage.setItem("showFilters", JSON.stringify(filters));
     localStorage.setItem("viewType", viewType);
     localStorage.setItem("sortDirection", sortDirection);
     localStorage.setItem("sortKey", sortKey);
-  }, [filters, viewType, sortDirection, sortKey]);
+    localStorage.setItem("currentPage", currentPage.toString());
+  }, [filters, viewType, sortDirection, sortKey, currentPage]);
 
   useEffect(() => {
     if (currentModal) document.body.classList.add("is-clipped");
     else document.body.classList.remove("is-clipped");
   }, [currentModal]);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (shows.isLoading) return <GlobalLoading withText={true} />;
+
+  const showsData = shows.data?.shows || [];
+  const pagination = shows.data?.pagination;
 
   return (
     <>
@@ -105,7 +124,7 @@ export const IndexApp = () => {
         setSortDirection={setSortDirection}
       />
       <Shows
-        shows={shows.data}
+        shows={showsData}
         setActiveShow={setActiveShow}
         filters={filters}
         textFilter={textFilter}
@@ -114,6 +133,12 @@ export const IndexApp = () => {
         setCurrentModal={setCurrentModal}
         viewType={viewType}
       />
+      {pagination && (
+        <Pagination
+          pagination={pagination}
+          onPageChange={handlePageChange}
+        />
+      )}
     </>
   );
 };

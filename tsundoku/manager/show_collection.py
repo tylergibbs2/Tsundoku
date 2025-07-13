@@ -76,6 +76,67 @@ class ShowCollection:
         shows_ = [await Show.from_data(app, show) for show in shows]
         return cls(_shows=shows_)
 
+    @classmethod
+    async def paginated(cls, app: "TsundokuApp", limit: int = 17, offset: int = 0) -> tuple["ShowCollection", int]:
+        """
+        Retrieves a paginated collection of Show objects.
+
+        Parameters
+        ----------
+        app: TsundokuApp
+            The application instance.
+        limit: int
+            Maximum number of shows to return (default: 17).
+        offset: int
+            Number of shows to skip (default: 0).
+
+        Returns
+        -------
+        tuple[ShowCollection, int]
+            A tuple containing the paginated collection and total count.
+        """
+        async with app.acquire_db() as con:
+            # Get total count
+            total_count = await con.fetchval(
+                """
+                SELECT COUNT(*) FROM shows;
+                """
+            )
+
+            # Get paginated shows
+            shows = await con.fetchall(
+                """
+                SELECT
+                    s.id as id_,
+                    s.library_id,
+                    s.title,
+                    s.title_local,
+                    s.desired_format,
+                    s.season,
+                    s.episode_offset,
+                    s.watch,
+                    s.post_process,
+                    s.preferred_resolution,
+                    s.preferred_release_group,
+                    s.created_at,
+                    ki.kitsu_id,
+                    ki.slug,
+                    ki.show_status,
+                    ki.cached_poster_url
+                FROM
+                    shows as s
+                LEFT JOIN
+                    kitsu_info as ki
+                ON s.id = ki.show_id
+                ORDER BY title
+                LIMIT ? OFFSET ?;
+            """,
+                limit, offset
+            )
+
+        shows_ = [await Show.from_data(app, show) for show in shows]
+        return cls(_shows=shows_), total_count
+
     async def gather_statuses(self) -> None:
         """
         Gathers the status for all of the shows

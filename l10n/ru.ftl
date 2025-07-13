@@ -82,6 +82,12 @@ edit-form-episode-offset-tt = Положительное или отрицате
 edit-form-episode-offset-field = Смещение эпизода
 edit-form-cancel-button = Отменить
 
+pagination-previous = Предыдущая
+pagination-next = Следующая
+pagination-showing = Показано
+pagination-of = из
+pagination-items = элементов
+
 ## Configuration Page
 
 

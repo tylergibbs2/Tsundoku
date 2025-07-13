@@ -128,6 +128,12 @@ sort-key-title = タイトル
 sort-key-update = 最後の更新
 sort-key-date-added = 追加された日付
 
+pagination-previous = 前へ
+pagination-next = 次へ
+pagination-showing = 表示中
+pagination-of = の
+pagination-items = アイテム
+
 ## Configuration Page
 
 config-page-title = 構成

@@ -22,10 +22,32 @@ logger = logging.getLogger("tsundoku")
 class ShowsAPI(views.MethodView):
     async def get(self, show_id: int | None) -> APIResponse:
         if show_id is None:
-            shows = await ShowCollection.all(app)
+            # Get pagination parameters
+            args = request.args
+            page = int(args.get("page", 1))
+            limit = int(args.get("limit", 17))
+
+            # Calculate offset
+            offset = (page - 1) * limit
+
+            # Validate parameters
+            if page < 1:
+                return APIResponse(status=400, error="Page must be greater than 0.")
+            if limit < 1 or limit > 100:
+                return APIResponse(status=400, error="Limit must be between 1 and 100.")
+
+            shows, total_count = await ShowCollection.paginated(app, limit, offset)
             await shows.gather_statuses()
 
-            return APIResponse(result=shows.to_list())
+            return APIResponse(result={
+                "shows": shows.to_list(),
+                "pagination": {
+                    "page": page,
+                    "limit": limit,
+                    "total": total_count,
+                    "pages": (total_count + limit - 1) // limit
+                }
+            })
         try:
             show = await Show.from_id(app, show_id)
         except ValueError:

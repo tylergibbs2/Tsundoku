@@ -80,6 +80,18 @@ export interface Show {
   webhooks: Webhook[];
 }
 
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface PaginatedShowsResponse {
+  shows: Show[];
+  pagination: PaginationInfo;
+}
+
 export interface NyaaIndividualResult {
   show_id?: number;
   title: string;

@@ -107,9 +107,10 @@ export const Card = ({
 
 interface AddShowCardParams {
   setCurrentModal: Dispatch<SetStateAction<string>>;
+  isOnlyCardInRow: boolean;
 }
 
-export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
+export const AddShowCard = ({ setCurrentModal, isOnlyCardInRow }: AddShowCardParams) => {
   const openModal = () => {
     setCurrentModal("add");
   };
@@ -127,7 +128,7 @@ export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
           </span>
         </button>
       </div>
-      <div className="column is-2 is-invisible">
+      { isOnlyCardInRow && <div className="column is-2 is-invisible">
         <div className="card">
           <figure className="image is-3by4"></figure>
 
@@ -138,7 +139,7 @@ export const AddShowCard = ({ setCurrentModal }: AddShowCardParams) => {
             </p>
           </footer>
         </div>
-      </div>
+      </div> }
     </>
   );
 };
