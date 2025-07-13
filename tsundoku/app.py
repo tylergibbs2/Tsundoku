@@ -1,21 +1,13 @@
-from __future__ import annotations
-
 import asyncio
 from asyncio.queues import Queue
+from collections.abc import Callable, MutableSet
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
 import logging
 import os
 from pathlib import Path
 import secrets
 import sqlite3
-from typing import (
-    Optional,
-    Tuple,
-    MutableSet,
-    List,
-    Callable,
-    AsyncContextManager,
-    ContextManager,
-)
+from typing import Any, ClassVar
 from uuid import uuid4
 
 import aiohttp
@@ -61,16 +53,16 @@ class TsundokuApp(Quart):
     downloader: Downloader
     encoder: Encoder
 
-    acquire_db: Callable[..., AsyncContextManager[Connection]]
-    sync_acquire_db: Callable[..., ContextManager[sqlite3.Connection]]
+    acquire_db: Callable[..., AbstractAsyncContextManager[Connection]]
+    sync_acquire_db: Callable[..., AbstractContextManager[sqlite3.Connection]]
 
     flags: Flags
 
-    cached_bundle_hash: Optional[str] = None
-    _active_localization: Optional[CustomFluentLocalization] = None
-    _tasks: List[asyncio.Task] = []
+    cached_bundle_hash: str | None = None
+    _active_localization: CustomFluentLocalization | None = None
+    _tasks: ClassVar[list[asyncio.Task]] = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.scheduler = AsyncIOScheduler()
@@ -82,10 +74,7 @@ class TsundokuApp(Quart):
         self.flags = Flags()
 
     def get_fluent(self) -> CustomFluentLocalization:
-        if (
-            self._active_localization is not None
-            and self._active_localization.preferred_locale == self.flags.LOCALE
-        ):
+        if self._active_localization is not None and self._active_localization.preferred_locale == self.flags.LOCALE:
             return self._active_localization
 
         loader = FluentResourceLoader("l10n")
@@ -211,14 +200,10 @@ async def setup_session() -> None:
     """
     loop = asyncio.get_event_loop()
 
-    jar = aiohttp.CookieJar(
-        unsafe=True
-    )  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
+    jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
 
     logger.debug("Creating aiohttp ClientSession...")
-    app.session = aiohttp.ClientSession(
-        loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0)
-    )
+    app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0))
     logger.debug("Creating interface to downloader client...")
     app.dl_client = Manager(app.app_context(), app.session)
 
@@ -227,7 +212,7 @@ async def setup_session() -> None:
 
 
 @app.before_serving
-async def setup_tasks() -> None:
+async def setup_tasks() -> None:  # noqa: RUF029
     """
     Creates the instances for the following tasks:
     poller, downloader, encoder
@@ -294,7 +279,7 @@ async def cleanup() -> None:
 
 
 @ux_blueprint.context_processor
-async def insert_locale() -> dict:
+async def insert_locale() -> dict:  # noqa: RUF029
     return {"LOCALE": app.flags.LOCALE}
 
 
@@ -302,7 +287,7 @@ app.register_blueprint(api_blueprint)
 app.register_blueprint(ux_blueprint)
 
 
-def get_bind() -> Tuple[str, int]:
+def get_bind() -> tuple[str, int]:
     """
     Returns the host and port bindings
     to run the app on.

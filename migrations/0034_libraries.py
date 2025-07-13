@@ -3,7 +3,6 @@ from sqlite3 import Connection
 
 from yoyo import step
 
-
 __depends__ = {"0033_encode_encoder"}
 
 
@@ -43,17 +42,10 @@ def grab_default_library(con: Connection):
     else:
         default_folder = Path(config[0])
 
-    use_season_folder = any(
-        any(s in part for s in VALID_SEASON_REPLACEMENTS)
-        for part in default_folder.parts
-    )
+    use_season_folder = any(any(s in part for s in VALID_SEASON_REPLACEMENTS) for part in default_folder.parts)
 
     library_folder = Path(
-        *(
-            p
-            for p in default_folder.parts
-            if all(val not in p for val in VALID_REPLACEMENTS)
-        )
+        *(p for p in default_folder.parts if all(val not in p for val in VALID_REPLACEMENTS))
     ).resolve()
 
     cur.execute(

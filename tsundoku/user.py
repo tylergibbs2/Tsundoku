@@ -1,11 +1,10 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
     app: TsundokuApp
 else:
-
     from quart import current_app as app
 
 from quart_auth import AuthUser
@@ -18,7 +17,7 @@ class User(AuthUser):
     _api_key: str
     _readonly: bool
 
-    def __init__(self, auth_id: Optional[str]) -> None:
+    def __init__(self, auth_id: str | None) -> None:
         super().__init__(auth_id)
         self._resolved = False
         self._username = ""

@@ -1,9 +1,7 @@
-from __future__ import annotations
-
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import AsyncGenerator
 
 import aiofiles
 
@@ -16,17 +14,13 @@ class SourceKeyMapping:
     torrent: str
 
     @classmethod
-    def from_object(cls, obj: dict) -> SourceKeyMapping:
+    def from_object(cls, obj: dict) -> "SourceKeyMapping":
         required_keys = ("filename", "torrent")
         for key in required_keys:
             if key not in obj:
-                raise Exception(
-                    f"Invalid RSS Source Key Mapping object, missing required key '{key}'"
-                )
+                raise Exception(f"Invalid RSS Source Key Mapping object, missing required key '{key}'")
 
-        return cls(
-            cls._get_true_key(obj["filename"]), cls._get_true_key(obj["torrent"])
-        )
+        return cls(cls._get_true_key(obj["filename"]), cls._get_true_key(obj["torrent"]))
 
     @staticmethod
     def _get_true_key(value: str) -> str:
@@ -56,24 +50,20 @@ class Source:
     rss_key_map: SourceKeyMapping
 
     @classmethod
-    def from_object(cls, obj: dict) -> Source:
+    def from_object(cls, obj: dict) -> "Source":
         required_keys = ("name", "version", "url", "rssItemKeyMapping")
         for key in required_keys:
             if key not in obj:
-                raise Exception(
-                    f"Invalid RSS Source object, missing required key '{key}'"
-                )
+                raise Exception(f"Invalid RSS Source object, missing required key '{key}'")
 
         if not isinstance(obj["name"], str):
-            raise Exception("Invalid RSS Source object, name must be a string")
-        elif not isinstance(obj["version"], str):
-            raise Exception("Invalid RSS Source object, version must be a string")
-        elif not isinstance(obj["url"], str):
-            raise Exception("Invalid RSS Source object, url must be a string")
-        elif not isinstance(obj["rssItemKeyMapping"], dict):
-            raise Exception(
-                "Invalid RSS Source object, rssItemKeyMapping must be a dictionary"
-            )
+            raise TypeError("Invalid RSS Source object, name must be a string")
+        if not isinstance(obj["version"], str):
+            raise TypeError("Invalid RSS Source object, version must be a string")
+        if not isinstance(obj["url"], str):
+            raise TypeError("Invalid RSS Source object, url must be a string")
+        if not isinstance(obj["rssItemKeyMapping"], dict):
+            raise TypeError("Invalid RSS Source object, rssItemKeyMapping must be a dictionary")
 
         mapping = SourceKeyMapping.from_object(obj["rssItemKeyMapping"])
         return cls(obj["name"], obj["version"], obj["url"], mapping)
@@ -98,14 +88,12 @@ async def get_all_sources() -> AsyncGenerator[Source, None]:
             source = source.name
             if not (source_path / source).exists():
                 async with aiofiles.open(source_path / source, "wb") as fp:
-                    async with aiofiles.open(
-                        Path.cwd() / "default_sources" / source, "rb"
-                    ) as default_fp:
+                    async with aiofiles.open(Path.cwd() / "default_sources" / source, "rb") as default_fp:
                         await fp.write(await default_fp.read())
 
         async with aiofiles.open(source_path / "COPIED", "wb") as fp:
             await fp.write(b"")
 
     for source in source_path.glob("*.json"):
-        async with aiofiles.open(source, "r") as fp:
+        async with aiofiles.open(source) as fp:
             yield Source.from_object(json.loads(await fp.read()))

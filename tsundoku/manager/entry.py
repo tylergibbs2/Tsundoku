@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum, auto
 from pathlib import Path
 from sqlite3 import Row
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -12,19 +10,19 @@ if TYPE_CHECKING:
 from tsundoku.webhooks import Webhook
 
 
-class EntryState(str, Enum):
+class EntryState(StrEnum):
     """
     Represents the state of an Entry.
 
     Matches exactly with the Postgres enum.
     """
 
-    downloading = "downloading"
-    downloaded = "downloaded"
-    renamed = "renamed"
-    moved = "moved"
-    completed = "completed"
-    failed = "failed"
+    downloading = auto()
+    downloaded = auto()
+    renamed = auto()
+    moved = auto()
+    completed = auto()
+    failed = auto()
 
 
 class Entry:
@@ -40,8 +38,8 @@ class Entry:
     created_manually: bool
     last_update: datetime
 
-    encode: Optional[dict]
-    file_path: Optional[Path]
+    encode: dict | None
+    file_path: Path | None
 
     def __init__(self, app: TsundokuApp, record: Row) -> None:
         self.id: int = record["id"]
@@ -65,7 +63,7 @@ class Entry:
             self.encode = None
 
         fp = record["file_path"]
-        self.file_path: Optional[Path] = Path(fp) if fp is not None else None
+        self.file_path: Path | None = Path(fp) if fp is not None else None
 
         self._app: TsundokuApp = app
         self._record: Row = record
@@ -93,7 +91,7 @@ class Entry:
         }
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> List[Entry]:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> list["Entry"]:
         """
         Retrieves a list of Entries that are associated
         with a specific Show's ID.
@@ -145,7 +143,7 @@ class Entry:
         return [Entry(app, entry) for entry in entries]
 
     @classmethod
-    async def from_entry_id(cls, app: TsundokuApp, entry_id: int) -> Entry:
+    async def from_entry_id(cls, app: TsundokuApp, entry_id: int) -> "Entry":
         """
         Retrieves an Entry by its ID.
 
@@ -215,11 +213,7 @@ class Entry:
                 self.show_id,
             )
 
-        return (
-            self.state == "completed"
-            and self.file_path is not None
-            and encoding_enabled
-        )
+        return self.state == "completed" and self.file_path is not None and encoding_enabled
 
     async def set_state(self, new_state: EntryState) -> None:
         """

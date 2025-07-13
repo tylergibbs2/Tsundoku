@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import datetime
 import logging
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from urllib.parse import quote_plus
 
 if TYPE_CHECKING:
@@ -20,7 +18,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class SearchResult:
-    show_id: Optional[int]
+    show_id: int | None
 
     title: str
 
@@ -36,7 +34,7 @@ class SearchResult:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: TsundokuApp, _from: dict) -> SearchResult:
+    def from_dict(cls, app: TsundokuApp, _from: dict) -> "SearchResult":
         """
         Returns a valid SearchResult object from a data dict.
 
@@ -58,9 +56,7 @@ class SearchResult:
 
         unparsed_date = _from.pop("published")
 
-        instance.published = datetime.datetime.strptime(
-            unparsed_date, "%a, %d %b %Y %H:%M:%S %z"
-        )
+        instance.published = datetime.datetime.strptime(unparsed_date, "%a, %d %b %Y %H:%M:%S %z")
         instance.torrent_link = _from.pop("link")
         instance.post_link = _from.pop("id")
         instance.size = _from.pop("nyaa_size")
@@ -73,9 +69,7 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(
-        cls, app: TsundokuApp, show_id: int, torrent_link: str
-    ) -> SearchResult:
+    def from_necessary(cls, app: TsundokuApp, show_id: int, torrent_link: str) -> "SearchResult":
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
@@ -113,7 +107,7 @@ class SearchResult:
             "leechers": self.leechers,
         }
 
-    async def get_episodes(self) -> List[int]:
+    async def get_episodes(self) -> list[int]:
         """
         Returns a list of episodes that are contained
         within the torrent.
@@ -129,29 +123,20 @@ class SearchResult:
             try:
                 parsed = parse_anime_title(file)
             except Exception:
-                logger.error(
-                    f"Anitopy - Could not Parse `{file}`, skipping", exc_info=True
-                )
+                logger.error(f"Anitopy - Could not Parse `{file}`, skipping", exc_info=True)
                 continue
 
-            if (
-                parsed is None
-                or "anime_type" in parsed
-                or "episode_number" not in parsed
-            ):
+            if parsed is None or "anime_type" in parsed or "episode_number" not in parsed:
                 continue
 
-            if (
-                not isinstance(parsed["episode_number"], str)
-                or not parsed["episode_number"].isdigit()
-            ):
+            if not isinstance(parsed["episode_number"], str) or not parsed["episode_number"].isdigit():
                 continue
 
             episodes.append(int(parsed["episode_number"]))
 
         return episodes
 
-    async def process(self, overwrite: bool = False) -> List[Entry]:
+    async def process(self, overwrite: bool = False) -> list[Entry]:
         """
         Processes a SearchResult for downloading.
 
@@ -166,7 +151,7 @@ class SearchResult:
         List[Entry]:
             Returns a list of added entries.
         """
-        added: List[Entry] = []
+        added: list[Entry] = []
 
         if self.show_id is None:
             logger.error("Nyaa - Unable to process result without `show_id` set.")
@@ -277,7 +262,7 @@ class NyaaSearcher:
         return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
 
     @staticmethod
-    async def search(app: TsundokuApp, query: str) -> List[SearchResult]:
+    async def search(app: TsundokuApp, query: str) -> list[SearchResult]:
         """
         Searches for a query on nyaa.si.
 

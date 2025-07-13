@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from quart import current_app, abort
+from quart import abort, current_app
 
 if TYPE_CHECKING:
     from tsundoku.user import User
@@ -35,7 +36,8 @@ def deny_readonly(func: Callable) -> Callable:
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
         if await current_user.is_authenticated and await current_user.readonly:
             abort(403)
-        else:
-            return await current_app.ensure_async(func)(*args, **kwargs)
+            return None
+
+        return await current_app.ensure_async(func)(*args, **kwargs)
 
     return wrapper

@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-
 VALID_SPEEDS = (
     "ultrafast",
     "superfast",

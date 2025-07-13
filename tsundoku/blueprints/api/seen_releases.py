@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 
@@ -38,7 +36,7 @@ class SeenReleasesAPI(views.MethodView):
                     )
                 ]
             )
-        elif action == "distinct":
+        if action == "distinct":
             field = request.args.get("field")
             if field is None:
                 return APIResponse(status=400, error="Missing field argument.")
@@ -55,7 +53,4 @@ class SeenReleasesAPI(views.MethodView):
                     resolution=resolution,
                 )
             )
-        else:
-            return APIResponse(
-                status=404, error="Unknown action. Expected 'distinct' or 'filter'."
-            )
+        return APIResponse(status=404, error="Unknown action. Expected 'distinct' or 'filter'.")

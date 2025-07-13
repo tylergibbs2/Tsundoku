@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -12,30 +12,23 @@ else:
 
 from quart import request, views
 
-from tsundoku.constants import VALID_TRIGGERS, VALID_SERVICES
+from tsundoku.constants import VALID_SERVICES, VALID_TRIGGERS
 from tsundoku.webhooks import WebhookBase
 
 from .response import APIResponse
 
 
 class WebhookBaseAPI(views.MethodView):
-    async def get(self, base_id: Optional[int] = None) -> APIResponse:
+    async def get(self, base_id: int | None = None) -> APIResponse:
         hidden_url = await current_user.readonly
         if not base_id:
-            return APIResponse(
-                result=[
-                    base.to_dict(secure=hidden_url)
-                    for base in await WebhookBase.all(app)
-                ]
-            )
+            return APIResponse(result=[base.to_dict(secure=hidden_url) for base in await WebhookBase.all(app)])
 
         base = await WebhookBase.from_id(app, base_id)
         if base:
             return APIResponse(result=[base.to_dict(secure=hidden_url)])
 
-        return APIResponse(
-            status=404, error="BaseWebhook with specified ID does not exist."
-        )
+        return APIResponse(status=404, error="BaseWebhook with specified ID does not exist.")
 
     async def post(self) -> APIResponse:
         wh_services = ("discord", "slack", "custom")
@@ -53,23 +46,20 @@ class WebhookBaseAPI(views.MethodView):
 
         if service not in wh_services:
             return APIResponse(status=400, error="Invalid webhook service.")
-        elif not url:
+        if not url:
             return APIResponse(status=400, error="Invalid webhook URL.")
-        elif not name:
+        if not name:
             return APIResponse(status=400, error="Invalid webhook name.")
-        elif any(t not in VALID_TRIGGERS for t in triggers):
+        if any(t not in VALID_TRIGGERS for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
-        elif content_fmt == "":
+        if content_fmt == "":
             content_fmt = None
 
         base = await WebhookBase.new(app, name, service, url, content_fmt, triggers)
 
         if base:
             return APIResponse(result=base.to_dict())
-        else:
-            return APIResponse(
-                status=500, error="The server failed to create the new WebhookBase."
-            )
+        return APIResponse(status=500, error="The server failed to create the new WebhookBase.")
 
     async def put(self, base_id: int) -> APIResponse:
         arguments = await request.get_json()
@@ -82,16 +72,14 @@ class WebhookBaseAPI(views.MethodView):
         base = await WebhookBase.from_id(app, base_id)
 
         if not base:
-            return APIResponse(
-                status=404, error="WebhookBase with specified ID does not exist."
-            )
-        elif service not in VALID_SERVICES:
+            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
+        if service not in VALID_SERVICES:
             return APIResponse(status=400, error="Invalid webhook service.")
-        elif not url:
+        if not url:
             return APIResponse(status=400, error="Invalid webhook URL.")
-        elif not content_fmt:
+        if not content_fmt:
             return APIResponse(status=400, error="Invalid content format.")
-        elif not name:
+        if not name:
             return APIResponse(status=400, error="Invalid name.")
 
         base.name = name
@@ -122,9 +110,7 @@ class WebhookBaseAPI(views.MethodView):
     async def delete(self, base_id: int) -> APIResponse:
         base = await WebhookBase.from_id(app, base_id)
         if not base:
-            return APIResponse(
-                status=404, error="WebhookBase with specified ID does not exist."
-            )
+            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
 
         await base.delete()
         return APIResponse(result=base.to_dict())

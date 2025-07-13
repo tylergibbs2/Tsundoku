@@ -1,8 +1,5 @@
-from __future__ import annotations
-
 import logging
-from typing import Optional, TYPE_CHECKING
-
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -23,21 +20,20 @@ logger = logging.getLogger("tsundoku")
 
 
 class ShowsAPI(views.MethodView):
-    async def get(self, show_id: Optional[int]) -> APIResponse:
+    async def get(self, show_id: int | None) -> APIResponse:
         if show_id is None:
             shows = await ShowCollection.all(app)
             await shows.gather_statuses()
 
             return APIResponse(result=shows.to_list())
-        else:
-            try:
-                show = await Show.from_id(app, show_id)
-            except ValueError:
-                return APIResponse(status=404, error="Show with passed ID not found.")
-            except Exception as e:
-                return APIResponse(status=500, error=f"An unknown error occurred: {e}")
+        try:
+            show = await Show.from_id(app, show_id)
+        except ValueError:
+            return APIResponse(status=404, error="Show with passed ID not found.")
+        except Exception as e:
+            return APIResponse(status=500, error=f"An unknown error occurred: {e}")
 
-            return APIResponse(result=show.to_dict())
+        return APIResponse(result=show.to_dict())
 
     async def post(self, show_id: None) -> APIResponse:
         # show_id here will always be None. Having it as a parameter
@@ -79,21 +75,14 @@ class ShowsAPI(views.MethodView):
             try:
                 episode_offset = int(episode_offset)
             except ValueError:
-                return APIResponse(
-                    status=400, error="Episode offset is not an integer."
-                )
+                return APIResponse(status=400, error="Episode offset is not an integer.")
 
         preferred_resolution = arguments.get("preferred_resolution")
         if not preferred_resolution or preferred_resolution == "0":
             preferred_resolution = None
 
-        if (
-            preferred_resolution is not None
-            and preferred_resolution not in VALID_RESOLUTIONS
-        ):
-            return APIResponse(
-                status=400, error="Preferred resolution is not a valid resolution."
-            )
+        if preferred_resolution is not None and preferred_resolution not in VALID_RESOLUTIONS:
+            return APIResponse(status=400, error="Preferred resolution is not a valid resolution.")
 
         preferred_release_group = arguments.get("preferred_release_group")
         if not preferred_release_group:
@@ -129,15 +118,10 @@ class ShowsAPI(views.MethodView):
             await webhook.import_default_triggers()
 
         if show.watch:
-            logger.info(
-                f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases"
-            )
+            logger.info(f"New Show Added, <s{show.id_}> - Preparing to Check for New Releases")
 
             # Find already seen releases. Must be done before triggering the poller
-            if (
-                show.preferred_resolution is not None
-                and show.preferred_release_group is not None
-            ):
+            if show.preferred_resolution is not None and show.preferred_release_group is not None:
                 seen_releases = await SeenRelease.filter(
                     app,
                     title=show.title,
@@ -145,21 +129,15 @@ class ShowsAPI(views.MethodView):
                     release_group=show.preferred_release_group,
                 )
                 for seen_release in seen_releases:
-                    magnet = await app.dl_client.get_magnet(
-                        seen_release.torrent_destination
-                    )
-                    await app.downloader.begin_handling(
-                        show.id_, seen_release.episode, magnet, seen_release.version
-                    )
+                    magnet = await app.dl_client.get_magnet(seen_release.torrent_destination)
+                    await app.downloader.begin_handling(show.id_, seen_release.episode, magnet, seen_release.version)
             else:
                 await app.poller.poll(force=True)
 
             # Refetch entries in case they were added during the poll
             await show.entries()
         else:
-            logger.info(
-                f"New Show Added, <s{show.id_}> - Watch flag not set, not checking for new releases"
-            )
+            logger.info(f"New Show Added, <s{show.id_}> - Watch flag not set, not checking for new releases")
 
         return APIResponse(result=show.to_dict())
 
@@ -175,13 +153,8 @@ class ShowsAPI(views.MethodView):
         if not preferred_resolution or preferred_resolution == "0":
             preferred_resolution = None
 
-        if (
-            preferred_resolution is not None
-            and preferred_resolution not in VALID_RESOLUTIONS
-        ):
-            return APIResponse(
-                status=400, error="Preferred resolution is not a valid resolution."
-            )
+        if preferred_resolution is not None and preferred_resolution not in VALID_RESOLUTIONS:
+            return APIResponse(status=400, error="Preferred resolution is not a valid resolution.")
 
         library_id = arguments.get("library_id")
         if not library_id:
@@ -220,9 +193,7 @@ class ShowsAPI(views.MethodView):
             try:
                 episode_offset = int(arguments["episode_offset"])
             except Exception:
-                return APIResponse(
-                    status=400, error="Episode offset is not a valid integer."
-                )
+                return APIResponse(status=400, error="Episode offset is not a valid integer.")
 
             show.episode_offset = episode_offset
 
@@ -255,13 +226,11 @@ class ShowsAPI(views.MethodView):
 
         if "post_process" in arguments:
             if not isinstance(arguments["post_process"], bool):
-                return APIResponse(
-                    status=400, error="Post process is not a valid boolean."
-                )
+                return APIResponse(status=400, error="Post process is not a valid boolean.")
 
             show.post_process = arguments["post_process"]
 
-        if "title_local" in arguments and arguments["title_local"]:
+        if arguments.get("title_local"):
             show.title_local = arguments["title_local"]
         else:
             show.title_local = None
@@ -269,9 +238,7 @@ class ShowsAPI(views.MethodView):
         await show.update()
 
         if do_poll:
-            logger.info(
-                f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases"
-            )
+            logger.info(f"Existing Show Updated, <s{show_id}> - Preparing to Check for New Releases")
             await app.poller.poll(force=True)
 
         show = await Show.from_id(app, show_id)

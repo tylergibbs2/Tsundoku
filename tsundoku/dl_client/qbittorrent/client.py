@@ -1,9 +1,9 @@
 import asyncio
 import json
 import logging
-import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+import re
+from typing import Any
 
 import aiohttp
 
@@ -12,15 +12,13 @@ from tsundoku.dl_client.abstract import TorrentClient
 logger = logging.getLogger("tsundoku")
 
 
-class qBittorrentClient(TorrentClient):
-    auth: Dict[str, str]
+class qBittorrentClient(TorrentClient):  # noqa: N801
+    auth: dict[str, str]
     url: str
 
-    last_authed_user: Optional[str] = None
+    last_authed_user: str | None = None
 
-    def __init__(
-        self, session: aiohttp.ClientSession, auth: Dict[str, str], **kwargs: Any
-    ) -> None:
+    def __init__(self, session: aiohttp.ClientSession, auth: dict[str, str], **kwargs: Any) -> None:
         self.session = session
 
         host: str = kwargs.pop("host")
@@ -63,7 +61,7 @@ class qBittorrentClient(TorrentClient):
             "uploading",
         )
 
-    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+    async def check_torrent_ratio(self, torrent_id: str) -> float | None:
         payload = {"hashes": torrent_id}
 
         logger.debug(f"Retrieving torrent state for hash `{torrent_id}`")
@@ -85,7 +83,7 @@ class qBittorrentClient(TorrentClient):
 
         await self.request("get", "torrents", "delete", params=payload)
 
-    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
+    async def get_torrent_fp(self, torrent_id: str) -> Path | None:
         payload = {"hashes": torrent_id}
 
         data = await self.request("get", "torrents", "info", params=payload)
@@ -98,7 +96,7 @@ class qBittorrentClient(TorrentClient):
 
         return Path(data["content_path"])
 
-    async def add_torrent(self, magnet_url: str) -> Optional[str]:
+    async def add_torrent(self, magnet_url: str) -> str | None:
         payload = {"urls": magnet_url}
 
         await self.request("post", "torrents", "add", payload=payload)
@@ -120,14 +118,10 @@ class qBittorrentClient(TorrentClient):
 
         request_url = f"{self.url}/api/v2/auth/login"
 
-        async with self.session.post(
-            request_url, headers=headers, data=payload
-        ) as resp:
+        async with self.session.post(request_url, headers=headers, data=payload) as resp:
             status = resp.status
             if status == 200:
-                self.last_authed_user = (
-                    f"{self.auth['username']}:{self.auth['password']}"
-                )
+                self.last_authed_user = f"{self.auth['username']}:{self.auth['password']}"
                 logger.info("qBittorrent - Successfully Authenticated")
             else:
                 self.last_authed_user = None
@@ -140,8 +134,8 @@ class qBittorrentClient(TorrentClient):
         http_method: str,
         location: str,
         method: str,
-        payload: dict = None,  # type: ignore
-        params: dict = None,  # type: ignore
+        payload: dict | None = None,
+        params: dict | None = None,
     ) -> dict:
         """
         Makes a request to qBittorrent.
@@ -174,15 +168,13 @@ class qBittorrentClient(TorrentClient):
         retries = 5
 
         while retries:
-            async with self.session.request(
-                http_method, request_url, data=payload, params=params
-            ) as r:
+            async with self.session.request(http_method, request_url, data=payload, params=params) as r:
                 data: Any = await r.text(encoding="utf-8")
                 if r.headers.get("Content-Type") == "application/json":
                     data = json.loads(data)
                 if r.status == 200:
                     return data
-                elif r.status == 403:
+                if r.status == 403:
                     retries -= 1
                     logger.warning(f"qBittorrent - Forbidden, reauthorizing {retries}")
                     await self.login()

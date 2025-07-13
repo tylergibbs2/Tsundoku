@@ -1,23 +1,22 @@
-from __future__ import annotations
-
+from collections.abc import AsyncIterator, Iterator
+from configparser import ConfigParser
+from contextlib import asynccontextmanager, contextmanager
 import json
 import logging
 import os
-from configparser import ConfigParser
-from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import shutil
-import subprocess
 import sqlite3
-from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING, Union
+import subprocess
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tsundoku.asqlite import Connection
 
 from yoyo import get_backend, read_migrations
 
-from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 from tsundoku import asqlite
+from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 
 logger = logging.getLogger("tsundoku")
 
@@ -36,12 +35,10 @@ def sync_acquire() -> Iterator[sqlite3.Connection]:
 
 
 def spawn_shell() -> None:
-    subprocess.run(
-        ["sqlite3", f"{DATA_DIR / DATABASE_FILE_NAME}", "-header", "-column"]
-    )
+    subprocess.run(["sqlite3", f"{DATA_DIR / DATABASE_FILE_NAME}", "-header", "-column"])
 
 
-def get_cfg_value(parser: ConfigParser, key: str, value: str, default=None) -> Any:
+def get_cfg_value(parser: ConfigParser, key: str, value: str, default: Any | None = None) -> Any:
     try:
         value = parser[key][value]
     except Exception:
@@ -91,9 +88,7 @@ async def transfer_config() -> None:
             {
                 "host": get_cfg_value(cfg, "Tsundoku", "host", "localhost"),
                 "port": get_cfg_value(cfg, "Tsundoku", "port", 6439),
-                "update_do_check": get_cfg_value(
-                    cfg, "Tsundoku", "do_update_checks", True
-                ),
+                "update_do_check": get_cfg_value(cfg, "Tsundoku", "do_update_checks", True),
                 "locale": get_cfg_value(cfg, "Tsundoku", "locale", "en"),
                 "log_level": get_cfg_value(cfg, "Tsundoku", "log_level", "info"),
             },
@@ -119,15 +114,9 @@ async def transfer_config() -> None:
                 fuzzy_cutoff = :fuzzy_cutoff;
             """,
             {
-                "polling_interval": get_cfg_value(
-                    cfg, "Tsundoku", "polling_interval", 900
-                ),
-                "complete_check_interval": get_cfg_value(
-                    cfg, "Tsundoku", "complete_check_interval", 15
-                ),
-                "fuzzy_cutoff": get_cfg_value(
-                    cfg, "Tsundoku", "fuzzy_match_cutoff", 90
-                ),
+                "polling_interval": get_cfg_value(cfg, "Tsundoku", "polling_interval", 900),
+                "complete_check_interval": get_cfg_value(cfg, "Tsundoku", "complete_check_interval", 15),
+                "fuzzy_cutoff": get_cfg_value(cfg, "Tsundoku", "fuzzy_match_cutoff", 90),
             },
         )
         await con.execute(
@@ -173,21 +162,21 @@ async def transfer_config() -> None:
     path.rename(path.with_suffix(".old"))
 
 
-async def migrate_to_data_dir() -> None:
+def migrate_to_data_dir() -> None:
     if Path(DATA_DIR).exists():
         return
 
-    TO_MIGRATE = ("tsundoku.db", "tsundoku.log", "sources")
+    to_migrate = ("tsundoku.db", "tsundoku.log", "sources")
 
     Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
-    for f in TO_MIGRATE:
+    for f in to_migrate:
         if Path(f).exists():
             Path(f).rename(Path(DATA_DIR) / f)
 
 
-async def migrate(database_source: Union[Path, str]) -> None:
+async def migrate(database_source: Path | str) -> None:
     try:
-        await migrate_to_data_dir()
+        migrate_to_data_dir()
     except Exception as e:
         logger.error(f"Error migrating to data directory: {e}", exc_info=True)
 

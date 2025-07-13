@@ -1,13 +1,9 @@
-from __future__ import annotations
-
 import logging
 import sqlite3
 
 from pytest import LogCaptureFixture
 
-from tests.mock import MockTsundokuApp
 from tsundoku.database import migrate
-
 
 # async def test_migrate_from_empty(caplog: LogCaptureFixture) -> None:
 #     caplog.set_level(logging.ERROR, logger="tsundoku")

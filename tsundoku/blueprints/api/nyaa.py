@@ -27,9 +27,7 @@ class NyaaAPI(views.MethodView):
             results = await NyaaSearcher.search(app, query)
         except Exception as e:
             logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
-            return APIResponse(
-                status=400, error="Error searching for the specified query."
-            )
+            return APIResponse(status=400, error="Error searching for the specified query.")
 
         return APIResponse(result=[sr.to_dict() for sr in results])
 
@@ -61,9 +59,7 @@ class NyaaAPI(views.MethodView):
             )
 
         if not show_id:
-            return APIResponse(
-                status=404, error="Show ID does not exist in the database."
-            )
+            return APIResponse(status=404, error="Show ID does not exist in the database.")
 
         search_result = SearchResult.from_necessary(app, show_id, torrent_link)
 

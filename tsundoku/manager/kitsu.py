@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import datetime
 import logging
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -20,7 +18,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class KitsuManager:
-    HEADERS = {
+    HEADERS: ClassVar[dict[str, str]] = {
         "Accept": "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
     }
@@ -29,10 +27,10 @@ class KitsuManager:
 
     show_id: int
 
-    kitsu_id: Optional[int]
-    slug: Optional[str]
-    status: Optional[str]
-    poster: Optional[str]
+    kitsu_id: int | None
+    slug: str | None
+    status: str | None
+    poster: str | None
 
     def __init__(self) -> None:
         self.SHOW_BASE = "https://kitsu.io/anime/{}"
@@ -55,18 +53,14 @@ class KitsuManager:
             "link": self.link,
             "slug": self.slug,
             "status": self.status,
-            "html_status": STATUS_HTML_MAP[self.status].format(
-                fluent._(f"status-{self.status}")
-            )
+            "html_status": STATUS_HTML_MAP[self.status].format(fluent._(f"status-{self.status}"))
             if self.status
             else None,
             "poster": self.poster,
         }
 
     @classmethod
-    async def fetch(
-        cls, app: TsundokuApp, show_id: int, show_name: str
-    ) -> KitsuManager:
+    async def fetch(cls, app: TsundokuApp, show_id: int, show_name: str) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show name from the Kitsu API.
@@ -106,9 +100,7 @@ class KitsuManager:
         instance.slug = attributes.get("slug")
         instance.status = attributes.get("status")
 
-        instance.poster = await instance.get_poster_image(
-            attributes.get("posterImage", {})
-        )
+        instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
             await con.execute(
@@ -141,9 +133,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def fetch_by_kitsu(
-        cls, app: TsundokuApp, show_id: int, kitsu_id: int
-    ) -> KitsuManager:
+    async def fetch_by_kitsu(cls, app: TsundokuApp, show_id: int, kitsu_id: int) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show ID from the Kitsu API.
@@ -183,9 +173,7 @@ class KitsuManager:
         instance.slug = attributes.get("slug")
         instance.status = attributes.get("status")
 
-        instance.poster = await instance.get_poster_image(
-            attributes.get("posterImage", {})
-        )
+        instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
             await con.execute(
@@ -218,7 +206,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> KitsuManager:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> "KitsuManager":
         """
         Retrieves Kitsu information from the database based
         on a show's ID.
@@ -273,7 +261,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: Dict[str, str]) -> KitsuManager:
+    async def from_data(cls, app: TsundokuApp, data: dict[str, str]) -> "KitsuManager":
         """
         Creates a metadata object from already queried SQL
         data.
@@ -320,7 +308,7 @@ class KitsuManager:
         return instance
 
     @property
-    def link(self) -> Optional[str]:
+    def link(self) -> str | None:
         """
         Returns the link to the show on Kitsu
         from the show's ID.
@@ -332,8 +320,7 @@ class KitsuManager:
         """
         if self.kitsu_id:
             return self.SHOW_BASE.format(self.kitsu_id)
-        else:
-            return None
+        return None
 
     async def clear_cache(self) -> None:
         """
@@ -350,9 +337,7 @@ class KitsuManager:
                 self.show_id,
             )
 
-    async def get_poster_image(
-        self, poster_images: Optional[Dict[str, str]] = None
-    ) -> Optional[str]:
+    async def get_poster_image(self, poster_images: dict[str, str] | None = None) -> str | None:
         """
         Returns the link to the show's poster.
 
@@ -396,9 +381,7 @@ class KitsuManager:
         to_cache = None
         for size in ("large", "medium", "original", "small", "tiny"):
             if poster_images.get(size) is not None:
-                logger.info(
-                    f"New poster found for <s{self.show_id}> at [{size}] quality"
-                )
+                logger.info(f"New poster found for <s{self.show_id}> at [{size}] quality")
                 to_cache = poster_images[size]
                 break
 

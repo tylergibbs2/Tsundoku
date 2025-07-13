@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from sqlite3 import Row
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -25,13 +23,11 @@ class Library:
         }
 
     @classmethod
-    def from_data(cls, app: TsundokuApp, row: Row) -> Library:
-        return cls(
-            app, id_=row["id"], folder=Path(row["folder"]), is_default=row["is_default"]
-        )
+    def from_data(cls, app: TsundokuApp, row: Row) -> "Library":
+        return cls(app, id_=row["id"], folder=Path(row["folder"]), is_default=row["is_default"])
 
     @classmethod
-    async def from_id(cls, app: TsundokuApp, id_: int) -> Library:
+    async def from_id(cls, app: TsundokuApp, id_: int) -> "Library":
         async with app.acquire_db() as con:
             library = await con.fetchone(
                 """
@@ -53,7 +49,7 @@ class Library:
         return Library.from_data(app, library)
 
     @classmethod
-    async def all(cls, app: TsundokuApp) -> List[Library]:
+    async def all(cls, app: TsundokuApp) -> list["Library"]:
         async with app.acquire_db() as con:
             libraries = await con.fetchall(
                 """
@@ -70,9 +66,7 @@ class Library:
         return [Library.from_data(app, row) for row in libraries]
 
     @classmethod
-    async def new(
-        cls, app: TsundokuApp, folder: Path, is_default: bool = False
-    ) -> Library:
+    async def new(cls, app: TsundokuApp, folder: Path, is_default: bool = False) -> "Library":
         async with app.acquire_db() as con:
             async with con.cursor() as cur:
                 await cur.execute(

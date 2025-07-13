@@ -4,10 +4,10 @@ from .rss_feed import mock_feedparser_parse
 from .sources import mock_get_all_sources
 
 __all__ = (
-    "MockTsundokuApp",
-    "UserType",
     "InMemoryDownloadClient",
     "MockDownloadManager",
+    "MockTsundokuApp",
+    "UserType",
     "mock_feedparser_parse",
     "mock_get_all_sources",
 )

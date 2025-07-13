@@ -11,6 +11,7 @@ else:
 from quart import views
 
 from tsundoku.manager import Entry
+
 from .response import APIResponse
 
 logger = logging.getLogger("tsundoku")
@@ -39,8 +40,6 @@ class EntriesAPI(views.MethodView):
             )
 
         if entry is None:
-            return APIResponse(
-                status=404, error="Entry with specified ID does not exist."
-            )
+            return APIResponse(status=404, error="Entry with specified ID does not exist.")
 
         return APIResponse(result=Entry(app, entry).to_dict())

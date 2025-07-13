@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+# ruff: noqa
 """
 The MIT License (MIT)
 
@@ -24,31 +23,20 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import annotations
-
+import asyncio
+from collections.abc import Callable, Generator, Iterable
+import queue
 import sqlite3
 import threading
-import queue
-import asyncio
+from types import TracebackType
 from typing import (
     Any,
     AsyncContextManager,
-    Callable,
-    Dict,
-    Generator,
     Generic,
-    Iterable,
-    List,
     Literal,
-    Optional,
-    Tuple,
-    Type,
     TypeVar,
-    Union,
     overload,
 )
-
-from types import TracebackType
 
 __version__ = "2.0.0a"
 
@@ -60,13 +48,13 @@ U = TypeVar("U", covariant=True, bound=AsyncContextManager[Any])
 
 
 class _WorkerEntry:
-    __slots__ = ("func", "args", "kwargs", "future", "cancelled")
+    __slots__ = ("args", "cancelled", "func", "future", "kwargs")
 
     def __init__(
         self,
         func: Callable[..., Any],
-        args: Tuple[Any, ...],
-        kwargs: Dict[str, Any],
+        args: tuple[Any, ...],
+        kwargs: dict[str, Any],
         future: asyncio.Future,
     ):
         self.func = func
@@ -104,9 +92,7 @@ class _Worker(threading.Thread):
             else:
                 self._call_entry(entry)
 
-    def post(
-        self, func: Callable[..., T], *args: Any, **kwargs: Any
-    ) -> asyncio.Future[T]:
+    def post(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> asyncio.Future[T]:
         future: asyncio.Future[T] = self._loop.create_future()
         entry = _WorkerEntry(func=func, args=args, kwargs=kwargs, future=future)
         self._worker_queue.put_nowait(entry)
@@ -123,16 +109,16 @@ class _ContextManagerMixin(Generic[T, U]):
         _factory: Callable[[T], U],
         func: Callable[..., Any],
         *args: Any,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         **kwargs: Any,
     ):
         self._worker: _Worker = _queue
         self.func: Callable[..., Any] = func
-        self.timeout: Optional[float] = timeout
+        self.timeout: float | None = timeout
         self._factory: Callable[[T], U] = _factory
-        self.args: Tuple[Any, ...] = args
-        self.kwargs: Dict[str, Any] = kwargs
-        self.__result: Optional[U] = None
+        self.args: tuple[Any, ...] = args
+        self.kwargs: dict[str, Any] = kwargs
+        self.__result: U | None = None
 
     async def _runner(self) -> U:
         future = self._worker.post(self.func, *self.args, **self.kwargs)
@@ -152,9 +138,9 @@ class _ContextManagerMixin(Generic[T, U]):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         if self.__result is not None:
             await self.__result.__aexit__(exc_type, exc_value, traceback)
@@ -170,7 +156,7 @@ class Cursor:
     Create these with :meth:`Connection.cursor`.
     """
 
-    def __init__(self, connection: Connection, cursor: sqlite3.Cursor):
+    def __init__(self, connection: "Connection", cursor: sqlite3.Cursor):
         self._conn = connection
         self._cursor = cursor
         self._post = connection._post
@@ -180,9 +166,9 @@ class Cursor:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -191,11 +177,11 @@ class Cursor:
         return self._cursor
 
     @property
-    def lastrowid(self) -> Optional[int]:
+    def lastrowid(self) -> int | None:
         return self._cursor.lastrowid
 
     @property
-    def connection(self) -> Connection:
+    def connection(self) -> "Connection":
         """Retrieves the :class:`Connection` that made this cursor."""
         return self._conn
 
@@ -204,16 +190,13 @@ class Cursor:
         return await self._post(self._cursor.close)
 
     @overload
-    async def execute(self: C, sql: str, parameter: Dict[str, Any], /) -> C:
-        ...
+    async def execute(self: C, sql: str, parameter: dict[str, Any], /) -> C: ...
 
     @overload
-    async def execute(self: C, sql: str, parameter: Tuple[Any, ...], /) -> C:
-        ...
+    async def execute(self: C, sql: str, parameter: tuple[Any, ...], /) -> C: ...
 
     @overload
-    async def execute(self: C, sql: str, /, *parameters: Any) -> C:
-        ...
+    async def execute(self: C, sql: str, /, *parameters: Any) -> C: ...
 
     async def execute(self: C, sql: str, /, *parameters: Any) -> C:
         """Asynchronous version of :meth:`sqlite3.Cursor.execute`."""
@@ -222,9 +205,7 @@ class Cursor:
         await self._post(self._cursor.execute, sql, parameters)
         return self
 
-    async def executemany(
-        self: C, sql: str, seq_of_parameters: Iterable[Iterable[Any]]
-    ) -> C:
+    async def executemany(self: C, sql: str, seq_of_parameters: Iterable[Iterable[Any]]) -> C:
         """Asynchronous version of :meth:`sqlite3.Cursor.executemany`."""
         await self._post(self._cursor.executemany, sql, seq_of_parameters)
         return self
@@ -238,18 +219,18 @@ class Cursor:
         try:
             return (await self._post(self._cursor.fetchone))[0]
         except TypeError:
-            return
+            return None
 
     async def fetchone(self) -> sqlite3.Row:
         """Asynchronous version of :meth:`sqlite3.Cursor.fetchone`."""
         return await self._post(self._cursor.fetchone)
 
-    async def fetchmany(self, size: Optional[int] = None) -> List[sqlite3.Row]:
+    async def fetchmany(self, size: int | None = None) -> list[sqlite3.Row]:
         """Asynchronous version of :meth:`sqlite3.Cursor.fetchmany`."""
         size = self._cursor.arraysize if size is None else size
         return await self._post(self._cursor.fetchmany, size)
 
-    async def fetchall(self) -> List[sqlite3.Row]:
+    async def fetchall(self) -> list[sqlite3.Row]:
         """Asynchronous version of :meth:`sqlite3.Cursor.fetchall`."""
         return await self._post(self._cursor.fetchall)
 
@@ -260,7 +241,7 @@ class Transaction:
     This can be used as a context manager as well.
     """
 
-    def __init__(self, conn: Connection):
+    def __init__(self, conn: "Connection"):
         self.conn: Connection = conn
 
     async def start(self) -> None:
@@ -281,9 +262,9 @@ class Transaction:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         if exc_type is None:
             # no error
@@ -308,9 +289,9 @@ class _CursorWithTransaction(Cursor):
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         try:
             if exc_type is None:
@@ -346,9 +327,9 @@ class Connection:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -366,18 +347,12 @@ class Connection:
     @overload
     def cursor(
         self, *, transaction: Literal[True]
-    ) -> _ContextManagerMixin[sqlite3.Cursor, _CursorWithTransaction]:
-        ...
+    ) -> _ContextManagerMixin[sqlite3.Cursor, _CursorWithTransaction]: ...
 
     @overload
-    def cursor(
-        self, *, transaction: Literal[False] = False
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
-        ...
+    def cursor(self, *, transaction: Literal[False] = False) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]: ...
 
-    def cursor(
-        self, *, transaction: bool = False
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
+    def cursor(self, *, transaction: bool = False) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
         """Asynchronous version of :meth:`sqlite3.Connection.cursor`.
 
         Much like :func:`connect` this can be used as both a coroutine
@@ -397,8 +372,7 @@ class Connection:
         def factory(cur: sqlite3.Cursor) -> Cursor:
             if transaction:
                 return _CursorWithTransaction(self, cur)
-            else:
-                return Cursor(self, cur)
+            return Cursor(self, cur)
 
         return _ContextManagerMixin(self._queue, factory, self._conn.cursor)
 
@@ -416,26 +390,15 @@ class Connection:
         self._queue.stop()
 
     @overload
-    def execute(
-        self, sql: str, parameter: Dict[str, Any], /
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
-        ...
+    def execute(self, sql: str, parameter: dict[str, Any], /) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]: ...
 
     @overload
-    def execute(
-        self, sql: str, parameter: Tuple[Any, ...], /
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
-        ...
+    def execute(self, sql: str, parameter: tuple[Any, ...], /) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]: ...
 
     @overload
-    def execute(
-        self, sql: str, /, *parameters: Any
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
-        ...
+    def execute(self, sql: str, /, *parameters: Any) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]: ...
 
-    def execute(
-        self, sql: str, /, *parameters: Any
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
+    def execute(self, sql: str, /, *parameters: Any) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
         """Asynchronous version of :meth:`sqlite3.Connection.execute`.
 
         Note that this returns a :class:`Cursor` instead of a :class:`sqlite3.Cursor`.
@@ -446,9 +409,7 @@ class Connection:
         def factory(cur: sqlite3.Cursor):
             return Cursor(self, cur)
 
-        return _ContextManagerMixin(
-            self._queue, factory, self._conn.execute, sql, parameters
-        )
+        return _ContextManagerMixin(self._queue, factory, self._conn.execute, sql, parameters)
 
     def executemany(
         self, sql: str, seq_of_parameters: Iterable[Iterable[Any]]
@@ -461,13 +422,9 @@ class Connection:
         def factory(cur: sqlite3.Cursor):
             return Cursor(self, cur)
 
-        return _ContextManagerMixin(
-            self._queue, factory, self._conn.executemany, sql, seq_of_parameters
-        )
+        return _ContextManagerMixin(self._queue, factory, self._conn.executemany, sql, seq_of_parameters)
 
-    def executescript(
-        self, sql_script: str
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
+    def executescript(self, sql_script: str) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
         """Asynchronous version of :meth:`sqlite3.Connection.executescript`.
 
         Note that this returns a :class:`Cursor` instead of a :class:`sqlite3.Cursor`.
@@ -476,21 +433,16 @@ class Connection:
         def factory(cur: sqlite3.Cursor):
             return Cursor(self, cur)
 
-        return _ContextManagerMixin(
-            self._queue, factory, self._conn.executescript, sql_script
-        )
+        return _ContextManagerMixin(self._queue, factory, self._conn.executescript, sql_script)
 
     @overload
-    async def fetchone(self, query: str, parameter: Dict[str, Any], /) -> sqlite3.Row:
-        ...
+    async def fetchone(self, query: str, parameter: dict[str, Any], /) -> sqlite3.Row: ...
 
     @overload
-    async def fetchone(self, query: str, parameter: Tuple[Any, ...], /) -> sqlite3.Row:
-        ...
+    async def fetchone(self, query: str, parameter: tuple[Any, ...], /) -> sqlite3.Row: ...
 
     @overload
-    async def fetchone(self, query: str, *parameters: Any) -> sqlite3.Row:
-        ...
+    async def fetchone(self, query: str, *parameters: Any) -> sqlite3.Row: ...
 
     async def fetchone(self, query: str, *parameters: Any) -> sqlite3.Row:
         """Shortcut method version of :meth:`sqlite3.Cursor.fetchone` without making a cursor."""
@@ -502,56 +454,42 @@ class Connection:
             try:
                 return (await cursor.fetchone())[0]
             except TypeError:
-                return
+                return None
 
     @overload
     async def fetchmany(
-        self, query: str, parameter: Dict[str, Any], /, *, size: Optional[int] = None
-    ) -> List[sqlite3.Row]:
-        ...
+        self, query: str, parameter: dict[str, Any], /, *, size: int | None = None
+    ) -> list[sqlite3.Row]: ...
 
     @overload
     async def fetchmany(
-        self, query: str, parameter: Tuple[Any, ...], /, *, size: Optional[int] = None
-    ) -> List[sqlite3.Row]:
-        ...
+        self, query: str, parameter: tuple[Any, ...], /, *, size: int | None = None
+    ) -> list[sqlite3.Row]: ...
 
     @overload
-    async def fetchmany(
-        self, query: str, /, *parameters: Any, size: Optional[int] = None
-    ) -> List[sqlite3.Row]:
-        ...
+    async def fetchmany(self, query: str, /, *parameters: Any, size: int | None = None) -> list[sqlite3.Row]: ...
 
-    async def fetchmany(
-        self, query: str, /, *parameters: Any, size: Optional[int] = None
-    ) -> List[sqlite3.Row]:
+    async def fetchmany(self, query: str, /, *parameters: Any, size: int | None = None) -> list[sqlite3.Row]:
         """Shortcut method version of :meth:`sqlite3.Cursor.fetchmany` without making a cursor."""
         async with self.execute(query, *parameters) as cursor:
             return await cursor.fetchmany(size)
 
     @overload
-    async def fetchall(
-        self, query: str, parameter: Dict[str, Any], /
-    ) -> List[sqlite3.Row]:
-        ...
+    async def fetchall(self, query: str, parameter: dict[str, Any], /) -> list[sqlite3.Row]: ...
 
     @overload
-    async def fetchall(
-        self, query: str, parameter: Tuple[Any, ...], /
-    ) -> List[sqlite3.Row]:
-        ...
+    async def fetchall(self, query: str, parameter: tuple[Any, ...], /) -> list[sqlite3.Row]: ...
 
     @overload
-    async def fetchall(self, query: str, /, *parameters: Any) -> List[sqlite3.Row]:
-        ...
+    async def fetchall(self, query: str, /, *parameters: Any) -> list[sqlite3.Row]: ...
 
-    async def fetchall(self, query: str, /, *parameters: Any) -> List[sqlite3.Row]:
+    async def fetchall(self, query: str, /, *parameters: Any) -> list[sqlite3.Row]:
         """Shortcut method version of :meth:`sqlite3.Cursor.fetchall` without making a cursor."""
         async with self.execute(query, *parameters) as cursor:
             return await cursor.fetchall()
 
 
-def _connect_pragmas(db: Union[str, bytes], **kwargs: Any) -> sqlite3.Connection:
+def _connect_pragmas(db: str | bytes, **kwargs: Any) -> sqlite3.Connection:
     connection = sqlite3.connect(db, **kwargs)
     sqlite3.register_adapter(bool, int)
     sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
@@ -563,11 +501,11 @@ def _connect_pragmas(db: Union[str, bytes], **kwargs: Any) -> sqlite3.Connection
 
 
 def connect(
-    database: Union[str, bytes],
+    database: str | bytes,
     *,
-    init: Optional[Callable[[sqlite3.Connection], None]] = None,
-    timeout: Optional[float] = None,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+    init: Callable[[sqlite3.Connection], None] | None = None,
+    timeout: float | None = None,
+    loop: asyncio.AbstractEventLoop | None = None,
     **kwargs: Any,
 ) -> _ContextManagerMixin[sqlite3.Connection, Connection]:
     """asyncio-compatible version of :func:`sqlite3.connect`.
@@ -605,7 +543,7 @@ def connect(
     kwargs["detect_types"] = PARSE_DECLTYPES | PARSE_COLNAMES
     if init is not None:
 
-        def new_connect(db: Union[str, bytes], **kwargs: Any) -> sqlite3.Connection:
+        def new_connect(db: str | bytes, **kwargs: Any) -> sqlite3.Connection:
             con = _connect_pragmas(db, **kwargs)
             init(con)
             return con
@@ -613,6 +551,4 @@ def connect(
     else:
         new_connect = _connect_pragmas  # type: ignore
 
-    return _ContextManagerMixin(
-        queue, factory, new_connect, database, timeout=timeout, **kwargs
-    )
+    return _ContextManagerMixin(queue, factory, new_connect, database, timeout=timeout, **kwargs)

@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 import base64
 import hashlib
 import logging
-import re
 from pathlib import Path
-from typing import Any, List, Optional, TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -26,7 +24,7 @@ class Manager:
     app: TsundokuApp
     session: aiohttp.ClientSession
 
-    __last_hash: Optional[int]
+    __last_hash: int | None
 
     def __init__(self, app_context: Any, session: aiohttp.ClientSession) -> None:
         self.app = app_context.app
@@ -91,17 +89,16 @@ class Manager:
             hash_ = match.group(1)
             if len(hash_) == 40:
                 return match.group(0)
-            elif len(hash_) == 32:
+            if len(hash_) == 32:
                 return "urn:btih:" + base64.b32decode(hash_.upper()).hex()
 
             return match.group(0)
 
         if location.startswith("magnet:?"):
             return re.sub(pattern, b32_to_sha1, location)
-        else:
-            async with self.session.get(location) as resp:
-                torrent_bytes = await resp.read()
-                metadata: Any = bencodepy.decode(torrent_bytes)
+        async with self.session.get(location) as resp:
+            torrent_bytes = await resp.read()
+            metadata: Any = bencodepy.decode(torrent_bytes)
 
         subject = metadata[b"info"]
 
@@ -117,7 +114,7 @@ class Manager:
 
         return re.sub(pattern, b32_to_sha1, magnet_url)
 
-    async def get_file_structure(self, location: str) -> List[str]:
+    async def get_file_structure(self, location: str) -> list[str]:
         """
         Given a URL to a .torrent file, it will then return a list
         of the file names inside.
@@ -183,7 +180,7 @@ class Manager:
 
         return await self._client.check_torrent_completed(torrent_id)
 
-    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+    async def check_torrent_ratio(self, torrent_id: str) -> float | None:
         """
         Checks whether a torrent has a ratio of at least 1.0.
 
@@ -217,7 +214,7 @@ class Manager:
 
         await self._client.delete_torrent(torrent_id, with_files=with_files)
 
-    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
+    async def get_torrent_fp(self, torrent_id: str) -> Path | None:
         """
         Retrieves a torrent's downloaded location from a download client.
 
@@ -235,7 +232,7 @@ class Manager:
 
         return await self._client.get_torrent_fp(torrent_id)
 
-    async def add_torrent(self, magnet_url: str) -> Optional[str]:
+    async def add_torrent(self, magnet_url: str) -> str | None:
         """
         Adds a torrent to a download client.
 

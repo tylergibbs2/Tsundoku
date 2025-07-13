@@ -1,10 +1,8 @@
-from __future__ import annotations
-
-import logging
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 from sqlite3 import Row
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -25,20 +23,20 @@ class Show:
     id_: int
     library_id: int
     title: str
-    title_local: Optional[str]
-    desired_format: Optional[str]
+    title_local: str | None
+    desired_format: str | None
     season: int
     episode_offset: int
     watch: bool
     post_process: bool
-    preferred_resolution: Optional[str]
-    preferred_release_group: Optional[str]
+    preferred_resolution: str | None
+    preferred_release_group: str | None
     created_at: datetime
 
     metadata: KitsuManager
 
-    _entries: List[Entry]
-    _webhooks: List[Webhook]
+    _entries: list[Entry]
+    _webhooks: list[Webhook]
 
     def to_dict(self) -> dict:
         """
@@ -68,7 +66,7 @@ class Show:
         }
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: Row) -> Show:
+    async def from_data(cls, app: TsundokuApp, data: Row) -> "Show":
         """
         Creates a Show object from a sqlite3.Row
         of a Show in the database.
@@ -101,7 +99,7 @@ class Show:
         return instance
 
     @classmethod
-    async def from_id(cls, app: TsundokuApp, id_: int) -> Show:
+    async def from_id(cls, app: TsundokuApp, id_: int) -> "Show":
         """
         Retrieves a Show from the database based on
         a passed identifier.
@@ -174,15 +172,15 @@ class Show:
         /,
         library_id: int,
         title: str,
-        title_local: Optional[str],
-        desired_format: Optional[str],
+        title_local: str | None,
+        desired_format: str | None,
         season: int,
         episode_offset: int,
         watch: bool,
         post_process: bool,
-        preferred_resolution: Optional[str],
-        preferred_release_group: Optional[str],
-    ) -> Show:
+        preferred_resolution: str | None,
+        preferred_release_group: str | None,
+    ) -> "Show":
         """
         Inserts a Show into the database based on the
         passed keyword arguments.
@@ -274,7 +272,7 @@ class Show:
                 self.id_,
             )
 
-    async def entries(self) -> List[Entry]:
+    async def entries(self) -> list[Entry]:
         """
         Retrieves and sets a list of this Show's
         entries.
@@ -287,7 +285,7 @@ class Show:
         self._entries = await Entry.from_show_id(self.app, self.id_)
         return self._entries
 
-    async def webhooks(self) -> List[Webhook]:
+    async def webhooks(self) -> list[Webhook]:
         """
         Retrieves and sets a list of this Show's
         webhooks.

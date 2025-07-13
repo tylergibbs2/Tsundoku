@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -18,7 +18,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class ShowEntriesAPI(views.MethodView):
-    async def get(self, show_id: int, entry_id: Optional[int]) -> APIResponse:
+    async def get(self, show_id: int, entry_id: int | None) -> APIResponse:
         if entry_id is None:
             async with app.acquire_db() as con:
                 entries = await con.fetchall(
@@ -36,10 +36,9 @@ class ShowEntriesAPI(views.MethodView):
                 )
 
             return APIResponse(result=[dict(record) for record in entries])
-        else:
-            async with app.acquire_db() as con:
-                entry = await con.fetchone(
-                    """
+        async with app.acquire_db() as con:
+            entry = await con.fetchone(
+                """
                     SELECT
                         id,
                         episode,
@@ -49,33 +48,27 @@ class ShowEntriesAPI(views.MethodView):
                         show_entry
                     WHERE id=?;
                 """,
-                    entry_id,
-                )
+                entry_id,
+            )
 
-            if entry is None:
-                return APIResponse(
-                    status=404, error="Entry with specified ID does not exist."
-                )
+        if entry is None:
+            return APIResponse(status=404, error="Entry with specified ID does not exist.")
 
-            return APIResponse(result=dict(entry))
+        return APIResponse(result=dict(entry))
 
     async def add_single_entry(self, show_id: int, entry: dict) -> Entry:
         required_arguments = {"episode", "magnet"}
         if all(arg not in entry.keys() for arg in required_arguments):
-            raise Exception(
-                f"Too many arguments or missing required arguments ({', '.join(required_arguments)})."
-            )
+            raise Exception(f"Too many arguments or missing required arguments ({', '.join(required_arguments)}).")
 
         try:
             episode = int(entry["episode"])
-        except ValueError:
-            raise Exception("Episode must be an integer.")
+        except ValueError as e:
+            raise Exception("Episode must be an integer.") from e
 
         if entry["magnet"]:
             magnet = await app.dl_client.get_magnet(entry["magnet"])
-            entry_id = await app.downloader.begin_handling(
-                show_id, episode, magnet, "v0", manual=True
-            )
+            entry_id = await app.downloader.begin_handling(show_id, episode, magnet, "v0", manual=True)
         else:
             async with app.acquire_db() as con:
                 async with con.cursor() as cur:
@@ -125,17 +118,15 @@ class ShowEntriesAPI(views.MethodView):
         await new_entry_obj._handle_webhooks()
         return new_entry_obj
 
-    async def post(self, show_id: int, entry_id: Optional[int] = None) -> APIResponse:
+    async def post(self, show_id: int, entry_id: int | None = None) -> APIResponse:
         body = await request.get_json()
 
         try:
             if isinstance(body, dict):
                 entry = await self.add_single_entry(show_id, body)
                 return APIResponse(result=entry.to_dict())
-            elif isinstance(body, list):
-                entries = [
-                    await self.add_single_entry(show_id, entry) for entry in body
-                ]
+            if isinstance(body, list):
+                entries = [await self.add_single_entry(show_id, entry) for entry in body]
                 return APIResponse(result=[entry.to_dict() for entry in entries])
         except Exception as e:
             return APIResponse(status=400, error=str(e))

@@ -1,8 +1,7 @@
+from collections.abc import AsyncGenerator
 import json
-from typing import AsyncGenerator
 
 from tsundoku.sources import Source
-
 
 MOCK_SOURCE = """
 {

@@ -1,15 +1,14 @@
-from __future__ import annotations
-
 from asyncio import Queue
 from datetime import timedelta
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import Blueprint, Response as QuartResponse
-from quart_rate_limiter import rate_limit, RateLimitExceeded
+from quart import Blueprint
+from quart import Response as QuartResponse
+from quart_rate_limiter import RateLimitExceeded, rate_limit
 from werkzeug import Response
 
 if TYPE_CHECKING:
@@ -29,11 +28,11 @@ from quart import (
     websocket,
 )
 from quart_auth import (
+    Unauthorized,
     current_user,
     login_required,
     login_user,
     logout_user,
-    Unauthorized,
 )
 
 from tsundoku import __version__ as version
@@ -55,7 +54,7 @@ hasher = PasswordHasher()
 
 
 @ux_blueprint.errorhandler(Unauthorized)
-async def redirect_to_login(_: Any) -> Response:
+async def redirect_to_login(_: Any) -> Response:  # noqa: RUF029
     if app.flags.IS_FIRST_LAUNCH:
         return redirect(url_for("ux.register"))
 
@@ -73,7 +72,7 @@ async def err_429(e: Exception) -> Response:
 
 
 @ux_blueprint.context_processor
-async def update_context() -> dict:
+async def update_context() -> dict:  # noqa: RUF029
     fluent = app.get_fluent()
     stats = {"version": version}
 
@@ -112,7 +111,7 @@ async def index() -> str:
 
 @ux_blueprint.route("/logs", methods=["GET"])
 @login_required
-async def logs() -> Union[str, QuartResponse]:
+async def logs() -> str | QuartResponse:
     if request.args.get("dl"):
         return await send_file(f"{DATA_DIR / 'tsundoku.log'}", as_attachment=True)
 
@@ -131,35 +130,34 @@ async def register() -> Any:
 
     if request.method == "GET":
         return await render_template("register.html")
-    else:
-        fluent = app.get_fluent()
-        form = await request.form
+    fluent = app.get_fluent()
+    form = await request.form
 
-        username = form.get("username")
-        password = form.get("password")
-        password_confirm = form.get("confirmPassword")
-        if not username:
-            await flash(
-                fluent._("form-register-missing-data", {"field": "username"}),
-                category="error",
-            )
-            return redirect(url_for("ux.register"))
-        elif not password:
-            await flash(
-                fluent._("form-register-missing-data", {"field": "password"}),
-                category="error",
-            )
-            return redirect(url_for("ux.register"))
-        elif len(password) < 8:
-            await flash(fluent._("form-password-characters"), category="error")
-            return redirect(url_for("ux.register"))
-        elif password != password_confirm:
-            await flash(fluent._("form-password-mismatch"), category="error")
-            return redirect(url_for("ux.register"))
+    username = form.get("username")
+    password = form.get("password")
+    password_confirm = form.get("confirmPassword")
+    if not username:
+        await flash(
+            fluent._("form-register-missing-data", {"field": "username"}),
+            category="error",
+        )
+        return redirect(url_for("ux.register"))
+    if not password:
+        await flash(
+            fluent._("form-register-missing-data", {"field": "password"}),
+            category="error",
+        )
+        return redirect(url_for("ux.register"))
+    if len(password) < 8:
+        await flash(fluent._("form-password-characters"), category="error")
+        return redirect(url_for("ux.register"))
+    if password != password_confirm:
+        await flash(fluent._("form-password-mismatch"), category="error")
+        return redirect(url_for("ux.register"))
 
-        async with app.acquire_db() as con:
-            existing_id = await con.fetchval(
-                """
+    async with app.acquire_db() as con:
+        existing_id = await con.fetchval(
+            """
                 SELECT
                     id
                 FROM
@@ -167,35 +165,35 @@ async def register() -> Any:
                 WHERE
                     LOWER(username) = LOWER(?);
             """,
-                username,
-            )
+            username,
+        )
 
-        # technically not possible to get to this page if there are
-        # any other users at all
-        if existing_id is not None:
-            await flash(fluent._("form-username-taken"), category="error")
-            return redirect(url_for("ux.register"))
+    # technically not possible to get to this page if there are
+    # any other users at all
+    if existing_id is not None:
+        await flash(fluent._("form-username-taken"), category="error")
+        return redirect(url_for("ux.register"))
 
-        pw_hash = PasswordHasher().hash(password)
-        async with app.acquire_db() as con:
-            await con.execute(
-                """
+    pw_hash = PasswordHasher().hash(password)
+    async with app.acquire_db() as con:
+        await con.execute(
+            """
                 INSERT INTO
                     users
                     (username, password_hash, api_key)
                 VALUES
                     (?, ?, ?);
             """,
-                username,
-                pw_hash,
-                str(uuid4()),
-            )
+            username,
+            pw_hash,
+            str(uuid4()),
+        )
 
-        if app.flags.IS_FIRST_LAUNCH:
-            app.flags.IS_FIRST_LAUNCH = False
+    if app.flags.IS_FIRST_LAUNCH:
+        app.flags.IS_FIRST_LAUNCH = False
 
-        await flash(fluent._("form-register-success"), category="success")
-        return redirect(url_for("ux.login"))
+    await flash(fluent._("form-register-success"), category="success")
+    return redirect(url_for("ux.login"))
 
 
 @ux_blueprint.route("/login", methods=["GET"])
@@ -269,14 +267,14 @@ async def login_post() -> Any:
 
 @ux_blueprint.route("/logout", methods=["GET"])
 @login_required
-async def logout() -> Any:
+async def logout() -> Any:  # noqa: RUF029
     logout_user()
     return redirect("/")
 
 
-def collect_websocket(func):
+def collect_websocket(func: Any) -> Any:
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         queue = Queue()
         app.connected_websockets.add(queue)
         try:

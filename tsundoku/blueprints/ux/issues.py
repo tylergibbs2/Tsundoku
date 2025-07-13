@@ -58,9 +58,8 @@ def get_issue_url(issue_type: str, useragent: str) -> str:
 
         body = quote(BUG_REPORT.format(**ctx))
 
-        return (
-            f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=bug&title=&body="
-            + body
-        )
+        return f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=bug&title=&body=" + body
 
-    return f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=feature%20request&template=feature_request.md"
+    return (
+        f"https://github.com/{repo_owner}/{repo_name}/issues/new?labels=feature%20request&template=feature_request.md"
+    )

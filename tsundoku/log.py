@@ -1,7 +1,5 @@
-from __future__ import annotations
-
-import logging
 from asyncio import QueueFull
+import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -34,9 +32,7 @@ def setup_logging(app: TsundokuApp) -> None:
     logger.propagate = True
     logger.setLevel(logging.DEBUG)
 
-    file_handler = logging.FileHandler(
-        f"{DATA_DIR / LOGGING_FILE_NAME}", encoding="utf-8"
-    )
+    file_handler = logging.FileHandler(f"{DATA_DIR / LOGGING_FILE_NAME}", encoding="utf-8")
     file_handler.set_name("file")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)

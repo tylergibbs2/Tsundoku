@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -68,15 +66,11 @@ class Downloader:
                 import traceback
 
                 traceback.print_exc()
-                logger.error(
-                    f"Error occurred while checking show entries, '{e}'", exc_info=True
-                )
+                logger.error(f"Error occurred while checking show entries, '{e}'", exc_info=True)
 
             await asyncio.sleep(self.complete_check)
 
-    def get_expression_mapping(
-        self, title: str, season: str, episode: str, version: str, **kwargs: str
-    ) -> ExprDict:
+    def get_expression_mapping(self, title: str, season: str, episode: str, version: str, **kwargs: str) -> ExprDict:
         """
         Creates an ExprDict of specific expressions to use
         when formatting strings.
@@ -123,7 +117,7 @@ class Downloader:
         magnet_url: str,
         version: str,
         manual: bool = False,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Begins downloading an episode of a show
         using the passed magnet URL.
@@ -150,9 +144,7 @@ class Downloader:
         try:
             torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
         except Exception as e:
-            logger.exception(
-                f"Failed to begin handling, could not connect to download client: {e}"
-            )
+            logger.exception(f"Failed to begin handling, could not connect to download client: {e}")
             self.app.flags.DL_CLIENT_CONNECTION_ERROR = True
             return None
 
@@ -214,7 +206,7 @@ class Downloader:
 
         return entry.id
 
-    async def handle_move(self, entry: Entry) -> Optional[Path]:
+    async def handle_move(self, entry: Entry) -> Path | None:
         """
         Handles the move for a downloaded entry.
         Returns the new pathlib.Path of the moved file.
@@ -249,11 +241,7 @@ class Downloader:
             )
 
         season = str(show_info["season"])
-        title = (
-            show_info["title_local"]
-            if show_info["title_local"] is not None
-            else show_info["title"]
-        )
+        title = show_info["title_local"] if show_info["title_local"] is not None else show_info["title"]
 
         library: Library = await Library.from_id(self.app, show_info["library_id"])
         desired_folder = library.folder / title
@@ -275,15 +263,13 @@ class Downloader:
             try:
                 entry.file_path.symlink_to(desired_path)
             except Exception as e:
-                logger.warning(
-                    f"Failed to Create Trailing Symlink - {e}", exc_info=True
-                )
+                logger.warning(f"Failed to Create Trailing Symlink - {e}", exc_info=True)
 
             return desired_path
 
         return None
 
-    async def handle_rename(self, entry: Entry) -> Optional[Path]:
+    async def handle_rename(self, entry: Entry) -> Path | None:
         """
         Handles the rename for a downloaded entry.
         Returns the new pathlib.Path of the renamed file.
@@ -327,11 +313,7 @@ class Downloader:
 
         suffix = entry.file_path.suffix
 
-        title = (
-            show_info["title_local"]
-            if show_info["title_local"] is not None
-            else show_info["title"]
-        )
+        title = show_info["title_local"] if show_info["title_local"] is not None else show_info["title"]
         episode = str(entry.episode + show_info["episode_offset"])
 
         expressions = self.get_expression_mapping(
@@ -355,7 +337,7 @@ class Downloader:
 
         return None
 
-    def resolve_file(self, root: Path, episode: int) -> Optional[Path]:
+    def resolve_file(self, root: Path, episode: int) -> Path | None:
         """
         Searches a directory tree for a specific episode
         file.
@@ -391,10 +373,7 @@ class Downloader:
             if parsed is None or "episode_number" not in parsed:
                 continue
 
-            if (
-                not isinstance(parsed["episode_number"], str)
-                or not parsed["episode_number"].isdigit()
-            ):
+            if not isinstance(parsed["episode_number"], str) or not parsed["episode_number"].isdigit():
                 continue
 
             found = int(parsed["episode_number"])
@@ -420,9 +399,7 @@ class Downloader:
 
         # Sometimes the file path may exist on disk, but it isn't fully
         # downloaded by the torrent client at this point in time.
-        is_completed = await self.app.dl_client.check_torrent_completed(
-            entry.torrent_hash
-        )
+        is_completed = await self.app.dl_client.check_torrent_completed(entry.torrent_hash)
         if not is_completed:
             logger.info(f"<e{entry.id}> torrent state is not completed")
             return
@@ -432,12 +409,10 @@ class Downloader:
         if entry.state == EntryState.downloading:
             path = await self.app.dl_client.get_torrent_fp(entry.torrent_hash)
             if not path:
-                logger.error(
-                    f"Entry <e{entry.id}> missing from download client, marking as failed."
-                )
+                logger.error(f"Entry <e{entry.id}> missing from download client, marking as failed.")
                 await entry.set_state(EntryState.failed)
                 return
-            elif not path.parent.is_dir():
+            if not path.parent.is_dir():
                 logger.error(f"<e{entry.id}>, `{path}` could not be read")
                 return
 
@@ -468,16 +443,12 @@ class Downloader:
             logger.info(f"Release Marked as Downloaded - <e{entry.id}>")
 
         if entry.state == EntryState.downloaded:
-            seed_ratio = await self.app.dl_client.check_torrent_ratio(
-                entry.torrent_hash
-            )
+            seed_ratio = await self.app.dl_client.check_torrent_ratio(entry.torrent_hash)
             if seed_ratio is None:
                 logger.error(f"<e{entry.id}> seed ratio could not be determined")
                 return
-            elif seed_ratio < self.seed_ratio_limit:
-                logger.info(
-                    f"<e{entry.id}> seed ratio is below limit ({self.seed_ratio_limit})"
-                )
+            if seed_ratio < self.seed_ratio_limit:
+                logger.info(f"<e{entry.id}> seed ratio is below limit ({self.seed_ratio_limit})")
                 return
 
             logger.info(f"Preparing to Rename Release - <e{entry.id}>")
@@ -503,9 +474,7 @@ class Downloader:
             )
 
         if library_id is None:
-            logger.error(
-                f"Show <s{entry.show_id}> is missing a library. Cannot process entry <e{entry.id}>"
-            )
+            logger.error(f"Show <s{entry.show_id}> is missing a library. Cannot process entry <e{entry.id}>")
             return
 
         if entry.state == EntryState.renamed:

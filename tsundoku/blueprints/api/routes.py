@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import sqlite3
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from quart import Blueprint
@@ -21,46 +21,44 @@ from quart_auth import login_user
 from quart_rate_limiter import RateLimitExceeded
 
 from tsundoku.config import (
-    ConfigCheckFailure,
-    ConfigInvalidKey,
+    ConfigCheckFailError,
+    ConfigInvalidKeyError,
     EncodeConfig,
     FeedsConfig,
     GeneralConfig,
     TorrentConfig,
 )
 from tsundoku.decorators import deny_readonly
-from tsundoku.webhooks import WebhookBase
 from tsundoku.user import User
 from tsundoku.utils import directory_is_writable
+from tsundoku.webhooks import WebhookBase
 
-from .show_entries import ShowEntriesAPI
 from .entries import EntriesAPI
 from .libraries import LibrariesAPI
 from .nyaa import NyaaAPI
 from .response import APIResponse
+from .seen_releases import SeenReleasesAPI
+from .show_entries import ShowEntriesAPI
 from .shows import ShowsAPI
 from .webhookbase import WebhookBaseAPI
 from .webhooks import WebhooksAPI
-from .seen_releases import SeenReleasesAPI
 
 api_blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.errorhandler(500)
-async def err_500(_) -> APIResponse:
+async def err_500(_: Any) -> APIResponse:  # noqa: RUF029
     return APIResponse(status=500, error="Server encountered an unexpected error.")
 
 
 @api_blueprint.errorhandler(403)
-async def err_403(_) -> APIResponse:
-    return APIResponse(
-        status=403, error="You are forbidden from modifying this resource."
-    )
+async def err_403(_: Any) -> APIResponse:  # noqa: RUF029
+    return APIResponse(status=403, error="You are forbidden from modifying this resource.")
 
 
 @api_blueprint.errorhandler(429)
-async def err_429(e: Exception) -> APIResponse:
+async def err_429(e: Exception) -> APIResponse:  # noqa: RUF029
     error = "Too many requests."
     if isinstance(e, RateLimitExceeded):
         error += f" Try again in {e.retry_after} seconds."
@@ -68,7 +66,7 @@ async def err_429(e: Exception) -> APIResponse:
 
 
 @api_blueprint.before_request
-async def ensure_auth() -> Optional[APIResponse]:
+async def ensure_auth() -> APIResponse | None:
     if request.headers.get("Authorization"):
         token = request.headers["Authorization"]
         if not token.startswith("Bearer "):
@@ -92,14 +90,10 @@ async def ensure_auth() -> Optional[APIResponse]:
                 if user_id:
                     login_user(User(user_id))
             except Exception:
-                return APIResponse(
-                    status=401, result="You are not authorized to access this resource."
-                )
+                return APIResponse(status=401, result="You are not authorized to access this resource.")
 
     if not await current_user.is_authenticated:
-        return APIResponse(
-            status=401, result="You are not authorized to access this resource."
-        )
+        return APIResponse(status=401, result="You are not authorized to access this resource.")
 
     if await current_user.readonly and request.method in (
         "POST",
@@ -107,9 +101,7 @@ async def ensure_auth() -> Optional[APIResponse]:
         "PATCH",
         "DELETE",
     ):
-        return APIResponse(
-            status=403, error="You are forbidden from modifying this resource."
-        )
+        return APIResponse(status=403, error="You are forbidden from modifying this resource.")
 
     return None
 
@@ -121,18 +113,18 @@ async def tree() -> APIResponse:
         return APIResponse(status=400, error="Missing 'dir' key in request body.")
 
     location = Path(data["dir"]).resolve()
-    if "subdir" in data and data["subdir"]:
+    if data.get("subdir"):
         try:
             location = (location / data["subdir"]).resolve()
         except PermissionError:
             pass
 
     dirs = []
-    for dir in location.glob("*"):
-        if not dir.is_dir():
+    for directory in location.glob("*"):
+        if not directory.is_dir():
             continue
 
-        dirs.append(dir.name)
+        dirs.append(directory.name)
 
     can_go_back = location.parent != location
     return APIResponse(
@@ -190,18 +182,14 @@ async def config_route(cfg_type: str) -> APIResponse:
 
         try:
             cfg.update(arguments)
-        except ConfigInvalidKey:
-            return APIResponse(
-                status=400, error="Invalid key contained in new configuration settings."
-            )
+        except ConfigInvalidKeyError:
+            return APIResponse(status=400, error="Invalid key contained in new configuration settings.")
 
         try:
             await cfg.save()
         except sqlite3.IntegrityError:
-            return APIResponse(
-                status=400, error="Error inserting new configuration data."
-            )
-        except ConfigCheckFailure as e:
+            return APIResponse(status=400, error="Error inserting new configuration data.")
+        except ConfigCheckFailError as e:
             return APIResponse(status=400, error=e.message)
 
     if cfg_type == "encode":
@@ -318,9 +306,7 @@ def setup_views() -> None:
         view_func=shows_view,
         methods=["GET", "POST"],
     )
-    api_blueprint.add_url_rule(
-        "/shows/<int:show_id>", view_func=shows_view, methods=["GET", "PUT", "DELETE"]
-    )
+    api_blueprint.add_url_rule("/shows/<int:show_id>", view_func=shows_view, methods=["GET", "PUT", "DELETE"])
 
     # Setup EntriesAPI URL rules.
     show_entries_view = ShowEntriesAPI.as_view("show_entries_api")
@@ -339,16 +325,12 @@ def setup_views() -> None:
 
     entries_view = EntriesAPI.as_view("entries_api")
 
-    api_blueprint.add_url_rule(
-        "/entries/<int:entry_id>", view_func=entries_view, methods=["GET"]
-    )
+    api_blueprint.add_url_rule("/entries/<int:entry_id>", view_func=entries_view, methods=["GET"])
 
     # Setup WebhooksAPI URL rules.
     webhooks_view = WebhooksAPI.as_view("webhooks_api")
 
-    api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/webhooks", view_func=webhooks_view, methods=["GET"]
-    )
+    api_blueprint.add_url_rule("/shows/<int:show_id>/webhooks", view_func=webhooks_view, methods=["GET"])
     api_blueprint.add_url_rule(
         "/shows/<int:show_id>/webhooks/<int:base_id>",
         view_func=webhooks_view,
@@ -358,9 +340,7 @@ def setup_views() -> None:
     # Setup WebhookBaseAPI URL rules.
     webhookbase_view = WebhookBaseAPI.as_view("webhookbase_api")
 
-    api_blueprint.add_url_rule(
-        "/webhooks", view_func=webhookbase_view, methods=["GET", "POST"]
-    )
+    api_blueprint.add_url_rule("/webhooks", view_func=webhookbase_view, methods=["GET", "POST"])
     api_blueprint.add_url_rule(
         "/webhooks/<int:base_id>",
         view_func=webhookbase_view,
@@ -369,9 +349,7 @@ def setup_views() -> None:
 
     seenreleases_view = SeenReleasesAPI.as_view("seenreleases_api")
 
-    api_blueprint.add_url_rule(
-        "/seen_releases/<string:action>", view_func=seenreleases_view, methods=["GET"]
-    )
+    api_blueprint.add_url_rule("/seen_releases/<string:action>", view_func=seenreleases_view, methods=["GET"])
 
     # Setup NyaaAPI URL rules.
     nyaa_view = NyaaAPI.as_view("nyaa_api")
@@ -380,9 +358,7 @@ def setup_views() -> None:
 
     libraries_view = LibrariesAPI.as_view("libraries_api")
 
-    api_blueprint.add_url_rule(
-        "/libraries", view_func=libraries_view, methods=["GET", "POST"]
-    )
+    api_blueprint.add_url_rule("/libraries", view_func=libraries_view, methods=["GET", "POST"])
     api_blueprint.add_url_rule(
         "/libraries/<int:library_id>",
         view_func=libraries_view,

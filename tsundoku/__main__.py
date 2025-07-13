@@ -1,7 +1,7 @@
 import sys
 
-if sys.version_info < (3, 8):
-    print("Please update Python to use version 3.8+")
+if sys.version_info < (3, 11):
+    print("Please update Python to use version 3.11+")
     exit(1)
 
 import argparse
@@ -28,7 +28,7 @@ def bundle_zip() -> None:
     """
     Bundles the Tsundoku application into a zip file.
     """
-    TO_ZIP = (
+    to_zip = (
         "default_sources",
         "l10n",
         "migrations",
@@ -39,15 +39,15 @@ def bundle_zip() -> None:
         "requirements.txt",
     )
 
-    INVALID_EXTS = (".pyc",)
+    invalid_exts = (".pyc",)
 
-    for fp in TO_ZIP:
+    for fp in to_zip:
         if not Path(fp).exists():
             print(f"Bundle process failed, missing '{fp}'...")
             exit(1)
 
     print("Checking yarn package version...")
-    with open("package.json", "r", encoding="utf-8") as f:
+    with open("package.json", encoding="utf-8") as f:
         package = json.load(f)
 
     if package["version"] != version:
@@ -58,9 +58,7 @@ def bundle_zip() -> None:
         exit(1)
 
     print("Running `yarn build`...")
-    proc = subprocess.Popen(
-        ["yarn", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
+    proc = subprocess.Popen(["yarn", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = proc.communicate()
     if err:
         print(err.decode())
@@ -70,16 +68,16 @@ def bundle_zip() -> None:
 
     print("Zipping contents...")
     filename = f"tsundoku-{version}.zip"
-    with ZipFile(filename, "w") as zip:
-        for fp in TO_ZIP:
+    with ZipFile(filename, "w") as zipped:
+        for fp in to_zip:
             print(f"Adding {fp}...")
             if Path(fp).is_dir():
                 for path in Path(fp).rglob("*"):
-                    if path.suffix in INVALID_EXTS:
+                    if path.suffix in invalid_exts:
                         continue
-                    zip.write(str(path))
+                    zipped.write(str(path))
             else:
-                zip.write(fp)
+                zipped.write(fp)
 
     print(f"Bundle process complete. '{filename}' created.")
 
@@ -101,7 +99,7 @@ def find_locale_duplicates(lang: str) -> None:
     seen_keys = set()
     duplicates = set()
 
-    with open(str(locale_file), "r", encoding="utf-8") as text:
+    with open(str(locale_file), encoding="utf-8") as text:
         for match in re.finditer(r"^([\w\-]+) =", text.read(), re.MULTILINE):
             key = match.group(1)
             if key in seen_keys:
@@ -135,16 +133,16 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
     if not from_path.exists():
         print(f"Language '{from_lang}' could not be found or does not exist.")
         return
-    elif not to_path.exists():
+    if not to_path.exists():
         print(f"Language '{to_lang}' could not be found or does not exist.")
         return
 
     from_bundle = FluentBundle([from_lang])
     to_bundle = FluentBundle([to_lang])
 
-    with open(str(from_path), "r", encoding="utf-8") as text:
+    with open(str(from_path), encoding="utf-8") as text:
         from_bundle.add_resource(FluentResource(text.read()))
-    with open(str(to_path), "r", encoding="utf-8") as text:
+    with open(str(to_path), encoding="utf-8") as text:
         to_bundle.add_resource(FluentResource(text.read()))
 
     from_keys = from_bundle._messages.keys()
@@ -159,9 +157,7 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
     if conflicts:
         print(f"{conflicts} different conflicts were found in language '{to_lang}'.")
 
-        print(
-            f"'{to_lang}' is {100 - (len(missing_keys) / len(from_keys)) * 100:.2f}% compatible with '{from_lang}'."
-        )
+        print(f"'{to_lang}' is {100 - (len(missing_keys) / len(from_keys)) * 100:.2f}% compatible with '{from_lang}'.")
         print(f"(missing {len(missing_keys)} keys out of {len(from_keys)})")
     else:
         print("No conflicts found. Both locales have the same features.")
@@ -181,9 +177,7 @@ if __name__ == "__main__":
         action="store_true",
         help="Migrates the Tsundoku database to match any updates.",
     )
-    parser.add_argument(
-        "--create-user", action="store_true", help="Creates a new login user."
-    )
+    parser.add_argument("--create-user", action="store_true", help="Creates a new login user.")
     parser.add_argument(
         "--l10n-compat",
         type=str,

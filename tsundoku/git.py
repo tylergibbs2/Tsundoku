@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -13,7 +13,6 @@ else:
 from tsundoku import __version__ as current_version
 from tsundoku.config import GeneralConfig
 from tsundoku.utils import compare_version_strings
-
 
 logger = logging.getLogger("tsundoku")
 
@@ -28,20 +27,18 @@ class UpdateInformation:
     url: str
 
 
-async def check_for_updates() -> Optional[UpdateInformation]:
+async def check_for_updates() -> UpdateInformation | None:
     config = await GeneralConfig.retrieve(app)
     if not config.get("update_do_check", False):
         logger.info("Update checks disabled by configuration, skipping.")
-        return
+        return None
 
     headers = {"accept": "application/vnd.github+json"}
 
     repo_owner = os.getenv("GITHUB_REPO_OWNER", "tylergibbs2")
     repo_name = os.getenv("GITHUB_REPO_NAME", "Tsundoku")
 
-    logger.info(
-        f"Update check: Checking for updates at github.com/{repo_owner}/{repo_name}"
-    )
+    logger.info(f"Update check: Checking for updates at github.com/{repo_owner}/{repo_name}")
 
     url = REQUEST_URL.format(owner=repo_owner, repository=repo_name)
     async with app.session.get(url, headers=headers) as resp:
@@ -50,7 +47,7 @@ async def check_for_updates() -> Optional[UpdateInformation]:
     if resp.status == 404:
         logger.error("Update check: Could not find repository on GitHub.")
         return None
-    elif resp.status != 200:
+    if resp.status != 200:
         logger.error("Update check: Could not connect to GitHub.")
         return None
 
@@ -71,3 +68,4 @@ async def check_for_updates() -> Optional[UpdateInformation]:
         return app.flags.UPDATE_INFO
 
     logger.info("Update check: No new version is available.")
+    return None

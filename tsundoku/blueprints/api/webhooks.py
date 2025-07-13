@@ -32,10 +32,8 @@ class WebhooksAPI(views.MethodView):
         wh = await Webhook.from_composite(app, show_id, base_id)
 
         if not wh:
-            return APIResponse(
-                status=404, error="Webhook with specified ID does not exist."
-            )
-        elif any(t not in VALID_TRIGGERS for t in triggers):
+            return APIResponse(status=404, error="Webhook with specified ID does not exist.")
+        if any(t not in VALID_TRIGGERS for t in triggers):
             return APIResponse(status=400, error="Invalid webhook triggers.")
 
         all_triggers = await wh.get_triggers()

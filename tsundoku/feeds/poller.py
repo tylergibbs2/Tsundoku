@@ -1,14 +1,12 @@
-from __future__ import annotations
-
 import asyncio
 from collections import defaultdict
 from dataclasses import dataclass
-from functools import partial, cmp_to_key
+from functools import cmp_to_key, partial
 import hashlib
 import logging
 import os
 from sqlite3 import Row
-from typing import Any, Dict, List, NamedTuple, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -18,7 +16,7 @@ import feedparser
 from tsundoku.config import FeedsConfig
 from tsundoku.feeds.fuzzy import extract_one
 from tsundoku.manager import SeenRelease
-from tsundoku.sources import get_all_sources, Source
+from tsundoku.sources import Source, get_all_sources
 from tsundoku.utils import (
     compare_version_strings,
     normalize_resolution,
@@ -69,9 +67,9 @@ class SourceCache:
         The hash of the most recent item in the feed.
     """
 
-    last_etag: Optional[str] = None
-    last_modified: Optional[str] = None
-    most_recent_hash: Optional[str] = None
+    last_etag: str | None = None
+    last_modified: str | None = None
+    most_recent_hash: str | None = None
 
 
 class Poller:
@@ -89,7 +87,7 @@ class Poller:
     """
 
     app: TsundokuApp
-    source_cache: Dict[str, SourceCache]
+    source_cache: dict[str, SourceCache]
 
     def __init__(self, app_context: Any) -> None:
         self.app = app_context.app
@@ -114,9 +112,7 @@ class Poller:
 
         if os.getenv("DISABLE_POLL_ON_START"):
             await self.update_config()
-            logger.info(
-                f"Polling disabled on start, waiting {self.interval} seconds before first poll..."
-            )
+            logger.info(f"Polling disabled on start, waiting {self.interval} seconds before first poll...")
             await asyncio.sleep(self.interval)
 
         while True:
@@ -125,20 +121,14 @@ class Poller:
             try:
                 await self.poll()
             except Exception:
-                logger.error(
-                    "An error occurred while polling RSS sources.", exc_info=True
-                )
+                logger.error("An error occurred while polling RSS sources.", exc_info=True)
 
             try:
                 await SeenRelease.delete_old(self.app, days=30)
             except Exception:
-                logger.error(
-                    "An error occurred while deleting old seen releases.", exc_info=True
-                )
+                logger.error("An error occurred while deleting old seen releases.", exc_info=True)
 
-            logger.info(
-                f"Sleeping {self.interval} seconds before polling RSS sources again..."
-            )
+            logger.info(f"Sleeping {self.interval} seconds before polling RSS sources again...")
             await asyncio.sleep(self.interval)
 
     def reset_rss_cache(self) -> None:
@@ -149,7 +139,7 @@ class Poller:
         """
         self.source_cache.clear()
 
-    async def poll(self, force: bool = False) -> List[FoundEntry]:
+    async def poll(self, force: bool = False) -> list[FoundEntry]:
         """
         Iterates through every installed RSS source
         and will check for new items to download.
@@ -180,9 +170,7 @@ class Poller:
             if not items:
                 continue
 
-            logger.info(
-                f"`{source.name}@{source.version}` - Checking for New Releases..."
-            )
+            logger.info(f"`{source.name}@{source.version}` - Checking for New Releases...")
             source_items = await self.check_feed(source, items)
             found += source_items
             logger.info(
@@ -193,10 +181,10 @@ class Poller:
 
         # This still returns information, despite not being used in this particular
         # task, because the REST API hooks into the running Poller task and will call
-        # this. See: tsundoku/blueprints/api/routes.py#check_for_releases
+        # this. See: tsundoku/blueprints/api/routes.py#check_for_releases  # noqa: ERA001
         return found
 
-    async def check_feed(self, source: Source, items: List[dict]) -> List[FoundEntry]:
+    async def check_feed(self, source: Source, items: list[dict]) -> list[FoundEntry]:
         """
         Iterates through the list of items in an
         RSS feed and will individually check each
@@ -272,12 +260,9 @@ class Poller:
 
         entries = sorted(entries, key=cmp_to_key(compare), reverse=True)
 
-        return (
-            entries[0]["created_manually"]
-            or compare_version_strings(entries[0]["version"], version) >= 0
-        )
+        return entries[0]["created_manually"] or compare_version_strings(entries[0]["version"], version) >= 0
 
-    async def check_item_for_match(self, show_name: str) -> Optional[EntryMatch]:
+    async def check_item_for_match(self, show_name: str) -> EntryMatch | None:
         """
         Takes a show name from RSS and an episode from RSS and
         checks if the object should be downloaded.
@@ -309,9 +294,7 @@ class Poller:
                     shows;
             """
             )
-        show_list = {
-            show["title"]: show["id"] for show in desired_shows if show["watch"]
-        }
+        show_list = {show["title"]: show["id"] for show in desired_shows if show["watch"]}
 
         if not show_list:
             return None
@@ -324,7 +307,7 @@ class Poller:
 
         return None
 
-    async def check_item(self, source: Source, item: dict) -> Optional[FoundEntry]:
+    async def check_item(self, source: Source, item: dict) -> FoundEntry | None:
         """
         Checks an item to see if it is from a
         desired show entry, and will then begin
@@ -352,15 +335,11 @@ class Poller:
             return None
 
         if parsed is None:
-            logger.warning(
-                f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'"
-            )
+            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'")
             return None
 
         if isinstance(parsed.get("release_information", []), list):
-            release_info = [
-                info.lower() for info in parsed.get("release_information", [])
-            ]
+            release_info = [info.lower() for info in parsed.get("release_information", [])]
         else:
             release_info = [parsed.get("release_information", "").lower()]
 
@@ -369,23 +348,15 @@ class Poller:
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'"
             )
             return None
-        elif "episode_number" not in parsed:
+        if "episode_number" not in parsed:
             logger.warning(
                 f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
             )
             return None
-        # elif "anime_type" in parsed.keys():
-        #     print(parsed)
-        #     logger.info(
-        #         f"`{source.name}@{source.version}` - Ignoring non-episode '{filename}'"
-        #     )
-        #     return None
-        elif "batch" in release_info or isinstance(parsed["episode_number"], list):
-            logger.info(
-                f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'"
-            )
+        if "batch" in release_info or isinstance(parsed["episode_number"], list):
+            logger.info(f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'")
             return None
-        elif not parsed["episode_number"].isdigit():
+        if not parsed["episode_number"].isdigit():
             logger.info(
                 f"`{source.name}@{source.version}` - Episode '{parsed['episode_number']}' is not an integer '{filename}'"
             )
@@ -429,10 +400,7 @@ class Poller:
                 f"`{source.name}@{source.version}` - Ignoring release for '{filename}', resolution {resolution} does not match preferred resolution {preferred_resolution}"
             )
             return None
-        elif (
-            preferred_release_group is not None
-            and release_group != preferred_release_group
-        ):
+        if preferred_release_group is not None and release_group != preferred_release_group:
             logger.info(
                 f"`{source.name}@{source.version}` - Ignoring release for '{filename}', release group {release_group} does not match preferred release group {preferred_release_group}"
             )
@@ -443,9 +411,7 @@ class Poller:
         )
 
         magnet_url = await self.get_torrent_link(source, item)
-        await self.app.downloader.begin_handling(
-            match.matched_id, show_episode, magnet_url, release_version
-        )
+        await self.app.downloader.begin_handling(match.matched_id, show_episode, magnet_url, release_version)
 
         return FoundEntry(match.matched_id, show_episode)
 
@@ -472,7 +438,7 @@ class Poller:
 
         return hashlib.sha256(to_hash.encode("utf-8")).hexdigest()
 
-    async def get_items_from_source(self, source: Source) -> List[dict]:
+    async def get_items_from_source(self, source: Source) -> list[dict]:
         """
         Returns new items from the current
         source's RSS feed.

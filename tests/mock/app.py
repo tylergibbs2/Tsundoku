@@ -1,22 +1,13 @@
-from __future__ import annotations
+import asyncio
+from collections.abc import AsyncIterator, Iterator, MutableSet
+from contextlib import AbstractAsyncContextManager, AbstractContextManager, asynccontextmanager, contextmanager
+from enum import Enum, auto
+from queue import Queue
+import sqlite3
+from typing import ClassVar
+from uuid import uuid4
 
 import aiofiles
-import asyncio
-from contextlib import asynccontextmanager, contextmanager
-from enum import Enum, auto
-import sqlite3
-from typing import (
-    AsyncIterator,
-    AsyncContextManager,
-    ContextManager,
-    Iterator,
-    List,
-    MutableSet,
-    Optional,
-)
-from uuid import uuid4
-from queue import Queue
-
 import aiohttp
 from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
@@ -25,13 +16,14 @@ from quart.typing import TestClientProtocol
 from quart_auth import AuthManager
 from quart_rate_limiter import RateLimiter
 
-from .dl_client import MockDownloadManager
 from tsundoku.app import CustomFluentLocalization
 from tsundoku.asqlite import Connection, connect
 from tsundoku.blueprints import api_blueprint, ux_blueprint
+from tsundoku.feeds import Downloader, Encoder, Poller
 from tsundoku.flags import Flags
-from tsundoku.feeds import Poller, Downloader, Encoder
 from tsundoku.user import User
+
+from .dl_client import MockDownloadManager
 
 
 class UserType(Enum):
@@ -58,14 +50,14 @@ class MockTsundokuApp(Quart):
 
     flags: Flags
 
-    cached_bundle_hash: Optional[str] = None
-    _active_localization: Optional[CustomFluentLocalization] = None
-    _tasks: List[asyncio.Task] = []
+    cached_bundle_hash: str | None = None
+    _active_localization: CustomFluentLocalization | None = None
+    _tasks: ClassVar[list[asyncio.Task]] = []
 
     __async_db_connection: Connection
     __sync_db_connection: sqlite3.Connection
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Tsundoku", static_folder=None)
 
         auth = AuthManager(self)
@@ -91,19 +83,15 @@ class MockTsundokuApp(Quart):
         self.encoder = Encoder(self.app_context())
 
     async def setup(self) -> None:
-        self.__async_db_connection = await connect(
-            "file:tsundoku?mode=memory&cache=shared", uri=True
-        )
-        self.__sync_db_connection = sqlite3.connect(
-            "file:tsundoku?mode=memory&cache=shared", uri=True
-        )
+        self.__async_db_connection = await connect("file:tsundoku?mode=memory&cache=shared", uri=True)
+        self.__sync_db_connection = sqlite3.connect("file:tsundoku?mode=memory&cache=shared", uri=True)
         self.__sync_db_connection.row_factory = sqlite3.Row
 
         async with self.acquire_db() as con:
-            async with aiofiles.open("schema.sql", "r") as fp:
+            async with aiofiles.open("schema.sql") as fp:
                 await con.executescript(await fp.read())
 
-            async with aiofiles.open("tests/mock/_data.sql", "r") as fp:
+            async with aiofiles.open("tests/mock/_data.sql") as fp:
                 await con.executescript(await fp.read())
 
         await self.poller.update_config()
@@ -127,14 +115,12 @@ class MockTsundokuApp(Quart):
                 readonly,
             )
 
-    async def test_client(
-        self, /, user_type: Optional[UserType] = None
-    ) -> TestClientProtocol:
+    async def test_client(self, /, user_type: UserType | None = None) -> TestClientProtocol:
         client = super().test_client(use_cookies=True)
         if user_type is None:
             self.flags.IS_FIRST_LAUNCH = True
             return client
-        elif user_type == UserType.REGULAR:
+        if user_type == UserType.REGULAR:
             await self.__create_user(readonly=False)
         elif user_type == UserType.READONLY:
             await self.__create_user(readonly=True)
@@ -147,10 +133,7 @@ class MockTsundokuApp(Quart):
         return client
 
     def get_fluent(self) -> CustomFluentLocalization:
-        if (
-            self._active_localization is not None
-            and self._active_localization.preferred_locale == self.flags.LOCALE
-        ):
+        if self._active_localization is not None and self._active_localization.preferred_locale == self.flags.LOCALE:
             return self._active_localization
 
         loader = FluentResourceLoader("l10n")
@@ -162,14 +145,14 @@ class MockTsundokuApp(Quart):
         )
         return self._active_localization
 
-    def acquire_db(self) -> AsyncContextManager[Connection]:
+    def acquire_db(self) -> AbstractAsyncContextManager[Connection]:
         @asynccontextmanager
-        async def async_con_generator() -> AsyncIterator[Connection]:
+        async def async_con_generator() -> AsyncIterator[Connection]:  # noqa: RUF029
             yield self.__async_db_connection
 
         return async_con_generator()
 
-    def sync_acquire_db(self) -> ContextManager[sqlite3.Connection]:
+    def sync_acquire_db(self) -> AbstractContextManager[sqlite3.Connection]:
         @contextmanager
         def sync_con_generator() -> Iterator[sqlite3.Connection]:
             yield self.__sync_db_connection

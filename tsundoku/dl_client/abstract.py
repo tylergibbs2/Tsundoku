@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
 
 
 class TorrentClient(ABC):
@@ -66,7 +65,7 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
-    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+    async def check_torrent_ratio(self, torrent_id: str) -> float | None:
         """
         Checks the seeding ratio of a specified torrent.
 
@@ -98,7 +97,7 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
-    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
+    async def get_torrent_fp(self, torrent_id: str) -> Path | None:
         """
         Returns the torrent's path on disk.
 
@@ -114,7 +113,7 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
-    async def add_torrent(self, magnet_url: str) -> Optional[str]:
+    async def add_torrent(self, magnet_url: str) -> str | None:
         """
         Adds a torrent with the given magnet URL.
 

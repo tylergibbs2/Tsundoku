@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 
@@ -33,9 +31,7 @@ async def test_library_folder_is_path(app: MockTsundokuApp, caplog: LogCaptureFi
     assert isinstance(library.folder, Path)
 
 
-async def test_only_one_default_library(
-    app: MockTsundokuApp, caplog: LogCaptureFixture
-):
+async def test_only_one_default_library(app: MockTsundokuApp, caplog: LogCaptureFixture):
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries():
@@ -44,9 +40,7 @@ async def test_only_one_default_library(
     assert await count_default_libraries() == 1
 
 
-async def test_only_one_default_library_from_new(
-    app: MockTsundokuApp, caplog: LogCaptureFixture
-):
+async def test_only_one_default_library_from_new(app: MockTsundokuApp, caplog: LogCaptureFixture):
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries():
@@ -56,18 +50,14 @@ async def test_only_one_default_library_from_new(
     assert new_library.is_default and await count_default_libraries() == 1
 
 
-async def test_only_one_default_library_from_existing(
-    app: MockTsundokuApp, caplog: LogCaptureFixture
-):
+async def test_only_one_default_library_from_existing(app: MockTsundokuApp, caplog: LogCaptureFixture):
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries():
         return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
 
     libraries = await Library.all(app)  # type: ignore
-    assert (
-        len(libraries) > 1
-    )  # can't test if there's only one library in the testing data
+    assert len(libraries) > 1  # can't test if there's only one library in the testing data
 
     default, nondefault, *_ = libraries
     assert default.is_default and not nondefault.is_default
@@ -76,9 +66,7 @@ async def test_only_one_default_library_from_existing(
     assert nondefault.is_default and await count_default_libraries() == 1
 
 
-async def test_all_shows_have_a_library(
-    app: MockTsundokuApp, caplog: LogCaptureFixture
-):
+async def test_all_shows_have_a_library(app: MockTsundokuApp, caplog: LogCaptureFixture):
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     for show in await ShowCollection.all(app):  # type: ignore

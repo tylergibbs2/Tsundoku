@@ -1,2 +1,70 @@
+[project]
+name = "tsundoku"
+version = "1.0.5"
+description = "An all-in-one utility to download, rename, and move anime from RSS feeds."
+readme = "README.md"
+requires-python = "==3.11.*"
+authors = [
+  {name = "Tyler Gibbs", email = "gibbstyler7@gmail.com"}
+]
+license-files = ["LICENSE.md"]
+dependencies = [
+    "anitopy@git+https://github.com/FichteFoll/anitopy.git@fb64e73559323baaee37eb06e3a137c5f5087dff",
+    "apscheduler==3.10.4",
+    "argon2-cffi==23.1.0",
+    "aiofiles==23.2.1",
+    "aiohttp==3.8.5",
+    "bencodepy==0.9.5",
+    "distro==1.8.0",
+    "feedparser==6.0.10",
+    "fluent.runtime==0.4.0",
+    "user-agents==2.2.0",
+    "quart-auth==0.8.0",
+    "quart-rate-limiter==0.9.0",
+    "quart==0.19.3",
+    "typing-extensions==4.5.0",
+    "yoyo-migrations==8.2.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "python-dotenv==1.1.1",
+    "pytest==8.4.1",
+    "pytest-asyncio==1.0.0",
+    "pytest-cov==6.2.1",
+    "ruff==0.12.3"
+]
+
+[tool.ruff.lint]
+extend-select = [
+    "A",      # flake8-builtins
+    "ANN",    # flake8-annotations
+    "ASYNC",  # flake8-async
+    "B",      # flake8-bugbear
+    "COM818", # trailing comma on bare tuples
+    "E",      # pycodestyle error
+    "ERA",    # eradicate
+    "FAST",   # fastapi
+    "I",      # isort
+    "N",      # pep8-naming
+    "PT",     # flake8-pytest-style
+    "PTH",    # use pathlib
+    "RET",    # flake8-return
+    "RUF",    # ruff-specific rules
+    "TRY004", # typeerror for type exceptions
+    "UP",     # pyupgrade
+    "W",      # pycodestyle warning
+]
+preview = true
+
+[tool.ruff.lint.per-file-ignores]
+"*" = ["ANN401"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+
+[tool.ruff.lint.pycodestyle]
+ignore-overlong-task-comments = true
+
 [tool.ruff]
-line-length = 1024
+line-length = 119

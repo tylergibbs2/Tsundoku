@@ -1,15 +1,13 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import datetime
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
 from tsundoku.constants import VALID_RESOLUTIONS
-from tsundoku.utils import normalize_resolution, compare_version_strings, ParserResult
+from tsundoku.utils import ParserResult, compare_version_strings, normalize_resolution
 
 logger = logging.getLogger("tsundoku")
 
@@ -51,9 +49,9 @@ class SeenRelease:
         app: TsundokuApp,
         field: str,
         /,
-        title: Optional[str] = None,
-        release_group: Optional[str] = None,
-        resolution: Optional[str] = None,
+        title: str | None = None,
+        release_group: str | None = None,
+        resolution: str | None = None,
     ) -> list[str]:
         """
         Gets a distinct field with optional filtering.
@@ -93,7 +91,7 @@ class SeenRelease:
                     {field}
                 FROM
                     seen_release
-                {'WHERE ' + ' AND '.join(conditions) if conditions else ''};
+                {"WHERE " + " AND ".join(conditions) if conditions else ""};
                 """,
                 *parameters,
             )
@@ -105,12 +103,12 @@ class SeenRelease:
         cls,
         app: TsundokuApp,
         /,
-        title: Optional[str] = None,
-        release_group: Optional[str] = None,
-        resolution: Optional[str] = None,
-        episode: Optional[int] = None,
-        version: Optional[str] = None,
-    ) -> list[SeenRelease]:
+        title: str | None = None,
+        release_group: str | None = None,
+        resolution: str | None = None,
+        episode: int | None = None,
+        version: str | None = None,
+    ) -> list["SeenRelease"]:
         """
         Gets all SeenReleases from the database,
         filtering by specific criteria.
@@ -120,11 +118,7 @@ class SeenRelease:
         list[SeenRelease]
             All SeenReleases.
         """
-        parameters = [
-            p
-            for p in (title, release_group, resolution, episode, version)
-            if p is not None
-        ]
+        parameters = [p for p in (title, release_group, resolution, episode, version) if p is not None]
 
         conditions = []
         if title is not None:
@@ -151,7 +145,7 @@ class SeenRelease:
                     seen_at
                 FROM
                     seen_release
-                {'WHERE ' + ' AND '.join(conditions) if conditions else ''};
+                {"WHERE " + " AND ".join(conditions) if conditions else ""};
                 """,
                 *parameters,
             )
@@ -192,7 +186,7 @@ class SeenRelease:
     @classmethod
     async def add(
         cls, app: TsundokuApp, anitopy_result: ParserResult, torrent_destination: str
-    ) -> Optional[SeenRelease]:
+    ) -> "SeenRelease | None":
         """
         Adds a new SeenRelease to the database.
 
@@ -212,52 +206,47 @@ class SeenRelease:
             The SeenRelease that was added.
         """
         if "file_name" not in anitopy_result:
-            logger.warning(
-                f"Not adding '{anitopy_result}' to seen releases because it has no file name."
-            )
-            return
-        elif "anime_title" not in anitopy_result:
+            logger.warning(f"Not adding '{anitopy_result}' to seen releases because it has no file name.")
+            return None
+        if "anime_title" not in anitopy_result:
             logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title."
             )
-            return
-        elif "episode_number" not in anitopy_result:
+            return None
+        if "episode_number" not in anitopy_result:
             logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number."
             )
-            return
+            return None
 
         release_group = anitopy_result.get("release_group", "")
         if not release_group:
             logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no release group."
             )
-            return
+            return None
 
         resolution = anitopy_result.get("video_resolution", "")
         if not resolution:
             logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no resolution."
             )
-            return
+            return None
 
         resolution = normalize_resolution(resolution)
         if resolution not in VALID_RESOLUTIONS:
             logger.info(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases because it has an invalid resolution '{resolution}'."
             )
-            return
+            return None
 
         version = anitopy_result.get("release_version", "v0")
 
-        if (
-            not isinstance(anitopy_result["episode_number"], str)
-            or not anitopy_result["episode_number"].isdigit()
-        ):
+        if not isinstance(anitopy_result["episode_number"], str) or not anitopy_result["episode_number"].isdigit():
             logger.warning(
                 f"Not adding '{anitopy_result['file_name']}' to seen releases episode number is not an integer."
             )
-            return
+            return None
 
         episode = int(anitopy_result["episode_number"])
 
@@ -279,14 +268,11 @@ class SeenRelease:
                 episode,
                 resolution,
             )
-            if (
-                existing_version
-                and compare_version_strings(version, existing_version) <= 0
-            ):
+            if existing_version and compare_version_strings(version, existing_version) <= 0:
                 logger.debug(
                     f"Not adding '{anitopy_result['file_name']}' to seen releases because it has a lower (or same) version than the existing release."
                 )
-                return
+                return None
 
             await con.execute(
                 """

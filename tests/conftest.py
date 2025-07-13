@@ -1,11 +1,15 @@
+from collections.abc import AsyncGenerator
 import inspect
-from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 
-from tests.mock import MockTsundokuApp, mock_get_all_sources, mock_feedparser_parse
-from tests.mock import filesystem
+from tests.mock import (
+    MockTsundokuApp,
+    filesystem,
+    mock_feedparser_parse,
+    mock_get_all_sources,
+)
 
 
 def pytest_collection_modifyitems(config, items):

@@ -15,7 +15,6 @@ This install script is essentially performing the following operations:
 If any of the operations fail, the script exits.
 """
 
-from __future__ import annotations
 import sys
 
 if sys.version_info < (3, 8):
@@ -31,14 +30,12 @@ import subprocess
 try:
     from tsundoku import __version__ as version
 except ImportError:
-    print(
-        "The main Tsundoku module is missing. Are you sure you're in the right directory?"
-    )
+    print("The main Tsundoku module is missing. Are you sure you're in the right directory?")
     sys.exit(1)
 
 
 RUN_SCRIPT = """
-from __future__ import annotations
+
 import sys
 
 if sys.version_info < (3, 8):
@@ -85,20 +82,16 @@ class Installer:
     def python_executable(self) -> Path:
         if os.name == "nt":
             return Path(self.virtual_dir, "Scripts", "python.exe")
-        else:
-            return Path(self.virtual_dir, "bin", "python")
+        return Path(self.virtual_dir, "bin", "python")
 
     @property
     def pip_executable(self) -> Path:
         if os.name == "nt":
             return Path(self.virtual_dir, "Scripts", "pip.exe")
-        else:
-            return Path(self.virtual_dir, "bin", "pip")
+        return Path(self.virtual_dir, "bin", "pip")
 
     def is_venv(self) -> bool:
-        return Path(self.virtual_dir).exists() and Path(sys.prefix).samefile(
-            self.virtual_dir
-        )
+        return Path(self.virtual_dir).exists() and Path(sys.prefix).samefile(self.virtual_dir)
 
     def is_yarn_required(self) -> bool:
         js_path = Path("tsundoku", "blueprints", "ux", "static", "js")
@@ -113,7 +106,7 @@ class Installer:
             return False
 
         # if the frontend is built, check if the version matches
-        with open("package.json", "r") as f:
+        with open("package.json") as f:
             package_info = json.load(f)
 
         if "version" not in package_info:
@@ -169,9 +162,7 @@ class Installer:
             print(f"Failed to install wheel. Exit code {proc.returncode}")
             sys.exit(1)
 
-        proc = subprocess.run(
-            [self.pip_executable, "install", "-r", "requirements.txt"]
-        )
+        proc = subprocess.run([self.pip_executable, "install", "-r", "requirements.txt"])
         if proc.returncode != 0:
             print(f"Failed to install requirements. Exit code {proc.returncode}")
             sys.exit(1)

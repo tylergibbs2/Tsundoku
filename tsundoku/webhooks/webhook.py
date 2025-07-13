@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import logging
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -21,7 +19,7 @@ class WebhookBase:
     service: str
     url: str
     content_fmt: str
-    default_triggers: List[str]
+    default_triggers: list[str]
 
     def to_dict(self, /, secure: bool = False) -> dict:
         """
@@ -48,9 +46,9 @@ class WebhookBase:
         name: str,
         service: str,
         url: str,
-        content_fmt: Optional[str] = None,
-        default_triggers: Optional[List[str]] = None,
-    ) -> Optional[WebhookBase]:
+        content_fmt: str | None = None,
+        default_triggers: list[str] | None = None,
+    ) -> "WebhookBase | None":
         """
         Adds a new WebhookBase to the database and
         returns an instance.
@@ -79,7 +77,7 @@ class WebhookBase:
         if default_triggers is None:
             default_triggers = []
 
-        args: Tuple[str, ...] = (name, service, url)
+        args: tuple[str, ...] = (name, service, url)
         if content_fmt:
             query = """
                 INSERT INTO
@@ -172,7 +170,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: TsundokuApp, base_id: int) -> Optional[WebhookBase]:
+    async def from_id(cls, app: TsundokuApp, base_id: int) -> "WebhookBase | None":
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -234,7 +232,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: Dict[str, str]) -> WebhookBase:
+    async def from_data(cls, app: TsundokuApp, data: dict[str, str]) -> "WebhookBase":
         """
         Returns a WebhookBase object from passed data.
 
@@ -265,7 +263,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls, app: TsundokuApp) -> List[WebhookBase]:
+    async def all(cls, app: TsundokuApp) -> list["WebhookBase"]:
         """
         Returns all WebhookBase rows from
         the database.
@@ -292,7 +290,7 @@ class WebhookBase:
             """
             )
 
-        instances: List[WebhookBase] = []
+        instances: list[WebhookBase] = []
         for id_ in ids:
             wh_base = await WebhookBase.from_id(app, id_["id"])
             if wh_base:
@@ -345,7 +343,7 @@ class WebhookBase:
                 self.base_id,
             )
 
-    async def get_default_triggers(self) -> List[str]:
+    async def get_default_triggers(self) -> list[str]:
         """
         Retrieves all triggers for a webhook.
 
@@ -370,7 +368,7 @@ class WebhookBase:
         self.default_triggers = [r["trigger"] for r in triggers]
         return self.default_triggers
 
-    async def add_default_trigger(self, trigger: str) -> List[str]:
+    async def add_default_trigger(self, trigger: str) -> list[str]:
         """
         Adds a new default trigger to the webhook.
 
@@ -417,7 +415,7 @@ class WebhookBase:
 
         return await self.get_default_triggers()
 
-    async def remove_default_trigger(self, trigger: str) -> List[str]:
+    async def remove_default_trigger(self, trigger: str) -> list[str]:
         """
         Removes a default trigger from a webhook.
 
@@ -473,12 +471,11 @@ class WebhookBase:
                 return False
             text = await resp.text()
             return text == "no_text"
-        else:
-            try:
-                resp = await self._app.session.head(self.url)
-            except Exception:
-                return False
-            return resp.status == 200
+        try:
+            resp = await self._app.session.head(self.url)
+        except Exception:
+            return False
+        return resp.status == 200
 
 
 class Webhook:
@@ -486,7 +483,7 @@ class Webhook:
 
     show_id: int
     base: WebhookBase
-    triggers: List[str]
+    triggers: list[str]
 
     def to_dict(self) -> dict:
         """
@@ -504,7 +501,7 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> List[Webhook]:
+    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> list["Webhook"]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -568,18 +565,14 @@ class Webhook:
 
             instance.show_id = show_id
             instance.base = base
-            instance.triggers = [
-                t["trigger"] for t in triggers if t["base"] == base.base_id
-            ]
+            instance.triggers = [t["trigger"] for t in triggers if t["base"] == base.base_id]
 
             instances.append(instance)
 
         return instances
 
     @classmethod
-    async def from_composite(
-        cls, app: TsundokuApp, show_id: int, base_id: int
-    ) -> Optional[Webhook]:
+    async def from_composite(cls, app: TsundokuApp, show_id: int, base_id: int) -> "Webhook | None":
         """
         Returns a webhook from its composite key.
 
@@ -652,7 +645,7 @@ class Webhook:
 
         await self.get_triggers()
 
-    async def get_triggers(self) -> List[str]:
+    async def get_triggers(self) -> list[str]:
         """
         Retrieves all triggers for a webhook.
 
@@ -679,7 +672,7 @@ class Webhook:
 
         return self.triggers
 
-    async def add_trigger(self, trigger: str) -> List[str]:
+    async def add_trigger(self, trigger: str) -> list[str]:
         """
         Adds a new trigger to a webhook.
 
@@ -728,7 +721,7 @@ class Webhook:
 
         return await self.get_triggers()
 
-    async def remove_trigger(self, trigger: str) -> List[str]:
+    async def remove_trigger(self, trigger: str) -> list[str]:
         """
         Removes a trigger from a webhook.
 
@@ -802,7 +795,7 @@ class Webhook:
             "description": content,
         }
 
-    def generate_slack_blocks(self, content: str) -> List[dict]:
+    def generate_slack_blocks(self, content: str) -> list[dict]:
         """
         Generates a Slack Block for the content.
 
@@ -827,7 +820,7 @@ class Webhook:
 
         return [title_block, content_block]
 
-    async def generate_payload(self, entry: Entry) -> Optional[dict]:
+    async def generate_payload(self, entry: Entry) -> dict | None:
         """
         Generates the complete payload for
         a webhook send.
@@ -894,25 +887,19 @@ class Webhook:
             The event that occurred, can be any `show_state`.
         """
         if not await self.base.is_valid():
-            logger.warning(
-                "Webhooks - Attempted to send webhook, but the base webhook was invalid"
-            )
-            return None
+            logger.warning("Webhooks - Attempted to send webhook, but the base webhook was invalid")
+            return
 
         logger.debug(f"Webhooks - Generating payload for webhook for <s{self.show_id}>")
         payload = await self.generate_payload(entry)
 
         if not payload:
-            logger.warning(
-                f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>"
-            )
-            return None
+            logger.warning(f"Webhooks - Failed to generate a valid payload for webhook for <s{self.show_id}>")
+            return
 
         logger.debug(f"Webhooks - Payload generated for webhook for <s{self.show_id}>")
 
-        logger.debug(
-            f"Webhooks - Webhook for show <s{self.show_id}> sending payload..."
-        )
+        logger.debug(f"Webhooks - Webhook for show <s{self.show_id}> sending payload...")
 
         try:
             await self._app.session.post(self.base.url, json=payload)

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 
@@ -50,7 +50,7 @@ class DelugeClient(TorrentClient):
         logger.debug(f"Torrent `{torrent_id}` is `{data['state']}`")
         return data["state"] == "Seeding"
 
-    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+    async def check_torrent_ratio(self, torrent_id: str) -> float | None:
         ret = await self.request("webapi.get_torrents", [[torrent_id], ["ratio"]])
 
         ret_list = ret["result"].get("torrents", [])
@@ -68,10 +68,8 @@ class DelugeClient(TorrentClient):
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         await self.request("webapi.remove_torrent", [torrent_id, with_files])
 
-    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
-        ret = await self.request(
-            "webapi.get_torrents", [[torrent_id], ["name", "move_completed_path"]]
-        )
+    async def get_torrent_fp(self, torrent_id: str) -> Path | None:
+        ret = await self.request("webapi.get_torrents", [[torrent_id], ["name", "move_completed_path"]])
 
         ret_list = ret["result"].get("torrents", [])
 
@@ -82,11 +80,11 @@ class DelugeClient(TorrentClient):
 
         return Path(data["move_completed_path"], data["name"])
 
-    async def add_torrent(self, magnet_url: str) -> Optional[str]:
+    async def add_torrent(self, magnet_url: str) -> str | None:
         data = await self.request("webapi.add_torrent", [magnet_url])
         return data.get("result")
 
-    async def login(self) -> Optional[str]:
+    async def login(self) -> str | None:
         payload = {
             "id": self._request_counter,
             "method": "auth.check_session",
@@ -96,9 +94,7 @@ class DelugeClient(TorrentClient):
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
         try:
-            auth_status = await self.session.post(
-                self.url, json=payload, headers=headers
-            )
+            auth_status = await self.session.post(self.url, json=payload, headers=headers)
         except aiohttp.ClientConnectionError:
             logger.error("Deluge - Failed to Connect")
             resp = {}
@@ -113,9 +109,7 @@ class DelugeClient(TorrentClient):
                 "method": "auth.login",
                 "params": [self.password],
             }
-            auth_request = await self.session.post(
-                self.url, json=payload, headers=headers
-            )
+            auth_request = await self.session.post(self.url, json=payload, headers=headers)
             resp = await auth_request.json(content_type=None)
 
             self._request_counter += 1
@@ -127,7 +121,7 @@ class DelugeClient(TorrentClient):
 
         return result
 
-    async def request(self, method: str, data: list = []) -> dict:
+    async def request(self, method: str, data: list | None = None) -> dict:
         """
         Authorizes and makes a request with the Deluge WebAPI.
 
@@ -146,6 +140,9 @@ class DelugeClient(TorrentClient):
         dict
             The response dict.
         """
+        if data is None:
+            data = []
+
         retries = 5
         while retries and not await self.login():
             await asyncio.sleep(10)

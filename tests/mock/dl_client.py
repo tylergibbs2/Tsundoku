@@ -1,13 +1,10 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 import re
-from typing import Dict, List, Optional
 
-from tsundoku.dl_client.abstract import TorrentClient
 from tsundoku.dl_client import Manager
+from tsundoku.dl_client.abstract import TorrentClient
 
 
 class TorrentStatus(Enum):
@@ -18,7 +15,7 @@ class TorrentStatus(Enum):
 @dataclass
 class InMemoryTorrent:
     torrent_id: str
-    fp: Optional[Path] = None
+    fp: Path | None = None
     status: TorrentStatus = TorrentStatus.INCOMPLETE
     ratio: float = 0.0
 
@@ -40,15 +37,14 @@ class MockDownloadManager(Manager):
         self._client = InMemoryDownloadClient()
 
     @property
-    def torrents(self) -> List[InMemoryTorrent]:
+    def torrents(self) -> list[InMemoryTorrent]:
         return list(self._client.torrents.values())
 
     def mark_all_torrent_complete(self) -> None:
         for torrent in self.torrents:
             torrent.mark_complete()
 
-    async def update_config(self) -> None:
-        ...
+    async def update_config(self) -> None: ...
 
     async def get_magnet(self, location: str) -> str:
         if not location.startswith("magnet:?"):
@@ -56,12 +52,12 @@ class MockDownloadManager(Manager):
 
         return await super().get_magnet(location)
 
-    async def get_file_structure(self, location: str) -> List[str]:
+    async def get_file_structure(self, location: str) -> list[str]:
         raise NotImplementedError()
 
 
 class InMemoryDownloadClient(TorrentClient):
-    torrents: Dict[str, InMemoryTorrent]
+    torrents: dict[str, InMemoryTorrent]
 
     def __init__(self) -> None:
         self.torrents = {}
@@ -78,22 +74,22 @@ class InMemoryDownloadClient(TorrentClient):
     async def check_torrent_completed(self, torrent_id: str) -> bool:
         return torrent_id in self.torrents and self.torrents[torrent_id].is_complete()
 
-    async def check_torrent_ratio(self, torrent_id: str) -> Optional[float]:
+    async def check_torrent_ratio(self, torrent_id: str) -> float | None:
         if torrent_id not in self.torrents:
-            return
+            return None
 
         return self.torrents[torrent_id].ratio
 
     async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         self.torrents.pop(torrent_id, None)
 
-    async def get_torrent_fp(self, torrent_id: str) -> Optional[Path]:
+    async def get_torrent_fp(self, torrent_id: str) -> Path | None:
         return self.torrents[torrent_id].fp
 
-    async def add_torrent(self, magnet_url: str) -> Optional[str]:
+    async def add_torrent(self, magnet_url: str) -> str | None:
         hash_match = re.search(MAGNET_RE, magnet_url)
         if hash_match is None:
-            return
+            return None
 
         info_hash = hash_match.group(1).lower().strip()
         self.torrents[info_hash] = InMemoryTorrent(info_hash)

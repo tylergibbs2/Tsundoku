@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 import asyncio
 from functools import partial, wraps
 import logging
 from pathlib import Path
 import shutil
-from typing import Any, List, TypedDict
+from typing import Any, TypedDict
 from uuid import uuid4
 
 import anitopy
@@ -13,9 +11,7 @@ import anitopy
 
 def wrap(func: Any) -> Any:
     @wraps(func)
-    async def run(
-        *args: Any, loop: Any = None, executor: Any = None, **kwargs: Any
-    ) -> Any:
+    async def run(*args: Any, loop: Any = None, executor: Any = None, **kwargs: Any) -> Any:
         if loop is None:
             loop = asyncio.get_event_loop()
         pfunc = partial(func, *args, **kwargs)
@@ -37,7 +33,7 @@ class ParserResult(TypedDict, total=False):
     anime_title: str
     anime_year: str
     audio_term: str
-    episode_number: List[str] | str
+    episode_number: list[str] | str
     episode_title: str
     file_checksum: str
     file_extension: str
@@ -50,9 +46,7 @@ class ParserResult(TypedDict, total=False):
 
 
 def parse_anime_title(title: str) -> ParserResult:
-    result: ParserResult = anitopy.parse(
-        title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False}
-    )  # type: ignore
+    result: ParserResult = anitopy.parse(title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False})  # type: ignore
 
     if "video_resolution" in result:
         result["video_resolution"] = normalize_resolution(result["video_resolution"])
@@ -85,22 +79,22 @@ def normalize_resolution(original: str) -> str:
 
         if height == 4320:
             return "8k"
-        elif height == 3840:
+        if height == 3840:
             return "4k"
-        elif height == 1080:
+        if height == 1080:
             return "1080p"
-        elif height == 720:
+        if height == 720:
             return "720p"
-        elif height == 480:
+        if height == 480:
             return "480p"
-        elif height == 360:
+        if height == 360:
             return "360p"
 
         return f"{width}x{height}"
-    elif original.endswith("p"):
+    if original.endswith("p"):
         if original == "4320p":
             return "8k"
-        elif original == "2160p":
+        if original == "2160p":
             return "4k"
 
     return original
@@ -143,16 +137,16 @@ def compare_version_strings(first: str, second: str) -> int:
 
         if a_part > b_part:
             return 1
-        elif a_part < b_part:
+        if a_part < b_part:
             return -1
 
     return 0
 
 
-def directory_is_writable(dir: Path) -> bool:
-    logger.debug(f"Checking if directory '{dir}' is writable...")
+def directory_is_writable(directory: Path) -> bool:
+    logger.debug(f"Checking if directory '{directory}' is writable...")
     try:
-        canary = dir / str(uuid4())
+        canary = directory / str(uuid4())
         canary.write_bytes(b"\0")
         canary.unlink(missing_ok=True)
     except Exception:

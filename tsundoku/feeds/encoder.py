@@ -1,21 +1,18 @@
-from __future__ import annotations
-
 import asyncio
-import logging
-import os
-import statistics
 from asyncio import create_subprocess_shell
 from datetime import datetime, timedelta
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, TYPE_CHECKING
+import statistics
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
 from quart import request
 
-from tsundoku.config import GeneralConfig, EncodeConfig
-from tsundoku.constants import VALID_MINIMUM_FILE_SIZES, VALID_ENCODERS
+from tsundoku.config import EncodeConfig, GeneralConfig
+from tsundoku.constants import VALID_ENCODERS, VALID_MINIMUM_FILE_SIZES
 from tsundoku.manager import Entry
 from tsundoku.utils import move
 
@@ -58,7 +55,7 @@ class Encoder:
     HOUR_END: int
 
     __start_lock: asyncio.Lock
-    __ffmpeg_procs: Dict[int, asyncio.subprocess.Process]
+    __ffmpeg_procs: dict[int, asyncio.subprocess.Process]
     __available_encoders: set[str]
 
     def __init__(self, app_context: Any) -> None:
@@ -203,9 +200,7 @@ class Encoder:
             The entry ID to encode.
         """
         logger.debug(f"Launching new process task for <e{entry_id}>")
-        self.app._tasks.append(
-            asyncio.create_task(self.process(entry_id), name=f"encode-{entry_id}")
-        )
+        self.app._tasks.append(asyncio.create_task(self.process(entry_id), name=f"encode-{entry_id}"))
 
     async def process(self, entry_id: int) -> None:
         """
@@ -222,21 +217,17 @@ class Encoder:
         if not self.ENABLED:
             logger.debug(f"Encoding is disabled, skipping for <e{entry_id}>")
             return
-        elif not has_ffmpeg:
+        if not has_ffmpeg:
             logger.warning(f"Unable to encode <e{entry_id}>: ffmpeg is not installed")
             return
 
         if self.TIMED_ENCODING:
             to_sleep = seconds_until(self.HOUR_START, self.HOUR_END)
-            logger.debug(
-                f"Timed encoding enabled, sleeping '{to_sleep:,}' seconds before encoding..."
-            )
+            logger.debug(f"Timed encoding enabled, sleeping '{to_sleep:,}' seconds before encoding...")
             await asyncio.sleep(to_sleep)
 
         if len(self.__ffmpeg_procs) >= self.MAX_ENCODES:
-            logger.debug(
-                f"Reached maximum encodes when processing, <e{entry_id}> is queued."
-            )
+            logger.debug(f"Reached maximum encodes when processing, <e{entry_id}> is queued.")
             return
 
         async with self.__start_lock:
@@ -312,30 +303,22 @@ class Encoder:
             )
 
         if entry["file_path"] is None:
-            logger.warning(
-                f"Error when attempting to encode entry <e{entry_id}>: file path is None"
-            )
+            logger.warning(f"Error when attempting to encode entry <e{entry_id}>: file path is None")
             return False
-        elif entry["current_state"] != "completed":
-            logger.warning(
-                f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry"
-            )
+        if entry["current_state"] != "completed":
+            logger.warning(f"Error when attempting to encode entry <e{entry_id}>: cannot encode a non-completed entry")
             return False
-        elif entry_id in self.__ffmpeg_procs:
-            logger.warning(
-                f"Error when attempting to encode entry <e{entry_id}>: entry is already being encoded"
-            )
+        if entry_id in self.__ffmpeg_procs:
+            logger.warning(f"Error when attempting to encode entry <e{entry_id}>: entry is already being encoded")
             return False
 
         logger.debug(f"Starting new encode process for entry <e{entry_id}>...")
 
         infile = Path(entry["file_path"]).resolve()
         if not infile.exists():
-            logger.warning(
-                f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist"
-            )
+            logger.warning(f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist")
             return False
-        elif not infile.is_file():
+        if not infile.is_file():
             logger.warning(
                 f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
             )
@@ -377,7 +360,7 @@ class Encoder:
         return False
 
     @staticmethod
-    def process_progress_data(data: bytes) -> Dict[str, str]:
+    def process_progress_data(data: bytes) -> dict[str, str]:
         """
         Processes the byte data of an ffmpeg progress stream.
 
@@ -428,17 +411,13 @@ class Encoder:
         del self.__ffmpeg_procs[entry_id]
 
         if ret != 0:
-            logger.error(
-                f"Error occurred with end of ffmpeg process for entry <e{entry_id}>: error code {ret}"
-            )
+            logger.error(f"Error occurred with end of ffmpeg process for entry <e{entry_id}>: error code {ret}")
 
         try:
             if last_received.get("progress") == "end":
                 await self.handle_encode_finished(entry_id)
         except Exception:
-            logger.exception(
-                f"Error occurred when handling finished encode for entry <e{entry_id}>"
-            )
+            logger.exception(f"Error occurred when handling finished encode for entry <e{entry_id}>")
         finally:
             await self.process_next()
 
@@ -460,15 +439,13 @@ class Encoder:
             )
 
             if entry_path is None:
-                logger.warning(
-                    f"Error when finalizing encode for entry <e{entry_id}>: file path is None"
-                )
+                logger.warning(f"Error when finalizing encode for entry <e{entry_id}>: file path is None")
                 return
 
             original = Path(entry_path)
             encoded = original.with_suffix(self.TEMP_SUFFIX)
 
-            encoded_size = os.path.getsize(encoded)
+            encoded_size = Path(encoded).stat().st_size
             await con.execute(
                 """
                 UPDATE
@@ -491,22 +468,16 @@ class Encoder:
         try:
             await self.app.dl_client.delete_torrent(entry.torrent_hash)
         except Exception as e:
-            logger.warning(
-                f"Failed removing entry <e{entry_id}> from torrent client: {e}"
-            )
+            logger.warning(f"Failed removing entry <e{entry_id}> from torrent client: {e}")
 
         original = original.resolve()
         try:
             original.unlink(missing_ok=True)
         except Exception as e:
-            logger.exception(
-                f"Failed moving finished encode for entry <e{entry_id}>: {e}"
-            )
+            logger.exception(f"Failed moving finished encode for entry <e{entry_id}>: {e}")
         else:
             await move(encoded.resolve(), original)
-            logger.debug(
-                f"Encode moved for entry <e{entry_id}>: encoding process finished"
-            )
+            logger.debug(f"Encode moved for entry <e{entry_id}>: encoding process finished")
 
     async def has_ffmpeg(self) -> bool:
         """
@@ -554,7 +525,7 @@ class Encoder:
         self.__available_encoders = res
         return res
 
-    async def get_queue(self, page: int = 0) -> List[Dict[str, str]]:
+    async def get_queue(self, page: int = 0) -> list[dict[str, str]]:
         """
         Returns the active encode queue.
 
@@ -595,7 +566,7 @@ class Encoder:
 
         return [dict(item) for item in queue]
 
-    async def get_stats(self) -> Dict[str, float]:
+    async def get_stats(self) -> dict[str, float]:
         """
         Returns global encoding statistics.
 
@@ -671,6 +642,4 @@ class Encoder:
                 failed_to_cancel += 1
             else:
                 logger.debug(f"Cleanup: Encode process for entry {entry_id} cancelled.")
-        logger.debug(
-            f"Cleanup: Encode processes cancelled. [{failed_to_cancel} failed to cancel]"
-        )
+        logger.debug(f"Cleanup: Encode processes cancelled. [{failed_to_cancel} failed to cancel]")

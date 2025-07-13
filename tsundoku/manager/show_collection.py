@@ -1,7 +1,6 @@
-from __future__ import annotations
-
+from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Dict, Generator, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -14,16 +13,15 @@ from .show import Show
 
 @dataclass
 class ShowCollection:
-    _shows: List[Show]
+    _shows: list[Show]
 
     def __len__(self) -> int:
         return len(self._shows)
 
     def __iter__(self) -> Generator[Show, None, None]:
-        for show in self._shows:
-            yield show
+        yield from self._shows
 
-    def to_list(self) -> List[dict]:
+    def to_list(self) -> list[dict]:
         """
         Serializes all of the Shows in the collection
         to a list.
@@ -36,7 +34,7 @@ class ShowCollection:
         return [s.to_dict() for s in self._shows]
 
     @classmethod
-    async def all(cls, app: TsundokuApp) -> ShowCollection:
+    async def all(cls, app: TsundokuApp) -> "ShowCollection":
         """
         Retrieves a collection of all Show
         objects presently stored in the database.
@@ -75,10 +73,8 @@ class ShowCollection:
             """
             )
 
-        _shows = [await Show.from_data(app, show) for show in shows]
-        instance = cls(_shows=_shows)
-
-        return instance
+        shows_ = [await Show.from_data(app, show) for show in shows]
+        return cls(_shows=shows_)
 
     async def gather_statuses(self) -> None:
         """
@@ -88,14 +84,12 @@ class ShowCollection:
         The status is an attribute that is assigned
         on each Show's metadata object.
         """
-        managers = [
-            s.metadata for s in self._shows if await s.metadata.should_update_status()
-        ]
+        managers = [s.metadata for s in self._shows if await s.metadata.should_update_status()]
 
         if not managers:
             return
 
-        status_map: Dict[int, str] = {}
+        status_map: dict[int, str] = {}
         async with aiohttp.ClientSession() as sess:
             payload = {
                 "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
