@@ -29,7 +29,7 @@ class UpdateInformation:
 
 async def check_for_updates() -> UpdateInformation | None:
     config = await GeneralConfig.retrieve(app)
-    if not config.get("update_do_check", False):
+    if not config.update_do_check:
         logger.info("Update checks disabled by configuration, skipping.")
         return None
 
