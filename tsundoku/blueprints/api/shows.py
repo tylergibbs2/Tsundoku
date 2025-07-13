@@ -92,7 +92,7 @@ class ShowsAPI(views.MethodView):
             app,
             library_id=library_id,
             title=arguments["title"],
-            title_local=arguments["title_local"],
+            title_local=arguments["title_local"] if arguments["title_local"] else None,
             desired_format=desired_format,
             season=season,
             episode_offset=episode_offset,
