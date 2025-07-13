@@ -108,10 +108,22 @@ jobs:
 
       - name: Create Git tag
         run: |
+          VERSION="${{ needs.validate-versions.outputs.version }}"
+          FORCE_RECREATE="${{ github.event.inputs.force_recreate }}"
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag -a "v${{ needs.validate-versions.outputs.version }}" -m "Release v${{ needs.validate-versions.outputs.version }}"
-          git push origin "v${{ needs.validate-versions.outputs.version }}"
+
+          # Delete existing tag if force recreate is enabled
+          if [ "$FORCE_RECREATE" = "true" ]; then
+            echo "⚠️ Force re-create enabled - deleting existing tag if it exists"
+            git tag -d "v$VERSION" 2>/dev/null || echo "Tag doesn't exist locally"
+            git push origin ":refs/tags/v$VERSION" 2>/dev/null || echo "Tag doesn't exist remotely"
+          fi
+
+          # Create new tag
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
 
       - name: Create GitHub release
         uses: actions/create-release@v1
