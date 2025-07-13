@@ -14,7 +14,7 @@ logger = logging.getLogger("tsundoku")
 
 @dataclass
 class SeenRelease:
-    app: TsundokuApp
+    app: "TsundokuApp"
 
     title: str
     release_group: str
@@ -46,7 +46,7 @@ class SeenRelease:
     @classmethod
     async def distinct(
         cls,
-        app: TsundokuApp,
+        app: "TsundokuApp",
         field: str,
         /,
         title: str | None = None,
@@ -101,7 +101,7 @@ class SeenRelease:
     @classmethod
     async def filter(
         cls,
-        app: TsundokuApp,
+        app: "TsundokuApp",
         /,
         title: str | None = None,
         release_group: str | None = None,
@@ -153,7 +153,7 @@ class SeenRelease:
         return [SeenRelease(app, *row) for row in rows]
 
     @staticmethod
-    async def delete_old(app: TsundokuApp, /, days: int) -> None:
+    async def delete_old(app: "TsundokuApp", /, days: int) -> None:
         """
         Deletes all SeenReleases older than a certain number of days.
 
@@ -184,9 +184,7 @@ class SeenRelease:
         logger.info(f"Deleted {deleted} old SeenReleases.")
 
     @classmethod
-    async def add(
-        cls, app: TsundokuApp, anitopy_result: ParserResult, torrent_destination: str
-    ) -> "SeenRelease | None":
+    async def add(cls, app: "TsundokuApp", anitopy_result: ParserResult, torrent_destination: str) -> "SeenRelease | None":
         """
         Adds a new SeenRelease to the database.
 
@@ -209,43 +207,31 @@ class SeenRelease:
             logger.warning(f"Not adding '{anitopy_result}' to seen releases because it has no file name.")
             return None
         if "anime_title" not in anitopy_result:
-            logger.warning(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title."
-            )
+            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title.")
             return None
         if "episode_number" not in anitopy_result:
-            logger.warning(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number."
-            )
+            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number.")
             return None
 
         release_group = anitopy_result.get("release_group", "")
         if not release_group:
-            logger.warning(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no release group."
-            )
+            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no release group.")
             return None
 
         resolution = anitopy_result.get("video_resolution", "")
         if not resolution:
-            logger.warning(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no resolution."
-            )
+            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no resolution.")
             return None
 
         resolution = normalize_resolution(resolution)
         if resolution not in VALID_RESOLUTIONS:
-            logger.info(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases because it has an invalid resolution '{resolution}'."
-            )
+            logger.info(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has an invalid resolution '{resolution}'.")
             return None
 
         version = anitopy_result.get("release_version", "v0")
 
         if not isinstance(anitopy_result["episode_number"], str) or not anitopy_result["episode_number"].isdigit():
-            logger.warning(
-                f"Not adding '{anitopy_result['file_name']}' to seen releases episode number is not an integer."
-            )
+            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases episode number is not an integer.")
             return None
 
         episode = int(anitopy_result["episode_number"])
@@ -269,9 +255,7 @@ class SeenRelease:
                 resolution,
             )
             if existing_version and compare_version_strings(version, existing_version) <= 0:
-                logger.debug(
-                    f"Not adding '{anitopy_result['file_name']}' to seen releases because it has a lower (or same) version than the existing release."
-                )
+                logger.debug(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has a lower (or same) version than the existing release.")
                 return None
 
             await con.execute(

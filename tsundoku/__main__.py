@@ -1,79 +1,15 @@
 import argparse
 import asyncio
 import getpass
-import json
-import os
 from pathlib import Path
 import re
-import subprocess
-from zipfile import ZipFile
 
 try:
     from fluent.runtime import FluentBundle, FluentResource
-
-    from tsundoku import __version__ as version
 except ImportError:
     print("Please install the dependencies before running Tsundoku.")
     print("Run `pip install -r requirements.txt` to install them.")
     exit(1)
-
-
-def bundle_zip() -> None:
-    """
-    Bundles the Tsundoku application into a zip file.
-    """
-    to_zip = (
-        "default_sources",
-        "l10n",
-        "migrations",
-        "tsundoku",
-        "install.py",
-        "LICENSE.md",
-        "README.md",
-        "requirements.txt",
-    )
-
-    invalid_exts = (".pyc",)
-
-    for fp in to_zip:
-        if not Path(fp).exists():
-            print(f"Bundle process failed, missing '{fp}'...")
-            exit(1)
-
-    print("Checking yarn package version...")
-    with open("package.json", encoding="utf-8") as f:
-        package = json.load(f)
-
-    if package["version"] != version:
-        print(
-            f"Bundle process failed, package.json version '{package['version']}' "
-            f"does not match __init__.py version '{version}'..."
-        )
-        exit(1)
-
-    print("Running `yarn build`...")
-    proc = subprocess.Popen(["yarn", "build"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    out, err = proc.communicate()
-    if err:
-        print(err.decode())
-        exit(1)
-
-    print(out.decode())
-
-    print("Zipping contents...")
-    filename = f"tsundoku-{version}.zip"
-    with ZipFile(filename, "w") as zipped:
-        for fp in to_zip:
-            print(f"Adding {fp}...")
-            if Path(fp).is_dir():
-                for path in Path(fp).rglob("*"):
-                    if path.suffix in invalid_exts:
-                        continue
-                    zipped.write(str(path))
-            else:
-                zipped.write(fp)
-
-    print(f"Bundle process complete. '{filename}' created.")
 
 
 def find_locale_duplicates(lang: str) -> None:
@@ -93,13 +29,13 @@ def find_locale_duplicates(lang: str) -> None:
     seen_keys = set()
     duplicates = set()
 
-    with open(str(locale_file), encoding="utf-8") as text:
-        for match in re.finditer(r"^([\w\-]+) =", text.read(), re.MULTILINE):
-            key = match.group(1)
-            if key in seen_keys:
-                duplicates.add(key)
-            else:
-                seen_keys.add(key)
+    text = locale_file.read_text(encoding="utf-8")
+    for match in re.finditer(r"^([\w\-]+) =", text, re.MULTILINE):
+        key = match.group(1)
+        if key in seen_keys:
+            duplicates.add(key)
+        else:
+            seen_keys.add(key)
 
     if not duplicates:
         print("No duplicates found.")
@@ -134,10 +70,8 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
     from_bundle = FluentBundle([from_lang])
     to_bundle = FluentBundle([to_lang])
 
-    with open(str(from_path), encoding="utf-8") as text:
-        from_bundle.add_resource(FluentResource(text.read()))
-    with open(str(to_path), encoding="utf-8") as text:
-        to_bundle.add_resource(FluentResource(text.read()))
+    from_bundle.add_resource(FluentResource(from_path.read_text(encoding="utf-8")))
+    to_bundle.add_resource(FluentResource(to_path.read_text(encoding="utf-8")))
 
     from_keys = from_bundle._messages.keys()
     to_keys = to_bundle._messages.keys()
@@ -159,8 +93,6 @@ def compare_locales(from_lang: str, to_lang: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tsunduku Command Line Interface")
-    parser.add_argument("--bundle", action="store_true", help="Bundle Tsundoku.")
-    parser.add_argument("--test", action="store_true", help="Run unit tests.")
     parser.add_argument(
         "--dbshell",
         action="store_true",
@@ -186,11 +118,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.bundle:
-        bundle_zip()
-    elif args.test:
-        os.system("pytest")
-    elif args.dbshell:
+    if args.dbshell:
         from tsundoku.database import spawn_shell
 
         spawn_shell()

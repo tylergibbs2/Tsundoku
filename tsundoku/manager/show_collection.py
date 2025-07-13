@@ -34,7 +34,7 @@ class ShowCollection:
         return [s.to_dict() for s in self._shows]
 
     @classmethod
-    async def all(cls, app: TsundokuApp) -> "ShowCollection":
+    async def all(cls, app: "TsundokuApp") -> "ShowCollection":
         """
         Retrieves a collection of all Show
         objects presently stored in the database.

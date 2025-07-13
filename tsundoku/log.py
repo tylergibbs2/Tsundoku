@@ -12,7 +12,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class SocketHandler(logging.Handler):
-    def __init__(self, app: TsundokuApp) -> None:
+    def __init__(self, app: "TsundokuApp") -> None:
         self.app = app
         super().__init__()
 
@@ -24,7 +24,7 @@ class SocketHandler(logging.Handler):
                 continue
 
 
-def setup_logging(app: TsundokuApp) -> None:
+def setup_logging(app: "TsundokuApp") -> None:
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)

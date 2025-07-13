@@ -30,11 +30,11 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: TsundokuApp) -> None:
+    def __init__(self, app: "TsundokuApp") -> None:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: TsundokuApp, _from: dict) -> "SearchResult":
+    def from_dict(cls, app: "TsundokuApp", _from: dict) -> "SearchResult":
         """
         Returns a valid SearchResult object from a data dict.
 
@@ -69,7 +69,7 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(cls, app: TsundokuApp, show_id: int, torrent_link: str) -> "SearchResult":
+    def from_necessary(cls, app: "TsundokuApp", show_id: int, torrent_link: str) -> "SearchResult":
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
@@ -262,7 +262,7 @@ class NyaaSearcher:
         return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
 
     @staticmethod
-    async def search(app: TsundokuApp, query: str) -> list[SearchResult]:
+    async def search(app: "TsundokuApp", query: str) -> list[SearchResult]:
         """
         Searches for a query on nyaa.si.
 

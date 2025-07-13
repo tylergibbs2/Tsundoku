@@ -1,10 +1,11 @@
+from pathlib import Path
 import random
 import string
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 class MockRSSFeed(TypedDict):
-    items: list[MockRSSFeedItem]
+    items: list["MockRSSFeedItem"]
 
 
 class MockRSSFeedItem(TypedDict):
@@ -19,8 +20,8 @@ def generate_fake_magnet() -> str:
     return "magnet:?xt=urn:btih:" + "".join(random.choices(BASE32_CHARSET, k=random.choice([40, 32])))
 
 
-def mock_feedparser_parse(*_, **__) -> MockRSSFeed:
-    with open("tests/mock/_rss_item_titles.txt", encoding="utf-8") as fp:
-        titles = [line.strip() for line in fp.readlines() if line]
+def mock_feedparser_parse(*_: Any, **__: Any) -> MockRSSFeed:
+    with Path("tests/mock/_rss_item_titles.txt").open("r", encoding="utf-8") as fd:
+        titles = [line.strip() for line in fd.readlines() if line]
 
     return {"items": [{"title": title, "link": generate_fake_magnet()} for title in titles]}

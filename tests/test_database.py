@@ -1,17 +1,12 @@
 import logging
 import sqlite3
 
-from pytest import LogCaptureFixture
+import pytest
 
 from tsundoku.database import migrate
 
-# async def test_migrate_from_empty(caplog: LogCaptureFixture) -> None:
-#     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-#     await migrate("file:migration_test1?mode=memory")
-
-
-async def test_schema_matches_migrated(caplog: LogCaptureFixture) -> None:
+async def test_schema_matches_migrated(caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG, logger="tsundoku")
 
     await migrate("file:migration_test2?mode=memory&cache=shared")

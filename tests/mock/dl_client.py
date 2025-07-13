@@ -31,7 +31,7 @@ MAGNET_RE = re.compile(r"magnet:\?.+btih:([\d\w]+)")
 
 
 class MockDownloadManager(Manager):
-    _client: InMemoryDownloadClient
+    _client: "InMemoryDownloadClient"
 
     def __init__(self) -> None:
         self._client = InMemoryDownloadClient()

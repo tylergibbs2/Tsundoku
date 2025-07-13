@@ -5,6 +5,7 @@ import {
   Dispatch,
   SetStateAction,
   ChangeEvent,
+  JSX,
 } from "react";
 import { UseFormRegister, useForm } from "react-hook-form";
 

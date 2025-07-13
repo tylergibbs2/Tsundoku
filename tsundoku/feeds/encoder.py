@@ -41,7 +41,7 @@ class Encoder:
     Constant Rate Factor (CRF).
     """
 
-    app: TsundokuApp
+    app: "TsundokuApp"
 
     ENABLED: bool
     ENCODER: str
@@ -161,10 +161,7 @@ class Encoder:
 
         outfile = infile.with_suffix(self.TEMP_SUFFIX)
 
-        return (
-            f'ffmpeg -hide_banner -loglevel error -i "{infile}" -map 0 -c copy -c:v {self.ENCODER} -crf {self.CRF}'
-            f' -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y "{outfile}"'
-        )
+        return f'ffmpeg -hide_banner -loglevel error -i "{infile}" -map 0 -c copy -c:v {self.ENCODER} -crf {self.CRF} -tune animation -preset {self.SPEED_PRESET} -c:a copy -progress {url} -y "{outfile}"'
 
     async def queue(self, entry_id: int) -> None:
         """
@@ -319,16 +316,12 @@ class Encoder:
             logger.warning(f"Error when attemping to encode entry <e{entry_id}>: input fp does not exist")
             return False
         if not infile.is_file():
-            logger.warning(
-                f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink"
-            )
+            logger.warning(f"Error when attemping to encode entry <e{entry_id}>: input fp is not a file, or is a symlink")
             return False
 
         file_bytecount = infile.stat().st_size
         if file_bytecount < self.MIN_FILE_BYTES:
-            logger.info(
-                f"Skipping encode for <e{entry_id}>. Byte count is `{file_bytecount}`, does not meet minimum of `{self.MIN_FILE_BYTES}`."
-            )
+            logger.info(f"Skipping encode for <e{entry_id}>. Byte count is `{file_bytecount}`, does not meet minimum of `{self.MIN_FILE_BYTES}`.")
             return False
 
         cmd = await self.build_cmd(entry_id, infile)

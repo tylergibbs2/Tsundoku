@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-import inspect
 
 import pytest
 import pytest_asyncio
@@ -10,12 +9,6 @@ from tests.mock import (
     mock_feedparser_parse,
     mock_get_all_sources,
 )
-
-
-def pytest_collection_modifyitems(config, items) -> None:
-    for item in items:
-        if inspect.iscoroutinefunction(item.function):
-            item.add_marker(pytest.mark.asyncio)
 
 
 @pytest_asyncio.fixture(name="app", scope="function")

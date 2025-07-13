@@ -1,13 +1,13 @@
 import logging
 from pathlib import Path
 
-from pytest import LogCaptureFixture
+import pytest
 
 from tests.mock import MockTsundokuApp
 from tsundoku.manager import Library, ShowCollection
 
 
-async def test_retrieve_all_libraries(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_retrieve_all_libraries(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async with app.acquire_db() as con:
@@ -24,26 +24,26 @@ async def test_retrieve_all_libraries(app: MockTsundokuApp, caplog: LogCaptureFi
     assert len(libraries) == library_count
 
 
-async def test_library_folder_is_path(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_library_folder_is_path(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     library, *_ = await Library.all(app)  # type: ignore
     assert isinstance(library.folder, Path)
 
 
-async def test_only_one_default_library(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_only_one_default_library(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    async def count_default_libraries():
+    async def count_default_libraries() -> int:
         return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
 
     assert await count_default_libraries() == 1
 
 
-async def test_only_one_default_library_from_new(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_only_one_default_library_from_new(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    async def count_default_libraries():
+    async def count_default_libraries() -> int:
         return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
 
     new_library = await Library.new(app, Path("/anime3"), is_default=True)  # type: ignore
@@ -51,10 +51,10 @@ async def test_only_one_default_library_from_new(app: MockTsundokuApp, caplog: L
     assert await count_default_libraries() == 1
 
 
-async def test_only_one_default_library_from_existing(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_only_one_default_library_from_existing(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    async def count_default_libraries():
+    async def count_default_libraries() -> int:
         return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
 
     libraries = await Library.all(app)  # type: ignore
@@ -69,7 +69,7 @@ async def test_only_one_default_library_from_existing(app: MockTsundokuApp, capl
     assert await count_default_libraries() == 1
 
 
-async def test_all_shows_have_a_library(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_all_shows_have_a_library(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     for show in await ShowCollection.all(app):  # type: ignore

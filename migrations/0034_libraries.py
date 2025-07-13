@@ -44,9 +44,7 @@ def grab_default_library(con: Connection) -> None:
 
     use_season_folder = any(any(s in part for s in VALID_SEASON_REPLACEMENTS) for part in default_folder.parts)
 
-    library_folder = Path(
-        *(p for p in default_folder.parts if all(val not in p for val in VALID_REPLACEMENTS))
-    ).resolve()
+    library_folder = Path(*(p for p in default_folder.parts if all(val not in p for val in VALID_REPLACEMENTS))).resolve()
 
     cur.execute(
         """

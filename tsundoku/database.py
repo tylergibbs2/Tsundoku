@@ -22,7 +22,7 @@ logger = logging.getLogger("tsundoku")
 
 
 @asynccontextmanager
-async def acquire() -> AsyncIterator[Connection]:
+async def acquire() -> AsyncIterator["Connection"]:
     async with asqlite.connect(f"{DATA_DIR / DATABASE_FILE_NAME}") as con:
         yield con
 

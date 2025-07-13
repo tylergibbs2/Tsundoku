@@ -1,13 +1,13 @@
 import logging
 from pathlib import Path
 
-from pytest import LogCaptureFixture
+import pytest
 
 from tests.mock import MockTsundokuApp
 from tsundoku.config import GeneralConfig
 
 
-async def test_expected_file_paths(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_expected_file_paths(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     await app.poller.poll()
@@ -35,7 +35,7 @@ async def test_expected_file_paths(app: MockTsundokuApp, caplog: LogCaptureFixtu
         assert path.parts in expected_parts
 
 
-async def test_no_season_folder(app: MockTsundokuApp, caplog: LogCaptureFixture) -> None:
+async def test_no_season_folder(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     config = await GeneralConfig.retrieve(app)  # type: ignore

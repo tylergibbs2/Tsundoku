@@ -16,5 +16,5 @@ MOCK_SOURCE = """
 """
 
 
-async def mock_get_all_sources() -> AsyncGenerator[Source, None]:
+async def mock_get_all_sources() -> AsyncGenerator[Source, None]:  # noqa: RUF029
     yield Source.from_object(json.loads(MOCK_SOURCE))

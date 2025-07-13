@@ -26,7 +26,7 @@ class EntryState(StrEnum):
 
 
 class Entry:
-    _app: TsundokuApp
+    _app: "TsundokuApp"
     _record: Row
 
     id: int
@@ -41,7 +41,7 @@ class Entry:
     encode: dict | None
     file_path: Path | None
 
-    def __init__(self, app: TsundokuApp, record: Row) -> None:
+    def __init__(self, app: "TsundokuApp", record: Row) -> None:
         self.id: int = record["id"]
         self.show_id: int = record["show_id"]
         self.episode: int = record["episode"]
@@ -91,7 +91,7 @@ class Entry:
         }
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> list["Entry"]:
+    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> list["Entry"]:
         """
         Retrieves a list of Entries that are associated
         with a specific Show's ID.
@@ -143,7 +143,7 @@ class Entry:
         return [Entry(app, entry) for entry in entries]
 
     @classmethod
-    async def from_entry_id(cls, app: TsundokuApp, entry_id: int) -> "Entry":
+    async def from_entry_id(cls, app: "TsundokuApp", entry_id: int) -> "Entry":
         """
         Retrieves an Entry by its ID.
 
@@ -283,7 +283,4 @@ class Entry:
                 await wh.send(self)
 
     def __repr__(self) -> str:
-        return (
-            f"<Entry id={self.id} show_id={self.show_id} episode={self.episode}"
-            f" state={self.state} hash={self.torrent_hash}>"
-        )
+        return f"<Entry id={self.id} show_id={self.show_id} episode={self.episode} state={self.state} hash={self.torrent_hash}>"

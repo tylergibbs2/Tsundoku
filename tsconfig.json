@@ -3,10 +3,11 @@
     "target": "es2020",
     "jsx": "react-jsx",
     "module": "commonjs",
-    "lib": ["ES2020", "ES2016", "DOM"],
+    "lib": ["ES2020", "ES2016", "DOM", "DOM.Iterable"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "skipLibCheck": true
   },
   "include": ["tsundoku/blueprints/ux/static/ts/App.tsx"]
 }

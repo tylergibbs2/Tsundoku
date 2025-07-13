@@ -345,9 +345,7 @@ class Connection:
         return Transaction(self)
 
     @overload
-    def cursor(
-        self, *, transaction: Literal[True]
-    ) -> _ContextManagerMixin[sqlite3.Cursor, _CursorWithTransaction]: ...
+    def cursor(self, *, transaction: Literal[True]) -> _ContextManagerMixin[sqlite3.Cursor, _CursorWithTransaction]: ...
 
     @overload
     def cursor(self, *, transaction: Literal[False] = False) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]: ...
@@ -411,9 +409,7 @@ class Connection:
 
         return _ContextManagerMixin(self._queue, factory, self._conn.execute, sql, parameters)
 
-    def executemany(
-        self, sql: str, seq_of_parameters: Iterable[Iterable[Any]]
-    ) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
+    def executemany(self, sql: str, seq_of_parameters: Iterable[Iterable[Any]]) -> _ContextManagerMixin[sqlite3.Cursor, Cursor]:
         """Asynchronous version of :meth:`sqlite3.Connection.executemany`.
 
         Note that this returns a :class:`Cursor` instead of a :class:`sqlite3.Cursor`.
@@ -457,14 +453,10 @@ class Connection:
                 return None
 
     @overload
-    async def fetchmany(
-        self, query: str, parameter: dict[str, Any], /, *, size: int | None = None
-    ) -> list[sqlite3.Row]: ...
+    async def fetchmany(self, query: str, parameter: dict[str, Any], /, *, size: int | None = None) -> list[sqlite3.Row]: ...
 
     @overload
-    async def fetchmany(
-        self, query: str, parameter: tuple[Any, ...], /, *, size: int | None = None
-    ) -> list[sqlite3.Row]: ...
+    async def fetchmany(self, query: str, parameter: tuple[Any, ...], /, *, size: int | None = None) -> list[sqlite3.Row]: ...
 
     @overload
     async def fetchmany(self, query: str, /, *parameters: Any, size: int | None = None) -> list[sqlite3.Row]: ...

@@ -16,7 +16,7 @@ from apscheduler.triggers.cron import CronTrigger
 from argon2 import PasswordHasher
 from fluent.runtime import FluentResourceLoader
 from quart import Quart
-from quart_auth import AuthManager
+from quart_auth import QuartAuth
 from quart_rate_limiter import RateLimiter
 
 try:
@@ -89,7 +89,7 @@ class TsundokuApp(Quart):
 
 app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
 
-auth = AuthManager(app)
+auth = QuartAuth(app)
 rate_limiter = RateLimiter(app)
 
 auth.user_class = User
@@ -187,9 +187,7 @@ async def setup_db() -> None:
         app.flags.LOCALE = locale
 
     if not users:
-        logger.warning(
-            "No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command."
-        )
+        logger.warning("No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command.")
         app.flags.IS_FIRST_LAUNCH = True
 
 

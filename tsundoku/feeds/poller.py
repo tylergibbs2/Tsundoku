@@ -86,7 +86,7 @@ class Poller:
     renaming, and moving.
     """
 
-    app: TsundokuApp
+    app: "TsundokuApp"
     source_cache: dict[str, SourceCache]
 
     def __init__(self, app_context: Any) -> None:
@@ -173,9 +173,7 @@ class Poller:
             logger.info(f"`{source.name}@{source.version}` - Checking for New Releases...")
             source_items = await self.check_feed(source, items)
             found += source_items
-            logger.info(
-                f"`{source.name}@{source.version}` - Checked for New Releases, {len(source_items)} items found"
-            )
+            logger.info(f"`{source.name}@{source.version}` - Checked for New Releases, {len(source_items)} items found")
 
         logger.info(f"Checked for New Releases, total of {len(found)} items found")
 
@@ -344,22 +342,16 @@ class Poller:
             release_info = [parsed.get("release_information", "").lower()]
 
         if "anime_title" not in parsed:
-            logger.warning(
-                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'"
-            )
+            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'")
             return None
         if "episode_number" not in parsed:
-            logger.warning(
-                f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'"
-            )
+            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'")
             return None
         if "batch" in release_info or isinstance(parsed["episode_number"], list):
             logger.info(f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'")
             return None
         if not parsed["episode_number"].isdigit():
-            logger.info(
-                f"`{source.name}@{source.version}` - Episode '{parsed['episode_number']}' is not an integer '{filename}'"
-            )
+            logger.info(f"`{source.name}@{source.version}` - Episode '{parsed['episode_number']}' is not an integer '{filename}'")
             return None
 
         show_episode = int(parsed["episode_number"])
@@ -396,19 +388,13 @@ class Poller:
         resolution = normalize_resolution(parsed.get("video_resolution", ""))
         release_group = parsed.get("release_group")
         if preferred_resolution is not None and resolution != preferred_resolution:
-            logger.info(
-                f"`{source.name}@{source.version}` - Ignoring release for '{filename}', resolution {resolution} does not match preferred resolution {preferred_resolution}"
-            )
+            logger.info(f"`{source.name}@{source.version}` - Ignoring release for '{filename}', resolution {resolution} does not match preferred resolution {preferred_resolution}")
             return None
         if preferred_release_group is not None and release_group != preferred_release_group:
-            logger.info(
-                f"`{source.name}@{source.version}` - Ignoring release for '{filename}', release group {release_group} does not match preferred release group {preferred_release_group}"
-            )
+            logger.info(f"`{source.name}@{source.version}` - Ignoring release for '{filename}', release group {release_group} does not match preferred release group {preferred_release_group}")
             return None
 
-        logger.info(
-            f"`{source.name}@{source.version}` - Release Found for <s{match.matched_id}>, episode {show_episode}{release_version}"
-        )
+        logger.info(f"`{source.name}@{source.version}` - Release Found for <s{match.matched_id}>, episode {show_episode}{release_version}")
 
         magnet_url = await self.get_torrent_link(source, item)
         await self.app.downloader.begin_handling(match.matched_id, show_episode, magnet_url, release_version)
@@ -472,10 +458,7 @@ class Poller:
         if hasattr(feed, "status") and feed.status == 304:
             return []
 
-        if (
-            self.source_cache[source.name].last_etag is not None
-            or self.source_cache[source.name].last_modified is not None
-        ):
+        if self.source_cache[source.name].last_etag is not None or self.source_cache[source.name].last_modified is not None:
             return feed["items"]
 
         new_items = []

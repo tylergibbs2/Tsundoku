@@ -6,4 +6,7 @@ module.exports = merge(common, {
   output: {
     filename: "[name].[contenthash].js",
   },
+  optimization: {
+    minimize: false, // Disable minification to avoid terser/worker_threads issues with Bun
+  },
 });

@@ -18,7 +18,7 @@ logger = logging.getLogger("tsundoku")
 
 @dataclass
 class Show:
-    app: TsundokuApp
+    app: "TsundokuApp"
 
     id_: int
     library_id: int
@@ -66,7 +66,7 @@ class Show:
         }
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: Row) -> "Show":
+    async def from_data(cls, app: "TsundokuApp", data: Row) -> "Show":
         """
         Creates a Show object from a sqlite3.Row
         of a Show in the database.
@@ -99,7 +99,7 @@ class Show:
         return instance
 
     @classmethod
-    async def from_id(cls, app: TsundokuApp, id_: int) -> "Show":
+    async def from_id(cls, app: "TsundokuApp", id_: int) -> "Show":
         """
         Retrieves a Show from the database based on
         a passed identifier.
@@ -168,7 +168,7 @@ class Show:
 
     @staticmethod
     async def insert(
-        app: TsundokuApp,
+        app: "TsundokuApp",
         /,
         library_id: int,
         title: str,

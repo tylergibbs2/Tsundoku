@@ -5,13 +5,13 @@ def parse_title(title: str) -> utils.ParserResult:
     return utils.parse_anime_title(title)
 
 
-def assertAnitopyResultContains(title: str, like: utils.ParserResult) -> None:
+def assert_anitopy_result_contains(title: str, like: utils.ParserResult) -> None:
     result = utils.parse_anime_title(title)
     assert result == {**result, **like}
 
 
 def test_1() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[SubsPlease] Chainsaw Man - 12 (1080p) [179132FA].mkv",
         {
             "release_group": "SubsPlease",
@@ -23,7 +23,7 @@ def test_1() -> None:
 
 
 def test_2() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[SubsPlease] NieR Automata Ver1.1a - 04 (720p) [CC00E892].mkv",
         {
             "release_group": "SubsPlease",
@@ -35,7 +35,7 @@ def test_2() -> None:
 
 
 def test_3() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[SubsPlease] NieR Automata Ver1.1a - 04v2 (720p) [CC00E892].mkv",
         {
             "release_group": "SubsPlease",
@@ -48,7 +48,7 @@ def test_3() -> None:
 
 
 def test_4() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[SubsPlease] Tomo-chan wa Onnanoko! - 03 (480p) [F21C23E2].mkv",
         {
             "release_group": "SubsPlease",
@@ -60,7 +60,7 @@ def test_4() -> None:
 
 
 def test_5() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[ASW] Shadowverse Flame - 41 [1080p HEVC x265 10Bit][AAC]",
         {
             "release_group": "ASW",
@@ -72,7 +72,7 @@ def test_5() -> None:
 
 
 def test_6() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[SubsPlease] Bocchi the Rock! (01-12) (1080p) [Batch]",
         {
             "release_group": "SubsPlease",
@@ -85,7 +85,7 @@ def test_6() -> None:
 
 
 def test_7() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[ASW] Shadowverse Flame - 41 [1920x1080 HEVC x265 10Bit][AAC]",
         {
             "release_group": "ASW",
@@ -97,7 +97,7 @@ def test_7() -> None:
 
 
 def test_8() -> None:
-    assertAnitopyResultContains(
+    assert_anitopy_result_contains(
         "[M-L-Stuffs] Futari wa Precure (Pretty Cure) 01",
         {
             "release_group": "M-L-Stuffs",

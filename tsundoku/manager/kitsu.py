@@ -23,7 +23,7 @@ class KitsuManager:
         "Content-Type": "application/vnd.api+json",
     }
 
-    app: TsundokuApp
+    app: "TsundokuApp"
 
     show_id: int
 
@@ -53,14 +53,12 @@ class KitsuManager:
             "link": self.link,
             "slug": self.slug,
             "status": self.status,
-            "html_status": STATUS_HTML_MAP[self.status].format(fluent._(f"status-{self.status}"))
-            if self.status
-            else None,
+            "html_status": STATUS_HTML_MAP[self.status].format(fluent._(f"status-{self.status}")) if self.status else None,
             "poster": self.poster,
         }
 
     @classmethod
-    async def fetch(cls, app: TsundokuApp, show_id: int, show_name: str) -> "KitsuManager":
+    async def fetch(cls, app: "TsundokuApp", show_id: int, show_name: str) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show name from the Kitsu API.
@@ -133,7 +131,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def fetch_by_kitsu(cls, app: TsundokuApp, show_id: int, kitsu_id: int) -> "KitsuManager":
+    async def fetch_by_kitsu(cls, app: "TsundokuApp", show_id: int, kitsu_id: int) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show ID from the Kitsu API.
@@ -206,7 +204,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> "KitsuManager":
+    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> "KitsuManager":
         """
         Retrieves Kitsu information from the database based
         on a show's ID.
@@ -261,7 +259,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: dict[str, str]) -> "KitsuManager":
+    async def from_data(cls, app: "TsundokuApp", data: dict[str, str]) -> "KitsuManager":
         """
         Creates a metadata object from already queried SQL
         data.

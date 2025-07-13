@@ -12,7 +12,7 @@ logger = logging.getLogger("tsundoku")
 
 
 class WebhookBase:
-    _app: TsundokuApp
+    _app: "TsundokuApp"
 
     base_id: int
     name: str
@@ -42,7 +42,7 @@ class WebhookBase:
     @classmethod
     async def new(
         cls,
-        app: TsundokuApp,
+        app: "TsundokuApp",
         name: str,
         service: str,
         url: str,
@@ -170,7 +170,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: TsundokuApp, base_id: int) -> "WebhookBase | None":
+    async def from_id(cls, app: "TsundokuApp", base_id: int) -> "WebhookBase | None":
         """
         Returns a WebhookBase object from a webhook base ID.
 
@@ -232,7 +232,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_data(cls, app: TsundokuApp, data: dict[str, str]) -> "WebhookBase":
+    async def from_data(cls, app: "TsundokuApp", data: dict[str, str]) -> "WebhookBase":
         """
         Returns a WebhookBase object from passed data.
 
@@ -263,7 +263,7 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def all(cls, app: TsundokuApp) -> list["WebhookBase"]:
+    async def all(cls, app: "TsundokuApp") -> list["WebhookBase"]:
         """
         Returns all WebhookBase rows from
         the database.
@@ -479,7 +479,7 @@ class WebhookBase:
 
 
 class Webhook:
-    _app: TsundokuApp
+    _app: "TsundokuApp"
 
     show_id: int
     base: WebhookBase
@@ -501,7 +501,7 @@ class Webhook:
         }
 
     @classmethod
-    async def from_show_id(cls, app: TsundokuApp, show_id: int) -> list["Webhook"]:
+    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> list["Webhook"]:
         """
         Returns all webhooks for a specified show ID.
 
@@ -572,7 +572,7 @@ class Webhook:
         return instances
 
     @classmethod
-    async def from_composite(cls, app: TsundokuApp, show_id: int, base_id: int) -> "Webhook | None":
+    async def from_composite(cls, app: "TsundokuApp", show_id: int, base_id: int) -> "Webhook | None":
         """
         Returns a webhook from its composite key.
 
@@ -820,7 +820,7 @@ class Webhook:
 
         return [title_block, content_block]
 
-    async def generate_payload(self, entry: Entry) -> dict | None:
+    async def generate_payload(self, entry: "Entry") -> dict | None:
         """
         Generates the complete payload for
         a webhook send.
@@ -875,7 +875,7 @@ class Webhook:
 
         return payload
 
-    async def send(self, entry: Entry) -> None:
+    async def send(self, entry: "Entry") -> None:
         """
         Posts an event with data to a webhook.
 

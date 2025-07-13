@@ -31,7 +31,7 @@ class Downloader:
     `show_entry` table.
     """
 
-    app: TsundokuApp
+    app: "TsundokuApp"
 
     complete_check: int
     seed_ratio_limit: float
