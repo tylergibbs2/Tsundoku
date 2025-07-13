@@ -738,7 +738,7 @@ wheels = [
 
 [[package]]
 name = "tsundoku"
-version = "1.0.5"
+version = "1.0.6"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
