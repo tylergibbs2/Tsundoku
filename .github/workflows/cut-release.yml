@@ -2,6 +2,12 @@ name: Cut Release
 
 on:
   workflow_dispatch:
+    inputs:
+      force_recreate:
+        description: 'Force re-create'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   validate-versions:
@@ -51,6 +57,12 @@ jobs:
         run: |
           VERSION="${{ needs.validate-versions.outputs.version }}"
           USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+          FORCE_RECREATE="${{ github.event.inputs.force_recreate }}"
+
+          if [ "$FORCE_RECREATE" = "true" ]; then
+            echo "⚠️ Force re-create enabled - bypassing Docker Hub check"
+            exit 0
+          fi
 
           # Get list of tags from Docker Hub
           TAGS=$(curl -s "https://registry.hub.docker.com/v2/repositories/$USERNAME/tsundoku/tags/" | jq -r '.results[].name' 2>/dev/null || echo "")
@@ -59,6 +71,8 @@ jobs:
             echo "❌ Version $VERSION already exists as a Docker Hub tag"
             echo "Available tags:"
             echo "$TAGS" | head -10
+            echo ""
+            echo "To force re-create, enable the 'Force re-create' option when running this workflow"
             exit 1
           else
             echo "✅ Version $VERSION is not yet tagged on Docker Hub"
@@ -92,13 +106,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Create Git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v${{ needs.validate-versions.outputs.version }}" -m "Release v${{ needs.validate-versions.outputs.version }}"
+          git push origin "v${{ needs.validate-versions.outputs.version }}"
+
       - name: Create GitHub release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ needs.validate-versions.outputs.version }}
-          release_name: Release v${{ needs.validate-versions.outputs.version }}
+          release_name: ${{ needs.validate-versions.outputs.version }}
           body: |
             ## What's Changed
 
