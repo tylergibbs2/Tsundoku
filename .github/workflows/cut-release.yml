@@ -1,0 +1,116 @@
+name: Cut Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get pyproject.toml version
+        id: get-pyproject-version
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "pyproject.toml version: $VERSION"
+
+      - name: Get package.json version
+        id: get-package-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "package.json version: $VERSION"
+
+      - name: Validate version consistency and set output
+        id: get-version
+        run: |
+          PYPROJECT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          echo "pyproject.toml version: $PYPROJECT_VERSION"
+          echo "package.json version: $PACKAGE_VERSION"
+
+          if [ "$PYPROJECT_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "❌ pyproject.toml version ($PYPROJECT_VERSION) doesn't match package.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+
+          echo "✅ All versions match: $PYPROJECT_VERSION"
+          echo "version=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
+
+    check-dockerhub:
+    runs-on: ubuntu-latest
+    needs: validate-versions
+
+    steps:
+      - name: Check Docker Hub for existing tag
+        run: |
+          VERSION="${{ needs.validate-versions.outputs.version }}"
+          USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+
+          # Get list of tags from Docker Hub
+          TAGS=$(curl -s "https://registry.hub.docker.com/v2/repositories/$USERNAME/tsundoku/tags/" | jq -r '.results[].name' 2>/dev/null || echo "")
+
+          if echo "$TAGS" | grep -q "^$VERSION$"; then
+            echo "❌ Version $VERSION already exists as a Docker Hub tag"
+            echo "Available tags:"
+            echo "$TAGS" | head -10
+            exit 1
+          else
+            echo "✅ Version $VERSION is not yet tagged on Docker Hub"
+          fi
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [validate-versions, check-dockerhub]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/tsundoku:${{ needs.validate-versions.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tsundoku:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create GitHub release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.validate-versions.outputs.version }}
+          release_name: Release v${{ needs.validate-versions.outputs.version }}
+          body: |
+            ## What's Changed
+
+            Docker image has been built and pushed to Docker Hub.
+
+            ### Docker Image
+            - **Tag**: `${{ secrets.DOCKERHUB_USERNAME }}/tsundoku:${{ needs.validate-versions.outputs.version }}`
+            - **Latest**: `${{ secrets.DOCKERHUB_USERNAME }}/tsundoku:latest`
+
+            ### Pull Command
+            ```bash
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/tsundoku:${{ needs.validate-versions.outputs.version }}
+            ```
+          draft: false
+          prerelease: false
