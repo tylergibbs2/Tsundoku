@@ -53,9 +53,9 @@ export const IndexApp = () => {
   });
 
   const shows = useQuery(
-    ["shows", currentPage],
+    ["shows", currentPage, filters, textFilter, sortKey, sortDirection],
     async () => {
-      return await fetchShows(currentPage, 17);
+      return await fetchShows(currentPage, 17, filters, textFilter, sortKey, sortDirection);
     },
     {
       keepPreviousData: true,
@@ -69,6 +69,11 @@ export const IndexApp = () => {
     localStorage.setItem("sortKey", sortKey);
     localStorage.setItem("currentPage", currentPage.toString());
   }, [filters, viewType, sortDirection, sortKey, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    // eslint-disable-next-line
+  }, [filters, textFilter, sortKey, sortDirection]);
 
   useEffect(() => {
     if (currentModal) document.body.classList.add("is-clipped");

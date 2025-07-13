@@ -36,18 +36,19 @@ class ShowsAPI(views.MethodView):
             if limit < 1 or limit > 100:
                 return APIResponse(status=400, error="Limit must be between 1 and 100.")
 
-            shows, total_count = await ShowCollection.paginated(app, limit, offset)
+            # Parse filters
+            filters_param = args.get("filters")
+            text_filter = args.get("text_filter") or None
+            sort_key = args.get("sort_key") or "title"
+            sort_direction = args.get("sort_direction") or "+"
+            if filters_param:
+                statuses = [f.strip() for f in filters_param.split(",") if f.strip()]
+                shows, total_count = await ShowCollection.filtered_paginated(app, statuses, limit, offset, text_filter, sort_key, sort_direction)
+            else:
+                shows, total_count = await ShowCollection.filtered_paginated(app, [], limit, offset, text_filter, sort_key, sort_direction)
             await shows.gather_statuses()
 
-            return APIResponse(result={
-                "shows": shows.to_list(),
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total": total_count,
-                    "pages": (total_count + limit - 1) // limit
-                }
-            })
+            return APIResponse(result={"shows": shows.to_list(), "pagination": {"page": page, "limit": limit, "total": total_count, "pages": (total_count + limit - 1) // limit}})
         try:
             show = await Show.from_id(app, show_id)
         except ValueError:

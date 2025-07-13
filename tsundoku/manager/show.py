@@ -82,6 +82,8 @@ class Show:
             The created Show object.
         """
         data_dict = dict(data)
+        data_dict.pop("last_update", None)
+
         metadata_dict = {
             "show_id": data_dict["id_"],
             "kitsu_id": data_dict.pop("kitsu_id", None),

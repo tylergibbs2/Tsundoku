@@ -31,15 +31,6 @@ export const Card = ({
     );
   else title = <b>{show.title}</b>;
 
-  let shouldShow: boolean = true;
-  if (show.metadata.kitsu_id !== null) {
-    if (filters.length !== 0)
-      shouldShow = filters.includes(show.metadata.status);
-
-    if (shouldShow)
-      shouldShow = show.title.toLowerCase().includes(textFilter.toLowerCase());
-  }
-
   const openEditModal = () => {
     setActiveShow(show);
     setCurrentModal("edit");
@@ -62,11 +53,7 @@ export const Card = ({
   };
 
   return (
-    <div
-      className={
-        "column is-12-mobile is-4-tablet is-2-desktop " +
-        (shouldShow ? "" : "is-hidden")
-      }
+    <div className="column is-12-mobile is-4-tablet is-2-desktop"
     >
       <div className="card">
         {show.metadata.poster && (

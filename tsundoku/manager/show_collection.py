@@ -77,35 +77,59 @@ class ShowCollection:
         return cls(_shows=shows_)
 
     @classmethod
-    async def paginated(cls, app: "TsundokuApp", limit: int = 17, offset: int = 0) -> tuple["ShowCollection", int]:
+    async def filtered_paginated(cls, app: "TsundokuApp", statuses: list[str], limit: int = 17, offset: int = 0, text_filter: str | None = None, sort_key: str = "title", sort_direction: str = "+") -> tuple["ShowCollection", int]:
         """
-        Retrieves a paginated collection of Show objects.
-
-        Parameters
-        ----------
-        app: TsundokuApp
-            The application instance.
-        limit: int
-            Maximum number of shows to return (default: 17).
-        offset: int
-            Number of shows to skip (default: 0).
-
-        Returns
-        -------
-        tuple[ShowCollection, int]
-            A tuple containing the paginated collection and total count.
+        Retrieves a paginated collection of Show objects filtered by status, text, and sorted.
         """
+        # Build WHERE clause
+        if statuses:
+            where_clauses = ["ki.show_status IS NOT NULL", "ki.show_status IN ({})".format(",".join(["?"] * len(statuses)))]
+            params = list(statuses)
+        else:
+            # If no statuses are selected, return no shows
+            return cls(_shows=[]), 0
+        if text_filter:
+            where_clauses.append("(LOWER(s.title) LIKE ? OR LOWER(s.title_local) LIKE ?)")
+            like_val = f"%{text_filter.lower()}%"
+            params.extend([like_val, like_val])
+        where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+        # Sorting
+        if sort_key == "title":
+            order_sql = f"ORDER BY LOWER(s.title) {'ASC' if sort_direction == '+' else 'DESC'}"
+        elif sort_key == "dateAdded":
+            order_sql = f"ORDER BY s.created_at {'ASC' if sort_direction == '+' else 'DESC'}"
+        elif sort_key == "update":
+            order_sql = f"ORDER BY last_update {'ASC' if sort_direction == '+' else 'DESC'}"
+        else:
+            order_sql = "ORDER BY s.title ASC"
+        # For last_update, join show_entry and use MAX
+        join_last_update = ""
+        select_last_update = ""
+        group_by = ""
+        if sort_key == "update":
+            join_last_update = "LEFT JOIN show_entry se ON s.id = se.show_id"
+            select_last_update = ", MAX(se.last_update) as last_update"
+            group_by = "GROUP BY s.id"
         async with app.acquire_db() as con:
-            # Get total count
-            total_count = await con.fetchval(
-                """
-                SELECT COUNT(*) FROM shows;
-                """
+            id_rows = await con.fetchall(
+                f"""
+                SELECT DISTINCT s.id FROM shows as s
+                LEFT JOIN kitsu_info as ki ON s.id = ki.show_id
+                {join_last_update}
+                WHERE {where_sql}
+                {group_by}
+                {order_sql}
+                """,
+                *params,
             )
-
-            # Get paginated shows
+            all_ids = [row[0] for row in id_rows]
+            total_count = len(all_ids)
+            paged_ids = all_ids[offset : offset + limit]
+            if not paged_ids:
+                return cls(_shows=[]), total_count
+            # Now fetch the actual show data for these IDs
             shows = await con.fetchall(
-                """
+                f"""
                 SELECT
                     s.id as id_,
                     s.library_id,
@@ -123,15 +147,18 @@ class ShowCollection:
                     ki.slug,
                     ki.show_status,
                     ki.cached_poster_url
+                    {select_last_update}
                 FROM
                     shows as s
                 LEFT JOIN
                     kitsu_info as ki
                 ON s.id = ki.show_id
-                ORDER BY title
-                LIMIT ? OFFSET ?;
-            """,
-                limit, offset
+                {join_last_update}
+                WHERE s.id IN ({",".join(["?"] * len(paged_ids))})
+                {group_by}
+                {order_sql}
+                """,
+                *paged_ids,
             )
 
         shows_ = [await Show.from_data(app, show) for show in shows]

@@ -62,10 +62,8 @@ export const EditModal = ({
       updatedShow = await finalizeEntries(updatedShow);
       updatedShow = await finalizeWebhooks(updatedShow);
 
-      queryClient.setQueryData(["shows"], (oldShows: Show[]) => [
-        ...oldShows.filter((show) => show.id_ !== updatedShow.id_),
-        updatedShow,
-      ]);
+      // Instead of manually updating the cache, just refetch the paginated shows queries
+      queryClient.invalidateQueries(["shows"]);
 
       toast({
         message: _("show-update-success"),

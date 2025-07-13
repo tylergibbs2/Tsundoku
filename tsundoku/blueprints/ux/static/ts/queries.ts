@@ -77,7 +77,14 @@ export const fetchWebhookBases = async (): Promise<WebhookBase[]> => {
   );
 };
 
-export const fetchShows = async (page: number = 1, limit: number = 17): Promise<PaginatedShowsResponse> => {
+export const fetchShows = async (
+  page: number = 1,
+  limit: number = 17,
+  filters: string[] = [],
+  textFilter: string = "",
+  sortKey: string = "title",
+  sortDirection: string = "+"
+): Promise<PaginatedShowsResponse> => {
   let request = {
     method: "GET",
     headers: COMMON_HEADERS,
@@ -86,6 +93,10 @@ export const fetchShows = async (page: number = 1, limit: number = 17): Promise<
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
+    ...(filters.length > 0 ? { filters: filters.join(",") } : {}),
+    ...(textFilter ? { text_filter: textFilter } : {}),
+    ...(sortKey ? { sort_key: sortKey } : {}),
+    ...(sortDirection ? { sort_direction: sortDirection } : {}),
   });
 
   let response = await fetch(`/api/v1/shows?${params}`, request);

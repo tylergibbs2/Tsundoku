@@ -52,15 +52,6 @@ export const ListItem = ({
       </b>
     );
 
-  let shouldShow: boolean = true;
-  if (show.metadata.kitsu_id !== null) {
-    if (filters.length !== 0)
-      shouldShow = filters.includes(show.metadata.status);
-
-    if (shouldShow)
-      shouldShow = show.title.toLowerCase().includes(textFilter.toLowerCase());
-  }
-
   let timeDisplay: any;
   if (show.entries.length !== 0) {
     let sorted = [...show.entries].sort(sortByDate);
@@ -97,7 +88,7 @@ export const ListItem = ({
   };
 
   return (
-    <tr className={shouldShow ? "" : "is-hidden"}>
+    <tr>
       <td className="is-vcentered">
         <a href={show.metadata.link} target="_blank">
           <figure className="image is-3by4">
