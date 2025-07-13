@@ -92,10 +92,10 @@ class MockTsundokuApp(Quart):
 
     async def setup(self) -> None:
         self.__async_db_connection = await connect(
-            "file::memory:?cache=shared", uri=True
+            "file:tsundoku?mode=memory&cache=shared", uri=True
         )
         self.__sync_db_connection = sqlite3.connect(
-            "file::memory:?cache=shared", uri=True
+            "file:tsundoku?mode=memory&cache=shared", uri=True
         )
         self.__sync_db_connection.row_factory = sqlite3.Row
 

@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 import logging
 import os
-import sqlite3
 from configparser import ConfigParser
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING
+import sqlite3
+from typing import Any, AsyncIterator, Iterator, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from tsundoku.asqlite import Connection
@@ -185,25 +185,26 @@ async def migrate_to_data_dir() -> None:
             Path(f).rename(Path(DATA_DIR) / f)
 
 
-async def migrate() -> None:
+async def migrate(database_source: Union[Path, str]) -> None:
     try:
         await migrate_to_data_dir()
     except Exception as e:
         logger.error(f"Error migrating to data directory: {e}", exc_info=True)
 
-    logger.info("Backing up database before performing migrations...")
+    if isinstance(database_source, Path):
+        logger.info("Backing up database before performing migrations...")
 
-    try:
-        shutil.copy(
-            DATA_DIR / DATABASE_FILE_NAME,
-            (DATA_DIR / DATABASE_FILE_NAME).with_suffix(".db.autobak"),
-        )
-    except FileNotFoundError:
-        logger.info("No existing database found, skipping backup.")
-    except Exception as e:
-        logger.error(f"Failed to backup database: {e}")
+        try:
+            shutil.copy(
+                database_source,
+                database_source.with_suffix(".db.autobak"),
+            )
+        except FileNotFoundError:
+            logger.info("No existing database found, skipping backup.")
+        except Exception as e:
+            logger.error(f"Failed to backup database: {e}", exc_info=True)
 
-    backend = get_backend(f"sqlite:///{DATA_DIR / DATABASE_FILE_NAME}")
+    backend = get_backend(f"sqlite:///{database_source}")
     migrations = read_migrations("migrations")
     migrations.items = migrations.items[14:]
 

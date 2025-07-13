@@ -123,7 +123,8 @@ app.config.from_object(QuartConfig())
 
 
 async def insert_user(username: str, password: str) -> None:
-    await migrate()
+    database_source = DATA_DIR / DATABASE_FILE_NAME
+    await migrate(database_source)
 
     pw_hash = PasswordHasher().hash(password)
     async with tsundoku.asqlite.connect(f"{DATA_DIR / DATABASE_FILE_NAME}") as con:
@@ -327,7 +328,8 @@ def get_bind() -> Tuple[str, int]:
 
 
 async def run() -> None:
-    await migrate()
+    database_source = DATA_DIR / DATABASE_FILE_NAME
+    await migrate(database_source)
     setup_logging(app)
 
     host, port = get_bind()

@@ -212,9 +212,11 @@ if __name__ == "__main__":
     elif args.l10n_duplicates:
         find_locale_duplicates(args.l10n_duplicates[0])
     elif args.migrate:
+        from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
         from tsundoku.database import migrate
 
-        asyncio.run(migrate())
+        database_source = DATA_DIR / DATABASE_FILE_NAME
+        asyncio.run(migrate(database_source))
     elif args.create_user:
         username = input("Username: ")
         match = False
