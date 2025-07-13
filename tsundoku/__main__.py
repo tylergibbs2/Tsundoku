@@ -1,9 +1,3 @@
-import sys
-
-if sys.version_info < (3, 11):
-    print("Please update Python to use version 3.11+")
-    exit(1)
-
 import argparse
 import asyncio
 import getpass

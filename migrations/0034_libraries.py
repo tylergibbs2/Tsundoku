@@ -25,7 +25,7 @@ VALID_REPLACEMENTS = {
 }
 
 
-def grab_default_library(con: Connection):
+def grab_default_library(con: Connection) -> None:
     cur = con.cursor()
     cur.execute(
         """
@@ -81,7 +81,7 @@ def grab_default_library(con: Connection):
     )
 
 
-def rollback_default_library(con: Connection):
+def rollback_default_library(con: Connection) -> None:
     cur = con.cursor()
 
     cur.execute(

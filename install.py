@@ -15,17 +15,12 @@ This install script is essentially performing the following operations:
 If any of the operations fail, the script exits.
 """
 
-import sys
-
-if sys.version_info < (3, 8):
-    print("Please update Python to use version 3.8+")
-    sys.exit(1)
-
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 
 try:
     from tsundoku import __version__ as version
@@ -130,7 +125,7 @@ class Installer:
 
     def restart_under_venv(self) -> None:
         print(f"Restarting under virtual environment '{self.virtual_dir}'...")
-        subprocess.run([self.python_executable, __file__] + sys.argv[1:])
+        subprocess.run([self.python_executable, __file__, *sys.argv[1:]])
         sys.exit(0)
 
     def check_required_files(self) -> None:

@@ -12,7 +12,7 @@ from tests.mock import (
 )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     for item in items:
         if inspect.iscoroutinefunction(item.function):
             item.add_marker(pytest.mark.asyncio)

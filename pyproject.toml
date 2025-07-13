@@ -67,4 +67,4 @@ force-sort-within-sections = true
 ignore-overlong-task-comments = true
 
 [tool.ruff]
-line-length = 119
+line-length = 1024

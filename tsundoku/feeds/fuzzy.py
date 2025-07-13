@@ -8,16 +8,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from collections.abc import Callable, Collection, Generator, Sequence
 from difflib import SequenceMatcher
-from typing import (
-    Union,
-)
 
-SortableCollection = Union[Collection[str], Sequence[str]]
+SortableCollection = Collection[str] | Sequence[str]
 
 
 def quick_ratio(a: str, b: str) -> int:
     m = SequenceMatcher(None, a, b)
-    return int(round(100 * m.quick_ratio()))
+    return round(100 * m.quick_ratio())
 
 
 def _extraction_generator(

@@ -10,7 +10,7 @@ def assertAnitopyResultContains(title: str, like: utils.ParserResult) -> None:
     assert result == {**result, **like}
 
 
-def test_1():
+def test_1() -> None:
     assertAnitopyResultContains(
         "[SubsPlease] Chainsaw Man - 12 (1080p) [179132FA].mkv",
         {
@@ -22,7 +22,7 @@ def test_1():
     )
 
 
-def test_2():
+def test_2() -> None:
     assertAnitopyResultContains(
         "[SubsPlease] NieR Automata Ver1.1a - 04 (720p) [CC00E892].mkv",
         {
@@ -34,7 +34,7 @@ def test_2():
     )
 
 
-def test_3():
+def test_3() -> None:
     assertAnitopyResultContains(
         "[SubsPlease] NieR Automata Ver1.1a - 04v2 (720p) [CC00E892].mkv",
         {
@@ -47,7 +47,7 @@ def test_3():
     )
 
 
-def test_4():
+def test_4() -> None:
     assertAnitopyResultContains(
         "[SubsPlease] Tomo-chan wa Onnanoko! - 03 (480p) [F21C23E2].mkv",
         {
@@ -59,7 +59,7 @@ def test_4():
     )
 
 
-def test_5():
+def test_5() -> None:
     assertAnitopyResultContains(
         "[ASW] Shadowverse Flame - 41 [1080p HEVC x265 10Bit][AAC]",
         {
@@ -71,7 +71,7 @@ def test_5():
     )
 
 
-def test_6():
+def test_6() -> None:
     assertAnitopyResultContains(
         "[SubsPlease] Bocchi the Rock! (01-12) (1080p) [Batch]",
         {
@@ -84,7 +84,7 @@ def test_6():
     )
 
 
-def test_7():
+def test_7() -> None:
     assertAnitopyResultContains(
         "[ASW] Shadowverse Flame - 41 [1920x1080 HEVC x265 10Bit][AAC]",
         {
@@ -96,7 +96,7 @@ def test_7():
     )
 
 
-def test_8():
+def test_8() -> None:
     assertAnitopyResultContains(
         "[M-L-Stuffs] Futari wa Precure (Pretty Cure) 01",
         {
