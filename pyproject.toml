@@ -1,6 +1,6 @@
 [project]
 name = "tsundoku"
-version = "1.0.5"
+version = "1.0.6"
 description = "An all-in-one utility to download, rename, and move anime from RSS feeds."
 readme = "README.md"
 requires-python = "==3.11.*"
