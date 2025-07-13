@@ -637,14 +637,14 @@ wheels = [
 
 [[package]]
 name = "quart-auth"
-version = "0.11.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "quart" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/45/8d/d965905118fe612e7520f8a1014e4988842d8ed9fd68de4471999f7d968b/quart_auth-0.11.0.tar.gz", hash = "sha256:7703df693d795b3ec43a634efe4118c6adbddd98e7b8195008ca6def6d45cb47", size = 11122, upload-time = "2024-12-26T21:47:46.074Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/06/19a63bfcc93782126985aa246da4cb6cca4586cd9e65a58157a42e1b8dfb/quart_auth-0.8.0.tar.gz", hash = "sha256:12b1ff3c3a92845dea5c80211820ae5e9c0f7d1ef4e8ba74678aa7bd8546803c", size = 7938, upload-time = "2023-01-01T14:51:50.173Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/a3/8ca9235569f39e471a9a319ba1665a27cb9cea8c48c688966460db67d48f/quart_auth-0.11.0-py3-none-any.whl", hash = "sha256:dd342ea39475a9b32b79d83e2b6820ddaa358e77f01dedbba47d50529f2c8c74", size = 9958, upload-time = "2024-12-26T21:47:44.717Z" },
+    { url = "https://files.pythonhosted.org/packages/19/e5/1c6181253118299025b8cfb5bbfd28e0e685dcc134431fa07d6c3a080869/quart_auth-0.8.0-py3-none-any.whl", hash = "sha256:c1180c1cb5b95d780231aaad2109adc55b9fa0c7f64b5601853110bbd3fea898", size = 7050, upload-time = "2023-01-01T14:51:48.654Z" },
 ]
 
 [[package]]
@@ -783,7 +783,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==6.2.1" },
     { name = "python-dotenv", marker = "extra == 'dev'", specifier = "==1.1.1" },
     { name = "quart", specifier = "==0.20.0" },
-    { name = "quart-auth", specifier = "==0.11.0" },
+    { name = "quart-auth", specifier = "==0.8.0" },
     { name = "quart-rate-limiter", specifier = "==0.9.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.12.3" },
     { name = "typing-extensions", specifier = "==4.5.0" },
