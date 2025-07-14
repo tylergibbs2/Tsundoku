@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 import aiofiles.os
 
 from tsundoku.config import FeedsConfig, GeneralConfig
-from tsundoku.manager import Entry, EntryState, Library, Show
+from tsundoku.manager import Entry, EntryState, Show
 from tsundoku.utils import ExprDict, move, parse_anime_title
 
 logger = logging.getLogger("tsundoku")
