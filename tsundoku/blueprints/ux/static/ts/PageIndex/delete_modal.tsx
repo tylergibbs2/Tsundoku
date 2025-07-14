@@ -25,9 +25,7 @@ export const DeleteModal = ({
 
   const mutation = useMutation(deleteShowById, {
     onSuccess: () => {
-      queryClient.setQueryData(["shows"], (oldShows: Show[]) =>
-        oldShows.filter((s) => s.id_ !== show?.id_)
-      );
+      queryClient.invalidateQueries(["shows"]);
       toast({
         message: _("show-delete-success"),
         duration: 5000,

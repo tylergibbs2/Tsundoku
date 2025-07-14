@@ -55,10 +55,7 @@ export const AddModal = ({
 
   const mutation = useMutation(addNewShow, {
     onSuccess: (newShow) => {
-      queryClient.setQueryData(["shows"], (oldShows: Show[]) => [
-        ...oldShows,
-        newShow,
-      ]);
+      queryClient.invalidateQueries(["shows"]);
       toast({
         message: _("show-add-success"),
         duration: 5000,
