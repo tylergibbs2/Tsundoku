@@ -16,6 +16,9 @@ interface ShowToggleButtonParams {
   offTooltip: string;
   additionalClasses: string;
   disabled?: boolean;
+  showLabel?: boolean;
+  labelOn?: string;
+  labelOff?: string;
 }
 
 export const ShowToggleButton = ({
@@ -28,6 +31,9 @@ export const ShowToggleButton = ({
   offTooltip,
   additionalClasses,
   disabled,
+  showLabel = false,
+  labelOn,
+  labelOff,
 }: ShowToggleButtonParams) => {
   const btn = useRef(null);
 
@@ -64,6 +70,7 @@ export const ShowToggleButton = ({
         disabled={disabled}
       >
         <IonIcon name={onIcon} />
+        {showLabel && labelOn && <span className="ml-1">{labelOn}</span>}
       </button>
     );
   } else {
@@ -76,6 +83,7 @@ export const ShowToggleButton = ({
         disabled={disabled}
       >
         <IonIcon name={offIcon} />
+        {showLabel && labelOff && <span className="ml-1">{labelOff}</span>}
       </button>
     );
   }

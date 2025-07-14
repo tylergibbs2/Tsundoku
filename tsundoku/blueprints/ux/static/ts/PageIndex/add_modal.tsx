@@ -24,6 +24,7 @@ import {
 } from "../queries";
 import { ShowToggleButton } from "./components/show_toggle_button";
 import { LibrarySelect } from "./components/library_select";
+import { ShowForm } from "./components/ShowForm";
 
 const _ = getInjector();
 
@@ -128,20 +129,26 @@ export const AddModal = ({
             <ShowToggleButton
               setValue={setValue}
               attribute="post_process"
-              onIcon="color-wand"
-              offIcon="color-wand-outline"
-              onTooltip={_("unprocess-button-title")}
-              offTooltip={_("process-button-title")}
-              additionalClasses="is-primary"
+              onIcon="settings"
+              offIcon="settings-outline"
+              onTooltip={_("post-process-enabled")}
+              offTooltip={_("post-process-disabled")}
+              additionalClasses="is-info"
+              showLabel={true}
+              labelOn={_("Processing")}
+              labelOff={_("No Processing")}
             />
             <ShowToggleButton
               setValue={setValue}
               attribute="watch"
-              onIcon="bookmark"
-              offIcon="bookmark-outline"
-              onTooltip={_("unwatch-button-title")}
-              offTooltip={_("watch-button-title")}
-              additionalClasses="is-primary"
+              onIcon="eye"
+              offIcon="eye-outline"
+              onTooltip={_("watching-enabled")}
+              offTooltip={_("watching-disabled")}
+              additionalClasses="is-success"
+              showLabel={true}
+              labelOn={_("Watching")}
+              labelOff={_("Not Watching")}
             />
           </div>
         </header>
@@ -153,12 +160,13 @@ export const AddModal = ({
               setIsAddingAlreadySeen={setIsAddingAlreadySeen}
             />
           ) : (
-            <ManualAddFormComponent
-              handleSubmit={handleSubmit}
-              submitHandler={submitHandler}
-              register={register}
-              generalConfig={generalConfig}
-            />
+            <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
+              <ShowForm
+                mode="add"
+                register={register}
+                generalConfig={generalConfig}
+              />
+            </form>
           )}
         </section>
 
@@ -417,191 +425,3 @@ const AlreadySeenAddFormComponent = ({
   );
 };
 
-interface ManualAddFormComponentParams {
-  handleSubmit: UseFormHandleSubmit<AddShowFormValues>;
-  submitHandler: SubmitHandler<AddShowFormValues>;
-  register: UseFormRegister<AddShowFormValues>;
-  generalConfig: GeneralConfig;
-}
-
-const ManualAddFormComponent = ({
-  handleSubmit,
-  submitHandler,
-  register,
-  generalConfig,
-}: ManualAddFormComponentParams) => {
-  return (
-    <form id="add-show-form" onSubmit={handleSubmit(submitHandler)}>
-      <div className="form-columns columns is-multiline">
-        <div className="column is-full">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("add-form-name-tt")}
-              >
-                {_("add-form-name-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("title", { required: true })}
-                className="input"
-                type="text"
-                placeholder={_("add-form-name-placeholder")}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-half">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("edit-form-resolution-tt")}
-              >
-                {_("edit-form-resolution-field")}
-              </span>
-            </label>
-            <div className="select is-fullwidth">
-              <select
-                {...register("preferred_resolution", { required: true })}
-                defaultValue="0"
-              >
-                <option value="0">Any</option>
-                <option value="480p">480p</option>
-                <option value="720p">720p</option>
-                <option value="1080p">1080p</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-half">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
-                data-tooltip={_("edit-form-release-group-tt")}
-              >
-                {_("edit-form-release-group-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("preferred_release_group")}
-                className="input"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-half">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("add-form-season-tt")}
-              >
-                {_("add-form-season-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("season", { required: true })}
-                className="input"
-                type="number"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-half">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-top"
-                data-tooltip={_("add-form-episode-offset-tt")}
-              >
-                {_("add-form-episode-offset-field")}
-              </span>
-            </label>
-            <div className="control">
-              <input
-                {...register("episode_offset", { required: true })}
-                className="input"
-                type="number"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-full">
-          <div className="field">
-            <label className="label">
-              <span
-                className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                data-tooltip={_("add-form-library-tt")}
-              >
-                {_("add-form-library-field")}
-              </span>
-            </label>
-            <div className="control">
-              <LibrarySelect register={register} />
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-full">
-          <details>
-            <summary>{_("add-form-advanced")}</summary>
-
-            <div className="columns mt-2">
-              <div className="column">
-                <div className="field">
-                  <label className="label">
-                    <span
-                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
-                      data-tooltip={_("add-form-desired-format-tt")}
-                    >
-                      {_("add-form-desired-format-field")}
-                    </span>
-                  </label>
-                  <div className="control">
-                    <input
-                      {...register("desired_format")}
-                      className="input"
-                      type="text"
-                      placeholder={generalConfig.default_desired_format}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="column">
-                <div className="field">
-                  <label className="label">
-                    <span
-                      className="has-tooltip-arrow has-tooltip-multiline has-tooltip-left"
-                      data-tooltip={_("add-form-local-title-tt")}
-                    >
-                      {_("add-form-local-title-field")}
-                    </span>
-                  </label>
-                  <div className="control">
-                    <input
-                      {...register("title_local")}
-                      className="input"
-                      type="text"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </details>
-        </div>
-      </div>
-    </form>
-  );
-};
