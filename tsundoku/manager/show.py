@@ -28,7 +28,6 @@ class Show:
     season: int
     episode_offset: int
     watch: bool
-    post_process: bool
     preferred_resolution: str | None
     preferred_release_group: str | None
     created_at: datetime
@@ -56,7 +55,6 @@ class Show:
             "season": self.season,
             "episode_offset": self.episode_offset,
             "watch": self.watch,
-            "post_process": self.post_process,
             "preferred_resolution": self.preferred_resolution,
             "preferred_release_group": self.preferred_release_group,
             "created_at": self.created_at,
@@ -128,7 +126,6 @@ class Show:
                     season,
                     episode_offset,
                     watch,
-                    post_process,
                     preferred_resolution,
                     preferred_release_group,
                     created_at
@@ -179,7 +176,6 @@ class Show:
         season: int,
         episode_offset: int,
         watch: bool,
-        post_process: bool,
         preferred_resolution: str | None,
         preferred_release_group: str | None,
     ) -> "Show":
@@ -212,7 +208,6 @@ class Show:
                         season,
                         episode_offset,
                         watch,
-                        post_process,
                         preferred_resolution,
                         preferred_release_group
                     )
@@ -226,7 +221,6 @@ class Show:
                     season,
                     episode_offset,
                     watch,
-                    post_process,
                     preferred_resolution,
                     preferred_release_group,
                 )
@@ -255,7 +249,6 @@ class Show:
                     season=?,
                     episode_offset=?,
                     watch=?,
-                    post_process=?,
                     preferred_resolution=?,
                     preferred_release_group=?
                 WHERE
@@ -268,7 +261,6 @@ class Show:
                 self.season,
                 self.episode_offset,
                 self.watch,
-                self.post_process,
                 self.preferred_resolution,
                 self.preferred_release_group,
                 self.id_,

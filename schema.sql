@@ -63,7 +63,6 @@ CREATE TABLE shows (
     season INTEGER NOT NULL,
     episode_offset INTEGER NOT NULL DEFAULT 0,
     watch BOOLEAN NOT NULL DEFAULT '1',
-    post_process BOOLEAN NOT NULL DEFAULT '1',
     preferred_resolution TEXT,
     preferred_release_group TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -81,14 +80,6 @@ CREATE TABLE show_entry (
     last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE encode (
-    entry_id INTEGER PRIMARY KEY REFERENCES show_entry(id) ON DELETE CASCADE,
-    initial_size INTEGER,
-    final_size INTEGER,
-    queued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    started_at TIMESTAMP,
-    ended_at TIMESTAMP
-);
 
 CREATE TABLE general_config (
     id INTEGER PRIMARY KEY CHECK (id = 0),
@@ -120,23 +111,6 @@ CREATE TABLE torrent_config (
     secure BOOLEAN NOT NULL DEFAULT '0'
 );
 
-CREATE TABLE encode_config (
-    id INTEGER PRIMARY KEY CHECK (id = 0),
-    enabled BOOLEAN NOT NULL DEFAULT '0',
-    encoder TEXT NOT NULL DEFAULT 'libx264',
-    quality_preset TEXT NOT NULL DEFAULT 'moderate',
-    speed_preset TEXT NOT NULL DEFAULT 'medium',
-    maximum_encodes INTEGER NOT NULL DEFAULT 2,
-    minimum_file_size TEXT NOT NULL DEFAULT 'any',
-    timed_encoding BOOLEAN NOT NULL DEFAULT '0',
-    hour_start INTEGER NOT NULL DEFAULT 3,
-    hour_end INTEGER NOT NULL DEFAULT 6,
-    CHECK (
-        hour_start >= 0 AND
-        hour_end <= 23 AND
-        hour_end > hour_start
-    )
-);
 
 CREATE TABLE kitsu_info (
     show_id INTEGER PRIMARY KEY REFERENCES shows(id) ON DELETE CASCADE,

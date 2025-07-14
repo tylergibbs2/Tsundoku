@@ -19,7 +19,7 @@ from quart_rate_limiter import RateLimiter
 from tsundoku.app import CustomFluentLocalization
 from tsundoku.asqlite import Connection, connect
 from tsundoku.blueprints import api_blueprint, ux_blueprint
-from tsundoku.feeds import Downloader, Encoder, Poller
+from tsundoku.feeds import Downloader, Poller
 from tsundoku.flags import Flags
 from tsundoku.user import User
 
@@ -46,7 +46,6 @@ class MockTsundokuApp(Quart):
 
     poller: Poller
     downloader: Downloader
-    encoder: Encoder
 
     flags: Flags
 
@@ -80,7 +79,6 @@ class MockTsundokuApp(Quart):
 
         self.poller = Poller(self.app_context())
         self.downloader = Downloader(self.app_context())
-        self.encoder = Encoder(self.app_context())
 
     async def setup(self) -> None:
         self.__async_db_connection = await connect("file:tsundoku?mode=memory&cache=shared", uri=True)
@@ -96,7 +94,6 @@ class MockTsundokuApp(Quart):
 
         await self.poller.update_config()
         await self.downloader.update_config()
-        await self.encoder.update_config()
 
     async def __create_user(self, /, readonly: bool = False) -> None:
         pw_hash = PasswordHasher().hash("password")

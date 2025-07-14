@@ -4,7 +4,6 @@ import { LibraryConfigApp } from "./components/libraryconfig";
 import { FeedbackBtns } from "./components/feedback_btns";
 import { TorrentConfig } from "./components/torrentclient";
 import { getInjector } from "../fluent";
-import { PostProcessing } from "./components/postprocessing";
 import { FeedsConfig } from "./components/feedsconfig";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "bulma-toast";
@@ -28,7 +27,6 @@ export const ConfigApp = () => {
     library: false,
     feeds: false,
     torrent: false,
-    encode: false,
   });
 
   const anyDirty = Object.values(dirty).some(Boolean);
@@ -57,7 +55,6 @@ export const ConfigApp = () => {
     if (dirty.library && libraryRef.current) await libraryRef.current.save();
     if (dirty.feeds && feedsRef.current) await feedsRef.current.save();
     if (dirty.torrent && torrentRef.current) await torrentRef.current.save();
-    if (dirty.encode && encodeRef.current) await encodeRef.current.save();
     toast({
       message: _("config-save-success"),
       duration: 4000,
@@ -110,14 +107,6 @@ export const ConfigApp = () => {
         />
       </section>
       <AccountSection />
-      <section className="section">
-        <h1 className="title is-4">{_("section-encode-title")}</h1>
-        <h2 className="subtitle is-6">{_("section-encode-subtitle")}</h2>
-        <PostProcessing
-          ref={encodeRef}
-          onDirtyChange={(d) => handleDirtyChange("encode", d)}
-        />
-      </section>
       {anyDirty && (
         <button
           className="button is-primary is-large floating-save-btn"

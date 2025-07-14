@@ -42,7 +42,6 @@ export type AddShowFormValues = {
   season: number;
   episode_offset: number;
   watch: boolean;
-  post_process: boolean;
   preferred_resolution: string;
   preferred_release_group: string;
 };
@@ -85,7 +84,6 @@ export const AddModal = ({
     season: 1,
     episode_offset: 0,
     watch: true,
-    post_process: true,
     preferred_resolution: "0",
     preferred_release_group: "",
   };
@@ -126,18 +124,6 @@ export const AddModal = ({
         <header className="modal-card-head">
           <p className="modal-card-title">{_("add-modal-header")}</p>
           <div className="buttons">
-            <ShowToggleButton
-              setValue={setValue}
-              attribute="post_process"
-              onIcon="settings"
-              offIcon="settings-outline"
-              onTooltip={_("post-process-enabled")}
-              offTooltip={_("post-process-disabled")}
-              additionalClasses="is-info"
-              showLabel={true}
-              labelOn={_("Processing")}
-              labelOff={_("No Processing")}
-            />
             <ShowToggleButton
               setValue={setValue}
               attribute="watch"

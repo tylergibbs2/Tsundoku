@@ -25,7 +25,6 @@ from quart_rate_limiter import RateLimitExceeded
 from tsundoku.config import (
     ConfigCheckFailError,
     ConfigInvalidKeyError,
-    EncodeConfig,
     FeedsConfig,
     GeneralConfig,
     TorrentConfig,
@@ -170,8 +169,6 @@ async def config_route(cfg_type: str) -> APIResponse:
         cfg_class = GeneralConfig
     elif cfg_type == "feeds":
         cfg_class = FeedsConfig
-    elif cfg_type == "encode":
-        cfg_class = EncodeConfig
     elif cfg_type == "torrent":
         cfg_class = TorrentConfig
     else:
@@ -194,10 +191,6 @@ async def config_route(cfg_type: str) -> APIResponse:
         except ConfigCheckFailError as e:
             return APIResponse(status=400, error=e.message)
 
-    if cfg_type == "encode":
-        cfg.keys["has_ffmpeg"] = await app.encoder.has_ffmpeg()
-        cfg.keys["available_encoders"] = await app.encoder.get_available_encoders()
-
     return APIResponse(status=200, result=cfg.keys)
 
 
@@ -207,34 +200,6 @@ async def test_torrent_client() -> APIResponse:
     res = await app.dl_client.test_client()
     app.flags.DL_CLIENT_CONNECTION_ERROR = not res
     return APIResponse(result=res)
-
-
-@api_blueprint.route("/config/encode/stats", methods=["GET"])
-async def get_encode_stats() -> APIResponse:
-    """
-    Returns a dictionary of encode statistics.
-
-    :returns: Dict[:class:`str`, :class:`float`]
-    """
-    return APIResponse(result=await app.encoder.get_stats())
-
-
-@api_blueprint.route("/encode/queue", methods=["GET"])
-async def get_encode_queue() -> APIResponse:
-    """
-    Returns the encoding queue.
-
-    :returns: List[:class:`Dict`]
-    """
-    page = request.args.get("page", "0")
-    if not page.isdigit():
-        page = 0
-    elif int(page) < 1:
-        page = 0
-    else:
-        page = int(page)
-
-    return APIResponse(result=await app.encoder.get_queue(page))
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])

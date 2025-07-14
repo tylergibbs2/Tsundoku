@@ -10,7 +10,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 LABEL maintainer="Tyler Gibbs <gibbstyler7@gmail.com>"
 
 RUN apt -y update && apt -y upgrade
-RUN apt install -y ffmpeg git sqlite3
+RUN apt install -y git sqlite3
 
 ENV IS_DOCKER=1
 

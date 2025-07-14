@@ -66,7 +66,6 @@
           "season",
           "episode_offset",
           "watch",
-          "post_process",
           "preferred_resolution",
           "preferred_release_group",
           "created_at",
@@ -104,11 +103,6 @@
           },
           "watch": {
             "description": "Whether or not to check RSS feeds for this show.",
-            "type": "boolean",
-            "example": true
-          },
-          "post_process": {
-            "description": "Whether or not to post-process entries for this show.",
             "type": "boolean",
             "example": true
           },

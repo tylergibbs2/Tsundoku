@@ -37,7 +37,6 @@ export interface Entry {
   file_path?: string;
   created_manually: boolean;
   last_update: string;
-  encode: EntryEncodeInfo | null;
 }
 
 export interface Webhook {
@@ -71,7 +70,6 @@ export interface Show {
   season: number;
   episode_offset: number;
   watch: boolean;
-  post_process: boolean;
   preferred_resolution: string | null;
   preferred_release_group: string | null;
   created_at: string;

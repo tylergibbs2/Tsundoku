@@ -71,11 +71,6 @@
                 "description": "Whether or not to watch the new show.",
                 "example": true
               },
-              "post_process": {
-                "description": "Whether or not to post-process entries for this show.",
-                "type": "boolean",
-                "example": true
-              },
               "preferred_resolution": {
                 "description": "Preferred resolution that entries should be in for this show.",
                 "type": "string",

@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING, Any, Self
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
 
-from tsundoku.constants import VALID_MINIMUM_FILE_SIZES, VALID_SPEEDS
-
 logger = logging.getLogger("tsundoku")
 
 
@@ -228,60 +226,3 @@ class TorrentConfig(Config):
             raise ConfigCheckFailError(f"'{port}' is less than 1")
         if port > 65535:
             raise ConfigCheckFailError(f"'{port}' is greater than 65535")
-
-
-class EncodeConfig(Config):
-    TABLE_NAME = "encode_config"
-
-    enabled: bool
-    encoder: str
-    quality_preset: str
-    speed_preset: str
-    maximum_encodes: int
-    timed_encoding: bool
-    hour_start: int
-    hour_end: int
-    minimum_file_size: str
-
-    async def check_encoder(self, value: str) -> None:
-        if value not in await self.app.encoder.get_available_encoders():
-            raise ConfigCheckFailError(f"'{value}' is not available for encoding")
-
-    def check_maximum_encodes(self, value: str) -> None:
-        if isinstance(value, str) and not value.isdigit():
-            raise ConfigCheckFailError(f"'{value}' is not a valid integer")
-
-        max_encodes = int(value)
-        if max_encodes < 1:
-            raise ConfigCheckFailError("Maximum encodes must be at least 1")
-
-    def check_speed_preset(self, value: str) -> None:
-        if value not in VALID_SPEEDS:
-            raise ConfigCheckFailError(f"'{value}' is not a valid speed preset")
-
-    def check_quality_preset(self, value: str) -> None:
-        if value not in ("high", "low", "moderate"):
-            raise ConfigCheckFailError(f"'{value}' is not a valid quality preset")
-
-    def check_hour_start(self, value: str) -> None:
-        if isinstance(value, str) and not value.isdigit():
-            raise ConfigCheckFailError(f"'{value}' is not a valid integer")
-
-        hour_start = int(value)
-        hour_end = self.hour_end
-        if hour_end and hour_end <= hour_start:
-            raise ConfigCheckFailError("Encode time end must be greater than encode time start")
-
-    def check_minimum_file_size(self, value: str) -> None:
-        if value not in VALID_MINIMUM_FILE_SIZES:
-            raise ConfigCheckFailError(f"'{value}' is not a valid file size")
-
-    def check_hour_end(self, value: str) -> None:
-        if isinstance(value, str) and not value.isdigit():
-            raise ConfigCheckFailError(f"'{value}' is not a valid integer")
-
-        hour_end = int(value)
-
-        hour_start = self.hour_start
-        if hour_start and hour_start >= hour_end:
-            raise ConfigCheckFailError("Encode time start must be less than encode time end")

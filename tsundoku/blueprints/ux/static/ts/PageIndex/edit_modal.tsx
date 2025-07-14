@@ -77,7 +77,6 @@ export const EditModal = ({
   });
 
   register("watch", { required: true });
-  register("post_process", { required: true });
 
   useEffect(() => {
     if (activeShow) {
@@ -91,7 +90,6 @@ export const EditModal = ({
         season: activeShow.season,
         episode_offset: activeShow.episode_offset,
         watch: activeShow.watch,
-        post_process: activeShow.post_process,
         kitsu_id: activeShow.metadata.kitsu_id,
         preferred_resolution: activeShow.preferred_resolution ?? "0",
         preferred_release_group: activeShow.preferred_release_group,
@@ -247,19 +245,6 @@ export const EditModal = ({
         <header className="modal-card-head">
           <p className="modal-card-title">{_("edit-modal-header")}</p>
           <div className="buttons">
-            <ShowToggleButton
-              show={activeShow}
-              setValue={setValue}
-              attribute="post_process"
-              onIcon="settings"
-              offIcon="settings-outline"
-              onTooltip={_("post-process-enabled")}
-              offTooltip={_("post-process-disabled")}
-              additionalClasses="is-info"
-              showLabel={true}
-              labelOn={_("Processing")}
-              labelOff={_("No Processing")}
-            />
             <ShowToggleButton
               show={activeShow}
               setValue={setValue}

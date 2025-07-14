@@ -33,7 +33,7 @@ from tsundoku.config import GeneralConfig
 from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 from tsundoku.database import acquire, migrate, sync_acquire
 from tsundoku.dl_client import Manager
-from tsundoku.feeds import Downloader, Encoder, Poller
+from tsundoku.feeds import Downloader, Poller
 from tsundoku.flags import Flags
 from tsundoku.fluent import CustomFluentLocalization
 from tsundoku.git import check_for_updates
@@ -51,7 +51,6 @@ class TsundokuApp(Quart):
     dl_client: Manager
     poller: Poller
     downloader: Downloader
-    encoder: Encoder
 
     acquire_db: Callable[..., AbstractAsyncContextManager[Connection]]
     sync_acquire_db: Callable[..., AbstractContextManager[sqlite3.Connection]]
@@ -213,7 +212,7 @@ async def setup_session() -> None:
 async def setup_tasks() -> None:  # noqa: RUF029
     """
     Creates the instances for the following tasks:
-    poller, downloader, encoder
+    poller, downloader
 
     These tasks are added to the app's global task list.
     """
@@ -230,16 +229,10 @@ async def setup_tasks() -> None:  # noqa: RUF029
         app.downloader = Downloader(app.app_context())
         await app.downloader.start()
 
-    async def encoder() -> None:
-        app.encoder = Encoder(app.app_context())
-        await app.encoder.resume()
-
     logger.debug("Starting task: Poller")
     app._tasks.append(asyncio.create_task(poller(), name="Poller"))
     logger.debug("Starting task: Downloader")
     app._tasks.append(asyncio.create_task(downloader(), name="Downloader"))
-    logger.debug("Starting task: Encoder")
-    app._tasks.append(asyncio.create_task(encoder(), name="Encoder"))
 
     logger.debug("All tasks created.")
 
@@ -249,8 +242,6 @@ async def cleanup() -> None:
     """
     Attempts to cancel any running tasks and close the aiohttp session.
     """
-    app.encoder.cleanup()
-
     logger.debug("Cleanup: Attempting to cancel tasks...")
     failed_to_cancel = 0
     app.scheduler.shutdown()

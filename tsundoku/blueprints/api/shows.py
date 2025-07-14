@@ -120,7 +120,6 @@ class ShowsAPI(views.MethodView):
             season=season,
             episode_offset=episode_offset,
             watch=arguments.get("watch", True),
-            post_process=arguments.get("post_process", True),
             preferred_resolution=preferred_resolution,
             preferred_release_group=preferred_release_group,
         )
@@ -246,12 +245,6 @@ class ShowsAPI(views.MethodView):
                 return APIResponse(status=400, error="Watch is not a valid boolean.")
 
             show.watch = arguments["watch"]
-
-        if "post_process" in arguments:
-            if not isinstance(arguments["post_process"], bool):
-                return APIResponse(status=400, error="Post process is not a valid boolean.")
-
-            show.post_process = arguments["post_process"]
 
         if arguments.get("title_local"):
             show.title_local = arguments["title_local"]
