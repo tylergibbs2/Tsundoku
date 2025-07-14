@@ -16,6 +16,8 @@ else:
     from quart import current_app as app
     from quart_auth import current_user
 
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from quart import request
 from quart_auth import login_user
 from quart_rate_limiter import RateLimitExceeded
@@ -294,6 +296,56 @@ async def webhook_is_valid(base_id: int) -> APIResponse:
         return APIResponse(result=False)
 
     return APIResponse(result=await webhook.is_valid())
+
+
+@api_blueprint.route("/account/change-password", methods=["POST"])
+@deny_readonly
+async def change_password() -> APIResponse:
+    data = await request.get_json()
+    if not data:
+        return APIResponse(status=400, error="Missing request body.")
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+    if not current_password or not new_password:
+        return APIResponse(status=400, error="Missing current or new password.")
+    if len(new_password) < 8:
+        return APIResponse(status=400, error="New password must be at least 8 characters.")
+
+    hasher = PasswordHasher()
+    async with app.acquire_db() as con:
+        user_data = await con.fetchone(
+            """
+            SELECT password_hash, username FROM users WHERE id = ?;
+            """,
+            current_user.auth_id,
+        )
+        if not user_data:
+            return APIResponse(status=404, error="User not found.")
+        try:
+            hasher.verify(user_data["password_hash"], current_password)
+        except VerifyMismatchError:
+            return APIResponse(status=400, error="Current password is incorrect.")
+
+        if hasher.check_needs_rehash(user_data["password_hash"]):
+            new_hash = hasher.hash(current_password)
+            await con.execute(
+                """
+                UPDATE users SET password_hash=? WHERE id=?;
+                """,
+                new_hash,
+                current_user.auth_id,
+            )
+
+        new_hash = hasher.hash(new_password)
+        await con.execute(
+            """
+            UPDATE users SET password_hash=? WHERE id=?;
+            """,
+            new_hash,
+            current_user.auth_id,
+        )
+
+    return APIResponse(status=200, result=True)
 
 
 def setup_views() -> None:

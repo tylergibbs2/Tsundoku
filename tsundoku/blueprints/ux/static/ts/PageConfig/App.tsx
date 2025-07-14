@@ -9,6 +9,7 @@ import { FeedsConfig } from "./components/feedsconfig";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "bulma-toast";
 import { IonIcon } from "../icon";
+import AccountSection from "./components/AccountSection";
 import "../../css/config.css";
 
 const _ = getInjector();
@@ -108,16 +109,7 @@ export const ConfigApp = () => {
           onDirtyChange={(d) => handleDirtyChange("torrent", d)}
         />
       </section>
-      <section className="section">
-        <h1 className="title is-4">{_("section-api-title")}</h1>
-        <h2 className="subtitle is-6">{_("section-api-subtitle")}</h2>
-        <div className="box" style={{ width: "50%" }}>
-          <APITokenComponent />
-          <a href="https://tsundoku.moe/docs" className="button is-info mt-2">
-            {_("config-api-documentation")}
-          </a>
-        </div>
-      </section>
+      <AccountSection />
       <section className="section">
         <h1 className="title is-4">{_("section-encode-title")}</h1>
         <h2 className="subtitle is-6">{_("section-encode-subtitle")}</h2>
@@ -134,7 +126,7 @@ export const ConfigApp = () => {
             bottom: "2rem",
             right: "2rem",
             zIndex: 1000,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            boxShadow: "0 2px 8px #000000",
           }}
           onClick={handleSave}
         >

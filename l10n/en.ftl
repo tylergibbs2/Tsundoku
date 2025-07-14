@@ -518,3 +518,11 @@ episode-offset-field = Episode Offset
 
 add-button = Add release
 cancel-button = Cancel
+
+section-account-title = Account
+section-account-subtitle = Manage your account settings, API key, and password
+config-api-title = API Key
+change-password-title = Change Password
+current-password = Current Password
+new-password = New Password
+change-password-button = Change Password
