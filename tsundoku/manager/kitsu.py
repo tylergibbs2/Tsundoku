@@ -78,10 +78,7 @@ class KitsuManager:
         logger.info(f"Fetching Kitsu ID for {show_name}")
 
         async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
-            payload = {
-                "filter[text]": show_name,
-                "fields[anime]": "id,status,slug,posterImage",
-            }
+            payload = {"filter[text]": show_name, "fields[anime]": "id,status,slug,posterImage,startDate,popularityRank", "sort": "-startDate,-popularityRank"}
             async with sess.get(API_URL, params=payload) as resp:
                 data = await resp.json()
                 try:
