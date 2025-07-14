@@ -1,6 +1,6 @@
 [project]
 name = "tsundoku"
-version = "1.0.6"
+version = "1.0.7"
 description = "An all-in-one utility to download, rename, and move anime from RSS feeds."
 readme = "README.md"
 requires-python = "==3.11.*"
@@ -11,18 +11,18 @@ license-files = ["LICENSE.md"]
 dependencies = [
     "anitopy@git+https://github.com/FichteFoll/anitopy.git@fb64e73559323baaee37eb06e3a137c5f5087dff",
     "apscheduler==3.10.4",
-    "argon2-cffi==23.1.0",
-    "aiofiles==23.2.1",
-    "aiohttp==3.8.5",
+    "argon2-cffi==25.1.0",
+    "aiofiles==24.1.0",
+    "aiohttp==3.9.2",
     "bencodepy==0.9.5",
-    "distro==1.8.0",
-    "feedparser==6.0.10",
+    "distro==1.9.0",
+    "feedparser==6.0.11",
     "fluent.runtime==0.4.0",
     "user-agents==2.2.0",
     "quart-auth==0.8.0",
     "quart-rate-limiter==0.9.0",
     "quart==0.20.0",
-    "typing-extensions==4.5.0",
+    "typing-extensions==4.14.1",
     "yoyo-migrations==9.0.0"
 ]
 
