@@ -11,12 +11,5 @@ interface EditShowFormParams {
 }
 
 export const EditShowForm = ({ tab, show, register }: EditShowFormParams) => {
-  return (
-    <ShowForm
-      mode="edit"
-      show={show}
-      register={register}
-      tab={tab}
-    />
-  );
+  return <ShowForm mode="edit" show={show} register={register} tab={tab} />;
 };
