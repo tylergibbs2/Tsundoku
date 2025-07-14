@@ -1,4 +1,10 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, {
+  ChangeEvent,
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   UseMutateFunction,
   useMutation,
@@ -14,395 +20,340 @@ import { GlobalLoading } from "../../Components/GlobalLoading";
 
 const _ = getInjector();
 
-interface EncodeConfig {
-  enabled?: boolean;
-  encoder?: string;
-  quality_preset?: string;
-  speed_preset?: string;
-  maximum_encodes?: number;
-  timed_encoding?: boolean;
-  hour_start?: number;
-  hour_end?: number;
-  minimum_file_size?: string;
-  has_ffmpeg?: boolean;
-  available_encoders?: string[];
+interface PostProcessingProps {
+  onDirtyChange: (dirty: boolean) => void;
 }
 
-interface EncodeStats {
-  total_encoded?: number;
-  total_saved_bytes?: number;
-  avg_saved_bytes?: number;
-  median_time_spent_hours?: number;
-  avg_time_spent_hours?: number;
-}
+export const PostProcessing = forwardRef(
+  ({ onDirtyChange }: PostProcessingProps, ref) => {
+    const queryClient = useQueryClient();
 
-export const PostProcessing = () => {
-  const queryClient = useQueryClient();
+    const config = useQuery(["config", "encode"], async () => {
+      return await fetchConfig("encode");
+    });
 
-  const config = useQuery(["config", "encode"], async () => {
-    return await fetchConfig<EncodeConfig>("encode");
-  });
-
-  const mutation = useMutation(
-    async ({ key, value }: MutateConfigVars) => {
-      return await setConfig<EncodeConfig>("encode", key, value);
-    },
-    {
-      onSuccess: (newConfig) => {
-        queryClient.setQueryData(["config", "encode"], newConfig);
+    const mutation = useMutation(
+      async ({ key, value }: MutateConfigVars) => {
+        return await setConfig("encode", key, value);
       },
-    }
-  );
+      {
+        onSuccess: (newConfig) => {
+          queryClient.setQueryData(["config", "encode"], newConfig);
+        },
+      }
+    );
 
-  const [encodeStats, setEncodeStats] = useState<EncodeStats>({});
+    const [fields, setFields] = useState<any>({});
+    const [dirty, setDirty] = useState(false);
+    const [encodeStats, setEncodeStats] = useState<any>({});
 
-  const getEncodingStats = async () => {
-    let resp = await fetch("/api/v1/config/encode/stats");
-    if (resp.ok) {
-      let data = await resp.json();
-      setEncodeStats(data.result);
-    }
-  };
+    useEffect(() => {
+      if (config.data && typeof config.data === "object") {
+        setFields({ ...config.data });
+        setDirty(false);
+        onDirtyChange(false);
+      }
+    }, [config.data]);
 
-  useEffect(() => {
-    getEncodingStats();
-  }, []);
+    useEffect(() => {
+      if (!config.data) return;
+      const isDirty = Object.keys(fields).some(
+        (key) => fields[key] !== config.data[key]
+      );
+      setDirty(isDirty);
+      onDirtyChange(isDirty);
+    }, [fields, config.data]);
 
-  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
+    useImperativeHandle(ref, () => ({
+      async save() {
+        if (!dirty) return;
+        const promises = Object.keys(fields).map((key) => {
+          if (fields[key] !== config.data[key]) {
+            return mutation.mutateAsync({ key, value: fields[key] });
+          }
+          return null;
+        });
+        await Promise.all(promises);
+        setDirty(false);
+        onDirtyChange(false);
+      },
+    }));
 
-  const inputEnabled = (e: React.MouseEvent<HTMLInputElement>): void => {
-    if (e.currentTarget.checked)
-      mutation.mutate({ key: "enabled", value: true });
-    else mutation.mutate({ key: "enabled", value: false });
-  };
+    const getEncodingStats = async () => {
+      let resp = await fetch("/api/v1/config/encode/stats");
+      if (resp.ok) {
+        let data = await resp.json();
+        setEncodeStats(data.result);
+      }
+    };
 
-  return (
-    <>
-      <div className="field">
-        <input
-          id="enableEncode"
-          type="checkbox"
-          className="switch"
-          onClick={inputEnabled}
-          defaultChecked={config.data?.enabled && config.data?.has_ffmpeg}
-          disabled={!config.data?.has_ffmpeg}
-        />
-        <label htmlFor="enableEncode">{_("checkbox-enabled")}</label>
-        {!config.data?.has_ffmpeg && (
-          <span className="tag is-danger ml-1">{_("ffmpeg-missing")}</span>
-        )}
-      </div>
-      <PostProcessingForm
-        config={config.data}
-        stats={encodeStats}
-        updateConfig={mutation.mutate}
-      />
-    </>
-  );
-};
+    useEffect(() => {
+      getEncodingStats();
+    }, []);
 
-interface PostProcessingFormParams {
-  config: EncodeConfig;
-  stats: EncodeStats;
-  updateConfig: UseMutateFunction<EncodeConfig, any, MutateConfigVars, any>;
-}
+    if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
-const PostProcessingForm = ({
-  config,
-  stats,
-  updateConfig,
-}: PostProcessingFormParams) => {
-  let disabled = !(config.enabled && config.has_ffmpeg);
+    const handleChange = (key: string, value: any) => {
+      setFields((prev) => ({ ...prev, [key]: value }));
+    };
 
-  const inputMaxEncodes = (e: ChangeEvent<HTMLInputElement>) => {
-    updateConfig({ key: "maximum_encodes", value: e.target.value });
-  };
+    const disabled = !(fields.enabled && fields.has_ffmpeg);
 
-  const inputQualityValue = (e: ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value);
-    let preset: string;
-    switch (value) {
-      case 2:
-        preset = "high";
-        break;
-      case 1:
-        preset = "moderate";
-        break;
-      default:
-        preset = "low";
-    }
+    // Helper for quality value
+    const getQualityValue = () => {
+      switch (fields.quality_preset) {
+        case "high":
+          return 2;
+        case "moderate":
+          return 1;
+        default:
+          return 0;
+      }
+    };
 
-    updateConfig({ key: "quality_preset", value: preset });
-  };
+    const encoderIsUnavailable = (encoder: string): boolean => {
+      return !fields?.available_encoders?.includes(encoder);
+    };
 
-  const inputSpeedPreset = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateConfig({
-      key: "speed_preset",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
-
-  const inputEncoder = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateConfig({
-      key: "encoder",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
-
-  const inputHourStart = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateConfig({
-      key: "hour_start",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
-
-  const inputHourEnd = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateConfig({
-      key: "hour_end",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
-
-  const inputTimedEncoding = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) updateConfig({ key: "timed_encoding", value: true });
-    else updateConfig({ key: "timed_encoding", value: false });
-  };
-
-  const inputMinimumFileSize = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateConfig({
-      key: "minimum_file_size",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
-
-  const getQualityValue = () => {
-    switch (config.quality_preset) {
-      case "high":
-        return 2;
-      case "moderate":
-        return 1;
-      default:
-        return 0;
-    }
-  };
-
-  const encoderIsUnavailable = (encoder: string): boolean => {
-    return !config?.available_encoders?.includes(encoder);
-  };
-
-  return (
-    <div className="box">
-      {Object.keys(stats).length > 0 && (
-        <div className="columns">
-          <div className="column is-one-fifth my-auto">
-            <p>
-              {_("encode-stats-total-encoded", {
-                total_encoded: stats.total_encoded,
-              })}
-            </p>
-          </div>
-          <div className="column is-one-fifth my-auto">
-            <p>
-              {_("encode-stats-total-saved-gb", {
-                total_saved_gb: (stats.total_saved_bytes / 1024 ** 3).toFixed(
-                  1
-                ),
-              })}
-            </p>
-          </div>
-          <div className="column is-one-fifth my-auto">
-            <p>
-              {_("encode-stats-avg-saved-mb", {
-                avg_saved_mb: (stats.avg_saved_bytes / 1024 ** 2).toFixed(1),
-              })}
-            </p>
-          </div>
-          <div className="column is-one-fifth my-auto">
-            <p>
-              {_("encode-stats-median-time-hours", {
-                median_time_hours: stats.median_time_spent_hours.toFixed(2),
-              })}
-            </p>
-          </div>
-          <div className="column is-one-fifth my-auto">
-            <p>
-              {_("encode-stats-avg-time-hours", {
-                avg_time_hours: stats.avg_time_spent_hours.toFixed(2),
-              })}
-            </p>
-          </div>
-        </div>
-      )}
-      <div className="columns">
-        <div className="column is-half my-auto">
-          <h1 className="title is-5">{_("process-quality-title")}</h1>
-          <h2 className="subtitle is-6">{_("process-quality-subtitle")}</h2>
-          <div className="columns is-fullwidth mb-0">
-            <div className="column">
-              <strong title={`CRF 24 (${_("encode-quality-low-desc")})`}>
-                {_("encode-quality-low")}
-              </strong>
-            </div>
-            <div className="column has-text-centered">
-              <strong title={`CRF 21 (${_("encode-quality-moderate-desc")})`}>
-                {_("encode-quality-moderate")}
-              </strong>
-            </div>
-            <div className="column" style={{ textAlign: "right" }}>
-              <strong title={`CRF 18 (${_("encode-quality-high-desc")})`}>
-                {_("encode-quality-high")}
-              </strong>
-            </div>
-          </div>
+    return (
+      <>
+        <div className="field">
           <input
-            className="slider is-fullwidth is-info mt-0"
-            step="1"
-            min="0"
-            max="2"
-            type="range"
-            disabled={disabled}
-            defaultValue={getQualityValue()}
-            onChange={inputQualityValue}
-          ></input>
+            id="enableEncode"
+            type="checkbox"
+            className="switch"
+            checked={!!fields.enabled && fields.has_ffmpeg}
+            onChange={(e) => handleChange("enabled", e.target.checked)}
+            disabled={!fields.has_ffmpeg}
+          />
+          <label htmlFor="enableEncode">{_("checkbox-enabled")}</label>
+          {!fields.has_ffmpeg && (
+            <span className="tag is-danger ml-1">{_("ffmpeg-missing")}</span>
+          )}
         </div>
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">{_("process-speed-title")}</h1>
-          <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
-          <div className="select is-fullwidth is-vcentered">
-            <select
-              onChange={inputSpeedPreset}
-              disabled={disabled}
-              defaultValue={config?.speed_preset}
-            >
-              <option value="ultrafast">{_("encode-speed-ultrafast")}</option>
-              <option value="superfast">{_("encode-speed-superfast")}</option>
-              <option value="veryfast">{_("encode-speed-veryfast")}</option>
-              <option value="faster">{_("encode-speed-faster")}</option>
-              <option value="fast">{_("encode-speed-fast")}</option>
-              <option value="medium">{_("encode-speed-medium")}</option>
-              <option value="slow">{_("encode-speed-slow")}</option>
-              <option value="slower">{_("encode-speed-slower")}</option>
-              <option value="veryslow">{_("encode-speed-veryslow")}</option>
-            </select>
-          </div>
-        </div>
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">{_("encode-encoder-title")}</h1>
-          <h2 className="subtitle is-6">{_("encode-encoder-subtitle")}</h2>
-          <div className="select is-fullwidth is-vcentered">
-            <select
-              onChange={inputEncoder}
-              disabled={disabled}
-              defaultValue={config?.encoder}
-            >
-              <option
-                disabled={encoderIsUnavailable("libx264")}
-                value="libx264"
-              >
-                H.264
-              </option>
-              <option
-                disabled={encoderIsUnavailable("libx265")}
-                value="libx265"
-              >
-                H.265
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div className="columns">
-        <div className="column is-one-third my-auto">
-          <h1 className="title is-5">{_("process-max-encode-title")}</h1>
-          <h2 className="subtitle is-6 mb-3">
-            {_("process-max-encode-subtitle")}
-          </h2>
-          <input
-            className="input"
-            type="number"
-            min="1"
-            defaultValue={config.maximum_encodes}
-            onChange={inputMaxEncodes}
-            disabled={disabled}
-          ></input>
-        </div>
-        <div className="column is-one-third my-auto">
-          <h1 className="title is-5">{_("encode-time-title")}</h1>
-          <h2 className="subtitle is-6">{_("encode-time-subtitle")}</h2>
-          <div className="columns is-vcentered">
-            <div className="column">
-              <div className="field is-vcentered">
-                <input
-                  id="timeCheck"
-                  type="checkbox"
-                  className="switch"
-                  onChange={inputTimedEncoding}
-                  checked={config.timed_encoding}
-                  disabled={disabled}
-                />
-                <label htmlFor="timeCheck">{_("checkbox-enabled")}</label>
+        <div className="box">
+          {Object.keys(encodeStats).length > 0 && (
+            <div className="columns">
+              <div className="column is-one-fifth my-auto">
+                <p>
+                  {_("encode-stats-total-encoded", {
+                    total_encoded: encodeStats.total_encoded,
+                  })}
+                </p>
+              </div>
+              <div className="column is-one-fifth my-auto">
+                <p>
+                  {_("encode-stats-total-saved-gb", {
+                    total_saved_gb: (
+                      encodeStats.total_saved_bytes /
+                      1024 ** 3
+                    ).toFixed(1),
+                  })}
+                </p>
+              </div>
+              <div className="column is-one-fifth my-auto">
+                <p>
+                  {_("encode-stats-avg-saved-mb", {
+                    avg_saved_mb: (
+                      encodeStats.avg_saved_bytes /
+                      1024 ** 2
+                    ).toFixed(1),
+                  })}
+                </p>
+              </div>
+              <div className="column is-one-fifth my-auto">
+                <p>
+                  {_("encode-stats-median-time-hours", {
+                    median_time_hours:
+                      encodeStats.median_time_spent_hours?.toFixed(2),
+                  })}
+                </p>
+              </div>
+              <div className="column is-one-fifth my-auto">
+                <p>
+                  {_("encode-stats-avg-time-hours", {
+                    avg_time_hours:
+                      encodeStats.avg_time_spent_hours?.toFixed(2),
+                  })}
+                </p>
               </div>
             </div>
-            <div className="column">
+          )}
+          <div className="columns">
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("process-max-title")}</h1>
+              <h2 className="subtitle is-6">{_("process-max-subtitle")}</h2>
+              <input
+                className="input"
+                type="number"
+                value={fields.maximum_encodes ?? ""}
+                onChange={(e) =>
+                  handleChange("maximum_encodes", e.target.value)
+                }
+                disabled={disabled}
+              />
+            </div>
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("process-quality-title")}</h1>
+              <h2 className="subtitle is-6">{_("process-quality-subtitle")}</h2>
+              <input
+                className="slider is-fullwidth"
+                type="range"
+                min="0"
+                max="2"
+                value={getQualityValue()}
+                onChange={(e) => {
+                  let value = parseInt(e.target.value);
+                  let preset: string;
+                  switch (value) {
+                    case 2:
+                      preset = "high";
+                      break;
+                    case 1:
+                      preset = "moderate";
+                      break;
+                    default:
+                      preset = "low";
+                  }
+                  handleChange("quality_preset", preset);
+                }}
+                disabled={disabled}
+              />
+            </div>
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("process-speed-title")}</h1>
+              <h2 className="subtitle is-6">{_("process-speed-subtitle")}</h2>
               <div className="select is-fullwidth is-vcentered">
                 <select
-                  onChange={inputHourStart}
+                  onChange={(e) => handleChange("speed_preset", e.target.value)}
                   disabled={disabled}
-                  defaultValue={config?.hour_start?.toString()}
+                  value={
+                    fields.speed_preset ?? (config.data as any)?.speed_preset
+                  }
                 >
-                  {[...Array(24).keys()].map((hour) => {
-                    if (hour >= config.hour_end) return;
-                    return (
-                      <option key={hour} value={hour.toString()}>
-                        {_(`hour-${hour}`)}
-                      </option>
-                    );
-                  })}
+                  <option value="ultrafast">
+                    {_("encode-speed-ultrafast")}
+                  </option>
+                  <option value="superfast">
+                    {_("encode-speed-superfast")}
+                  </option>
+                  <option value="veryfast">{_("encode-speed-veryfast")}</option>
+                  <option value="faster">{_("encode-speed-faster")}</option>
+                  <option value="fast">{_("encode-speed-fast")}</option>
+                  <option value="medium">{_("encode-speed-medium")}</option>
+                  <option value="slow">{_("encode-speed-slow")}</option>
+                  <option value="slower">{_("encode-speed-slower")}</option>
+                  <option value="veryslow">{_("encode-speed-veryslow")}</option>
                 </select>
               </div>
             </div>
-            <div className="column">
-              <div className="select is-fullwidth is-vcentered ml-1">
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("encode-encoder-title")}</h1>
+              <h2 className="subtitle is-6">{_("encode-encoder-subtitle")}</h2>
+              <div className="select is-fullwidth is-vcentered">
                 <select
-                  onChange={inputHourEnd}
+                  onChange={(e) => handleChange("encoder", e.target.value)}
                   disabled={disabled}
-                  defaultValue={config?.hour_end?.toString()}
+                  value={fields.encoder ?? (config.data as any)?.encoder}
                 >
-                  {[...Array(24).keys()].map((hour) => {
-                    if (hour <= config.hour_start) return;
-                    return (
-                      <option key={hour} value={hour.toString()}>
-                        {_(`hour-${hour}`)}
-                      </option>
-                    );
-                  })}
+                  <option
+                    disabled={encoderIsUnavailable("libx264")}
+                    value="libx264"
+                  >
+                    H.264
+                  </option>
+                  <option
+                    disabled={encoderIsUnavailable("libx265")}
+                    value="libx265"
+                  >
+                    H.265
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div className="columns">
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("encode-timed-title")}</h1>
+              <h2 className="subtitle is-6">{_("encode-timed-subtitle")}</h2>
+              <input
+                id="timedEncodingCheck"
+                type="checkbox"
+                className="switch"
+                checked={!!fields.timed_encoding}
+                onChange={(e) =>
+                  handleChange("timed_encoding", e.target.checked)
+                }
+                disabled={disabled}
+              />
+              <label htmlFor="timedEncodingCheck">
+                {_("checkbox-enabled")}
+              </label>
+            </div>
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("encode-hourstart-title")}</h1>
+              <h2 className="subtitle is-6">
+                {_("encode-hourstart-subtitle")}
+              </h2>
+              <div className="select is-fullwidth">
+                <select
+                  onChange={(e) => handleChange("hour_start", e.target.value)}
+                  disabled={disabled}
+                  value={fields.hour_start ?? (config.data as any)?.hour_start}
+                >
+                  {[...Array(24).keys()].map((h) => (
+                    <option key={h} value={h}>
+                      {h}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("encode-hourend-title")}</h1>
+              <h2 className="subtitle is-6">{_("encode-hourend-subtitle")}</h2>
+              <div className="select is-fullwidth">
+                <select
+                  onChange={(e) => handleChange("hour_end", e.target.value)}
+                  disabled={disabled}
+                  value={fields.hour_end ?? (config.data as any)?.hour_end}
+                >
+                  {[...Array(24).keys()].map((h) => (
+                    <option key={h} value={h}>
+                      {h}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="column is-3 my-auto">
+              <h1 className="title is-5">{_("encode-minimum-size-title")}</h1>
+              <h2 className="subtitle is-6">
+                {_("encode-minimum-size-subtitle")}
+              </h2>
+              <div className="select is-fullwidth">
+                <select
+                  onChange={(e) =>
+                    handleChange("minimum_file_size", e.target.value)
+                  }
+                  disabled={disabled}
+                  value={
+                    fields.minimum_file_size ??
+                    (config.data as any)?.minimum_file_size
+                  }
+                >
+                  <option value="0">0 MB</option>
+                  <option value="50">50 MB</option>
+                  <option value="100">100 MB</option>
+                  <option value="200">200 MB</option>
+                  <option value="500">500 MB</option>
+                  <option value="1000">1 GB</option>
                 </select>
               </div>
             </div>
           </div>
         </div>
-        <div className="column is-one-third my-auto">
-          <h1 className="title is-5">{_("process-minimum-file-size-title")}</h1>
-          <h2 className="subtitle is-6 mb-3">
-            {_("process-minimum-file-size-subtitle")}
-          </h2>
-          <div className="select is-fullwidth is-vcentered">
-            <select
-              onChange={inputMinimumFileSize}
-              disabled={disabled}
-              defaultValue={config?.minimum_file_size}
-            >
-              <option value="any">{_("process-mfs-no-minimum")}</option>
-              <option value="250mb">250 MB</option>
-              <option value="500mb">500 MB</option>
-              <option value="750mb">750 MB</option>
-              <option value="1000mb">1 GB</option>
-              <option value="1250mb">1.25 GB</option>
-              <option value="1500mb">1.5 GB</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+      </>
+    );
+  }
+);

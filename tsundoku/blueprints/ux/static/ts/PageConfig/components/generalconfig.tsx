@@ -1,4 +1,11 @@
-import { ChangeEvent } from "react";
+import {
+  ChangeEvent,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useState,
+} from "react";
 import { GeneralConfig, MutateConfigVars } from "../../interfaces";
 import { getInjector } from "../../fluent";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -8,209 +15,225 @@ import { DirectorySelect } from "../../Components/DirectorySelect";
 
 const _ = getInjector();
 
-export const GeneralConfigApp = () => {
-  const queryClient = useQueryClient();
+export const GeneralConfigApp = forwardRef(
+  ({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }, ref) => {
+    const queryClient = useQueryClient();
 
-  const config = useQuery(["config", "general"], async () => {
-    return await fetchConfig<GeneralConfig>("general");
-  });
+    const config = useQuery(["config", "general"], async () => {
+      return await fetchConfig<GeneralConfig>("general");
+    });
 
-  const mutation = useMutation(
-    async ({ key, value }: MutateConfigVars) => {
-      return await setConfig<GeneralConfig>("general", key, value);
-    },
-    {
-      onSuccess: (newConfig) => {
-        queryClient.setQueryData(["config", "general"], newConfig);
+    const mutation = useMutation(
+      async ({ key, value }: MutateConfigVars) => {
+        return await setConfig<GeneralConfig>("general", key, value);
       },
-    }
-  );
+      {
+        onSuccess: (newConfig) => {
+          queryClient.setQueryData(["config", "general"], newConfig);
+        },
+      }
+    );
 
-  if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
+    // Local state for all fields
+    const [fields, setFields] = useState<Partial<GeneralConfig>>({});
+    const [dirty, setDirty] = useState(false);
 
-  const inputHost = (e: ChangeEvent<HTMLInputElement>) => {
-    mutation.mutate({ key: "host", value: e.target.value });
-  };
+    // Initialize local state from config
+    useEffect(() => {
+      if (config.data) {
+        setFields({ ...config.data });
+        setDirty(false);
+        onDirtyChange(false);
+      }
+    }, [config.data]);
 
-  const inputPort = (e: ChangeEvent<HTMLInputElement>) => {
-    mutation.mutate({ key: "port", value: e.target.value });
-  };
+    // Dirty tracking
+    useEffect(() => {
+      if (!config.data) return;
+      const isDirty = Object.keys(fields).some(
+        (key) => fields[key] !== config.data[key]
+      );
+      setDirty(isDirty);
+      onDirtyChange(isDirty);
+    }, [fields, config.data]);
 
-  const inputUpdateCheck = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked)
-      mutation.mutate({ key: "update_do_check", value: true });
-    else mutation.mutate({ key: "update_do_check", value: false });
-  };
+    // Expose save method to parent
+    useImperativeHandle(ref, () => ({
+      async save() {
+        if (!dirty) return;
+        const promises = Object.keys(fields).map((key) => {
+          if (fields[key] !== config.data[key]) {
+            return mutation.mutateAsync({ key, value: fields[key] });
+          }
+          return null;
+        });
+        await Promise.all(promises);
+        setDirty(false);
+        onDirtyChange(false);
+      },
+    }));
 
-  const inputLocale = (e: ChangeEvent<HTMLSelectElement>) => {
-    mutation.mutate({
-      key: "locale",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
+    if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
 
-  const inputLogLevel = (e: ChangeEvent<HTMLSelectElement>) => {
-    mutation.mutate({
-      key: "log_level",
-      value: e.target.options[e.target.selectedIndex].value,
-    });
-  };
+    // Handlers for each field
+    const handleChange = (key: keyof GeneralConfig, value: any) => {
+      setFields((prev) => ({ ...prev, [key]: value }));
+    };
 
-  const inputDefaultDesiredFormat = (e: ChangeEvent<HTMLInputElement>) => {
-    mutation.mutate({ key: "default_desired_format", value: e.target.value });
-  };
-
-  const inputUseSeasonFolder = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked)
-      mutation.mutate({ key: "use_season_folder", value: true });
-    else mutation.mutate({ key: "use_season_folder", value: false });
-  };
-
-  const inputUnwatchWhenFinished = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked)
-      mutation.mutate({ key: "unwatch_when_finished", value: true });
-    else mutation.mutate({ key: "unwatch_when_finished", value: false });
-  };
-
-  return (
-    <div className="box">
-      <div className="columns is-multiline">
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">
-            <span
-              className="has-tooltip-bottom"
-              data-tooltip={_("general-host-tooltip")}
-            >
-              {_("general-host-title")}
-            </span>
-          </h1>
-          <h2 className="subtitle is-6">{_("general-host-subtitle")}</h2>
-          <div className="field has-addons">
-            <div className="control is-expanded">
-              <input
-                className="input"
-                type="text"
-                placeholder="localhost"
-                defaultValue={config?.data?.host}
-                onChange={inputHost}
-              />
+    return (
+      <div className="box">
+        <div className="columns is-multiline">
+          <div className="column is-3 my-auto">
+            <h1 className="title is-5">
+              <span
+                className="has-tooltip-bottom"
+                data-tooltip={_("general-host-tooltip")}
+              >
+                {_("general-host-title")}
+              </span>
+            </h1>
+            <h2 className="subtitle is-6">{_("general-host-subtitle")}</h2>
+            <div className="field has-addons">
+              <div className="control is-expanded">
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="localhost"
+                  value={fields.host ?? ""}
+                  onChange={(e) => handleChange("host", e.target.value)}
+                />
+              </div>
+              <div className="control">
+                <input
+                  className="input"
+                  type="number"
+                  placeholder="6439"
+                  min="1024"
+                  max="65535"
+                  value={fields.port ?? ""}
+                  onChange={(e) => handleChange("port", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="control">
-              <input
-                className="input"
-                type="number"
-                placeholder="6439"
-                min="1024"
-                max="65535"
-                defaultValue={config?.data?.port}
-                onChange={inputPort}
-              />
+          </div>
+          <div className="column is-3 my-auto">
+            <h1 className="title is-5">{_("general-loglevel-title")}</h1>
+            <h2 className="subtitle is-6">{_("general-loglevel-subtitle")}</h2>
+            <div className="select is-fullwidth">
+              <select
+                value={fields.log_level ?? config.data?.log_level}
+                onChange={(e) => handleChange("log_level", e.target.value)}
+              >
+                <option value="error">{_("log-level-error")}</option>
+                <option value="warning">{_("log-level-warning")}</option>
+                <option value="info">{_("log-level-info")}</option>
+                <option value="debug">{_("log-level-debug")}</option>
+              </select>
             </div>
           </div>
-        </div>
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">{_("general-loglevel-title")}</h1>
-          <h2 className="subtitle is-6">{_("general-loglevel-subtitle")}</h2>
-          <div className="select is-fullwidth">
-            <select
-              onChange={inputLogLevel}
-              defaultValue={config?.data?.log_level}
-            >
-              <option value="error">{_("log-level-error")}</option>
-              <option value="warning">{_("log-level-warning")}</option>
-              <option value="info">{_("log-level-info")}</option>
-              <option value="debug">{_("log-level-debug")}</option>
-            </select>
+          <div className="column is-3 my-auto">
+            <h1 className="title is-5">
+              <span
+                className="has-tooltip-bottom"
+                data-tooltip={_("general-locale-tooltip")}
+              >
+                {_("general-locale-title")}
+              </span>
+            </h1>
+            <h2 className="subtitle is-6">{_("general-locale-subtitle")}</h2>
+            <div className="select is-fullwidth">
+              <select
+                value={fields.locale ?? config.data?.locale}
+                onChange={(e) => handleChange("locale", e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="ru">русский</option>
+                <option value="ja">日本語</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">
-            <span
-              className="has-tooltip-bottom"
-              data-tooltip={_("general-locale-tooltip")}
-            >
-              {_("general-locale-title")}
-            </span>
-          </h1>
-          <h2 className="subtitle is-6">{_("general-locale-subtitle")}</h2>
-          <div className="select is-fullwidth">
-            <select onChange={inputLocale} defaultValue={config?.data?.locale}>
-              <option value="en">English</option>
-              <option value="ru">русский</option>
-              <option value="ja">日本語</option>
-            </select>
+          <div className="column is-3 my-auto">
+            <h1 className="title is-5">
+              <span
+                className="has-tooltip-bottom"
+                data-tooltip={_("general-updatecheck-tooltip")}
+              >
+                {_("general-updatecheck-title")}
+              </span>
+            </h1>
+            <h2 className="subtitle is-6">
+              {_("general-updatecheck-subtitle")}
+            </h2>
+            <div className="field">
+              <input
+                id="updateCheck"
+                type="checkbox"
+                className="switch"
+                checked={!!fields.update_do_check}
+                onChange={(e) =>
+                  handleChange("update_do_check", e.target.checked)
+                }
+              />
+              <label htmlFor="updateCheck">{_("checkbox-enabled")}</label>
+            </div>
           </div>
-        </div>
-        <div className="column is-3 my-auto">
-          <h1 className="title is-5">
-            <span
-              className="has-tooltip-bottom"
-              data-tooltip={_("general-updatecheck-tooltip")}
-            >
-              {_("general-updatecheck-title")}
-            </span>
-          </h1>
-          <h2 className="subtitle is-6">{_("general-updatecheck-subtitle")}</h2>
-          <div className="field">
+          <div className="column is-4 my-auto">
+            <h1 className="title is-5">
+              <span className="has-tooltip-bottom">
+                {_("general-defaultformat-title")}
+              </span>
+            </h1>
+            <h2 className="subtitle is-6">
+              {_("general-defaultformat-subtitle")}
+            </h2>
             <input
-              id="updateCheck"
-              type="checkbox"
-              className="switch"
-              defaultChecked={config?.data?.update_do_check}
-              onChange={inputUpdateCheck}
+              className="input"
+              type="text"
+              value={fields.default_desired_format ?? ""}
+              onChange={(e) =>
+                handleChange("default_desired_format", e.target.value)
+              }
             />
-            <label htmlFor="updateCheck">{_("checkbox-enabled")}</label>
           </div>
-        </div>
-        <div className="column is-4 my-auto">
-          <h1 className="title is-5">
-            <span className="has-tooltip-bottom">
-              {_("general-defaultformat-title")}
-            </span>
-          </h1>
-          <h2 className="subtitle is-6">
-            {_("general-defaultformat-subtitle")}
-          </h2>
-          <input
-            className="input"
-            type="text"
-            defaultValue={config?.data?.default_desired_format}
-            onChange={inputDefaultDesiredFormat}
-          />
-        </div>
-        <div className="column is-4 my-auto">
-          <h1 className="title is-5">Use Season Folder</h1>
-          <h2 className="subtitle is-6">
-            Whether or not a season folder should be created when moving a show
-          </h2>
-          <div className="field">
-            <input
-              id="seasonFolderCheck"
-              type="checkbox"
-              className="switch"
-              defaultChecked={config?.data?.use_season_folder}
-              onChange={inputUseSeasonFolder}
-            />
-            <label htmlFor="seasonFolderCheck">{_("checkbox-enabled")}</label>
+          <div className="column is-4 my-auto">
+            <h1 className="title is-5">Use Season Folder</h1>
+            <h2 className="subtitle is-6">
+              Whether or not a season folder should be created when moving a
+              show
+            </h2>
+            <div className="field">
+              <input
+                id="seasonFolderCheck"
+                type="checkbox"
+                className="switch"
+                checked={!!fields.use_season_folder}
+                onChange={(e) =>
+                  handleChange("use_season_folder", e.target.checked)
+                }
+              />
+              <label htmlFor="seasonFolderCheck">{_("checkbox-enabled")}</label>
+            </div>
           </div>
-        </div>
-        <div className="column is-4 my-auto">
-          <h1 className="title is-5">{_("general-unwatchfinished-title")}</h1>
-          <h2 className="subtitle is-6">
-            {_("general-unwatchfinished-subtitle")}
-          </h2>
-          <div className="field">
-            <input
-              id="unwatchCheck"
-              type="checkbox"
-              className="switch"
-              defaultChecked={config?.data?.unwatch_when_finished}
-              onChange={inputUnwatchWhenFinished}
-            />
-            <label htmlFor="unwatchCheck">{_("checkbox-enabled")}</label>
+          <div className="column is-4 my-auto">
+            <h1 className="title is-5">{_("general-unwatchfinished-title")}</h1>
+            <h2 className="subtitle is-6">
+              {_("general-unwatchfinished-subtitle")}
+            </h2>
+            <div className="field">
+              <input
+                id="unwatchCheck"
+                type="checkbox"
+                className="switch"
+                checked={!!fields.unwatch_when_finished}
+                onChange={(e) =>
+                  handleChange("unwatch_when_finished", e.target.checked)
+                }
+              />
+              <label htmlFor="unwatchCheck">{_("checkbox-enabled")}</label>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);

@@ -209,6 +209,9 @@ config-test = Test
 config-test-success = Connected
 config-test-failure = Error connecting
 
+config-save-button = Save Configuration
+config-save-success = Configuration saved
+
 feedback-request = Request a Feature
 feedback-bug = Report a Bug
 
@@ -224,6 +227,7 @@ libraries-th-actions = Actions
 libraries-td-set-default = Set Default
 libraries-td-default = Default
 
+libraries-add-button = Add Library
 libraries-delete-success = Library deleted successfully.
 libraries-update-success = Library updated successfully.
 
