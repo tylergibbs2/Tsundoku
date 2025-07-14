@@ -30,6 +30,8 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchConfig, updateShowById } from "../queries";
 import { toast } from "bulma-toast";
 import { LibrarySelect } from "./components/library_select";
+import { NyaaSearchPanel } from "./NyaaSearchPanel";
+import { useRef } from "react";
 
 const _ = getInjector();
 
@@ -53,6 +55,10 @@ export const EditModal = ({
   const [entriesToDelete, setEntriesToDelete] = useState<Entry[]>([]);
   const [webhooksToUpdate, setWebhooksToUpdate] = useState<Webhook[]>([]);
 
+  const [highlightNewEntryId, setHighlightNewEntryId] = useState<number | null>(
+    null
+  );
+
   const { register, reset, trigger, getValues, setValue } = useForm();
 
   const queryClient = useQueryClient();
@@ -64,6 +70,11 @@ export const EditModal = ({
 
       // Instead of manually updating the cache, just refetch the paginated shows queries
       queryClient.invalidateQueries(["shows"]);
+
+      // Reset local state after save
+      setEntriesToAdd([]);
+      setEntriesToDelete([]);
+      setHighlightNewEntryId(null);
 
       toast({
         message: _("show-update-success"),
@@ -236,7 +247,17 @@ export const EditModal = ({
       }
     >
       <div className="modal-background" onClick={cancel}></div>
-      <div className="modal-card">
+      <div
+        className={"modal-card" + (tab === "entries" ? " is-wide" : "")}
+        style={{
+          maxWidth: tab === "entries" ? "90vw" : undefined,
+          width: tab === "entries" ? "1200px" : undefined,
+          height: "80vh",
+          maxHeight: "80vh",
+          transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+          overflow: "hidden",
+        }}
+      >
         <header className="modal-card-head">
           <p className="modal-card-title">{_("edit-modal-header")}</p>
           <div className="buttons">
@@ -302,14 +323,80 @@ export const EditModal = ({
           </div>
 
           <EditShowForm tab={tab} show={activeShow} register={register} />
-          <EditShowEntries
-            tab={tab}
-            show={activeShow}
-            setEntriesToAdd={setEntriesToAdd}
-            setEntriesToDelete={setEntriesToDelete}
-            entriesToAdd={entriesToAdd}
-            entriesToDelete={entriesToDelete}
-          />
+          {/* Entries Tab: show both entries list and Nyaa search panel */}
+          {tab === "entries" && activeShow && (
+            <div>
+              <EditShowEntries
+                tab={tab}
+                show={activeShow}
+                setEntriesToAdd={setEntriesToAdd}
+                setEntriesToDelete={setEntriesToDelete}
+                entriesToAdd={entriesToAdd}
+                entriesToDelete={entriesToDelete}
+                highlightNewEntryId={highlightNewEntryId}
+              />
+              <hr style={{ margin: "2rem 0" }} />
+              <h3 className="title is-5" style={{ marginBottom: "1rem" }}>
+                {_("edit-entries-add-from-nyaa")}
+              </h3>
+              <NyaaSearchPanel
+                initialQuery={activeShow.title}
+                showId={activeShow.id_}
+                existingEpisodes={getAllEpisodes(activeShow, entriesToAdd)}
+                onEntryAdd={async (entry, overwrite) => {
+                  const request = {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      show_id: activeShow.id_,
+                      torrent_link: entry.torrent_link,
+                      overwrite: overwrite,
+                    }),
+                  };
+                  try {
+                    const response = await fetch("/api/v1/nyaa", request);
+                    if (response.ok) {
+                      const data = await response.json();
+                      if (data.result && Array.isArray(data.result)) {
+                        setEntriesToAdd((prev) => [...data.result, ...prev]);
+                        setHighlightNewEntryId(data.result[0]?.id ?? null); // highlight the first new entry
+                        toast({
+                          message: _("entry-add-success", {
+                            count: data.result.length,
+                          }),
+                          duration: 4000,
+                          position: "bottom-right",
+                          type: "is-success",
+                          dismissible: true,
+                          animate: { in: "fadeIn", out: "fadeOut" },
+                        });
+                      }
+                    } else {
+                      toast({
+                        message: _("entry-add-failed"),
+                        duration: 4000,
+                        position: "bottom-right",
+                        type: "is-danger",
+                        dismissible: true,
+                        animate: { in: "fadeIn", out: "fadeOut" },
+                      });
+                    }
+                  } catch (e) {
+                    toast({
+                      message: _("entry-add-failed"),
+                      duration: 4000,
+                      position: "bottom-right",
+                      type: "is-danger",
+                      dismissible: true,
+                      animate: { in: "fadeIn", out: "fadeOut" },
+                    });
+                  }
+                }}
+              />
+            </div>
+          )}
           <EditShowWebhooks
             tab={tab}
             show={activeShow}
@@ -690,6 +777,7 @@ interface EditShowEntriesParams {
   setEntriesToDelete: Dispatch<SetStateAction<Entry[]>>;
   entriesToAdd: Entry[];
   entriesToDelete: Entry[];
+  highlightNewEntryId: number | null;
 }
 
 const EditShowEntries = ({
@@ -699,19 +787,22 @@ const EditShowEntries = ({
   setEntriesToDelete,
   entriesToAdd,
   entriesToDelete,
+  highlightNewEntryId,
 }: EditShowEntriesParams) => {
-  let previousEntries: Entry[] = show?.entries ?? [];
-
-  const [entries, setEntries] = useState<Entry[]>(previousEntries);
   const [fakeId, setFakeId] = useState<number>(-1);
-
   const { register, handleSubmit, reset } = useForm();
 
-  useEffect(() => {
-    if (show) setEntries(show.entries);
-  }, [show]);
-
   if (show === null) return <></>;
+
+  // Compute deleted IDs for filtering
+  const deletedIds = new Set(entriesToDelete.map((e) => e.id));
+  // Combine show.entries and entriesToAdd, removing duplicates by id, and filter out deleted
+  const allEntries = [...(show.entries || []), ...(entriesToAdd || [])]
+    .filter(
+      (entry, index, self) => index === self.findIndex((e) => e.id === entry.id)
+    )
+    .filter((entry) => !deletedIds.has(entry.id))
+    .sort((a, b) => a.episode - b.episode);
 
   const bufferAddEntry = (data: any) => {
     let newEpNum = parseInt(data.episode);
@@ -731,9 +822,8 @@ const EditShowEntries = ({
       last_update: new Date().toISOString(),
       encode: null,
     };
-    let temp = [entry, ...entries];
 
-    let exists = entries.findIndex(
+    let exists = allEntries.findIndex(
       (existing: Entry) => existing.episode === newEpNum
     );
     if (exists !== -1) {
@@ -742,29 +832,22 @@ const EditShowEntries = ({
     }
 
     setFakeId(fakeId - 1);
-
-    temp.sort((a, b) => {
-      return a.episode > b.episode ? 1 : -1;
-    });
-
     setEntriesToAdd([entry, ...entriesToAdd]);
-    setEntries(temp);
-
     reset();
   };
 
   const bufferRemoveEntry = (entry: Entry) => {
-    let temp = [...entries];
-    let idx = temp.findIndex((toRemove: Entry) => toRemove.id === entry.id);
-    if (idx !== -1) temp.splice(idx, 1);
-
-    setEntriesToDelete([entry, ...entriesToDelete]);
-    setEntries(temp);
+    // Remove from entriesToAdd if present
+    setEntriesToAdd(entriesToAdd.filter((e) => e.id !== entry.id));
+    // If entry has a positive id (exists in backend), add to entriesToDelete
+    if (entry.id > 0) {
+      setEntriesToDelete([entry, ...entriesToDelete]);
+    }
   };
 
   return (
     <div className={tab !== "entries" ? "is-hidden" : ""}>
-      {entries.length > 0 && (
+      {allEntries.length > 0 && (
         <table className="table is-fullwidth is-hoverable">
           <thead>
             <tr>
@@ -775,17 +858,18 @@ const EditShowEntries = ({
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry: Entry) => (
+            {allEntries.map((entry: Entry) => (
               <EntryRow
                 key={entry.id}
                 entry={entry}
                 bufferRemoveEntry={bufferRemoveEntry}
+                highlightNewEntryId={highlightNewEntryId}
               />
             ))}
           </tbody>
         </table>
       )}
-      {entries.length === 0 && (
+      {allEntries.length === 0 && (
         <div className="container has-text-centered mb-5">
           <h2 className="subtitle">{_("edit-entries-is-empty")}</h2>
         </div>
@@ -832,9 +916,14 @@ const EditShowEntries = ({
 interface EntryRowParams {
   entry: Entry;
   bufferRemoveEntry: any;
+  highlightNewEntryId: number | null;
 }
 
-const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
+const EntryRow = ({
+  entry,
+  bufferRemoveEntry,
+  highlightNewEntryId,
+}: EntryRowParams) => {
   const bufferDelete = () => {
     bufferRemoveEntry(entry);
   };
@@ -932,7 +1021,7 @@ const EntryRow = ({ entry, bufferRemoveEntry }: EntryRowParams) => {
   };
 
   return (
-    <tr>
+    <tr className={highlightNewEntryId === entry.id ? "is-highlighted" : ""}>
       <td>
         {entry.episode}
         {entry.version}
@@ -1136,3 +1225,11 @@ const EditWebhookTableRow = ({
     </tr>
   );
 };
+
+// Helper to get all episode numbers from show.entries and entriesToAdd
+function getAllEpisodes(show: Show, entriesToAdd: Entry[]): number[] {
+  const all = new Set<number>();
+  (show.entries || []).forEach((e: Entry) => all.add(e.episode));
+  (entriesToAdd || []).forEach((e: Entry) => all.add(e.episode));
+  return Array.from(all);
+}

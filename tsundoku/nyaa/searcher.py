@@ -259,10 +259,10 @@ class NyaaSearcher:
         query: str
             The search query.
         """
-        return "https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q=" + quote_plus(query)
+        return f"https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q={quote_plus(query)}"
 
     @staticmethod
-    async def search(app: "TsundokuApp", query: str) -> list[SearchResult]:
+    async def search(app: "TsundokuApp", query: str, limit: int = 15, page: int = 1) -> list[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
@@ -272,6 +272,10 @@ class NyaaSearcher:
             The app.
         query: str
             The search query.
+        limit: int
+            Number of results per page.
+        page: int
+            Page number (1-based).
         """
         url = NyaaSearcher._get_query_url(query)
         loop = asyncio.get_running_loop()
@@ -279,15 +283,18 @@ class NyaaSearcher:
         feed = await loop.run_in_executor(None, feedparser.parse, url)
         found = []
         for item in feed["entries"]:
+            title = item.get("title")
+            if not isinstance(title, str):
+                logger.error(f"NyaaSearcher - Skipping entry with non-string title: {title}")
+                continue
             try:
-                parse_anime_title(item["title"])
+                parse_anime_title(title)
             except Exception:
-                logger.error(
-                    f"Anitopy - Could not Parse `{item['title']}`, skipping",
-                    exc_info=True,
-                )
+                logger.error(f"Anitopy - Could not Parse `{title}`, skipping", exc_info=True)
                 continue
 
             found.append(SearchResult.from_dict(app, item))
 
-        return found
+        start = (page - 1) * limit
+        end = start + limit
+        return found[start:end]

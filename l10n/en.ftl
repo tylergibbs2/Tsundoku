@@ -120,6 +120,8 @@ edit-kitsu-id = Kitsu.io Show ID
 edit-tab-info = Information
 edit-tab-entries = Entries
 edit-tab-webhooks = Webhooks
+edit-tab-nyaa-search = Nyaa Search
+edit-entries-add-from-nyaa = Add from Nyaa
 
 edit-entries-th-episode = Episode
 edit-entries-th-status = Entry Status
@@ -467,9 +469,14 @@ entry-add-success = Successfully added release! Processing {$count} new {$count 
         *[other] entries
     }.
 
+entry-add-failed = Failed to add entry.
+
 search-placeholder = Attack on Titan
 search-empty-results = Nothing to see here!
 search-start-searching = Start searching to see some results.
+search-already-added = Already Added
+search-button = Search
+search-overwrite-checkbox = Overwrite existing entries
 
 search-th-name = Name
 search-th-size = Size
@@ -477,6 +484,8 @@ search-th-date = Date
 search-th-seeders = Seeders
 search-th-leechers = Leechers
 search-th-link = Link to Post
+search-th-action = Action
+search-add-entry = Add Entry
 
 search-item-link = Link
 

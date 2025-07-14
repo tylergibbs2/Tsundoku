@@ -11,7 +11,6 @@ import {
 import { toast } from "bulma-toast";
 
 import { IndexApp } from "./PageIndex/App";
-import { NyaaSearchApp } from "./PageNyaaSearch/App";
 import { WebhooksApp } from "./PageWebhooks/App";
 import { ConfigApp } from "./PageConfig/App";
 import { LogsApp } from "./PageLogs/App";
@@ -27,10 +26,6 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <IndexApp />,
-  },
-  {
-    path: "/nyaa",
-    element: <NyaaSearchApp />,
   },
   {
     path: "/webhooks",

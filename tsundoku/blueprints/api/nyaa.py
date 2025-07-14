@@ -23,8 +23,22 @@ class NyaaAPI(views.MethodView):
         if not query:
             return APIResponse(result=[])
 
+        # Pagination support
         try:
-            results = await NyaaSearcher.search(app, query)
+            limit = int(request.args.get("limit", 15))
+        except Exception:
+            limit = 15
+        try:
+            page = int(request.args.get("page", 1))
+        except Exception:
+            page = 1
+        if limit < 1 or limit > 100:
+            limit = 15
+        if page < 1:
+            page = 1
+
+        try:
+            results = await NyaaSearcher.search(app, query, limit=limit, page=page)
         except Exception as e:
             logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
             return APIResponse(status=400, error="Error searching for the specified query.")
