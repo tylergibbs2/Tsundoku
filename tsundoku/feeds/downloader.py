@@ -228,7 +228,7 @@ class Downloader:
         show = await Show.from_id(self.app, entry.show_id, lazy_metadata=True)
         season = str(show.season)
 
-        library: Library = await Library.from_id(self.app, show.library_id)
+        library = await show.get_library()
         desired_folder = library.folder / show.internal_title
         if self.use_season_folder:
             desired_folder /= f"Season {season}"
