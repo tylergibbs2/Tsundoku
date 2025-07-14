@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 import aiofiles.os
 
 from tsundoku.config import FeedsConfig, GeneralConfig
-from tsundoku.manager import Entry, EntryState, Library
+from tsundoku.manager import Entry, EntryState, Library, Show
 from tsundoku.utils import ExprDict, move, parse_anime_title
 
 logger = logging.getLogger("tsundoku")
@@ -225,26 +225,11 @@ class Downloader:
             logger.error(f"<e{entry.id}> file path is None?")
             return None
 
-        async with self.app.acquire_db() as con:
-            show_info = await con.fetchone(
-                """
-                SELECT
-                    library_id,
-                    title,
-                    title_local,
-                    season
-                FROM
-                    shows
-                WHERE id=?;
-            """,
-                entry.show_id,
-            )
+        show = await Show.from_id(self.app, entry.show_id, lazy_metadata=True)
+        season = str(show.season)
 
-        season = str(show_info["season"])
-        title = show_info["title_local"] if show_info["title_local"] is not None else show_info["title"]
-
-        library: Library = await Library.from_id(self.app, show_info["library_id"])
-        desired_folder = library.folder / title
+        library: Library = await Library.from_id(self.app, show.library_id)
+        desired_folder = library.folder / show.internal_title
         if self.use_season_folder:
             desired_folder /= f"Season {season}"
 
@@ -290,35 +275,18 @@ class Downloader:
             logger.error(f"<e{entry.id}> file_path is None?")
             return None
 
-        async with self.app.acquire_db() as con:
-            show_info = await con.fetchone(
-                """
-                SELECT
-                    title,
-                    title_local,
-                    desired_format,
-                    season,
-                    episode_offset
-                FROM
-                    shows
-                WHERE id=?;
-            """,
-                entry.show_id,
-            )
-
-        if show_info["desired_format"]:
-            file_fmt = show_info["desired_format"]
+        show = await Show.from_id(self.app, entry.show_id, lazy_metadata=True)
+        if show.desired_format:
+            file_fmt = show.desired_format
         else:
             file_fmt = self.default_desired_format
 
         suffix = entry.file_path.suffix
-
-        title = show_info["title_local"] if show_info["title_local"] is not None else show_info["title"]
-        episode = str(entry.episode + show_info["episode_offset"])
+        episode = str(entry.episode + show.episode_offset)
 
         expressions = self.get_expression_mapping(
-            title,
-            str(show_info["season"]),
+            show.internal_title,
+            str(show.season),
             episode,
             entry.version,
             ext=suffix,

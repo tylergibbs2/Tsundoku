@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import logging
 from sqlite3 import Row
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuApp
@@ -32,10 +32,14 @@ class Show:
     preferred_release_group: str | None
     created_at: datetime
 
-    metadata: KitsuManager
+    metadata: KitsuManager | None
 
     _entries: list[Entry]
     _webhooks: list[Webhook]
+
+    @property
+    def internal_title(self) -> str:
+        return self.title_local if self.title_local else self.title
 
     def to_dict(self) -> dict:
         """
@@ -59,12 +63,12 @@ class Show:
             "preferred_release_group": self.preferred_release_group,
             "created_at": self.created_at,
             "entries": [e.to_dict() for e in self._entries],
-            "metadata": self.metadata.to_dict(),
+            "metadata": self.metadata.to_dict() if self.metadata else None,
             "webhooks": [wh.to_dict() for wh in self._webhooks],
         }
 
     @classmethod
-    async def from_data(cls, app: "TsundokuApp", data: Row) -> "Show":
+    async def from_data(cls, app: "TsundokuApp", data: Row) -> Self:
         """
         Creates a Show object from a sqlite3.Row
         of a Show in the database.
@@ -99,7 +103,7 @@ class Show:
         return instance
 
     @classmethod
-    async def from_id(cls, app: "TsundokuApp", id_: int) -> "Show":
+    async def from_id(cls, app: "TsundokuApp", id_: int, lazy_metadata: bool = False, lazy_entries: bool = False, lazy_webhooks: bool = False) -> Self:
         """
         Retrieves a Show from the database based on
         a passed identifier.
@@ -108,6 +112,12 @@ class Show:
         ----------
         id_: int
             The Show ID to retrieve.
+        lazy_metadata: bool
+            If True, do not fetch metadata immediately.
+        lazy_entries: bool
+            If True, do not fetch entries immediately.
+        lazy_webhooks: bool
+            If True, do not fetch webhooks immediately.
 
         Returns
         -------
@@ -140,14 +150,26 @@ class Show:
             logger.error(f"Failed to retrieve show with ID #{id_}")
             raise ValueError(f"Failed to retrieve show with ID #{id_}")
 
-        metadata = await KitsuManager.from_show_id(app, show["id_"])
+        if lazy_metadata:
+            metadata = None
+        else:
+            metadata = await KitsuManager.from_show_id(app, show["id_"])
 
         instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
 
-        await instance.entries()
-        await instance.webhooks()
+        if not lazy_entries:
+            await instance.entries()
+        if not lazy_webhooks:
+            await instance.webhooks()
 
         return instance
+
+    async def ensure_metadata(self) -> None:
+        """
+        Ensures that metadata is loaded, fetching it if necessary.
+        """
+        if self.metadata is None:
+            self.metadata = await KitsuManager.from_show_id(self.app, self.id_)
 
     async def refetch(self) -> None:
         """
@@ -178,7 +200,7 @@ class Show:
         watch: bool,
         preferred_resolution: str | None,
         preferred_release_group: str | None,
-    ) -> "Show":
+    ) -> Self:
         """
         Inserts a Show into the database based on the
         passed keyword arguments.
