@@ -33,12 +33,16 @@ body.dark .input::placeholder {
 }
 
 body.dark
-  a.button:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary) {
+  a.button:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(
+    .is-primary
+  ) {
   background-color: $grey-darker;
 }
 
 body.dark
-  .tag:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(.is-primary),
+  .tag:not(.is-success):not(.is-danger):not(.is-info):not(.is-warning):not(
+    .is-primary
+  ),
 body.dark code {
   background-color: $black-ter;
 }

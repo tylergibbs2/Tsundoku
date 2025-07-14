@@ -13,12 +13,12 @@ logger = logging.getLogger("tsundoku")
 
 
 class qBittorrentClient(TorrentClient):  # noqa: N801
-    auth: dict[str, str]
+    auth: dict[str, str | None]
     url: str
 
     last_authed_user: str | None = None
 
-    def __init__(self, session: aiohttp.ClientSession, auth: dict[str, str], **kwargs: Any) -> None:
+    def __init__(self, session: aiohttp.ClientSession, auth: dict[str, str | None], **kwargs: Any) -> None:
         self.session = session
 
         host: str = kwargs.pop("host")

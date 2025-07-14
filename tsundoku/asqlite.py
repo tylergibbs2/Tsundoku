@@ -537,7 +537,7 @@ def connect(
 
         def new_connect(db: str | bytes, **kwargs: Any) -> sqlite3.Connection:
             con = _connect_pragmas(db, **kwargs)
-            init(con)
+            init(con)  # type: ignore
             return con
 
     else:

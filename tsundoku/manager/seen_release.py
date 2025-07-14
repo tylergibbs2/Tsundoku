@@ -131,7 +131,6 @@ class SeenRelease:
             conditions.append("episode = ?")
         if version is not None:
             conditions.append("version = ?")
-
         async with app.acquire_db() as con:
             rows = await con.fetchall(
                 f"""
@@ -150,7 +149,7 @@ class SeenRelease:
                 *parameters,
             )
 
-        return [SeenRelease(app, *row) for row in rows]
+        return [SeenRelease(app, *row) for row in rows]  # type: ignore
 
     @staticmethod
     async def delete_old(app: "TsundokuApp", /, days: int) -> None:

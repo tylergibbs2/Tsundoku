@@ -1,7 +1,7 @@
 from pathlib import Path
 import random
 import string
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 
 class MockRSSFeed(TypedDict):
@@ -24,4 +24,4 @@ def mock_feedparser_parse(*_: Any, **__: Any) -> MockRSSFeed:
     with Path("tests/mock/_rss_item_titles.txt").open("r", encoding="utf-8") as fd:
         titles = [line.strip() for line in fd.readlines() if line]
 
-    return {"items": [{"title": title, "link": generate_fake_magnet()} for title in titles]}
+    return cast(MockRSSFeed, {"items": [{"title": title, "link": generate_fake_magnet()} for title in titles]})

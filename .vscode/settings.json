@@ -3,7 +3,7 @@
     "editor.bracketPairColorization.enabled": true,
     "files.trimTrailingWhitespace": true,
     "editor.linkedEditing": true,
-    "python.languageServer": "Pylance",
+    "python.languageServer": "None",
     "[python]": {
         "editor.wordBasedSuggestions": "off"
     },

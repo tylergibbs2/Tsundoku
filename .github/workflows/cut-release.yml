@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       force_recreate:
-        description: 'Force re-create'
+        description: "Force re-create"
         required: false
         type: boolean
         default: false

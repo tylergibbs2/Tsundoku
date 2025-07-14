@@ -53,8 +53,7 @@ export const Card = ({
   };
 
   return (
-    <div className="column is-12-mobile is-4-tablet is-2-desktop"
-    >
+    <div className="column is-12-mobile is-4-tablet is-2-desktop">
       <div className="card">
         {show.metadata.poster && (
           <div className="card-image">
@@ -97,7 +96,10 @@ interface AddShowCardParams {
   isOnlyCardInRow: boolean;
 }
 
-export const AddShowCard = ({ setCurrentModal, isOnlyCardInRow }: AddShowCardParams) => {
+export const AddShowCard = ({
+  setCurrentModal,
+  isOnlyCardInRow,
+}: AddShowCardParams) => {
   const openModal = () => {
     setCurrentModal("add");
   };
@@ -115,18 +117,20 @@ export const AddShowCard = ({ setCurrentModal, isOnlyCardInRow }: AddShowCardPar
           </span>
         </button>
       </div>
-      { isOnlyCardInRow && <div className="column is-2 is-invisible">
-        <div className="card">
-          <figure className="image is-3by4"></figure>
+      {isOnlyCardInRow && (
+        <div className="column is-2 is-invisible">
+          <div className="card">
+            <figure className="image is-3by4"></figure>
 
-          <div className="card-content"></div>
-          <footer className="card-footer">
-            <p className="card-footer-item">
-              <a>Placeholder</a>
-            </p>
-          </footer>
+            <div className="card-content"></div>
+            <footer className="card-footer">
+              <p className="card-footer-item">
+                <a>Placeholder</a>
+              </p>
+            </footer>
+          </div>
         </div>
-      </div> }
+      )}
     </>
   );
 };

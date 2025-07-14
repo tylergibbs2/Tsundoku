@@ -59,8 +59,8 @@ class Manager:
             kwargs["auth"] = password
             self._client = DelugeClient(self.session, **kwargs)
         elif cfg.client == "qbittorrent":
-            kwargs["auth"] = {"username": username, "password": password}
-            self._client = qBittorrentClient(self.session, **kwargs)
+            auth = {"username": username, "password": password}
+            self._client = qBittorrentClient(self.session, auth, **kwargs)
         elif cfg.client == "transmission":
             kwargs["auth"] = {"username": username, "password": password}
             self._client = TransmissionClient(self.session, **kwargs)
@@ -100,12 +100,12 @@ class Manager:
             torrent_bytes = await resp.read()
             metadata: Any = bencodepy.decode(torrent_bytes)
 
-        subject = metadata[b"info"]
+        subject = metadata[b"info"]  # type: ignore
 
         hash_data = bencodepy.encode(subject)
         digest = hashlib.sha1(hash_data).hexdigest()
 
-        magnet_url = f"magnet:?xt=urn:btih:{digest}&dn={metadata[b'info'][b'name'].decode()}&tr={metadata[b'announce'].decode()}"
+        magnet_url = f"magnet:?xt=urn:btih:{digest}&dn={metadata[b'info'][b'name'].decode()}&tr={metadata[b'announce'].decode()}"  # type: ignore
 
         return re.sub(pattern, b32_to_sha1, magnet_url)
 
@@ -126,20 +126,20 @@ class Manager:
         """
         async with self.session.get(location) as resp:
             torrent_bytes = await resp.read()
-            metadata: Any = bencodepy.decode(torrent_bytes)
+            metadata = bencodepy.decode(torrent_bytes)
 
-        is_folder = b"files" in metadata[b"info"]
+        is_folder = b"files" in metadata[b"info"]  # type: ignore
 
         file_names = []
 
         if is_folder:
-            for item in metadata[b"info"][b"files"]:
+            for item in metadata[b"info"][b"files"]:  # type: ignore
                 try:
                     file_names.append(item[b"path"][0].decode("utf-8"))
                 except IndexError:
                     pass
         else:
-            file_names.append(metadata[b"info"][b"name"].decode("utf-8"))
+            file_names.append(metadata[b"info"][b"name"].decode("utf-8"))  # type: ignore
 
         return file_names
 

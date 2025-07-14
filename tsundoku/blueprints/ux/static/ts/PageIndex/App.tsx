@@ -30,7 +30,9 @@ export const IndexApp = () => {
   const [currentModal, setCurrentModal] = useState<string | null>(null);
 
   const [viewType, setViewType] = useState<string>(storedViewType || "cards");
-  const [currentPage, setCurrentPage] = useState<number>(parseInt(storedPage || "1"));
+  const [currentPage, setCurrentPage] = useState<number>(
+    parseInt(storedPage || "1")
+  );
 
   const [filters, setFilters] = useState<string[]>(
     JSON.parse(storedFilters) || [
@@ -55,7 +57,14 @@ export const IndexApp = () => {
   const shows = useQuery(
     ["shows", currentPage, filters, textFilter, sortKey, sortDirection],
     async () => {
-      return await fetchShows(currentPage, 17, filters, textFilter, sortKey, sortDirection);
+      return await fetchShows(
+        currentPage,
+        17,
+        filters,
+        textFilter,
+        sortKey,
+        sortDirection
+      );
     },
     {
       keepPreviousData: true,
@@ -139,10 +148,7 @@ export const IndexApp = () => {
         viewType={viewType}
       />
       {pagination && (
-        <Pagination
-          pagination={pagination}
-          onPageChange={handlePageChange}
-        />
+        <Pagination pagination={pagination} onPageChange={handlePageChange} />
       )}
     </>
   );

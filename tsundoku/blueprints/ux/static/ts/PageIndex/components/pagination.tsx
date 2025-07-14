@@ -51,7 +51,11 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
   return (
     <div style={{ marginTop: 24 }}>
       {/* Controls centered */}
-      <nav className="pagination is-centered" role="navigation" aria-label="pagination">
+      <nav
+        className="pagination is-centered"
+        role="navigation"
+        aria-label="pagination"
+      >
         <button
           className="pagination-previous"
           onClick={() => onPageChange(page - 1)}
@@ -60,14 +64,19 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
         >
           {_("pagination-previous")}
         </button>
-        <ul className="pagination-list" style={{ display: "flex", alignItems: "center" }}>
+        <ul
+          className="pagination-list"
+          style={{ display: "flex", alignItems: "center" }}
+        >
           {getPageNumbers().map((pageNum, index) => (
             <li key={index}>
               {pageNum === "..." ? (
                 <span className="pagination-ellipsis">&hellip;</span>
               ) : (
                 <button
-                  className={`pagination-link ${pageNum === page ? "is-current" : ""}`}
+                  className={`pagination-link ${
+                    pageNum === page ? "is-current" : ""
+                  }`}
                   onClick={() => onPageChange(pageNum as number)}
                   aria-label={`Page ${pageNum}`}
                   aria-current={pageNum === page ? "page" : undefined}
@@ -91,7 +100,9 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
       {/* Info text below, centered */}
       <div style={{ textAlign: "center", marginTop: 8 }}>
         <small className="has-text-grey">
-          {_("pagination-showing")} {((page - 1) * pagination.limit) + 1}-{Math.min(page * pagination.limit, total)} {_("pagination-of")} {total} {_("pagination-items")}
+          {_("pagination-showing")} {(page - 1) * pagination.limit + 1}-
+          {Math.min(page * pagination.limit, total)} {_("pagination-of")}{" "}
+          {total} {_("pagination-items")}
         </small>
       </div>
     </div>

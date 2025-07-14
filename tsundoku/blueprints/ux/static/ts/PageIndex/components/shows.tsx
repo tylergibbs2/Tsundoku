@@ -148,7 +148,10 @@ const CardView = ({
           setActiveShow={setActiveShow}
         />
       ))}
-      <AddShowCard setCurrentModal={setCurrentModal} isOnlyCardInRow={isOnlyCardInRow} />
+      <AddShowCard
+        setCurrentModal={setCurrentModal}
+        isOnlyCardInRow={isOnlyCardInRow}
+      />
     </div>
   );
 };

@@ -55,7 +55,7 @@ class Encoder:
     HOUR_END: int
 
     __start_lock: asyncio.Lock
-    __ffmpeg_procs: dict[int, asyncio.subprocess.Process]
+    __ffmpeg_procs: dict[int, asyncio.subprocess.Process]  # type: ignore
     __available_encoders: set[str]
 
     def __init__(self, app_context: Any) -> None:
@@ -501,8 +501,8 @@ class Encoder:
 
         proc = await asyncio.create_subprocess_shell(
             "ffmpeg -buildconf",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.PIPE,  # type: ignore
+            stderr=asyncio.subprocess.DEVNULL,  # type: ignore
         )
         stdout, _ = await proc.communicate()
         if proc.returncode != 0:

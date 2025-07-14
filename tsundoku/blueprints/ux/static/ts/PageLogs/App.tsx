@@ -21,12 +21,9 @@ export const LogsApp = () => {
   let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
   let protocol = location.protocol === "https:" ? "wss:" : "ws:";
 
-  const shows = useQuery(
-    ["shows", 1],
-    async () => {
-      return await fetchShows(1, 15);
-    }
-  );
+  const shows = useQuery(["shows", 1], async () => {
+    return await fetchShows(1, 15);
+  });
 
   let ws_url = `${protocol}//${ws_host}/ws/logs`;
 
