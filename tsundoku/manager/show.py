@@ -234,7 +234,7 @@ class Show:
                         preferred_release_group
                     )
                     VALUES
-                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        (?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
                     library_id,
                     title,
