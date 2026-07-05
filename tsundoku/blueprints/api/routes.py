@@ -197,9 +197,9 @@ async def config_route(cfg_type: str) -> APIResponse:
 @api_blueprint.route("/config/torrent/test", methods=["GET"])
 @deny_readonly
 async def test_torrent_client() -> APIResponse:
-    res = await app.dl_client.test_client()
-    app.flags.DL_CLIENT_CONNECTION_ERROR = not res
-    return APIResponse(result=res)
+    result = await app.dl_client.test_client()
+    app.flags.DL_CLIENT_CONNECTION_ERROR = not result.success
+    return APIResponse(result={"success": result.success, "error": result.error})
 
 
 @api_blueprint.route("/shows/check", methods=["GET"])

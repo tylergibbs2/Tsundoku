@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 from tsundoku.dl_client import Manager
-from tsundoku.dl_client.abstract import TorrentClient
+from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
 
 
 class TorrentStatus(Enum):
@@ -65,8 +65,8 @@ class InMemoryDownloadClient(TorrentClient):
     def build_api_url(self, host: str, port: int, secure: bool) -> str:
         return "MOCK"
 
-    async def test_client(self) -> bool:
-        return True
+    async def test_client(self) -> TestClientResult:
+        return TestClientResult(True)
 
     async def check_torrent_exists(self, torrent_id: str) -> bool:
         return torrent_id in self.torrents
@@ -95,5 +95,5 @@ class InMemoryDownloadClient(TorrentClient):
         self.torrents[info_hash] = InMemoryTorrent(info_hash)
         return info_hash
 
-    async def login(self) -> bool:
-        return True
+    async def login(self) -> TestClientResult:
+        return TestClientResult(True)

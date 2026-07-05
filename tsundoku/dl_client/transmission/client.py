@@ -7,7 +7,8 @@ from typing import Any
 
 import aiohttp
 
-from tsundoku.dl_client.abstract import TorrentClient
+from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
+from tsundoku.dl_client.errors import describe_connection_error
 
 logger = logging.getLogger("tsundoku")
 
@@ -54,13 +55,40 @@ class TransmissionClient(TorrentClient):
         """
         return base64.b64encode(f"{username}:{password}".encode()).decode("utf-8")
 
-    async def test_client(self) -> bool:
-        try:
-            resp = await self.request("session-stats")
-        except ConnectionRefusedError:
-            return False
+    async def test_client(self) -> TestClientResult:
+        request_url = f"{self.url}/transmission/rpc"
+        body = {"method": "session-stats", "arguments": {}}
 
-        return resp.get("result") == "success"
+        try:
+            for _ in range(2):
+                headers = {
+                    "X-Transmission-Session-Id": self.session_id,
+                    "Authorization": f"Basic {self.credentials}",
+                }
+                async with self.session.post(request_url, json=body, headers=headers) as resp:
+                    if resp.status == 409:
+                        self.session_id = resp.headers.get("X-Transmission-Session-Id", "")
+                        continue
+
+                    if resp.status == 401:
+                        return TestClientResult(False, "Transmission rejected the configured username or password.")
+
+                    if resp.status != 200:
+                        return TestClientResult(False, f"Transmission returned unexpected status {resp.status}.")
+
+                    data = json.loads(await resp.text(encoding="utf-8"))
+                    if data.get("result") == "success":
+                        return TestClientResult(True)
+
+                    return TestClientResult(
+                        False, f"Transmission reported an error: {data.get('result', 'unknown error')}"
+                    )
+        except (TimeoutError, aiohttp.ClientError) as e:
+            message = describe_connection_error(e, "Transmission", self.url)
+            logger.error(f"Transmission - {message}")
+            return TestClientResult(False, message)
+
+        return TestClientResult(False, "Transmission did not respond with a valid session after retrying.")
 
     async def check_torrent_exists(self, torrent_id: str) -> bool:
         fp = await self.get_torrent_fp(torrent_id)
@@ -122,7 +150,7 @@ class TransmissionClient(TorrentClient):
 
         return resp["arguments"]["torrent-added"]["hashString"]
 
-    async def login(self) -> bool:
+    async def login(self) -> TestClientResult:
         return await super().login()
 
     async def request(self, method: str, arguments: dict | None = None) -> dict:

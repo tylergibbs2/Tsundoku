@@ -12,7 +12,7 @@ import aiohttp
 import bencodepy
 
 from tsundoku.config import TorrentConfig
-from tsundoku.dl_client.abstract import TorrentClient
+from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
 from tsundoku.dl_client.transmission import TransmissionClient
@@ -143,10 +143,16 @@ class Manager:
 
         return file_names
 
-    async def test_client(self) -> bool:
+    async def test_client(self) -> TestClientResult:
         """
         Checks whether or not the torrent client is able
         to connect.
+
+        Returns
+        -------
+        TestClientResult
+            Whether the connection succeeded, and a human-readable
+            error message explaining why it failed if it did not.
         """
         await self.update_config()
 
@@ -154,7 +160,7 @@ class Manager:
             return await self._client.test_client()
         except Exception as e:
             logger.error(f"Failed to test torrent client. [{e}]", exc_info=True)
-            return False
+            return TestClientResult(False, f"Unexpected error while testing the torrent client: {e}")
 
     async def check_torrent_completed(self, torrent_id: str) -> bool:
         """

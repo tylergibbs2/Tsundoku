@@ -39,7 +39,9 @@ export const TorrentConfig = forwardRef(
     const [fields, setFields] = useState<any>({});
     const [dirty, setDirty] = useState(false);
     const [fetchingStatus, setFetchingStatus] = useState<boolean>(false);
-    const [clientStatus, setClientStatus] = useState<boolean>(null);
+    const [clientStatus, setClientStatus] = useState<ClientTestResult | null>(
+      null
+    );
 
     useEffect(() => {
       if (config.data && typeof config.data === "object") {
@@ -76,12 +78,16 @@ export const TorrentConfig = forwardRef(
     const testTorrentConnection = async () => {
       if (fetchingStatus) return;
       setFetchingStatus(true);
-      let resp = await fetch("/api/v1/config/torrent/test");
-      if (resp.ok) {
-        let data = await resp.json();
-        setClientStatus(data.result);
-      } else {
-        setClientStatus(false);
+      try {
+        let resp = await fetch("/api/v1/config/torrent/test");
+        if (resp.ok) {
+          let data = await resp.json();
+          setClientStatus(data.result);
+        } else {
+          setClientStatus({ success: false, error: _("config-test-failure") });
+        }
+      } catch (e) {
+        setClientStatus({ success: false, error: String(e) });
       }
       setFetchingStatus(false);
     };
@@ -191,22 +197,28 @@ export const TorrentConfig = forwardRef(
   }
 );
 
+interface ClientTestResult {
+  success: boolean;
+  error?: string;
+}
+
 interface ConnectionStatusParams {
-  status?: boolean;
+  status?: ClientTestResult;
 }
 
 const ConnectionStatus = ({ status }: ConnectionStatusParams) => {
-  if (status)
+  if (!status) return <></>;
+
+  if (status.success)
     return (
       <span className="tag is-success mt-2 ml-2">
         {_("config-test-success")}
       </span>
     );
-  else if (status === false)
-    return (
-      <span className="tag is-danger mt-2 ml-2">
-        {_("config-test-failure")}
-      </span>
-    );
-  else return <></>;
+
+  return (
+    <span className="tag is-danger mt-2 ml-2">
+      {status.error ?? _("config-test-failure")}
+    </span>
+  );
 };

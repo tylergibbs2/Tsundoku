@@ -1,5 +1,11 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import NamedTuple
+
+
+class TestClientResult(NamedTuple):
+    success: bool
+    error: str | None = None
 
 
 class TorrentClient(ABC):
@@ -24,10 +30,16 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
-    async def test_client(self) -> bool:
+    async def test_client(self) -> TestClientResult:
         """
         Checks whether or not the torrent client is
         able to connect.
+
+        Returns
+        -------
+        TestClientResult
+            Whether the connection succeeded, and a human-readable
+            error message explaining why it failed if it did not.
         """
 
     @abstractmethod
@@ -129,12 +141,13 @@ class TorrentClient(ABC):
         """
 
     @abstractmethod
-    async def login(self) -> bool:
+    async def login(self) -> TestClientResult:
         """
         Authorizes with the torrent client's API.
 
         Returns
         -------
-        bool
-            Auth status.
+        TestClientResult
+            Whether authentication succeeded, and a human-readable
+            error message explaining why it failed if it did not.
         """

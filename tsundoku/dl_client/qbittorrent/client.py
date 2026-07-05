@@ -7,7 +7,8 @@ from typing import Any
 
 import aiohttp
 
-from tsundoku.dl_client.abstract import TorrentClient
+from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
+from tsundoku.dl_client.errors import describe_connection_error
 
 logger = logging.getLogger("tsundoku")
 
@@ -34,7 +35,7 @@ class qBittorrentClient(TorrentClient):  # noqa: N801
 
         return f"{protocol}://{host}:{port}"
 
-    async def test_client(self) -> bool:
+    async def test_client(self) -> TestClientResult:
         return await self.login()
 
     async def check_torrent_exists(self, torrent_id: str) -> bool:
@@ -107,10 +108,11 @@ class qBittorrentClient(TorrentClient):  # noqa: N801
 
         return match.group(1).lower()
 
-    async def login(self) -> bool:
-        if self.last_authed_user == f"{self.auth['username']}:{self.auth['password']}":
+    async def login(self) -> TestClientResult:
+        cache_key = f"{self.auth['username']}:{self.auth['password']}"
+        if self.last_authed_user == cache_key:
             logger.info("qBittorrent - Authentication is already cached")
-            return True
+            return TestClientResult(True)
 
         headers = {"Referer": self.url}
 
@@ -118,16 +120,38 @@ class qBittorrentClient(TorrentClient):  # noqa: N801
 
         request_url = f"{self.url}/api/v2/auth/login"
 
-        async with self.session.post(request_url, headers=headers, data=payload) as resp:
-            status = resp.status
-            if status == 200:
-                self.last_authed_user = f"{self.auth['username']}:{self.auth['password']}"
-                logger.info("qBittorrent - Successfully Authenticated")
-            else:
-                self.last_authed_user = None
-                logger.warning(f"qBittorrent - Failed to Authenticate, status {status}")
+        try:
+            async with self.session.post(request_url, headers=headers, data=payload) as resp:
+                status = resp.status
+                body = (await resp.text()).strip()
+        except (TimeoutError, aiohttp.ClientError) as e:
+            self.last_authed_user = None
+            message = describe_connection_error(e, "qBittorrent", self.url)
+            logger.warning(f"qBittorrent - {message}")
+            return TestClientResult(False, message)
 
-        return status == 200
+        if status == 200 and body.lower() == "ok.":
+            self.last_authed_user = cache_key
+            logger.info("qBittorrent - Successfully Authenticated")
+            return TestClientResult(True)
+
+        self.last_authed_user = None
+        if status == 403:
+            message = "qBittorrent has temporarily banned this IP due to too many failed login attempts."
+        elif status == 200:
+            message = "qBittorrent rejected the configured username or password."
+        elif status == 204:
+            message = (
+                "qBittorrent returned status 204 (No Content) instead of a login response, "
+                "which means the request likely never reached qBittorrent's WebUI. If it's running "
+                "behind a VPN sidecar (e.g. Gluetun) or reverse proxy, check that the container's "
+                "firewall/port config allows inbound traffic to the WebUI port from Tsundoku."
+            )
+        else:
+            message = f"qBittorrent returned unexpected status {status} while logging in."
+
+        logger.warning(f"qBittorrent - Failed to Authenticate, status {status}")
+        return TestClientResult(False, message)
 
     async def request(
         self,

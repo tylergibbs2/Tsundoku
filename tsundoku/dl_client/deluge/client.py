@@ -5,7 +5,8 @@ from typing import Any
 
 import aiohttp
 
-from tsundoku.dl_client.abstract import TorrentClient
+from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
+from tsundoku.dl_client.errors import describe_connection_error
 
 logger = logging.getLogger("tsundoku")
 
@@ -29,8 +30,8 @@ class DelugeClient(TorrentClient):
 
         return f"{protocol}://{host}:{port}/json"
 
-    async def test_client(self) -> bool:
-        return await self.login() is not None
+    async def test_client(self) -> TestClientResult:
+        return await self.login()
 
     async def check_torrent_exists(self, torrent_id: str) -> bool:
         fp = await self.get_torrent_fp(torrent_id)
@@ -84,7 +85,7 @@ class DelugeClient(TorrentClient):
         data = await self.request("webapi.add_torrent", [magnet_url])
         return data.get("result")
 
-    async def login(self) -> str | None:
+    async def login(self) -> TestClientResult:
         payload = {
             "id": self._request_counter,
             "method": "auth.check_session",
@@ -95,31 +96,40 @@ class DelugeClient(TorrentClient):
 
         try:
             auth_status = await self.session.post(self.url, json=payload, headers=headers)
-        except aiohttp.ClientConnectionError:
-            logger.error("Deluge - Failed to Connect")
-            resp = {}
-        else:
-            resp = await auth_status.json(content_type=None)
+        except (TimeoutError, aiohttp.ClientError) as e:
+            message = describe_connection_error(e, "Deluge", self.url)
+            logger.error(f"Deluge - {message}")
+            return TestClientResult(False, message)
 
+        resp = await auth_status.json(content_type=None)
         self._request_counter += 1
-        result = resp.get("result")
-        if not result:
-            payload = {
-                "id": self._request_counter,
-                "method": "auth.login",
-                "params": [self.password],
-            }
+
+        if resp.get("result"):
+            return TestClientResult(True)
+
+        payload = {
+            "id": self._request_counter,
+            "method": "auth.login",
+            "params": [self.password],
+        }
+
+        try:
             auth_request = await self.session.post(self.url, json=payload, headers=headers)
-            resp = await auth_request.json(content_type=None)
+        except (TimeoutError, aiohttp.ClientError) as e:
+            message = describe_connection_error(e, "Deluge", self.url)
+            logger.error(f"Deluge - {message}")
+            return TestClientResult(False, message)
 
-            self._request_counter += 1
+        resp = await auth_request.json(content_type=None)
+        self._request_counter += 1
 
-            error = resp.get("error")
-            if error or resp["result"] is False:
-                logger.warning("Deluge - Failed to Authenticate")
-                return None
+        error = resp.get("error")
+        if error or resp.get("result") is False:
+            logger.warning(f"Deluge - Failed to Authenticate [{error}]")
+            error_message = error.get("message") if isinstance(error, dict) else None
+            return TestClientResult(False, error_message or "Deluge rejected the configured password.")
 
-        return result
+        return TestClientResult(True)
 
     async def request(self, method: str, data: list | None = None) -> dict:
         """
@@ -144,12 +154,16 @@ class DelugeClient(TorrentClient):
             data = []
 
         retries = 5
-        while retries and not await self.login():
+        result = TestClientResult(False)
+        while retries:
+            result = await self.login()
+            if result.success:
+                break
             await asyncio.sleep(10)
             retries -= 1
-            continue
 
-        logger.info("Deluge - Successfully Authenticated")
+        if result.success:
+            logger.info("Deluge - Successfully Authenticated")
 
         payload = {"id": self._request_counter, "method": method, "params": data}
 
