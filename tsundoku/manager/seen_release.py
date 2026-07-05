@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from typing import TYPE_CHECKING
 
@@ -149,7 +149,7 @@ class SeenRelease:
                 *parameters,
             )
 
-        return [SeenRelease(app, *row) for row in rows]  # type: ignore
+        return [SeenRelease(app, *row) for row in rows]
 
     @staticmethod
     async def delete_old(app: "TsundokuApp", /, days: int) -> None:
@@ -288,5 +288,5 @@ class SeenRelease:
             resolution,
             version,
             torrent_destination,
-            datetime.utcnow(),
+            datetime.now(UTC).replace(tzinfo=None),
         )

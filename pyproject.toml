@@ -32,8 +32,8 @@ dev = [
     "pytest==8.4.1",
     "pytest-asyncio==1.0.0",
     "pytest-cov==6.2.1",
-    "ruff==0.12.3",
-    "ty==0.0.1a14"
+    "ruff==0.15.20",
+    "ty==0.0.56",
 ]
 
 [tool.ruff.lint]
@@ -56,7 +56,10 @@ extend-select = [
     "UP",     # pyupgrade
     "W",      # pycodestyle warning
 ]
-preview = true
+# Kept off: as of ruff 0.15, preview=true + extend-select (rather than select)
+# pulls in whole extra rule categories (BLE, DTZ, PYI, SIM, etc.) beyond the
+# ones listed above, not just preview-status rules within them.
+preview = false
 
 [tool.ruff.lint.per-file-ignores]
 "*" = ["ANN401"]

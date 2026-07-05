@@ -67,10 +67,9 @@ class Library:
 
     @classmethod
     async def new(cls, app: "TsundokuApp", folder: Path, is_default: bool = False) -> "Library":
-        async with app.acquire_db() as con:
-            async with con.cursor() as cur:
-                await cur.execute(
-                    """
+        async with app.acquire_db() as con, con.cursor() as cur:
+            await cur.execute(
+                """
                     INSERT INTO
                         library (
                             folder,
@@ -79,11 +78,11 @@ class Library:
                     VALUES
                         (?, ?);
                 """,
-                    (str(folder), False),
-                )
-                id_ = cur.lastrowid
-                if id_ is None:
-                    raise Exception("Failed to create new library, lastrowid is None")
+                (str(folder), False),
+            )
+            id_ = cur.lastrowid
+            if id_ is None:
+                raise Exception("Failed to create new library, lastrowid is None")
 
         instance = cls(app, id_=id_, folder=folder, is_default=False)
         if is_default:
@@ -118,10 +117,9 @@ class Library:
             )
 
     async def set_default(self) -> None:
-        async with self.app.acquire_db() as con:
-            async with con.transaction():
-                await con.execute(
-                    """
+        async with self.app.acquire_db() as con, con.transaction():
+            await con.execute(
+                """
                     UPDATE
                         library
                     SET
@@ -129,14 +127,14 @@ class Library:
                     WHERE
                         id = ?;
                 """,
-                    (
-                        True,
-                        self.id_,
-                    ),
-                )
+                (
+                    True,
+                    self.id_,
+                ),
+            )
 
-                await con.execute(
-                    """
+            await con.execute(
+                """
                     UPDATE
                         library
                     SET
@@ -144,7 +142,7 @@ class Library:
                     WHERE
                         id != ?;
                 """,
-                    (False, self.id_),
-                )
+                (False, self.id_),
+            )
 
-                self.is_default = True
+            self.is_default = True

@@ -80,9 +80,7 @@ class TransmissionClient(TorrentClient):
                     if data.get("result") == "success":
                         return TestClientResult(True)
 
-                    return TestClientResult(
-                        False, f"Transmission reported an error: {data.get('result', 'unknown error')}"
-                    )
+                    return TestClientResult(False, f"Transmission reported an error: {data.get('result', 'unknown error')}")
         except (TimeoutError, aiohttp.ClientError) as e:
             message = describe_connection_error(e, "Transmission", self.url)
             logger.error(f"Transmission - {message}")
@@ -126,7 +124,7 @@ class TransmissionClient(TorrentClient):
 
         return None
 
-    async def delete_torrent(self, torrent_id: str, with_files: bool) -> None:
+    async def delete_torrent(self, torrent_id: str, with_files: bool = True) -> None:
         await self.request("torrent-remove", {"ids": [torrent_id], "delete-local-data": with_files})
 
     async def get_torrent_fp(self, torrent_id: str) -> Path | None:

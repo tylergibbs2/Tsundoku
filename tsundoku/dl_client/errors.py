@@ -23,10 +23,7 @@ def describe_connection_error(exc: BaseException, client_name: str, url: str) ->
         A human-readable error message.
     """
     if isinstance(exc, aiohttp.ClientConnectorError):
-        return (
-            f"Could not connect to {client_name} at {url}. "
-            "Check that the client is running and the host/port are correct."
-        )
+        return f"Could not connect to {client_name} at {url}. Check that the client is running and the host/port are correct."
 
     if isinstance(exc, (asyncio.TimeoutError, aiohttp.ServerTimeoutError)):
         return f"Connection to {client_name} at {url} timed out."

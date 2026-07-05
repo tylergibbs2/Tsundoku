@@ -100,12 +100,12 @@ class Manager:
             torrent_bytes = await resp.read()
             metadata: Any = bencodepy.decode(torrent_bytes)
 
-        subject = metadata[b"info"]  # type: ignore
+        subject = metadata[b"info"]
 
         hash_data = bencodepy.encode(subject)
         digest = hashlib.sha1(hash_data).hexdigest()
 
-        magnet_url = f"magnet:?xt=urn:btih:{digest}&dn={metadata[b'info'][b'name'].decode()}&tr={metadata[b'announce'].decode()}"  # type: ignore
+        magnet_url = f"magnet:?xt=urn:btih:{digest}&dn={metadata[b'info'][b'name'].decode()}&tr={metadata[b'announce'].decode()}"
 
         return re.sub(pattern, b32_to_sha1, magnet_url)
 

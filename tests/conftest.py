@@ -11,7 +11,7 @@ from tests.mock import (
 )
 
 
-@pytest_asyncio.fixture(name="app", scope="function")
+@pytest_asyncio.fixture(name="app")
 async def create_app(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncGenerator[MockTsundokuApp, None]:

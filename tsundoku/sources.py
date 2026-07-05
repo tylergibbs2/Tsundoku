@@ -83,13 +83,13 @@ async def get_all_sources() -> AsyncGenerator[Source, None]:
     source_path.mkdir(exist_ok=True, parents=True)
 
     if not (source_path / "COPIED").exists():
-        default_sources = Path("default_sources").glob("*.json")
+        # Small, bundled directory of source definitions - not worth threading off.
+        default_sources = Path("default_sources").glob("*.json")  # noqa: ASYNC240
         for source in default_sources:
             source = source.name
             if not (source_path / source).exists():
-                async with aiofiles.open(source_path / source, "wb") as fp:
-                    async with aiofiles.open(Path.cwd() / "default_sources" / source, "rb") as default_fp:
-                        await fp.write(await default_fp.read())
+                async with aiofiles.open(source_path / source, "wb") as fp, aiofiles.open(Path.cwd() / "default_sources" / source, "rb") as default_fp:
+                    await fp.write(await default_fp.read())
 
         async with aiofiles.open(source_path / "COPIED", "wb") as fp:
             await fp.write(b"")

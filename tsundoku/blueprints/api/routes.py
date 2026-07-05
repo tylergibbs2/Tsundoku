@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 import sqlite3
@@ -49,17 +50,17 @@ logger = logging.getLogger("tsundoku")
 
 
 @api_blueprint.errorhandler(500)
-async def err_500(_: Any) -> APIResponse:  # noqa: RUF029
+async def err_500(_: Any) -> APIResponse:
     return APIResponse(status=500, error="Server encountered an unexpected error.")
 
 
 @api_blueprint.errorhandler(403)
-async def err_403(_: Any) -> APIResponse:  # noqa: RUF029
+async def err_403(_: Any) -> APIResponse:
     return APIResponse(status=403, error="You are forbidden from modifying this resource.")
 
 
 @api_blueprint.errorhandler(429)
-async def err_429(e: Exception) -> APIResponse:  # noqa: RUF029
+async def err_429(e: Exception) -> APIResponse:
     error = "Too many requests."
     if isinstance(e, RateLimitExceeded):
         error += f" Try again in {e.retry_after} seconds."
@@ -107,41 +108,37 @@ async def ensure_auth() -> APIResponse | None:
     return None
 
 
+def _list_directory(dir_: str, subdir: str | None) -> dict[str, Any]:
+    location = Path(dir_).resolve()
+    if subdir:
+        try:
+            location = (location / subdir).resolve()
+        except PermissionError:
+            pass
+
+    dirs = [directory.name for directory in location.glob("*") if directory.is_dir()]
+
+    return {
+        "root_is_writable": directory_is_writable(location),
+        "can_go_back": location.parent != location,
+        "current_path": str(location),
+        "children": dirs,
+    }
+
+
 @api_blueprint.route("/tree", methods=["POST"])
 async def tree() -> APIResponse:
     data = await request.get_json()
     if "dir" not in data:
         return APIResponse(status=400, error="Missing 'dir' key in request body.")
 
-    location = Path(data["dir"]).resolve()
-    if data.get("subdir"):
-        try:
-            location = (location / data["subdir"]).resolve()
-        except PermissionError:
-            pass
-
-    dirs = []
-    for directory in location.glob("*"):
-        if not directory.is_dir():
-            continue
-
-        dirs.append(directory.name)
-
-    can_go_back = location.parent != location
-    return APIResponse(
-        status=200,
-        result={
-            "root_is_writable": directory_is_writable(location),
-            "can_go_back": can_go_back,
-            "current_path": str(location),
-            "children": dirs,
-        },
-    )
+    result = await asyncio.to_thread(_list_directory, data["dir"], data.get("subdir"))
+    return APIResponse(status=200, result=result)
 
 
 @api_blueprint.route("/config/token", methods=["GET", "POST"])
 async def config_token() -> APIResponse:
-    api_key = request.headers.get("Authorization") or await current_user.api_key  # type: ignore
+    api_key = request.headers.get("Authorization") or await current_user.api_key
     if request.method == "POST":
         async with app.acquire_db() as con:
             new_key = str(uuid4())

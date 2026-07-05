@@ -54,7 +54,7 @@ hasher = PasswordHasher()
 
 
 @ux_blueprint.errorhandler(Unauthorized)
-async def redirect_to_login(_: Any) -> Response:  # noqa: RUF029
+async def redirect_to_login(_: Any) -> Response:
     if app.flags.IS_FIRST_LAUNCH:
         return redirect(url_for("ux.register"))
 
@@ -72,7 +72,7 @@ async def err_429(e: Exception) -> Response:
 
 
 @ux_blueprint.context_processor
-async def update_context() -> dict:  # noqa: RUF029
+async def update_context() -> dict:
     fluent = app.get_fluent()
     stats = {"version": version}
 
@@ -267,7 +267,7 @@ async def login_post() -> Any:
 
 @ux_blueprint.route("/logout", methods=["GET"])
 @login_required
-async def logout() -> Any:  # noqa: RUF029
+async def logout() -> Any:
     logout_user()
     return redirect("/")
 

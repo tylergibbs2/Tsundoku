@@ -62,7 +62,7 @@ class MockTsundokuApp(Quart):
         auth = AuthManager(self)
         RateLimiter(self)
 
-        auth.user_class = User
+        auth.user_class = User  # ty: ignore[invalid-assignment]
 
         self.config.from_object(QuartConfig())
 
@@ -112,7 +112,7 @@ class MockTsundokuApp(Quart):
                 readonly,
             )
 
-    async def test_client(self, /, user_type: UserType | None = None) -> TestClientProtocol:
+    async def test_client(self, /, user_type: UserType | None = None) -> TestClientProtocol:  # ty: ignore[invalid-method-override]
         client = super().test_client(use_cookies=True)
         if user_type is None:
             self.flags.IS_FIRST_LAUNCH = True
@@ -144,7 +144,7 @@ class MockTsundokuApp(Quart):
 
     def acquire_db(self) -> AbstractAsyncContextManager[Connection]:
         @asynccontextmanager
-        async def async_con_generator() -> AsyncIterator[Connection]:  # noqa: RUF029
+        async def async_con_generator() -> AsyncIterator[Connection]:
             yield self.__async_db_connection
 
         return async_con_generator()

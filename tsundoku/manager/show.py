@@ -155,7 +155,7 @@ class Show:
         else:
             metadata = await KitsuManager.from_show_id(app, show["id_"])
 
-        instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])  # type: ignore
+        instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])
 
         if not lazy_entries:
             await instance.entries()
@@ -200,7 +200,7 @@ class Show:
         watch: bool,
         preferred_resolution: str | None,
         preferred_release_group: str | None,
-    ) -> Self:
+    ) -> "Show":
         """
         Inserts a Show into the database based on the
         passed keyword arguments.
@@ -216,10 +216,9 @@ class Show:
         Show
             The inserted Show object.
         """
-        async with app.acquire_db() as con:
-            async with con.cursor() as cur:
-                await cur.execute(
-                    """
+        async with app.acquire_db() as con, con.cursor() as cur:
+            await cur.execute(
+                """
                     INSERT INTO
                         shows
                     (
@@ -236,17 +235,17 @@ class Show:
                     VALUES
                         (?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
-                    library_id,
-                    title,
-                    title_local,
-                    desired_format,
-                    season,
-                    episode_offset,
-                    watch,
-                    preferred_resolution,
-                    preferred_release_group,
-                )
-                new_id = cur.lastrowid
+                library_id,
+                title,
+                title_local,
+                desired_format,
+                season,
+                episode_offset,
+                watch,
+                preferred_resolution,
+                preferred_release_group,
+            )
+            new_id = cur.lastrowid
 
         if new_id is None:
             raise Exception("Failed to insert show into database")

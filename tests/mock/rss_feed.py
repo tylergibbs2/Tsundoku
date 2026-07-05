@@ -22,6 +22,6 @@ def generate_fake_magnet() -> str:
 
 def mock_feedparser_parse(*_: Any, **__: Any) -> MockRSSFeed:
     with Path("tests/mock/_rss_item_titles.txt").open("r", encoding="utf-8") as fd:
-        titles = [line.strip() for line in fd.readlines() if line]
+        titles = [line.strip() for line in fd if line]
 
     return cast(MockRSSFeed, {"items": [{"title": title, "link": generate_fake_magnet()} for title in titles]})

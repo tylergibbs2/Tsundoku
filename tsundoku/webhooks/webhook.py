@@ -100,11 +100,10 @@ class WebhookBase:
                     (?, ?, ?);
             """
 
-        async with app.acquire_db() as con:
-            async with con.cursor() as cur:
-                await cur.execute(query, *args)
-                await cur.execute(
-                    """
+        async with app.acquire_db() as con, con.cursor() as cur:
+            await cur.execute(query, *args)
+            await cur.execute(
+                """
                     SELECT
                         id,
                         content_fmt
@@ -113,9 +112,9 @@ class WebhookBase:
                     WHERE
                         id = ?;
                 """,
-                    cur.lastrowid,
-                )
-                new_base = await cur.fetchone()
+                cur.lastrowid,
+            )
+            new_base = await cur.fetchone()
 
         if not new_base:
             return None

@@ -34,8 +34,7 @@ class NyaaAPI(views.MethodView):
             page = 1
         if limit < 1 or limit > 100:
             limit = 15
-        if page < 1:
-            page = 1
+        page = max(page, 1)
 
         try:
             results = await NyaaSearcher.search(app, query, limit=limit, page=page)

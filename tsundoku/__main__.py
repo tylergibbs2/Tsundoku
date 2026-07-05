@@ -3,13 +3,14 @@ import asyncio
 import getpass
 from pathlib import Path
 import re
+import sys
 
 try:
     from fluent.runtime import FluentBundle, FluentResource
 except ImportError:
     print("Please install the dependencies before running Tsundoku.")
     print("Run `pip install -r requirements.txt` to install them.")
-    exit(1)
+    sys.exit(1)
 
 
 def find_locale_duplicates(lang: str) -> None:
@@ -24,7 +25,7 @@ def find_locale_duplicates(lang: str) -> None:
     locale_file = Path(f"l10n/{lang}.ftl")
     if not locale_file.exists():
         print(f"Locale '{lang}' could not be found or does not exist.")
-        exit(1)
+        sys.exit(1)
 
     seen_keys = set()
     duplicates = set()

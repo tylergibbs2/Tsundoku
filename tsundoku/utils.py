@@ -46,7 +46,7 @@ class ParserResult(TypedDict, total=False):
 
 
 def parse_anime_title(title: str) -> ParserResult:
-    result: ParserResult = anitopy.parse(title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False})  # type: ignore
+    result: ParserResult = anitopy.parse(title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False})
 
     if "video_resolution" in result:
         result["video_resolution"] = normalize_resolution(result["video_resolution"])
@@ -116,10 +116,8 @@ def compare_version_strings(first: str, second: str) -> int:
     int
         1 if a > b, -1 if a < b, 0 if a == b.
     """
-    if first.startswith("v"):
-        first = first[1:]
-    if second.startswith("v"):
-        second = second[1:]
+    first = first.removeprefix("v")
+    second = second.removeprefix("v")
 
     a = first.split(".")
     b = second.split(".")

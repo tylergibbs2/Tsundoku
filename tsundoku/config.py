@@ -72,6 +72,8 @@ class Config:
             """
             )
 
+        # row is a sqlite3.Row: iterating it directly yields values, not column
+        # names, so .keys() is required here (unlike a plain dict).
         return cls(app, {k: row[k] for k in row.keys()})
 
     @classmethod
@@ -98,6 +100,8 @@ class Config:
         if row is None:
             return cls(app, {})
 
+        # row is a sqlite3.Row: iterating it directly yields values, not column
+        # names, so .keys() is required here (unlike a plain dict).
         return cls(app, {k: row[k] for k in row.keys()})
 
     async def save(self) -> None:

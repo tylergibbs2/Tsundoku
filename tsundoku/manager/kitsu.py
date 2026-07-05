@@ -431,17 +431,14 @@ class KitsuManager:
                 self.kitsu_id,
             )
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
         if row["last_updated"] is None:
             return True
 
         delta = now - row["last_updated"]
 
-        if row["show_status"] == "finished" or delta.total_seconds() < (2 * 86400):
-            return False
-
-        return True
+        return not (row["show_status"] == "finished" or delta.total_seconds() < 2 * 86400)
 
     async def set_status(self, status: str) -> None:
         """

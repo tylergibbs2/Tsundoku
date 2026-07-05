@@ -205,24 +205,23 @@ class SearchResult:
             logger.warning(f"Failed to add Magnet URL {magnet} to download client")
             return added
 
-        async with self._app.acquire_db() as con:
-            async with con.cursor() as cur:
-                for episode in episodes_to_process:
-                    await cur.execute(
-                        """
+        async with self._app.acquire_db() as con, con.cursor() as cur:
+            for episode in episodes_to_process:
+                await cur.execute(
+                    """
                         INSERT INTO
                             show_entry
                             (show_id, episode, torrent_hash, created_manually)
                         VALUES
                             (?, ?, ?, ?);
                     """,
-                        self.show_id,
-                        episode,
-                        torrent_hash,
-                        True,
-                    )
-                    await cur.execute(
-                        """
+                    self.show_id,
+                    episode,
+                    torrent_hash,
+                    True,
+                )
+                await cur.execute(
+                    """
                         SELECT
                             id,
                             show_id,
@@ -237,13 +236,13 @@ class SearchResult:
                             show_entry
                         WHERE id = ?;
                     """,
-                        cur.lastrowid,
-                    )
-                    entry = await cur.fetchone()
+                    cur.lastrowid,
+                )
+                entry = await cur.fetchone()
 
-                    entry = Entry(self._app, entry)
-                    await entry.set_state(EntryState.downloading)
-                    added.append(entry)
+                entry = Entry(self._app, entry)
+                await entry.set_state(EntryState.downloading)
+                added.append(entry)
 
         return added
 

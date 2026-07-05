@@ -171,6 +171,9 @@ class ShowsAPI(views.MethodView):
         except Exception:
             return APIResponse(status=404, error="Show with passed ID not found.")
 
+        # `lazy_metadata` defaults to False, so metadata is always populated here.
+        assert show.metadata is not None
+
         preferred_resolution = arguments.get("preferred_resolution")
         if not preferred_resolution or preferred_resolution == "0":
             preferred_resolution = None

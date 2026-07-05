@@ -58,7 +58,7 @@ class ShowEntriesAPI(views.MethodView):
 
     async def add_single_entry(self, show_id: int, entry: dict) -> Entry:
         required_arguments = {"episode", "magnet"}
-        if all(arg not in entry.keys() for arg in required_arguments):
+        if all(arg not in entry for arg in required_arguments):
             raise Exception(f"Too many arguments or missing required arguments ({', '.join(required_arguments)}).")
 
         try:
@@ -70,10 +70,9 @@ class ShowEntriesAPI(views.MethodView):
             magnet = await app.dl_client.get_magnet(entry["magnet"])
             entry_id = await app.downloader.begin_handling(show_id, episode, magnet, "v0", manual=True)
         else:
-            async with app.acquire_db() as con:
-                async with con.cursor() as cur:
-                    await cur.execute(
-                        """
+            async with app.acquire_db() as con, con.cursor() as cur:
+                await cur.execute(
+                    """
                         INSERT INTO
                             show_entry (
                                 show_id,
@@ -85,13 +84,13 @@ class ShowEntriesAPI(views.MethodView):
                         VALUES
                             (?, ?, ?, ?, ?);
                     """,
-                        show_id,
-                        episode,
-                        "completed",
-                        "",
-                        True,
-                    )
-                    entry_id = cur.lastrowid
+                    show_id,
+                    episode,
+                    "completed",
+                    "",
+                    True,
+                )
+                entry_id = cur.lastrowid
 
         async with app.acquire_db() as con:
             new_entry = await con.fetchone(

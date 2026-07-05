@@ -201,7 +201,7 @@ class Cursor:
     async def execute(self: C, sql: str, /, *parameters: Any) -> C:
         """Asynchronous version of :meth:`sqlite3.Cursor.execute`."""
         if len(parameters) == 1 and isinstance(parameters[0], (dict, tuple)):
-            parameters = parameters[0]  # type: ignore
+            parameters = parameters[0]
         await self._post(self._cursor.execute, sql, parameters)
         return self
 
@@ -402,7 +402,7 @@ class Connection:
         Note that this returns a :class:`Cursor` instead of a :class:`sqlite3.Cursor`.
         """
         if len(parameters) == 1 and isinstance(parameters[0], (dict, tuple)):
-            parameters = parameters[0]  # type: ignore
+            parameters = parameters[0]
 
         def factory(cur: sqlite3.Cursor):
             return Cursor(self, cur)
@@ -537,10 +537,10 @@ def connect(
 
         def new_connect(db: str | bytes, **kwargs: Any) -> sqlite3.Connection:
             con = _connect_pragmas(db, **kwargs)
-            init(con)  # type: ignore
+            init(con)
             return con
 
     else:
-        new_connect = _connect_pragmas  # type: ignore
+        new_connect = _connect_pragmas
 
     return _ContextManagerMixin(queue, factory, new_connect, database, timeout=timeout, **kwargs)

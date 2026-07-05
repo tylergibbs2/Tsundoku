@@ -155,10 +155,9 @@ class Downloader:
             return None
 
         # TODO: handle entry insertion in the Entry class
-        async with self.app.acquire_db() as con:
-            async with con.cursor() as cur:
-                await cur.execute(
-                    """
+        async with self.app.acquire_db() as con, con.cursor() as cur:
+            await cur.execute(
+                """
                     INSERT OR REPLACE INTO
                         show_entry (
                             show_id,
@@ -170,16 +169,16 @@ class Downloader:
                     VALUES
                         (:show_id, :episode, :version, :torrent_hash, :manual);
                 """,
-                    {
-                        "show_id": show_id,
-                        "episode": episode,
-                        "version": version,
-                        "torrent_hash": torrent_hash,
-                        "manual": manual,
-                    },
-                )
-                await cur.execute(
-                    """
+                {
+                    "show_id": show_id,
+                    "episode": episode,
+                    "version": version,
+                    "torrent_hash": torrent_hash,
+                    "manual": manual,
+                },
+            )
+            await cur.execute(
+                """
                     SELECT
                         id,
                         show_id,
@@ -195,9 +194,9 @@ class Downloader:
                     WHERE
                         id = ?;
                 """,
-                    cur.lastrowid,
-                )
-                entry = await cur.fetchone()
+                cur.lastrowid,
+            )
+            entry = await cur.fetchone()
 
         entry = Entry(self.app, entry)
         await entry.set_state(EntryState.downloading)

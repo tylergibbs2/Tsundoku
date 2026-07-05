@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -18,7 +18,7 @@ class ShowCollection:
     def __len__(self) -> int:
         return len(self._shows)
 
-    def __iter__(self) -> Generator[Show, None, None]:
+    def __iter__(self) -> Iterator[Show]:
         yield from self._shows
 
     def to_list(self) -> list[dict]:
@@ -170,7 +170,7 @@ class ShowCollection:
         The status is an attribute that is assigned
         on each Show's metadata object.
         """
-        managers = [s.metadata for s in self._shows if await s.metadata.should_update_status()]
+        managers = [s.metadata for s in self._shows if s.metadata is not None and await s.metadata.should_update_status()]
 
         if not managers:
             return

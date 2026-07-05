@@ -51,8 +51,11 @@ def get_cfg_value(parser: ConfigParser, key: str, value: str, default: Any | Non
 
 
 async def transfer_config() -> None:
+    # Runs once during startup migrations, before the server accepts requests,
+    # alongside other synchronous work (yoyo's own blocking migration apply) -
+    # not worth threading off for a one-shot config file read.
     cfg_fp = "data/config.ini" if os.getenv("IS_DOCKER") else "config.ini"
-    if not Path(cfg_fp).exists():
+    if not Path(cfg_fp).exists():  # noqa: ASYNC240
         return
 
     cfg = ConfigParser()
@@ -159,7 +162,7 @@ async def transfer_config() -> None:
         )
 
     path = Path(cfg_fp)
-    path.rename(path.with_suffix(".old"))
+    path.rename(path.with_suffix(".old"))  # noqa: ASYNC240
 
 
 def migrate_to_data_dir() -> None:

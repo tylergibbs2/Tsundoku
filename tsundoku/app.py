@@ -91,7 +91,7 @@ app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
 auth = AuthManager(app)
 rate_limiter = RateLimiter(app)
 
-auth.user_class = User
+auth.user_class = User  # ty: ignore[invalid-assignment]
 
 logger = logging.getLogger("tsundoku")
 
@@ -209,7 +209,7 @@ async def setup_session() -> None:
 
 
 @app.before_serving
-async def setup_tasks() -> None:  # noqa: RUF029
+async def setup_tasks() -> None:
     """
     Creates the instances for the following tasks:
     poller, downloader
@@ -268,7 +268,7 @@ async def cleanup() -> None:
 
 
 @ux_blueprint.context_processor
-async def insert_locale() -> dict:  # noqa: RUF029
+async def insert_locale() -> dict:
     return {"LOCALE": app.flags.LOCALE}
 
 
