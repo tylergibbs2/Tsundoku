@@ -130,7 +130,10 @@ class qBittorrentClient(TorrentClient):  # noqa: N801
             logger.warning(f"qBittorrent - {message}")
             return TestClientResult(False, message)
 
-        if status == 200 and body.lower() == "ok.":
+        # qBittorrent < 5.2.0 responds 200 with body "Ok." on a successful login.
+        # 5.2.0+ instead responds 204 No Content, setting the session cookie via
+        # the Set-Cookie header (picked up automatically by the shared cookie jar).
+        if status == 204 or (status == 200 and body.lower() == "ok."):
             self.last_authed_user = cache_key
             logger.info("qBittorrent - Successfully Authenticated")
             return TestClientResult(True)
@@ -138,15 +141,8 @@ class qBittorrentClient(TorrentClient):  # noqa: N801
         self.last_authed_user = None
         if status == 403:
             message = "qBittorrent has temporarily banned this IP due to too many failed login attempts."
-        elif status == 200:
+        elif status in (200, 401):
             message = "qBittorrent rejected the configured username or password."
-        elif status == 204:
-            message = (
-                "qBittorrent returned status 204 (No Content) instead of a login response, "
-                "which means the request likely never reached qBittorrent's WebUI. If it's running "
-                "behind a VPN sidecar (e.g. Gluetun) or reverse proxy, check that the container's "
-                "firewall/port config allows inbound traffic to the WebUI port from Tsundoku."
-            )
         else:
             message = f"qBittorrent returned unexpected status {status} while logging in."
 
