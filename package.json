@@ -1,6 +1,6 @@
 {
   "name": "tsundoku",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Streamlined anime downloading, moving, and renaming.",
   "private": true,
   "devDependencies": {
