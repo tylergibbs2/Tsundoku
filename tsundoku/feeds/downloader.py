@@ -10,7 +10,7 @@ import aiofiles.os
 
 from tsundoku.config import FeedsConfig, GeneralConfig
 from tsundoku.manager import Entry, EntryState, Show
-from tsundoku.utils import ExprDict, move, parse_anime_title
+from tsundoku.utils import ExprDict, move, parse_anime_titles
 
 logger = logging.getLogger("tsundoku")
 
@@ -327,24 +327,28 @@ class Downloader:
             return root
 
         root.resolve()
-        for subpath in root.rglob("*"):
-            try:
-                parsed = parse_anime_title(subpath.name)
-            except Exception:
-                logger.error(
-                    f"Anitopy - Could not parse `{subpath.name}`, skipping",
-                    exc_info=True,
-                )
-                continue  # TODO: maybe ask user on UI to match manually
+        subpaths = [subpath for subpath in root.rglob("*") if subpath.is_file()]
 
-            if parsed is None or "episode_number" not in parsed:
+        # The files inside a single torrent are related, so parse them as a set:
+        # anitomy shares context across them to resolve the real per-file episode
+        # number even when a season-pack folder/name carries a range.
+        try:
+            parsed_files = parse_anime_titles([subpath.name for subpath in subpaths])
+        except Exception:
+            logger.error(
+                f"Could not parse files in `{root}`, skipping",
+                exc_info=True,
+            )
+            return None  # TODO: maybe ask user on UI to match manually
+
+        for subpath, parsed in zip(subpaths, parsed_files, strict=True):
+            if "episode_number" not in parsed:
                 continue
 
             if not isinstance(parsed["episode_number"], str) or not parsed["episode_number"].isdigit():
                 continue
 
-            found = int(parsed["episode_number"])
-            if found == episode:
+            if int(parsed["episode_number"]) == episode:
                 return subpath
 
         return None

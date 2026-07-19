@@ -327,13 +327,13 @@ class Poller:
             parsed = parse_anime_title(filename)
         except Exception:
             logger.exception(
-                f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'",
+                f"`{source.name}@{source.version}` - anitomy failed to parse '{filename}'",
                 exc_info=True,
             )
             return None
 
         if parsed is None:
-            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to parse '{filename}'")
+            logger.warning(f"`{source.name}@{source.version}` - anitomy failed to parse '{filename}'")
             return None
 
         if isinstance(parsed.get("release_information", []), list):
@@ -342,10 +342,10 @@ class Poller:
             release_info = [parsed.get("release_information", "").lower()]
 
         if "anime_title" not in parsed:
-            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to retrieve 'anime_title' from '{filename}'")
+            logger.warning(f"`{source.name}@{source.version}` - anitomy failed to retrieve 'anime_title' from '{filename}'")
             return None
         if "episode_number" not in parsed:
-            logger.warning(f"`{source.name}@{source.version}` - anitopy failed to retrieve 'episode_number' from '{filename}'")
+            logger.warning(f"`{source.name}@{source.version}` - anitomy failed to retrieve 'episode_number' from '{filename}'")
             return None
         if "batch" in release_info or isinstance(parsed["episode_number"], list):
             logger.info(f"`{source.name}@{source.version}` - Ignoring batch release '{filename}'")

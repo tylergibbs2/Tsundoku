@@ -9,7 +9,7 @@ authors = [
 ]
 license-files = ["LICENSE.md"]
 dependencies = [
-    "anitopy@git+https://github.com/FichteFoll/anitopy.git@fb64e73559323baaee37eb06e3a137c5f5087dff",
+    "anitomy-ng==1.0.6",
     "apscheduler==3.10.4",
     "argon2-cffi==25.1.0",
     "aiofiles==24.1.0",

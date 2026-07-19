@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = "==3.11.*"
 
 [[package]]
@@ -70,9 +70,17 @@ wheels = [
 ]
 
 [[package]]
-name = "anitopy"
-version = "2.2.0rc3"
-source = { git = "https://github.com/FichteFoll/anitopy.git?rev=fb64e73559323baaee37eb06e3a137c5f5087dff#fb64e73559323baaee37eb06e3a137c5f5087dff" }
+name = "anitomy-ng"
+version = "1.0.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/8a/30c4cad8009f4004db0fa067eb2e6661e36fcb82242d01391ad791b4964b/anitomy_ng-1.0.6.tar.gz", hash = "sha256:340a55fae07fac537bf1721a36b53bca214c4d4c5df9e7a3cf1c34806dfe724e", size = 134997, upload-time = "2026-07-18T16:21:44.699Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/81/ca66b3e9d1b376f51f72caf9be9ebe4e62df61776953c72ff0a0c39abae1/anitomy_ng-1.0.6-cp39-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:b70021d878c391e4369d8eae23b19c626bff1c72536f0be4720cbfab58d604eb", size = 1067796, upload-time = "2026-07-18T16:21:36.357Z" },
+    { url = "https://files.pythonhosted.org/packages/69/3c/7bffc2b31deea666dfffa411bc6ebd30b016b649aa08552305798dd3fde8/anitomy_ng-1.0.6-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:03cc6372edea84886e5b85a53f9898586309d78be90d1db61de9986f35d4fa8f", size = 593476, upload-time = "2026-07-18T16:21:38.16Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/ff/26701739769aa556d99b1bad710ae1b311c5bec8381539fee074da72e261/anitomy_ng-1.0.6-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:764e30bdc4a2e9de6b75ccfecb964283ddaab0758bddea1c4adba0303ee49bc8", size = 601659, upload-time = "2026-07-18T16:21:39.87Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/d8/7fda438316cee56d088d914961b3579289bf99fc5ac0e45ff961556fdefb/anitomy_ng-1.0.6-cp39-abi3-win32.whl", hash = "sha256:9b4f982d8dd7f7bbbba38a51eab46b783a122ce4bd0187ec68b92dc370e4c3d6", size = 401750, upload-time = "2026-07-18T16:21:41.821Z" },
+    { url = "https://files.pythonhosted.org/packages/af/1b/13d1f62ab424c2325f42e7319771d6c78ded96799fa188bfaebc00840a71/anitomy_ng-1.0.6-cp39-abi3-win_amd64.whl", hash = "sha256:afb3f402e0d153790a52ea01fc857c61e3ac515f937b07f1975c9ac88914ce98", size = 432490, upload-time = "2026-07-18T16:21:43.267Z" },
+]
 
 [[package]]
 name = "apscheduler"
@@ -725,7 +733,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "aiohttp" },
-    { name = "anitopy" },
+    { name = "anitomy-ng" },
     { name = "apscheduler" },
     { name = "argon2-cffi" },
     { name = "bencodepy" },
@@ -754,7 +762,7 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = "==24.1.0" },
     { name = "aiohttp", specifier = "==3.14.1" },
-    { name = "anitopy", git = "https://github.com/FichteFoll/anitopy.git?rev=fb64e73559323baaee37eb06e3a137c5f5087dff" },
+    { name = "anitomy-ng", specifier = "==1.0.6" },
     { name = "apscheduler", specifier = "==3.10.4" },
     { name = "argon2-cffi", specifier = "==25.1.0" },
     { name = "bencodepy", specifier = "==0.9.5" },

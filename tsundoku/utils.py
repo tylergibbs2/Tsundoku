@@ -3,10 +3,17 @@ from functools import partial, wraps
 import logging
 from pathlib import Path
 import shutil
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 from uuid import uuid4
 
-import anitopy
+from anitomy_ng import ElementKind, Options
+from anitomy_ng import parse as anitomy_parse
+from anitomy_ng import parse_together as anitomy_parse_together
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from anitomy_ng import Element
 
 
 def wrap(func: Any) -> Any:
@@ -31,6 +38,7 @@ class ExprDict(dict):
 
 class ParserResult(TypedDict, total=False):
     anime_title: str
+    anime_type: str
     anime_year: str
     audio_term: str
     episode_number: list[str] | str
@@ -45,13 +53,66 @@ class ParserResult(TypedDict, total=False):
     video_term: str
 
 
-def parse_anime_title(title: str) -> ParserResult:
-    result: ParserResult = anitopy.parse(title, options={"allowed_delimiters": " _&+,|", "parse_episode_title": False})
+# Maps anitomy-ng element kinds onto the ParserResult keys the rest of
+# Tsundoku expects.
+_KIND_TO_KEY: dict[ElementKind, str] = {
+    ElementKind.TITLE: "anime_title",
+    ElementKind.TYPE: "anime_type",
+    ElementKind.YEAR: "anime_year",
+    ElementKind.AUDIO_TERM: "audio_term",
+    ElementKind.EPISODE: "episode_number",
+    ElementKind.EPISODE_TITLE: "episode_title",
+    ElementKind.FILE_CHECKSUM: "file_checksum",
+    ElementKind.FILE_EXTENSION: "file_extension",
+    ElementKind.RELEASE_GROUP: "release_group",
+    ElementKind.RELEASE_VERSION: "release_version",
+    ElementKind.RELEASE_INFORMATION: "release_information",
+    ElementKind.VIDEO_RESOLUTION: "video_resolution",
+    ElementKind.VIDEO_TERM: "video_term",
+}
 
+_PARSE_OPTIONS = Options(parse_episode_title=False)
+
+
+def _elements_to_result(title: str, elements: "Iterable[Element]") -> ParserResult:
+    grouped: dict[str, list[str]] = {}
+    for element in elements:
+        key = _KIND_TO_KEY.get(element.kind)
+        if key is not None:
+            grouped.setdefault(key, []).append(element.value)
+
+    # anitomy-ng returns an ordered list of elements and may emit the same kind
+    # more than once (e.g. the two endpoints of an episode range). A single
+    # occurrence collapses to a bare string; a repeated key stays a list, which
+    # the rest of the codebase branches on to detect batches/ranges.
+    raw: dict[str, Any] = {"file_name": title}
+    for key, values in grouped.items():
+        raw[key] = values[0] if len(values) == 1 else values
+
+    result = cast(ParserResult, raw)
     if "video_resolution" in result:
         result["video_resolution"] = normalize_resolution(result["video_resolution"])
 
     return result
+
+
+def parse_anime_title(title: str) -> ParserResult:
+    return _elements_to_result(title, anitomy_parse(title, _PARSE_OPTIONS))
+
+
+def parse_anime_titles(titles: list[str]) -> list[ParserResult]:
+    """
+    Parse a set of *related* anime filenames together.
+
+    Only use this for filenames that belong to the same release (e.g. the
+    files inside a single torrent) — anitomy-ng shares context across the set
+    to resolve ambiguities a single filename can't, such as a season-pack
+    folder range versus the real per-file episode number. Do not use it for
+    unrelated items (e.g. a mixed RSS feed), which would cross-contaminate.
+
+    Results are returned in the same order as ``titles``.
+    """
+    return [_elements_to_result(title, elements) for title, elements in zip(titles, anitomy_parse_together(titles, _PARSE_OPTIONS), strict=True)]
 
 
 def normalize_resolution(original: str) -> str:

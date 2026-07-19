@@ -183,7 +183,7 @@ class SeenRelease:
         logger.info(f"Deleted {deleted} old SeenReleases.")
 
     @classmethod
-    async def add(cls, app: "TsundokuApp", anitopy_result: ParserResult, torrent_destination: str) -> "SeenRelease | None":
+    async def add(cls, app: "TsundokuApp", parsed: ParserResult, torrent_destination: str) -> "SeenRelease | None":
         """
         Adds a new SeenRelease to the database.
 
@@ -191,9 +191,9 @@ class SeenRelease:
         ----------
         app : TsundokuApp
             The TsundokuApp instance.
-        anitopy_result : ParserResult
+        parsed : ParserResult
             The result of parsing a torrent's filename
-            with Anitopy.
+            with anitomy.
         torrent_destination : str
             The destination of the torrent.
 
@@ -202,38 +202,38 @@ class SeenRelease:
         SeenRelease
             The SeenRelease that was added.
         """
-        if "file_name" not in anitopy_result:
-            logger.warning(f"Not adding '{anitopy_result}' to seen releases because it has no file name.")
+        if "file_name" not in parsed:
+            logger.warning(f"Not adding '{parsed}' to seen releases because it has no file name.")
             return None
-        if "anime_title" not in anitopy_result:
-            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no anime title.")
+        if "anime_title" not in parsed:
+            logger.warning(f"Not adding '{parsed['file_name']}' to seen releases because it has no anime title.")
             return None
-        if "episode_number" not in anitopy_result:
-            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no episode number.")
+        if "episode_number" not in parsed:
+            logger.warning(f"Not adding '{parsed['file_name']}' to seen releases because it has no episode number.")
             return None
 
-        release_group = anitopy_result.get("release_group", "")
+        release_group = parsed.get("release_group", "")
         if not release_group:
-            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no release group.")
+            logger.warning(f"Not adding '{parsed['file_name']}' to seen releases because it has no release group.")
             return None
 
-        resolution = anitopy_result.get("video_resolution", "")
+        resolution = parsed.get("video_resolution", "")
         if not resolution:
-            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has no resolution.")
+            logger.warning(f"Not adding '{parsed['file_name']}' to seen releases because it has no resolution.")
             return None
 
         resolution = normalize_resolution(resolution)
         if resolution not in VALID_RESOLUTIONS:
-            logger.info(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has an invalid resolution '{resolution}'.")
+            logger.info(f"Not adding '{parsed['file_name']}' to seen releases because it has an invalid resolution '{resolution}'.")
             return None
 
-        version = anitopy_result.get("release_version", "v0")
+        version = parsed.get("release_version", "v0")
 
-        if not isinstance(anitopy_result["episode_number"], str) or not anitopy_result["episode_number"].isdigit():
-            logger.warning(f"Not adding '{anitopy_result['file_name']}' to seen releases episode number is not an integer.")
+        if not isinstance(parsed["episode_number"], str) or not parsed["episode_number"].isdigit():
+            logger.warning(f"Not adding '{parsed['file_name']}' to seen releases episode number is not an integer.")
             return None
 
-        episode = int(anitopy_result["episode_number"])
+        episode = int(parsed["episode_number"])
 
         async with app.acquire_db() as con:
             existing_version = await con.fetchval(
@@ -248,13 +248,13 @@ class SeenRelease:
                     AND episode = ?
                     AND resolution = ?;
                 """,
-                anitopy_result["anime_title"],
+                parsed["anime_title"],
                 release_group,
                 episode,
                 resolution,
             )
             if existing_version and compare_version_strings(version, existing_version) <= 0:
-                logger.debug(f"Not adding '{anitopy_result['file_name']}' to seen releases because it has a lower (or same) version than the existing release.")
+                logger.debug(f"Not adding '{parsed['file_name']}' to seen releases because it has a lower (or same) version than the existing release.")
                 return None
 
             await con.execute(
@@ -272,7 +272,7 @@ class SeenRelease:
                     version = excluded.version,
                     torrent_destination = excluded.torrent_destination;
                 """,
-                anitopy_result["anime_title"],
+                parsed["anime_title"],
                 release_group,
                 episode,
                 resolution,
@@ -282,7 +282,7 @@ class SeenRelease:
 
         return cls(
             app,
-            anitopy_result["anime_title"],
+            parsed["anime_title"],
             release_group,
             episode,
             resolution,

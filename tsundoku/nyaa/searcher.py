@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 import feedparser
 
 from tsundoku.manager import Entry, EntryState
-from tsundoku.utils import parse_anime_title
+from tsundoku.utils import parse_anime_title, parse_anime_titles
 
 logger = logging.getLogger("tsundoku")
 
@@ -118,15 +118,18 @@ class SearchResult:
             List of episodes.
         """
         files = await self._app.dl_client.get_file_structure(self.torrent_link)
-        episodes = []
-        for file in files:
-            try:
-                parsed = parse_anime_title(file)
-            except Exception:
-                logger.error(f"Anitopy - Could not Parse `{file}`, skipping", exc_info=True)
-                continue
 
-            if parsed is None or "anime_type" in parsed or "episode_number" not in parsed:
+        # The files all belong to this one torrent, so parse them together and
+        # let anitomy share context across the set.
+        try:
+            parsed_files = parse_anime_titles(files)
+        except Exception:
+            logger.error(f"Could not parse files in `{self.torrent_link}`, skipping", exc_info=True)
+            return []
+
+        episodes = []
+        for parsed in parsed_files:
+            if "anime_type" in parsed or "episode_number" not in parsed:
                 continue
 
             if not isinstance(parsed["episode_number"], str) or not parsed["episode_number"].isdigit():
@@ -289,7 +292,7 @@ class NyaaSearcher:
             try:
                 parse_anime_title(title)
             except Exception:
-                logger.error(f"Anitopy - Could not Parse `{title}`, skipping", exc_info=True)
+                logger.error(f"Could not parse `{title}`, skipping", exc_info=True)
                 continue
 
             found.append(SearchResult.from_dict(app, item))
