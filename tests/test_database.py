@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import sqlite3
 
 import pytest
@@ -6,11 +7,12 @@ import pytest
 from tsundoku.database import migrate
 
 
-async def test_schema_matches_migrated(caplog: pytest.LogCaptureFixture) -> None:
+async def test_schema_matches_migrated(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG, logger="tsundoku")
 
-    await migrate("file:migration_test2?mode=memory&cache=shared")
-    con = sqlite3.connect("file:migration_test2?mode=memory&cache=shared", uri=True)
+    db = tmp_path / "migration_test.db"
+    await migrate(db)
+    con = sqlite3.connect(db)
     cur = con.execute(
         """
         SELECT
