@@ -14,7 +14,30 @@ module.exports = {
       },
       {
         test: /\.s?[ac]ss$/i,
-        use: ["style-loader", "css-loader", "sass-loader"],
+        use: [
+          "style-loader",
+          "css-loader",
+          {
+            loader: "sass-loader",
+            options: {
+              // NOTE: we stay on the legacy Sass JS API on purpose. The modern
+              // API changes import resolution so bare `@import "bulma"` (a
+              // node_modules package) no longer resolves. Silence the noisy
+              // deprecations instead; migrating fully is blocked on bulma 1.x.
+              sassOptions: {
+                silenceDeprecations: [
+                  // We are knowingly using the legacy API (see note above).
+                  "legacy-js-api",
+                  // Our stylesheets + bulma 0.9.x still use `@import`.
+                  "import",
+                ],
+                // Silence deprecation warnings originating in dependencies
+                // (bulma 0.9.x internals: darken(), red(), etc.).
+                quietDeps: true,
+              },
+            },
+          },
+        ],
       },
       {
         test: /\.js/,
