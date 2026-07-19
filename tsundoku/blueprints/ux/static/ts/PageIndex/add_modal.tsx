@@ -92,11 +92,12 @@ export const AddModal = ({
     defaultValues: defaultValues,
   });
 
-  const [isAddingAlreadySeen, setIsAddingAlreadySeen] =
-    useState<boolean>(false);
+  // Discover is the default entry point: it steers users toward shows Tsundoku
+  // has actually seen in the feeds, rather than a blank manual form.
+  const [isAddingAlreadySeen, setIsAddingAlreadySeen] = useState<boolean>(true);
 
   useEffect(() => {
-    setIsAddingAlreadySeen(false);
+    setIsAddingAlreadySeen(true);
     reset(defaultValues);
   }, [currentModal]);
 
@@ -210,6 +211,7 @@ const AlreadySeenAddFormComponent = ({
   const [selectedResolution, setSelectedResolution] = useState<string | null>(
     null
   );
+  const [filter, setFilter] = useState<string>("");
 
   const seenTitles = useQuery("seenTitles", async () =>
     fetchDistinctSeenReleases("title")
@@ -274,6 +276,7 @@ const AlreadySeenAddFormComponent = ({
     else if (!selectedResolution) setSelectedResolution(selectedValue);
 
     setSelectedValue(null);
+    setFilter("");
   };
 
   const back = () => {
@@ -281,11 +284,13 @@ const AlreadySeenAddFormComponent = ({
     else if (!selectedReleaseGroup) {
       setSelectedTitle(null);
       setSelectedValue(previousTitle);
+      setFilter("");
       return;
     } else if (!selectedResolution) setSelectedReleaseGroup(null);
     else if (selectedResolution) setSelectedResolution(null);
 
     setSelectedValue(null);
+    setFilter("");
   };
 
   const currentStage = (): string => {
@@ -342,6 +347,31 @@ const AlreadySeenAddFormComponent = ({
     );
   }
 
+  const stage = currentStage();
+
+  const rawOptions =
+    stage === "title"
+      ? seenTitles.data
+      : stage === "release-group"
+      ? seenGroups.data
+      : seenResolutions.data;
+
+  // Normalize for matching so punctuation/spacing variants of the same show
+  // (e.g. "Show: Sub" vs "Show_ Sub") both match a single search query, and
+  // sort naturally so near-duplicate titles land next to each other.
+  const normalize = (value: string): string =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+
+  const needle = normalize(filter);
+  const visibleOptions = [...rawOptions]
+    .sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+    )
+    .filter((value) => needle === "" || normalize(value).includes(needle));
+
   return (
     <>
       <h5 className="is-size-5 has-text-centered mb-1">
@@ -350,19 +380,28 @@ const AlreadySeenAddFormComponent = ({
         {selectedResolution !== null ? ` - ${selectedResolution}` : ""}
       </h5>
 
-      {currentStage() == "title" && (
+      {stage == "title" && (
         <p className="mb-1">{_("add-form-discover-select-title")}</p>
       )}
-      {currentStage() == "release-group" && (
+      {stage == "release-group" && (
         <p className="mb-1">{_("add-form-discover-select-release-group")}</p>
       )}
-      {currentStage() == "resolution" && (
+      {stage == "resolution" && (
         <p className="mb-1">{_("add-form-discover-select-resolution")}</p>
       )}
 
+      <input
+        className="input mb-1"
+        type="text"
+        autoFocus
+        placeholder={_("add-form-discover-search-placeholder")}
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+      />
+
       <div
         className="select is-multiple is-fullwidth"
-        style={{ height: "33vh" }}
+        style={{ height: "30vh" }}
       >
         <select
           value={selectedValue ? selectedValue : undefined}
@@ -370,26 +409,19 @@ const AlreadySeenAddFormComponent = ({
           size={8}
           style={{ height: "100%" }}
         >
-          {currentStage() === "title" &&
-            seenTitles.data.map((title, i) => (
-              <option key={i} value={title}>
-                {title}
-              </option>
-            ))}
-          {currentStage() === "release-group" &&
-            seenGroups.data.map((group, i) => (
-              <option key={i} value={group}>
-                {group}
-              </option>
-            ))}
-          {currentStage() === "resolution" &&
-            seenResolutions.data.map((resolution, i) => (
-              <option key={i} value={resolution}>
-                {resolution}
-              </option>
-            ))}
+          {visibleOptions.map((value, i) => (
+            <option key={i} value={value}>
+              {value}
+            </option>
+          ))}
         </select>
       </div>
+
+      {visibleOptions.length === 0 && (
+        <p className="has-text-grey has-text-centered mt-1">
+          {_("add-form-discover-no-results")}
+        </p>
+      )}
 
       <div className="is-flex mt-2">
         <button
