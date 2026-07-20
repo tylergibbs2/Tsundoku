@@ -323,17 +323,13 @@ export const deleteShowById = async (id: number): Promise<void> => {
     );
 };
 
-export const deleteLibraryById = async (id: number): Promise<Library> => {
+export const deleteLibraryById = async (id: number): Promise<void> => {
   let request = {
     method: "DELETE",
     headers: COMMON_HEADERS,
   };
 
   let response = await fetch(`/api/v1/libraries/${id}`, request);
-  let data: APIResponse<Library> = await response.json();
-
-  if (response.ok) return data.result;
-
   if (!response.ok)
     throw new Error(
       `Failed to delete library, ${response.status}: ${getReasonPhrase(

@@ -6,7 +6,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import aiohttp
 import bencodepy
@@ -21,13 +21,13 @@ logger = logging.getLogger("tsundoku")
 
 
 class Manager:
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
     session: aiohttp.ClientSession
 
     __last_hash: int | None
 
-    def __init__(self, app_context: Any, session: aiohttp.ClientSession) -> None:
-        self.app = app_context.app
+    def __init__(self, app: "TsundokuAppState", session: aiohttp.ClientSession) -> None:
+        self.app = app
         self.session = session
         self.__last_hash = None
 

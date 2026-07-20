@@ -1,60 +1,81 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
-from quart_auth import AuthUser
+    from tsundoku.app import TsundokuAppState
 
 
-class User(AuthUser):
-    _resolved: bool
+@dataclass(slots=True)
+class User:
+    """A resolved, authenticated user.
 
-    _username: str
-    _api_key: str
-    _readonly: bool
+    Instances are always fully resolved against the database via
+    :meth:`from_id` or :meth:`from_api_key`; there is no lazy-loading
+    state to manage.
+    """
 
-    def __init__(self, auth_id: str | None) -> None:
-        super().__init__(auth_id)
-        self._resolved = False
-        self._username = ""
-        self._api_key = ""
-        self._readonly = False
+    id: int
+    username: str
+    api_key: str
+    readonly: bool
 
-    async def _resolve(self) -> None:
-        if not self._resolved:
-            async with app.acquire_db() as con:
-                user = await con.fetchone(
-                    """
-                    SELECT
-                        username,
-                        api_key,
-                        readonly
-                    FROM
-                        users
-                    WHERE id = ?;
+    @classmethod
+    async def from_id(cls, state: TsundokuAppState, user_id: int) -> User | None:
+        """Resolve a :class:`User` from its database identifier.
+
+        Returns ``None`` if no user with that identifier exists.
+        """
+        async with state.acquire_db() as con:
+            record = await con.fetchone(
+                """
+                SELECT
+                    id,
+                    username,
+                    api_key,
+                    readonly
+                FROM
+                    users
+                WHERE id = ?;
                 """,
-                    self.auth_id,
-                )
-            self._username = user["username"]
-            self._api_key = user["api_key"]
-            self._readonly = user["readonly"]
-            self._resolved = True
+                user_id,
+            )
 
-    @property
-    async def username(self) -> str:
-        await self._resolve()
-        return self._username
+        if record is None:
+            return None
 
-    @property
-    async def api_key(self) -> str:
-        await self._resolve()
-        return self._api_key
+        return cls(
+            id=record["id"],
+            username=record["username"],
+            api_key=record["api_key"],
+            readonly=bool(record["readonly"]),
+        )
 
-    @property
-    async def readonly(self) -> bool:
-        await self._resolve()
-        return self._readonly
+    @classmethod
+    async def from_api_key(cls, state: TsundokuAppState, api_key: str) -> User | None:
+        """Resolve a :class:`User` from a bearer API key."""
+        async with state.acquire_db() as con:
+            record = await con.fetchone(
+                """
+                SELECT
+                    id,
+                    username,
+                    api_key,
+                    readonly
+                FROM
+                    users
+                WHERE api_key = ?;
+                """,
+                api_key,
+            )
+
+        if record is None:
+            return None
+
+        return cls(
+            id=record["id"],
+            username=record["username"],
+            api_key=record["api_key"],
+            readonly=bool(record["readonly"]),
+        )

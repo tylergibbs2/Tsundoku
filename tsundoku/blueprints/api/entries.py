@@ -1,45 +1,42 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+from fastapi import APIRouter, status
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
-from quart import views
-
+from tsundoku.auth import StateDep
 from tsundoku.manager import Entry
 
-from .response import APIResponse
+from .response import APIError, Success
 
 logger = logging.getLogger("tsundoku")
 
+router = APIRouter()
 
-class EntriesAPI(views.MethodView):
-    async def get(self, entry_id: int) -> APIResponse:
-        async with app.acquire_db() as con:
-            entry = await con.fetchone(
-                """
-                SELECT
-                    id,
-                    show_id,
-                    episode,
-                    version,
-                    current_state,
-                    torrent_hash,
-                    file_path,
-                    created_manually,
-                    last_update
-                FROM
-                    show_entry
-                WHERE id=?;
-            """,
-                entry_id,
-            )
 
-        if entry is None:
-            return APIResponse(status=404, error="Entry with specified ID does not exist.")
+@router.get("/entries/{entry_id}")
+async def get_entry(state: StateDep, entry_id: int) -> Success[Entry]:
+    async with state.acquire_db() as con:
+        entry = await con.fetchone(
+            """
+            SELECT
+                id,
+                show_id,
+                episode,
+                version,
+                current_state,
+                torrent_hash,
+                file_path,
+                created_manually,
+                last_update
+            FROM
+                show_entry
+            WHERE id=?;
+        """,
+            entry_id,
+        )
 
-        return APIResponse(result=Entry(app, entry).to_dict())
+    if entry is None:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Entry with specified ID does not exist.")
+
+    return Success(result=Entry.from_record(state, entry))

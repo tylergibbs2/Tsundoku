@@ -1,23 +1,27 @@
+from __future__ import annotations
+
 import asyncio
-from asyncio.queues import Queue
-from collections.abc import Callable, MutableSet
-from contextlib import AbstractAsyncContextManager, AbstractContextManager
+from collections.abc import AsyncIterator
+from contextlib import AbstractAsyncContextManager, AbstractContextManager, asynccontextmanager
 import logging
 import os
 from pathlib import Path
 import secrets
 import sqlite3
-from typing import Any, ClassVar
 from uuid import uuid4
 
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from argon2 import PasswordHasher
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fluent.runtime import FluentResourceLoader
-from quart import Quart
-from quart_auth import AuthManager
-from quart_rate_limiter import RateLimiter
+from slowapi.errors import RateLimitExceeded
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.types import Lifespan
 
 try:
     from dotenv import load_dotenv
@@ -28,7 +32,8 @@ except ImportError:
 
 import tsundoku.asqlite
 from tsundoku.asqlite import Connection
-from tsundoku.blueprints import api_blueprint, ux_blueprint
+from tsundoku.auth import NotAuthenticatedError
+from tsundoku.blueprints import api_router, ux_router
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import DATA_DIR, DATABASE_FILE_NAME
 from tsundoku.database import acquire, migrate, sync_acquire
@@ -38,39 +43,56 @@ from tsundoku.flags import Flags
 from tsundoku.fluent import CustomFluentLocalization
 from tsundoku.git import check_for_updates
 from tsundoku.log import setup_logging
-from tsundoku.user import User
+from tsundoku.ratelimit import limiter
+from tsundoku.responses import APIError, ErrorEnvelope
+from tsundoku.templating import STATIC_URL_PATH, flash
+
+__all__ = ["CustomFluentLocalization", "TsundokuAppState", "create_app", "insert_user", "run"]
+
+logger = logging.getLogger("tsundoku")
+
+_STATIC_DIR = Path(__file__).parent / "blueprints" / "ux" / "static"
 
 
-class TsundokuApp(Quart):
+def _resolve_secret_key(flags: Flags) -> str:
+    env = os.getenv("SECRET_KEY")
+    if env:
+        return env
+    return "debug" if flags.IS_DEBUG else secrets.token_urlsafe(16)
+
+
+class TsundokuAppState:
+    """Shared application state and lifecycle for Tsundoku.
+
+    This is a plain container (not the ASGI app) holding everything the
+    domain layer needs: database accessors, the download-client manager,
+    the poller/downloader background tasks, feature flags, and the aiohttp
+    session. It is stored on ``app.state.ctx`` and injected into request
+    handlers via the ``StateDep`` dependency.
+    """
+
     session: aiohttp.ClientSession
-    scheduler: AsyncIOScheduler
-
-    connected_websockets: MutableSet[Queue[str]]
-    source_lock: asyncio.Lock
-
     dl_client: Manager
     poller: Poller
     downloader: Downloader
 
-    acquire_db: Callable[..., AbstractAsyncContextManager[Connection]]
-    sync_acquire_db: Callable[..., AbstractContextManager[sqlite3.Connection]]
-
-    flags: Flags
-
-    cached_bundle_hash: str | None = None
-    _active_localization: CustomFluentLocalization | None = None
-    _tasks: ClassVar[list[asyncio.Task]] = []
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
+    def __init__(self) -> None:
         self.scheduler = AsyncIOScheduler()
 
-        self.acquire_db = acquire
-        self.sync_acquire_db = sync_acquire
-
-        self.connected_websockets = set()
+        self.connected_websockets: set[asyncio.Queue[str]] = set()
+        self.source_lock = asyncio.Lock()
         self.flags = Flags()
+        self.secret_key = _resolve_secret_key(self.flags)
+
+        self.cached_bundle_hash: str | None = None
+        self._active_localization: CustomFluentLocalization | None = None
+        self._tasks: list[asyncio.Task[None]] = []
+
+    def acquire_db(self) -> AbstractAsyncContextManager[Connection]:
+        return acquire()
+
+    def sync_acquire_db(self) -> AbstractContextManager[sqlite3.Connection]:
+        return sync_acquire()
 
     def get_fluent(self) -> CustomFluentLocalization:
         if self._active_localization is not None and self._active_localization.preferred_locale == self.flags.LOCALE:
@@ -85,29 +107,133 @@ class TsundokuApp(Quart):
         )
         return self._active_localization
 
+    async def startup(self) -> None:
+        await self._setup_db()
+        await self._setup_session()
+        await self._setup_tasks()
 
-app: TsundokuApp = TsundokuApp("Tsundoku", static_folder=None)
+    async def _setup_db(self) -> None:
+        async with self.acquire_db() as con:
+            logger.debug("VACUUMing database...")
+            await con.execute("VACUUM;")
+            logger.debug("Database VACUUM'd.")
 
-auth = AuthManager(app)
-rate_limiter = RateLimiter(app)
+            users = await con.fetchval("SELECT COUNT(*) FROM users;")
+            locale = await con.fetchval("SELECT locale FROM general_config;")
 
-auth.user_class = User  # ty: ignore[invalid-assignment]
+        self.flags.LOCALE = locale or "en"
 
-logger = logging.getLogger("tsundoku")
+        if not users:
+            logger.warning("No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command.")
+            self.flags.IS_FIRST_LAUNCH = True
+
+    async def _setup_session(self) -> None:
+        jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
+
+        logger.debug("Creating aiohttp ClientSession...")
+        self.session = aiohttp.ClientSession(cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0))
+        logger.debug("Creating interface to downloader client...")
+        self.dl_client = Manager(self, self.session)
+
+        res = await self.dl_client.test_client()
+        self.flags.DL_CLIENT_CONNECTION_ERROR = not res.success
+
+    async def _setup_tasks(self) -> None:
+        logger.debug("Starting APScheduler...")
+        self.scheduler.start()
+        self.scheduler.add_job(check_for_updates, CronTrigger.from_crontab("* 4 * * *"), args=[self])
+
+        async def poller() -> None:
+            self.poller = Poller(self)
+            await self.poller.start()
+
+        async def downloader() -> None:
+            self.downloader = Downloader(self)
+            await self.downloader.start()
+
+        logger.debug("Starting task: Poller")
+        self._tasks.append(asyncio.create_task(poller(), name="Poller"))
+        logger.debug("Starting task: Downloader")
+        self._tasks.append(asyncio.create_task(downloader(), name="Downloader"))
+
+        logger.debug("All tasks created.")
+
+    async def shutdown(self) -> None:
+        logger.debug("Cleanup: Attempting to cancel tasks...")
+        self.scheduler.shutdown()
+
+        for task in self._tasks:
+            logger.debug(f"Cleanup: Attempting to cancel task '{task.get_name()}'...")
+            task.cancel()
+
+        logger.debug("Cleanup: Closing aiohttp session...")
+        try:
+            await self.session.close()
+        except Exception:
+            logger.warning("Cleanup: Could not close aiohttp session!", exc_info=True)
 
 
-if os.getenv("SECRET_KEY"):
-    secret_key = os.getenv("SECRET_KEY")
-else:
-    secret_key = secrets.token_urlsafe(16) if not app.flags.IS_DEBUG else "debug"
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    state: TsundokuAppState = app.state.ctx
+    await state.startup()
+    try:
+        yield
+    finally:
+        await state.shutdown()
 
 
-class QuartConfig:
-    SECRET_KEY = secret_key
-    QUART_AUTH_COOKIE_SECURE = False
+async def _api_error_handler(request: Request, exc: Exception) -> Response:
+    assert isinstance(exc, APIError)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ErrorEnvelope(status=exc.status_code, error=exc.message).model_dump(),
+    )
 
 
-app.config.from_object(QuartConfig())
+async def _not_authenticated_handler(request: Request, exc: Exception) -> Response:
+    state: TsundokuAppState = request.app.state.ctx
+    target = "/register" if state.flags.IS_FIRST_LAUNCH else "/login"
+    return RedirectResponse(target, status_code=302)
+
+
+async def _validation_error_handler(request: Request, exc: Exception) -> Response:
+    assert isinstance(exc, RequestValidationError)
+    errors = exc.errors()
+    message = errors[0]["msg"] if errors else "Invalid request."
+    return JSONResponse(
+        status_code=422,
+        content=ErrorEnvelope(status=422, error=message).model_dump(),
+    )
+
+
+async def _rate_limit_handler(request: Request, exc: Exception) -> Response:
+    assert isinstance(exc, RateLimitExceeded)
+    flash(request, "Too many requests. Please try again shortly.", "error")
+    return RedirectResponse(str(request.url), status_code=302)
+
+
+def create_app(state: TsundokuAppState | None = None, *, lifespan_handler: Lifespan[FastAPI] = lifespan) -> FastAPI:
+    if state is None:
+        state = TsundokuAppState()
+
+    app = FastAPI(title="Tsundoku", lifespan=lifespan_handler)
+    app.state.ctx = state
+    app.state.limiter = limiter
+
+    app.add_middleware(SessionMiddleware, secret_key=state.secret_key, https_only=False)
+
+    app.add_exception_handler(APIError, _api_error_handler)
+    app.add_exception_handler(NotAuthenticatedError, _not_authenticated_handler)
+    app.add_exception_handler(RequestValidationError, _validation_error_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+
+    app.include_router(api_router)
+    app.include_router(ux_router)
+
+    app.mount(STATIC_URL_PATH, StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+    return app
 
 
 async def insert_user(username: str, password: str) -> None:
@@ -130,171 +256,17 @@ async def insert_user(username: str, password: str) -> None:
         )
 
 
-@app.url_defaults
-def add_hash_for_webpack_bundle(endpoint: str, values: dict) -> None:
-    filename = values.get("filename")
-    if endpoint != "ux.static" or filename != "js/root.js":
-        return
+def get_bind(state: TsundokuAppState) -> tuple[str, int]:
+    """Return the host and port bindings to run the app on."""
+    cfg = GeneralConfig.sync_retrieve(state, ensure_exists=True)
 
-    if app.cached_bundle_hash is not None and not app.flags.IS_DEBUG:
-        values["filename"] = f"js/root.{app.cached_bundle_hash}.js"
-        return
+    host = os.getenv("HOST") or cfg.host
+    port_value: str | int = os.getenv("PORT") or cfg.port
 
-    js_folder = Path("tsundoku", "blueprints", "ux", "static", "js")
-    if not js_folder.exists():
-        logger.error("Could not find static JS folder!")
-        return
-
-    for file in js_folder.glob("*.js"):
-        if file.name.startswith("root."):
-            split = file.name.split(".")
-            if len(split) == 2:
-                return
-
-            app.cached_bundle_hash = split[1]
-            values["filename"] = f"js/root.{app.cached_bundle_hash}.js"
-            return
-
-
-@app.before_serving
-async def setup_db() -> None:
-    """
-    Creates a database pool for database interaction.
-    """
-    async with app.acquire_db() as con:
-        logger.debug("VACUUMing database...")
-        await con.execute("VACUUM;")
-        logger.debug("Database VACUUM'd.")
-
-        users = await con.fetchval(
-            """
-            SELECT
-                COUNT(*)
-            FROM
-                users;
-        """
-        )
-
-        locale = await con.fetchval(
-            """
-            SELECT
-                locale
-            FROM
-                general_config;
-        """
-        )
-        app.flags.LOCALE = locale
-
-    if not users:
-        logger.warning("No existing users! Opening the app will result in a one-time registration page. Alternatively, you can create a user with the `tsundoku --create-user` command.")
-        app.flags.IS_FIRST_LAUNCH = True
-
-
-@app.before_serving
-async def setup_session() -> None:
-    """
-    Creates an aiohttp ClientSession on startup using Quart's event loop.
-    """
-    loop = asyncio.get_event_loop()
-
-    jar = aiohttp.CookieJar(unsafe=True)  # unsafe has to be True to store cookies from non-DNS URLs, i.e local IPs.
-
-    logger.debug("Creating aiohttp ClientSession...")
-    app.session = aiohttp.ClientSession(loop=loop, cookie_jar=jar, timeout=aiohttp.ClientTimeout(total=15.0))
-    logger.debug("Creating interface to downloader client...")
-    app.dl_client = Manager(app.app_context(), app.session)
-
-    res = await app.dl_client.test_client()
-    app.flags.DL_CLIENT_CONNECTION_ERROR = not res
-
-
-@app.before_serving
-async def setup_tasks() -> None:
-    """
-    Creates the instances for the following tasks:
-    poller, downloader
-
-    These tasks are added to the app's global task list.
-    """
-    logger.debug("Starting APScheduler...")
-    app.scheduler.start()
-
-    app.scheduler.add_job(check_for_updates, CronTrigger.from_crontab("* 4 * * *"))
-
-    async def poller() -> None:
-        app.poller = Poller(app.app_context())
-        await app.poller.start()
-
-    async def downloader() -> None:
-        app.downloader = Downloader(app.app_context())
-        await app.downloader.start()
-
-    logger.debug("Starting task: Poller")
-    app._tasks.append(asyncio.create_task(poller(), name="Poller"))
-    logger.debug("Starting task: Downloader")
-    app._tasks.append(asyncio.create_task(downloader(), name="Downloader"))
-
-    logger.debug("All tasks created.")
-
-
-@app.after_serving
-async def cleanup() -> None:
-    """
-    Attempts to cancel any running tasks and close the aiohttp session.
-    """
-    logger.debug("Cleanup: Attempting to cancel tasks...")
-    failed_to_cancel = 0
-    app.scheduler.shutdown()
-
-    for task in app._tasks:
-        logger.debug(f"Cleanup: Attempting to cancel task '{task.get_name()}'...")
-        try:
-            task.cancel()
-        except Exception:
-            logger.warning(f"Could not cancel task '{task.get_name()}'!", exc_info=True)
-            failed_to_cancel += 1
-        else:
-            logger.debug(f"Cleanup: Task '{task.get_name()}' cancelled.")
-
-    logger.debug(f"Cleanup: Tasks cancelled. [{failed_to_cancel} failed to cancel]")
-
-    logger.debug("Cleanup: Closing aiohttp session...")
-    try:
-        await app.session.close()
-    except Exception:
-        logger.warning("Cleanup: Could not close aiohttp session!", exc_info=True)
-    else:
-        logger.debug("Cleanup: aiohttp session closed.")
-
-
-@ux_blueprint.context_processor
-async def insert_locale() -> dict:
-    return {"LOCALE": app.flags.LOCALE}
-
-
-app.register_blueprint(api_blueprint)
-app.register_blueprint(ux_blueprint)
-
-
-def get_bind() -> tuple[str, int]:
-    """
-    Returns the host and port bindings
-    to run the app on.
-
-    Returns
-    -------
-    Tuple[str, int]
-        Address and port
-    """
-    cfg = GeneralConfig.sync_retrieve(app, ensure_exists=True)
-
-    host = os.getenv("HOST", default="") if os.getenv("HOST") else cfg.host
-    port = os.getenv("PORT", default="") if os.getenv("PORT") else cfg.port
-
-    if isinstance(port, str) and not port.isdigit():
+    if isinstance(port_value, str) and not port_value.isdigit():
         raise ValueError("Port must be a number!")
 
-    port = int(port)
+    port = int(port_value)
     if not 0 < port < 65536:
         raise ValueError("Port must be between [1, 65536)!")
 
@@ -302,11 +274,17 @@ def get_bind() -> tuple[str, int]:
 
 
 async def run() -> None:
+    import uvicorn
+
     database_source = DATA_DIR / DATABASE_FILE_NAME
     await migrate(database_source)
-    setup_logging(app)
 
-    host, port = get_bind()
+    app = create_app()
+    setup_logging(app.state.ctx)
+
+    host, port = get_bind(app.state.ctx)
     logger.debug(f"Attempting to bind to {host}:{port}")
 
-    await app.run_task(host=host, port=port)
+    config = uvicorn.Config(app, host=host, port=port, log_config=None)
+    server = uvicorn.Server(config)
+    await server.serve()

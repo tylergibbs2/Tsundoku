@@ -1,28 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from pathlib import Path
 import sqlite3
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import uuid4
-
-from quart import Blueprint
-
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-    from tsundoku.user import User
-
-    app = TsundokuApp()
-    current_user = User(None)
-else:
-    from quart import current_app as app
-    from quart_auth import current_user
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import request
-from quart_auth import login_user
-from quart_rate_limiter import RateLimitExceeded
+from fastapi import APIRouter, Depends, status
 
+from tsundoku.auth import ApiUserDep, DenyReadonlyDep, StateDep, deny_readonly, require_api_user
 from tsundoku.config import (
     ConfigCheckFailError,
     ConfigInvalidKeyError,
@@ -30,85 +19,38 @@ from tsundoku.config import (
     GeneralConfig,
     TorrentConfig,
 )
-from tsundoku.decorators import deny_readonly
-from tsundoku.user import User
+from tsundoku.feeds.poller import FoundEntry
 from tsundoku.utils import directory_is_writable
 from tsundoku.webhooks import WebhookBase
 
-from .entries import EntriesAPI
-from .libraries import LibrariesAPI
-from .nyaa import NyaaAPI
-from .response import APIResponse
-from .seen_releases import SeenReleasesAPI
-from .show_entries import ShowEntriesAPI
-from .shows import ShowsAPI
-from .webhookbase import WebhookBaseAPI
-from .webhooks import WebhooksAPI
+from .entries import router as entries_router
+from .libraries import router as libraries_router
+from .nyaa import router as nyaa_router
+from .response import APIError, Success
+from .schemas import (
+    ChangePasswordRequest,
+    DirectoryTree,
+    FeedsConfigResponse,
+    FeedsConfigUpdate,
+    GeneralConfigResponse,
+    GeneralConfigUpdate,
+    TorrentConfigResponse,
+    TorrentConfigUpdate,
+    TorrentTestResult,
+    TreeRequest,
+)
+from .seen_releases import router as seen_releases_router
+from .show_entries import router as show_entries_router
+from .shows import router as shows_router
+from .webhookbase import router as webhookbase_router
+from .webhooks import router as webhooks_router
 
-api_blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
 logger = logging.getLogger("tsundoku")
 
-
-@api_blueprint.errorhandler(500)
-async def err_500(_: Any) -> APIResponse:
-    return APIResponse(status=500, error="Server encountered an unexpected error.")
+api_router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_api_user)])
 
 
-@api_blueprint.errorhandler(403)
-async def err_403(_: Any) -> APIResponse:
-    return APIResponse(status=403, error="You are forbidden from modifying this resource.")
-
-
-@api_blueprint.errorhandler(429)
-async def err_429(e: Exception) -> APIResponse:
-    error = "Too many requests."
-    if isinstance(e, RateLimitExceeded):
-        error += f" Try again in {e.retry_after} seconds."
-    return APIResponse(status=429, error=error)
-
-
-@api_blueprint.before_request
-async def ensure_auth() -> APIResponse | None:
-    if request.headers.get("Authorization"):
-        token = request.headers["Authorization"]
-        if not token.startswith("Bearer "):
-            return APIResponse(status=401, error="Invalid authorization header.")
-        token = token[7:]
-
-        async with app.acquire_db() as con:
-            try:
-                user_id = await con.fetchval(
-                    """
-                    SELECT
-                        id
-                    FROM
-                        users
-                    WHERE
-                        api_key=?;
-                """,
-                    token,
-                )
-
-                if user_id:
-                    login_user(User(user_id))
-            except Exception:
-                return APIResponse(status=401, result="You are not authorized to access this resource.")
-
-    if not await current_user.is_authenticated:
-        return APIResponse(status=401, result="You are not authorized to access this resource.")
-
-    if await current_user.readonly and request.method in (
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-    ):
-        return APIResponse(status=403, error="You are forbidden from modifying this resource.")
-
-    return None
-
-
-def _list_directory(dir_: str, subdir: str | None) -> dict[str, Any]:
+def _list_directory(dir_: str, subdir: str | None) -> DirectoryTree:
     location = Path(dir_).resolve()
     if subdir:
         try:
@@ -118,119 +60,122 @@ def _list_directory(dir_: str, subdir: str | None) -> dict[str, Any]:
 
     dirs = [directory.name for directory in location.glob("*") if directory.is_dir()]
 
-    return {
-        "root_is_writable": directory_is_writable(location),
-        "can_go_back": location.parent != location,
-        "current_path": str(location),
-        "children": dirs,
-    }
+    return DirectoryTree(
+        root_is_writable=directory_is_writable(location),
+        can_go_back=location.parent != location,
+        current_path=str(location),
+        children=dirs,
+    )
 
 
-@api_blueprint.route("/tree", methods=["POST"])
-async def tree() -> APIResponse:
-    data = await request.get_json()
-    if "dir" not in data:
-        return APIResponse(status=400, error="Missing 'dir' key in request body.")
-
-    result = await asyncio.to_thread(_list_directory, data["dir"], data.get("subdir"))
-    return APIResponse(status=200, result=result)
+@api_router.post("/tree")
+async def tree(body: TreeRequest) -> Success[DirectoryTree]:
+    result = await asyncio.to_thread(_list_directory, body.dir, body.subdir)
+    return Success(result=result)
 
 
-@api_blueprint.route("/config/token", methods=["GET", "POST"])
-async def config_token() -> APIResponse:
-    api_key = request.headers.get("Authorization") or await current_user.api_key
-    if request.method == "POST":
-        async with app.acquire_db() as con:
-            new_key = str(uuid4())
-            await con.execute(
-                """
-                UPDATE
-                    users
-                SET
-                    api_key = ?
-                WHERE
-                    api_key = ?;
-            """,
-                new_key,
-                api_key,
-            )
-    else:
-        new_key = api_key
-
-    return APIResponse(status=200, result=new_key)
+@api_router.get("/config/token")
+async def get_api_token(user: ApiUserDep) -> Success[str]:
+    return Success(result=user.api_key)
 
 
-@api_blueprint.route("/config/<string:cfg_type>", methods=["GET", "PATCH"])
-async def config_route(cfg_type: str) -> APIResponse:
-    if cfg_type == "general":
-        cfg_class = GeneralConfig
-    elif cfg_type == "feeds":
-        cfg_class = FeedsConfig
-    elif cfg_type == "torrent":
-        cfg_class = TorrentConfig
-    else:
-        return APIResponse(status=400, error="Invalid configuration type.")
+@api_router.post("/config/token")
+async def regenerate_api_token(state: StateDep, user: ApiUserDep) -> Success[str]:
+    new_key = str(uuid4())
+    async with state.acquire_db() as con:
+        await con.execute(
+            """
+            UPDATE
+                users
+            SET
+                api_key = ?
+            WHERE
+                api_key = ?;
+        """,
+            new_key,
+            user.api_key,
+        )
 
-    cfg = await cfg_class.retrieve(app)
-
-    if request.method == "PATCH":
-        arguments = await request.get_json()
-
-        try:
-            cfg.update(arguments)
-        except ConfigInvalidKeyError:
-            return APIResponse(status=400, error="Invalid key contained in new configuration settings.")
-
-        try:
-            await cfg.save()
-        except sqlite3.IntegrityError:
-            return APIResponse(status=400, error="Error inserting new configuration data.")
-        except ConfigCheckFailError as e:
-            return APIResponse(status=400, error=e.message)
-
-    return APIResponse(status=200, result=cfg.keys)
+    return Success(result=new_key)
 
 
-@api_blueprint.route("/config/torrent/test", methods=["GET"])
-@deny_readonly
-async def test_torrent_client() -> APIResponse:
-    result = await app.dl_client.test_client()
-    app.flags.DL_CLIENT_CONNECTION_ERROR = not result.success
-    return APIResponse(result={"success": result.success, "error": result.error})
+async def _apply_config_update(cfg: GeneralConfig | FeedsConfig | TorrentConfig, updates: dict[str, Any]) -> None:
+    if not updates:
+        return
+
+    try:
+        cfg.update(updates)
+    except ConfigInvalidKeyError as e:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid key contained in new configuration settings.") from e
+
+    try:
+        await cfg.save()
+    except sqlite3.IntegrityError as e:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Error inserting new configuration data.") from e
+    except ConfigCheckFailError as e:
+        raise APIError(status.HTTP_400_BAD_REQUEST, e.message) from e
 
 
-@api_blueprint.route("/shows/check", methods=["GET"])
-@deny_readonly
-async def check_for_releases() -> APIResponse:
-    """
-    Forces Tsundoku to check all enabled RSS feeds for new
-    title releases.
+@api_router.get("/config/general")
+async def get_general_config(state: StateDep) -> Success[GeneralConfigResponse]:
+    cfg = await GeneralConfig.retrieve(state)
+    return Success(result=GeneralConfigResponse.model_validate(cfg.keys))
 
-    .. note::
-        The first int in the tuple is the show ID
-        and the second int is the ID of the new entry.
 
-    .. :quickref: Shows; Checks for new releases.
+@api_router.patch("/config/general")
+async def update_general_config(state: StateDep, body: GeneralConfigUpdate) -> Success[GeneralConfigResponse]:
+    cfg = await GeneralConfig.retrieve(state)
+    await _apply_config_update(cfg, body.model_dump(exclude_unset=True))
+    return Success(result=GeneralConfigResponse.model_validate(cfg.keys))
 
-    :returns: List[Tuple(:class:`int`, :class:`int`)]
-    """
+
+@api_router.get("/config/feeds")
+async def get_feeds_config(state: StateDep) -> Success[FeedsConfigResponse]:
+    cfg = await FeedsConfig.retrieve(state)
+    return Success(result=FeedsConfigResponse.model_validate(cfg.keys))
+
+
+@api_router.patch("/config/feeds")
+async def update_feeds_config(state: StateDep, body: FeedsConfigUpdate) -> Success[FeedsConfigResponse]:
+    cfg = await FeedsConfig.retrieve(state)
+    await _apply_config_update(cfg, body.model_dump(exclude_unset=True))
+    return Success(result=FeedsConfigResponse.model_validate(cfg.keys))
+
+
+@api_router.get("/config/torrent")
+async def get_torrent_config(state: StateDep) -> Success[TorrentConfigResponse]:
+    cfg = await TorrentConfig.retrieve(state)
+    return Success(result=TorrentConfigResponse.model_validate(cfg.keys))
+
+
+@api_router.patch("/config/torrent")
+async def update_torrent_config(state: StateDep, body: TorrentConfigUpdate) -> Success[TorrentConfigResponse]:
+    cfg = await TorrentConfig.retrieve(state)
+    await _apply_config_update(cfg, body.model_dump(exclude_unset=True))
+    return Success(result=TorrentConfigResponse.model_validate(cfg.keys))
+
+
+@api_router.get("/config/torrent/test", dependencies=[Depends(deny_readonly)])
+async def test_torrent_client(state: StateDep) -> Success[TorrentTestResult]:
+    result = await state.dl_client.test_client()
+    state.flags.DL_CLIENT_CONNECTION_ERROR = not result.success
+    return Success(result=TorrentTestResult(success=result.success, error=result.error))
+
+
+@api_router.get("/shows/check", dependencies=[Depends(deny_readonly)])
+async def check_for_releases(state: StateDep) -> Success[list[FoundEntry]]:
+    """Force Tsundoku to check all enabled RSS feeds for new releases."""
     logger.info("API - Force New Releases Check")
-
-    found_items = await app.poller.poll(force=True)
-
-    return APIResponse(result=found_items)
+    found_items = await state.poller.poll(force=True)
+    return Success(result=found_items)
 
 
-@api_blueprint.route("/shows/<int:show_id>/cache", methods=["DELETE"])
-async def delete_show_cache(show_id: int) -> APIResponse:
-    """
-    Force Tsundoku to delete the poster cache for a show.
-
-    .. :quickref: Shows; Deletes show poster cache.
-    """
+@api_router.delete("/shows/{show_id}/cache", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_show_cache(state: StateDep, show_id: int) -> None:
+    """Force Tsundoku to delete the poster cache for a show."""
     logger.info(f"API - Deleting poster cache for Show <s{show_id}>")
 
-    async with app.acquire_db() as con:
+    async with state.acquire_db() as con:
         await con.execute(
             """
             UPDATE
@@ -243,141 +188,59 @@ async def delete_show_cache(show_id: int) -> APIResponse:
             (show_id,),
         )
 
-    return APIResponse(result=True)
 
-
-@api_blueprint.route("/webhooks/<int:base_id>/valid", methods=["GET"])
-async def webhook_is_valid(base_id: int) -> APIResponse:
-    """
-    Checks if a Webhook is valid with the service it is for.
-    """
+@api_router.get("/webhooks/{base_id}/valid")
+async def webhook_is_valid(state: StateDep, base_id: int) -> Success[bool]:
+    """Check if a Webhook is valid with the service it is for."""
     logger.info(f"API - Checking webhook validity for webhook ID {base_id}")
 
-    webhook = await WebhookBase.from_id(app, base_id)
+    webhook = await WebhookBase.from_id(state, base_id)
     if webhook is None:
-        return APIResponse(result=False)
+        return Success(result=False)
 
-    return APIResponse(result=await webhook.is_valid())
+    return Success(result=await webhook.is_valid())
 
 
-@api_blueprint.route("/account/change-password", methods=["POST"])
-@deny_readonly
-async def change_password() -> APIResponse:
-    data = await request.get_json()
-    if not data:
-        return APIResponse(status=400, error="Missing request body.")
-    current_password = data.get("current_password")
-    new_password = data.get("new_password")
-    if not current_password or not new_password:
-        return APIResponse(status=400, error="Missing current or new password.")
-    if len(new_password) < 8:
-        return APIResponse(status=400, error="New password must be at least 8 characters.")
-
+@api_router.post("/account/change-password")
+async def change_password(state: StateDep, user: DenyReadonlyDep, body: ChangePasswordRequest) -> Success[bool]:
     hasher = PasswordHasher()
-    async with app.acquire_db() as con:
+    async with state.acquire_db() as con:
         user_data = await con.fetchone(
             """
             SELECT password_hash, username FROM users WHERE id = ?;
             """,
-            current_user.auth_id,
+            user.id,
         )
         if not user_data:
-            return APIResponse(status=404, error="User not found.")
+            raise APIError(status.HTTP_404_NOT_FOUND, "User not found.")
+
         try:
-            hasher.verify(user_data["password_hash"], current_password)
-        except VerifyMismatchError:
-            return APIResponse(status=400, error="Current password is incorrect.")
+            hasher.verify(user_data["password_hash"], body.current_password)
+        except VerifyMismatchError as e:
+            raise APIError(status.HTTP_400_BAD_REQUEST, "Current password is incorrect.") from e
 
-        if hasher.check_needs_rehash(user_data["password_hash"]):
-            new_hash = hasher.hash(current_password)
-            await con.execute(
-                """
-                UPDATE users SET password_hash=? WHERE id=?;
-                """,
-                new_hash,
-                current_user.auth_id,
-            )
-
-        new_hash = hasher.hash(new_password)
+        new_hash = hasher.hash(body.new_password)
         await con.execute(
             """
             UPDATE users SET password_hash=? WHERE id=?;
             """,
             new_hash,
-            current_user.auth_id,
+            user.id,
         )
 
-    return APIResponse(status=200, result=True)
+    return Success(result=True)
 
 
-def setup_views() -> None:
-    # Setup ShowsAPI URL rules.
-    shows_view = ShowsAPI.as_view("shows_api")
-
-    api_blueprint.add_url_rule(
-        "/shows",
-        defaults={"show_id": None},
-        view_func=shows_view,
-        methods=["GET", "POST"],
-    )
-    api_blueprint.add_url_rule("/shows/<int:show_id>", view_func=shows_view, methods=["GET", "PUT", "DELETE"])
-
-    # Setup EntriesAPI URL rules.
-    show_entries_view = ShowEntriesAPI.as_view("show_entries_api")
-
-    api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/entries",
-        defaults={"entry_id": None},
-        view_func=show_entries_view,
-        methods=["GET", "POST"],
-    )
-    api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/entries/<int:entry_id>",
-        view_func=show_entries_view,
-        methods=["GET", "DELETE"],
-    )
-
-    entries_view = EntriesAPI.as_view("entries_api")
-
-    api_blueprint.add_url_rule("/entries/<int:entry_id>", view_func=entries_view, methods=["GET"])
-
-    # Setup WebhooksAPI URL rules.
-    webhooks_view = WebhooksAPI.as_view("webhooks_api")
-
-    api_blueprint.add_url_rule("/shows/<int:show_id>/webhooks", view_func=webhooks_view, methods=["GET"])
-    api_blueprint.add_url_rule(
-        "/shows/<int:show_id>/webhooks/<int:base_id>",
-        view_func=webhooks_view,
-        methods=["PUT"],
-    )
-
-    # Setup WebhookBaseAPI URL rules.
-    webhookbase_view = WebhookBaseAPI.as_view("webhookbase_api")
-
-    api_blueprint.add_url_rule("/webhooks", view_func=webhookbase_view, methods=["GET", "POST"])
-    api_blueprint.add_url_rule(
-        "/webhooks/<int:base_id>",
-        view_func=webhookbase_view,
-        methods=["GET", "PUT", "DELETE"],
-    )
-
-    seenreleases_view = SeenReleasesAPI.as_view("seenreleases_api")
-
-    api_blueprint.add_url_rule("/seen_releases/<string:action>", view_func=seenreleases_view, methods=["GET"])
-
-    # Setup NyaaAPI URL rules.
-    nyaa_view = NyaaAPI.as_view("nyaa_api")
-
-    api_blueprint.add_url_rule("/nyaa", view_func=nyaa_view, methods=["GET", "POST"])
-
-    libraries_view = LibrariesAPI.as_view("libraries_api")
-
-    api_blueprint.add_url_rule("/libraries", view_func=libraries_view, methods=["GET", "POST"])
-    api_blueprint.add_url_rule(
-        "/libraries/<int:library_id>",
-        view_func=libraries_view,
-        methods=["GET", "PUT", "DELETE"],
-    )
-
-
-setup_views()
+# "/webhooks/{base_id}/valid" and the show-scoped webhook routes are registered
+# ahead of the generic base-webhook router so they resolve first.
+for _router in (
+    shows_router,
+    show_entries_router,
+    entries_router,
+    webhooks_router,
+    webhookbase_router,
+    seen_releases_router,
+    nyaa_router,
+    libraries_router,
+):
+    api_router.include_router(_router)

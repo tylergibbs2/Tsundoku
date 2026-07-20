@@ -1,10 +1,10 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import aiofiles.os
 
@@ -31,7 +31,7 @@ class Downloader:
     `show_entry` table.
     """
 
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
 
     complete_check: int
     seed_ratio_limit: float
@@ -39,8 +39,8 @@ class Downloader:
     default_desired_format: str
     use_season_folder: bool
 
-    def __init__(self, app_context: Any) -> None:
-        self.app = app_context.app
+    def __init__(self, app: "TsundokuAppState") -> None:
+        self.app = app
 
     async def update_config(self) -> None:
         """
@@ -198,7 +198,7 @@ class Downloader:
             )
             entry = await cur.fetchone()
 
-        entry = Entry(self.app, entry)
+        entry = Entry.from_record(self.app, entry)
         await entry.set_state(EntryState.downloading)
 
         logger.info(f"Release Marked as Downloading - <e{entry.id}>")
@@ -490,5 +490,5 @@ class Downloader:
             )
 
         for entry in entries:
-            entry = Entry(self.app, entry)
+            entry = Entry.from_record(self.app, entry)
             await self.check_show_entry(entry)

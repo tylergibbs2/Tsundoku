@@ -6,10 +6,10 @@ import hashlib
 import logging
 import os
 from sqlite3 import Row
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import feedparser
 
@@ -86,11 +86,11 @@ class Poller:
     renaming, and moving.
     """
 
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
     source_cache: dict[str, SourceCache]
 
-    def __init__(self, app_context: Any) -> None:
-        self.app = app_context.app
+    def __init__(self, app: "TsundokuAppState") -> None:
+        self.app = app
         self.loop = asyncio.get_running_loop()
 
         self.source_cache = defaultdict(SourceCache)

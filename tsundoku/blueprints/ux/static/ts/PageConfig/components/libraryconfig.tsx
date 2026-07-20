@@ -48,9 +48,9 @@ export const LibraryConfigApp = forwardRef(
     });
 
     const deleteLibraryMutation = useMutation(deleteLibraryById, {
-      onSuccess: (oldLibrary: Library) => {
+      onSuccess: (_data: void, deletedId: number) => {
         queryClient.setQueryData(["libraries"], (oldLibraries: Library[]) =>
-          oldLibraries.filter((l) => l.id_ !== oldLibrary?.id_)
+          oldLibraries.filter((l) => l.id_ !== deletedId)
         );
         toast({
           message: _("libraries-delete-success"),

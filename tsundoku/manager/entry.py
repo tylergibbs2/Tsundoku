@@ -4,8 +4,12 @@ from pathlib import Path
 from sqlite3 import Row
 from typing import TYPE_CHECKING
 
+from pydantic import field_serializer
+
+from tsundoku.model import DBModel
+
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 from tsundoku.webhooks import Webhook
 
@@ -25,10 +29,7 @@ class EntryState(StrEnum):
     failed = auto()
 
 
-class Entry:
-    _app: "TsundokuApp"
-    _record: Row
-
+class Entry(DBModel):
     id: int
     show_id: int
     episode: int
@@ -38,54 +39,36 @@ class Entry:
     created_manually: bool
     last_update: datetime
 
-    file_path: Path | None
+    file_path: Path | None = None
 
-    def __init__(self, app: "TsundokuApp", record: Row) -> None:
-        self.id: int = record["id"]
-        self.show_id: int = record["show_id"]
-        self.episode: int = record["episode"]
-        self.version: str = record["version"]
-        self.state: EntryState = EntryState[record["current_state"]]
-        self.torrent_hash: str = record["torrent_hash"]
-        self.created_manually: bool = record["created_manually"]
-        self.last_update: datetime = record["last_update"]
-
-        fp = record["file_path"]
-        self.file_path: Path | None = Path(fp) if fp is not None else None
-
-        self._app: TsundokuApp = app
-        self._record: Row = record
-
-    def to_dict(self) -> dict:
-        """
-        Returns the Entry object as a dictionary.
-
-        Returns
-        -------
-        dict
-            The serialized Entry object.
-        """
-        return {
-            "id": self.id,
-            "show_id": self.show_id,
-            "episode": self.episode,
-            "version": self.version,
-            "state": self.state.value,
-            "torrent_hash": self.torrent_hash,
-            "file_path": str(self.file_path),
-            "created_manually": self.created_manually,
-            "last_update": self.last_update,
-        }
+    @field_serializer("file_path")
+    def _serialize_file_path(self, file_path: Path | None) -> str:
+        return str(file_path)
 
     @classmethod
-    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> list["Entry"]:
+    def from_record(cls, app: "TsundokuAppState", record: Row) -> "Entry":
+        fp = record["file_path"]
+        return cls(
+            id=record["id"],
+            show_id=record["show_id"],
+            episode=record["episode"],
+            version=record["version"],
+            state=EntryState[record["current_state"]],
+            torrent_hash=record["torrent_hash"],
+            created_manually=bool(record["created_manually"]),
+            last_update=record["last_update"],
+            file_path=Path(fp) if fp is not None else None,
+        )._bind(app)
+
+    @classmethod
+    async def from_show_id(cls, app: "TsundokuAppState", show_id: int) -> list["Entry"]:
         """
         Retrieves a list of Entries that are associated
         with a specific Show's ID.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         show_id: int
             The Show's ID.
@@ -118,16 +101,16 @@ class Entry:
                 show_id,
             )
 
-        return [Entry(app, entry) for entry in entries]
+        return [Entry.from_record(app, entry) for entry in entries]
 
     @classmethod
-    async def from_entry_id(cls, app: "TsundokuApp", entry_id: int) -> "Entry":
+    async def from_entry_id(cls, app: "TsundokuAppState", entry_id: int) -> "Entry":
         """
         Retrieves an Entry by its ID.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         entry_id: int
             The Entry's ID.
@@ -158,7 +141,7 @@ class Entry:
                 entry_id,
             )
 
-        return Entry(app, entry)
+        return Entry.from_record(app, entry)
 
     async def set_state(self, new_state: EntryState) -> None:
         """

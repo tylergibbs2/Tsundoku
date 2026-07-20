@@ -1,294 +1,220 @@
-from asyncio import Queue
-from datetime import timedelta
-from functools import wraps
-from typing import TYPE_CHECKING, Any
+from __future__ import annotations
+
+import asyncio
+from typing import Annotated
 from uuid import uuid4
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from quart import Blueprint
-from quart import Response as QuartResponse
-from quart_rate_limiter import RateLimitExceeded, rate_limit
-from werkzeug import Response
+from fastapi import APIRouter, Form, HTTPException, Request, Response, WebSocket, WebSocketDisconnect, status
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
-if TYPE_CHECKING:
-    import tsundoku.app
-
-    app = tsundoku.app.TsundokuApp()
-else:
-    from quart import current_app as app
-
-from quart import (
-    flash,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    url_for,
-    websocket,
-)
-from quart_auth import (
-    Unauthorized,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
-
-from tsundoku import __version__ as version
-from tsundoku.blueprints.api import APIResponse
-from tsundoku.constants import DATA_DIR
-from tsundoku.decorators import deny_readonly
+from tsundoku.auth import DenyReadonlyDep, OptionalUserDep, RequireUserDep, StateDep, login_user, logout_user
+from tsundoku.blueprints.api.response import Success
+from tsundoku.blueprints.api.schemas import IssueRequest
+from tsundoku.constants import DATA_DIR, LOGGING_FILE_NAME
+from tsundoku.ratelimit import limiter
+from tsundoku.templating import flash, render
 from tsundoku.user import User
 
 from .issues import get_issue_url
 
-ux_blueprint = Blueprint(
-    "ux",
-    __name__,
-    template_folder="templates",
-    static_folder="static",
-    static_url_path="/ux/static",
-)
+ux_router = APIRouter()
 hasher = PasswordHasher()
 
 
-@ux_blueprint.errorhandler(Unauthorized)
-async def redirect_to_login(_: Any) -> Response:
-    if app.flags.IS_FIRST_LAUNCH:
-        return redirect(url_for("ux.register"))
-
-    return redirect(url_for("ux.login"))
+@ux_router.post("/issue")
+async def issue(_guard: DenyReadonlyDep, body: IssueRequest) -> Success[str]:
+    return Success(result=get_issue_url(body.issue_type or "", body.user_agent or ""))
 
 
-@ux_blueprint.errorhandler(429)
-async def err_429(e: Exception) -> Response:
-    error = "Too many requests."
-    if isinstance(e, RateLimitExceeded):
-        error += f" Try again in {e.retry_after} seconds."
+@ux_router.get("/", response_class=HTMLResponse)
+@ux_router.get("/nyaa", response_class=HTMLResponse)
+@ux_router.get("/webhooks", response_class=HTMLResponse)
+@ux_router.get("/config", response_class=HTMLResponse)
+async def index(state: StateDep, request: Request, _guard: RequireUserDep) -> HTMLResponse:
+    if state.flags.DL_CLIENT_CONNECTION_ERROR:
+        flash(request, state.get_fluent()._("dl-client-connection-error"), "error")
 
-    await flash(error, category="error")
-    return redirect(request.url)
-
-
-@ux_blueprint.context_processor
-async def update_context() -> dict:
-    fluent = app.get_fluent()
-    stats = {"version": version}
-
-    return {
-        "stats": stats,
-        "docker": app.flags.IS_DOCKER,
-        "update_info": app.flags.UPDATE_INFO,
-        "_": fluent.format_value,
-    }
+    return render(state, request, "index.html")
 
 
-@ux_blueprint.route("/issue", methods=["POST"])
-@login_required
-@deny_readonly
-async def issue() -> APIResponse:
-    data = await request.get_json()
+@ux_router.get("/logs")
+async def logs(state: StateDep, request: Request, _guard: RequireUserDep, dl: str | None = None) -> Response:
+    if dl:
+        return FileResponse(str(DATA_DIR / LOGGING_FILE_NAME), filename=LOGGING_FILE_NAME)
 
-    issue_type = data.get("issue_type")
-    user_agent = data.get("user_agent")
+    if state.flags.DL_CLIENT_CONNECTION_ERROR:
+        flash(request, state.get_fluent()._("dl-client-connection-error"), "error")
 
-    return APIResponse(result=get_issue_url(issue_type, user_agent))
-
-
-@ux_blueprint.route("/", methods=["GET"])
-@ux_blueprint.route("/nyaa", methods=["GET"])
-@ux_blueprint.route("/webhooks", methods=["GET"])
-@ux_blueprint.route("/config", methods=["GET"])
-@login_required
-async def index() -> str:
-    fluent = app.get_fluent()
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
-
-    return await render_template("index.html")
+    return render(state, request, "index.html")
 
 
-@ux_blueprint.route("/logs", methods=["GET"])
-@login_required
-async def logs() -> str | QuartResponse:
-    if request.args.get("dl"):
-        return await send_file(f"{DATA_DIR / 'tsundoku.log'}", as_attachment=True)
+def _guard_registration(state: StateDep, user: User | None) -> Response | None:
+    """Shared guard for the registration routes.
 
-    fluent = app.get_fluent()
-    if app.flags.DL_CLIENT_CONNECTION_ERROR:
-        await flash(fluent._("dl-client-connection-error"), category="error")
+    Raises 403 for readonly users, returns a redirect for anyone who
+    cannot register, or ``None`` if registration may proceed.
+    """
+    if user is not None and user.readonly:
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+    if not state.flags.IS_FIRST_LAUNCH or user is not None:
+        return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+    return None
 
-    return await render_template("index.html")
+
+@ux_router.get("/register")
+async def register_get(state: StateDep, request: Request, user: OptionalUserDep) -> Response:
+    redirect = _guard_registration(state, user)
+    if redirect is not None:
+        return redirect
+
+    return render(state, request, "register.html")
 
 
-@ux_blueprint.route("/register", methods=["GET", "POST"])
-@deny_readonly
-async def register() -> Any:
-    if not app.flags.IS_FIRST_LAUNCH or await current_user.is_authenticated:
-        return redirect("/")
+@ux_router.post("/register")
+async def register_post(
+    state: StateDep,
+    request: Request,
+    user: OptionalUserDep,
+    username: Annotated[str, Form()] = "",
+    password: Annotated[str, Form()] = "",
+    confirm_password: Annotated[str, Form(alias="confirmPassword")] = "",
+) -> Response:
+    redirect = _guard_registration(state, user)
+    if redirect is not None:
+        return redirect
 
-    if request.method == "GET":
-        return await render_template("register.html")
-    fluent = app.get_fluent()
-    form = await request.form
+    fluent = state.get_fluent()
 
-    username = form.get("username")
-    password = form.get("password")
-    password_confirm = form.get("confirmPassword")
+    def fail(key: str, args: dict[str, str] | None = None) -> RedirectResponse:
+        flash(request, fluent._(key, args), "error")
+        return RedirectResponse("/register", status_code=status.HTTP_302_FOUND)
+
     if not username:
-        await flash(
-            fluent._("form-register-missing-data", {"field": "username"}),
-            category="error",
-        )
-        return redirect(url_for("ux.register"))
+        return fail("form-register-missing-data", {"field": "username"})
     if not password:
-        await flash(
-            fluent._("form-register-missing-data", {"field": "password"}),
-            category="error",
-        )
-        return redirect(url_for("ux.register"))
+        return fail("form-register-missing-data", {"field": "password"})
     if len(password) < 8:
-        await flash(fluent._("form-password-characters"), category="error")
-        return redirect(url_for("ux.register"))
-    if password != password_confirm:
-        await flash(fluent._("form-password-mismatch"), category="error")
-        return redirect(url_for("ux.register"))
+        return fail("form-password-characters")
+    if password != confirm_password:
+        return fail("form-password-mismatch")
 
-    async with app.acquire_db() as con:
+    async with state.acquire_db() as con:
         existing_id = await con.fetchval(
             """
-                SELECT
-                    id
-                FROM
-                    users
-                WHERE
-                    LOWER(username) = LOWER(?);
+            SELECT id FROM users WHERE LOWER(username) = LOWER(?);
             """,
             username,
         )
 
-    # technically not possible to get to this page if there are
-    # any other users at all
     if existing_id is not None:
-        await flash(fluent._("form-username-taken"), category="error")
-        return redirect(url_for("ux.register"))
+        return fail("form-username-taken")
 
-    pw_hash = PasswordHasher().hash(password)
-    async with app.acquire_db() as con:
+    pw_hash = hasher.hash(password)
+    async with state.acquire_db() as con:
         await con.execute(
             """
-                INSERT INTO
-                    users
-                    (username, password_hash, api_key)
-                VALUES
-                    (?, ?, ?);
+            INSERT INTO
+                users
+                (username, password_hash, api_key)
+            VALUES
+                (?, ?, ?);
             """,
             username,
             pw_hash,
             str(uuid4()),
         )
 
-    if app.flags.IS_FIRST_LAUNCH:
-        app.flags.IS_FIRST_LAUNCH = False
+    state.flags.IS_FIRST_LAUNCH = False
 
-    await flash(fluent._("form-register-success"), category="success")
-    return redirect(url_for("ux.login"))
-
-
-@ux_blueprint.route("/login", methods=["GET"])
-async def login() -> Response | str:
-    if await current_user.is_authenticated:
-        return redirect("/")
-
-    return await render_template("login.html")
+    flash(request, fluent._("form-register-success"), "success")
+    return RedirectResponse("/login", status_code=status.HTTP_302_FOUND)
 
 
-@ux_blueprint.route("/login", methods=["POST"])
-@rate_limit(1, timedelta(seconds=2))
-@rate_limit(10, timedelta(minutes=1))
-@rate_limit(20, timedelta(hours=1))
-async def login_post() -> Any:
-    if await current_user.is_authenticated:
-        return redirect("/")
+@ux_router.get("/login")
+async def login_get(state: StateDep, request: Request, user: OptionalUserDep) -> Response:
+    if user is not None:
+        return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
 
-    fluent = app.get_fluent()
-    form = await request.form
+    return render(state, request, "login.html")
 
-    username = form.get("username")
-    password = form.get("password")
+
+@ux_router.post("/login")
+@limiter.limit("1/2 seconds;10/minute;20/hour")
+async def login_post(
+    state: StateDep,
+    request: Request,
+    user: OptionalUserDep,
+    username: Annotated[str, Form()] = "",
+    password: Annotated[str, Form()] = "",
+    remember: Annotated[bool, Form()] = False,
+) -> Response:
+    if user is not None:
+        return RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+
+    fluent = state.get_fluent()
+
     if not username or not password:
-        await flash(fluent._("form-missing-data"), category="error")
-        return redirect(url_for("ux.login"))
+        flash(request, fluent._("form-missing-data"), "error")
+        return RedirectResponse("/login", status_code=status.HTTP_302_FOUND)
 
-    async with app.acquire_db() as con:
+    async with state.acquire_db() as con:
         user_data = await con.fetchone(
             """
-            SELECT
-                id,
-                password_hash
-            FROM
-                users
-            WHERE LOWER(username) = ?;
-        """,
+            SELECT id, password_hash FROM users WHERE LOWER(username) = ?;
+            """,
             username.lower(),
         )
 
     if not user_data:
-        await flash(fluent._("invalid-credentials"), category="error")
-        return redirect(url_for("ux.login"))
+        flash(request, fluent._("invalid-credentials"), "error")
+        return RedirectResponse("/login", status_code=status.HTTP_302_FOUND)
 
     try:
         hasher.verify(user_data["password_hash"], password)
     except VerifyMismatchError:
-        await flash(fluent._("invalid-credentials"), category="error")
-        return redirect(url_for("ux.login"))
+        flash(request, fluent._("invalid-credentials"), "error")
+        return RedirectResponse("/login", status_code=status.HTTP_302_FOUND)
 
     if hasher.check_needs_rehash(user_data["password_hash"]):
-        async with app.acquire_db() as con:
+        async with state.acquire_db() as con:
             await con.execute(
                 """
-                UPDATE
-                    users
-                SET
-                    password_hash=?
-                WHERE username=?;
-            """,
+                UPDATE users SET password_hash=? WHERE LOWER(username)=?;
+                """,
                 hasher.hash(password),
-                username,
+                username.lower(),
             )
 
-    remember = form.get("remember", False)
+    resolved = await User.from_id(state, user_data["id"])
+    response = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+    if resolved is not None:
+        login_user(response, state, resolved, remember=remember)
 
-    login_user(User(user_data["id"]), remember=remember)
-
-    return redirect("/")
-
-
-@ux_blueprint.route("/logout", methods=["GET"])
-@login_required
-async def logout() -> Any:
-    logout_user()
-    return redirect("/")
+    return response
 
 
-def collect_websocket(func: Any) -> Any:
-    @wraps(func)
-    async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        queue = Queue()
-        app.connected_websockets.add(queue)
-        try:
-            return await func(queue, *args, **kwargs)
-        finally:
-            app.connected_websockets.remove(queue)
-
-    return wrapper
+@ux_router.get("/logout")
+async def logout(_guard: RequireUserDep) -> Response:
+    response = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
+    logout_user(response)
+    return response
 
 
-@ux_blueprint.websocket("/ws/logs")
-@collect_websocket
-async def logs_ws(queue: Queue[str]) -> None:
-    await websocket.send("ACCEPT")
-    while True:
-        record = await queue.get()
-        await websocket.send(record)
+@ux_router.websocket("/ws/logs")
+async def logs_ws(websocket: WebSocket) -> None:
+    state = websocket.app.state.ctx
+    await websocket.accept()
+
+    queue: asyncio.Queue[str] = asyncio.Queue()
+    state.connected_websockets.add(queue)
+    try:
+        await websocket.send_text("ACCEPT")
+        while True:
+            record = await queue.get()
+            await websocket.send_text(record)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        state.connected_websockets.discard(queue)

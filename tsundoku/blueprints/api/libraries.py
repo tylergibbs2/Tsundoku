@@ -1,65 +1,59 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-    from tsundoku.user import User
+from fastapi import APIRouter, status
 
-    app: TsundokuApp
-    current_user: User
-else:
-    from quart import current_app as app
-
-from quart import request, views
-
+from tsundoku.auth import StateDep
 from tsundoku.manager import Library
 
-from .response import APIResponse
+from .response import APIError, Success
+from .schemas import LibraryCreate, LibraryUpdate
+
+router = APIRouter()
 
 
-class LibrariesAPI(views.MethodView):
-    async def get(self, library_id: int | None = None) -> APIResponse:
-        if not library_id:
-            return APIResponse(result=[library.to_dict() for library in await Library.all(app)])
+@router.get("/libraries")
+async def get_libraries(state: StateDep) -> Success[list[Library]]:
+    return Success(result=await Library.all(state))
 
-        library = await Library.from_id(app, library_id)
-        if library:
-            return APIResponse(result=[library.to_dict()])
 
-        return APIResponse(status=404, error="Library with specified ID does not exist.")
+@router.get("/libraries/{library_id}")
+async def get_library(state: StateDep, library_id: int) -> Success[list[Library]]:
+    try:
+        library = await Library.from_id(state, library_id)
+    except ValueError as e:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Library with specified ID does not exist.") from e
 
-    async def post(self) -> APIResponse:
-        arguments = await request.get_json()
+    return Success(result=[library])
 
-        folder = Path(arguments.get("folder"))
-        library = await Library.new(app, folder, is_default=False)
 
-        if library:
-            return APIResponse(result=library.to_dict())
-        return APIResponse(status=500, error="The server failed to create the new Library.")
+@router.post("/libraries", status_code=status.HTTP_201_CREATED)
+async def create_library(state: StateDep, body: LibraryCreate) -> Success[Library]:
+    library = await Library.new(state, Path(body.folder), is_default=False)
+    return Success(status=status.HTTP_201_CREATED, result=library)
 
-    async def put(self, library_id: int) -> APIResponse:
-        arguments = await request.get_json()
 
-        folder = Path(arguments.get("folder"))
-        is_default = arguments.get("is_default")
+@router.put("/libraries/{library_id}")
+async def update_library(state: StateDep, library_id: int, body: LibraryUpdate) -> Success[Library]:
+    try:
+        library = await Library.from_id(state, library_id)
+    except ValueError as e:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Library with specified ID does not exist.") from e
 
-        library = await Library.from_id(app, library_id)
+    library.folder = Path(body.folder)
+    await library.save()
+    if body.is_default:
+        await library.set_default()
 
-        if not library:
-            return APIResponse(status=404, error="Library with specified ID does not exist.")
+    return Success(result=library)
 
-        library.folder = folder
-        await library.save()
-        if is_default:
-            await library.set_default()
 
-        return APIResponse(result=library.to_dict())
+@router.delete("/libraries/{library_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_library(state: StateDep, library_id: int) -> None:
+    try:
+        library = await Library.from_id(state, library_id)
+    except ValueError as e:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Library with specified ID does not exist.") from e
 
-    async def delete(self, library_id: int) -> APIResponse:
-        library = await Library.from_id(app, library_id)
-        if not library:
-            return APIResponse(status=404, error="Library with specified ID does not exist.")
-
-        await library.delete()
-        return APIResponse(result=library.to_dict())
+    await library.delete()

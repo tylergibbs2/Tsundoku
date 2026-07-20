@@ -5,9 +5,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote_plus
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-    app: TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import feedparser
 
@@ -30,17 +28,17 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: "TsundokuApp") -> None:
+    def __init__(self, app: "TsundokuAppState") -> None:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: "TsundokuApp", _from: dict) -> "SearchResult":
+    def from_dict(cls, app: "TsundokuAppState", _from: dict) -> "SearchResult":
         """
         Returns a valid SearchResult object from a data dict.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         from: dict
             The data dict.
@@ -69,14 +67,14 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(cls, app: "TsundokuApp", show_id: int, torrent_link: str) -> "SearchResult":
+    def from_necessary(cls, app: "TsundokuAppState", show_id: int, torrent_link: str) -> "SearchResult":
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         show_id: int
             The ID of the show to be added to.
@@ -94,18 +92,6 @@ class SearchResult:
         instance.torrent_link = torrent_link
 
         return instance
-
-    def to_dict(self) -> dict:
-        return {
-            "show_id": self.show_id,
-            "title": self.title,
-            "published": self.published.strftime("%d %b %Y"),
-            "torrent_link": self.torrent_link,
-            "post_link": self.post_link,
-            "size": self.size,
-            "seeders": self.seeders,
-            "leechers": self.leechers,
-        }
 
     async def get_episodes(self) -> list[int]:
         """
@@ -243,7 +229,7 @@ class SearchResult:
                 )
                 entry = await cur.fetchone()
 
-                entry = Entry(self._app, entry)
+                entry = Entry.from_record(self._app, entry)
                 await entry.set_state(EntryState.downloading)
                 added.append(entry)
 
@@ -264,13 +250,13 @@ class NyaaSearcher:
         return f"https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q={quote_plus(query)}"
 
     @staticmethod
-    async def search(app: "TsundokuApp", query: str, limit: int = 15, page: int = 1) -> list[SearchResult]:
+    async def search(app: "TsundokuAppState", query: str, limit: int = 15, page: int = 1) -> list[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         query: str
             The search query.

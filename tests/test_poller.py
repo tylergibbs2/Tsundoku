@@ -2,10 +2,10 @@ import logging
 
 import pytest
 
-from tests.mock import MockTsundokuApp
+from tests.mock import MockTsundokuAppState
 
 
-async def test_all_found_are_managed(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
+async def test_all_found_are_managed(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     found = await app.poller.poll()
@@ -23,7 +23,7 @@ async def test_all_found_are_managed(app: MockTsundokuApp, caplog: pytest.LogCap
     assert len(found) == entry_count
 
 
-async def test_rss_cache_ends_search(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
+async def test_rss_cache_ends_search(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     found = await app.poller.poll()
@@ -37,7 +37,7 @@ async def test_rss_cache_ends_search(app: MockTsundokuApp, caplog: pytest.LogCap
     assert len(found_after) == 0
 
 
-async def test_rss_cache_cleared(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
+async def test_rss_cache_cleared(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     found = await app.poller.poll()
@@ -52,7 +52,7 @@ async def test_rss_cache_cleared(app: MockTsundokuApp, caplog: pytest.LogCapture
     assert len(found) == len(found_after)
 
 
-async def test_rss_force_poll(app: MockTsundokuApp, caplog: pytest.LogCaptureFixture) -> None:
+async def test_rss_force_poll(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     found = await app.poller.poll()

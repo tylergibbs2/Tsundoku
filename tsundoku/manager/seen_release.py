@@ -1,21 +1,18 @@
-from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
 from tsundoku.constants import VALID_RESOLUTIONS
+from tsundoku.model import DBModel
 from tsundoku.utils import ParserResult, compare_version_strings, normalize_resolution
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuAppState
 
 logger = logging.getLogger("tsundoku")
 
 
-@dataclass
-class SeenRelease:
-    app: "TsundokuApp"
-
+class SeenRelease(DBModel):
     title: str
     release_group: str
     episode: int
@@ -24,29 +21,10 @@ class SeenRelease:
     torrent_destination: str
     seen_at: datetime
 
-    def to_dict(self) -> dict:
-        """
-        Returns the SeenRelease object as a dictionary.
-
-        Returns
-        -------
-        dict
-            The serialized Entry object.
-        """
-        return {
-            "title": self.title,
-            "release_group": self.release_group,
-            "episode": self.episode,
-            "resolution": self.resolution,
-            "version": self.version,
-            "torrent_destination": self.torrent_destination,
-            "seen_at": self.seen_at.isoformat(),
-        }
-
     @classmethod
     async def distinct(
         cls,
-        app: "TsundokuApp",
+        app: "TsundokuAppState",
         field: str,
         /,
         title: str | None = None,
@@ -101,7 +79,7 @@ class SeenRelease:
     @classmethod
     async def filter(
         cls,
-        app: "TsundokuApp",
+        app: "TsundokuAppState",
         /,
         title: str | None = None,
         release_group: str | None = None,
@@ -149,10 +127,21 @@ class SeenRelease:
                 *parameters,
             )
 
-        return [SeenRelease(app, *row) for row in rows]
+        return [
+            SeenRelease(
+                title=row["title"],
+                release_group=row["release_group"],
+                episode=row["episode"],
+                resolution=row["resolution"],
+                version=row["version"],
+                torrent_destination=row["torrent_destination"],
+                seen_at=row["seen_at"],
+            )._bind(app)
+            for row in rows
+        ]
 
     @staticmethod
-    async def delete_old(app: "TsundokuApp", /, days: int) -> None:
+    async def delete_old(app: "TsundokuAppState", /, days: int) -> None:
         """
         Deletes all SeenReleases older than a certain number of days.
 
@@ -183,14 +172,14 @@ class SeenRelease:
         logger.info(f"Deleted {deleted} old SeenReleases.")
 
     @classmethod
-    async def add(cls, app: "TsundokuApp", parsed: ParserResult, torrent_destination: str) -> "SeenRelease | None":
+    async def add(cls, app: "TsundokuAppState", parsed: ParserResult, torrent_destination: str) -> "SeenRelease | None":
         """
         Adds a new SeenRelease to the database.
 
         Parameters
         ----------
-        app : TsundokuApp
-            The TsundokuApp instance.
+        app : TsundokuAppState
+            The TsundokuAppState instance.
         parsed : ParserResult
             The result of parsing a torrent's filename
             with anitomy.
@@ -281,12 +270,11 @@ class SeenRelease:
             )
 
         return cls(
-            app,
-            parsed["anime_title"],
-            release_group,
-            episode,
-            resolution,
-            version,
-            torrent_destination,
-            datetime.now(UTC).replace(tzinfo=None),
-        )
+            title=parsed["anime_title"],
+            release_group=release_group,
+            episode=episode,
+            resolution=resolution,
+            version=version,
+            torrent_destination=torrent_destination,
+            seen_at=datetime.now(UTC).replace(tzinfo=None),
+        )._bind(app)

@@ -1,9 +1,13 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
+from tsundoku.model import DBModel
+
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
     from tsundoku.manager import Entry
+
+from pydantic import Field
 
 from tsundoku.constants import VALID_SERVICES, VALID_TRIGGERS
 from tsundoku.utils import ExprDict
@@ -11,38 +15,18 @@ from tsundoku.utils import ExprDict
 logger = logging.getLogger("tsundoku")
 
 
-class WebhookBase:
-    _app: "TsundokuApp"
-
+class WebhookBase(DBModel):
     base_id: int
     name: str
     service: str
     url: str
-    content_fmt: str
-    default_triggers: list[str]
-
-    def to_dict(self, /, secure: bool = False) -> dict:
-        """
-        Return the WebhookBase object as a dict.
-
-        Returns
-        -------
-        dict
-            The dict.
-        """
-        return {
-            "base_id": self.base_id,
-            "name": self.name,
-            "service": self.service,
-            "url": self.url if not secure else "********",
-            "content_fmt": self.content_fmt,
-            "default_triggers": self.default_triggers,
-        }
+    content_fmt: str | None = None
+    default_triggers: list[str] = Field(default_factory=list)
 
     @classmethod
     async def new(
         cls,
-        app: "TsundokuApp",
+        app: "TsundokuAppState",
         name: str,
         service: str,
         url: str,
@@ -55,7 +39,7 @@ class WebhookBase:
 
         Parameters
         ----------
-        app: TsundokuApp:
+        app: TsundokuAppState:
             The app.
         name: str
             The name of the WebhookBase.
@@ -130,15 +114,13 @@ class WebhookBase:
                 new_base["id"],
             )
 
-        instance = cls()
-
-        instance._app = app
-
-        instance.base_id = new_base["id"]
-        instance.name = name
-        instance.service = service
-        instance.url = url
-        instance.content_fmt = new_base["content_fmt"]
+        instance = cls(
+            base_id=new_base["id"],
+            name=name,
+            service=service,
+            url=url,
+            content_fmt=new_base["content_fmt"],
+        )._bind(app)
 
         for trigger in default_triggers:
             await instance.add_default_trigger(trigger)
@@ -169,13 +151,13 @@ class WebhookBase:
         return instance
 
     @classmethod
-    async def from_id(cls, app: "TsundokuApp", base_id: int) -> "WebhookBase | None":
+    async def from_id(cls, app: "TsundokuAppState", base_id: int) -> "WebhookBase | None":
         """
         Returns a WebhookBase object from a webhook base ID.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         base_id: int
             The WebhookBase's ID.
@@ -216,28 +198,26 @@ class WebhookBase:
                 base_id,
             )
 
-        instance = cls()
-
-        instance._app = app
-
-        instance.base_id = base["id"]
-        instance.name = base["name"]
-        instance.service = base["base_service"]
-        instance.url = base["base_url"]
-        instance.content_fmt = base["content_fmt"]
+        instance = cls(
+            base_id=base["id"],
+            name=base["name"],
+            service=base["base_service"],
+            url=base["base_url"],
+            content_fmt=base["content_fmt"],
+        )._bind(app)
 
         await instance.get_default_triggers()
 
         return instance
 
     @classmethod
-    async def from_data(cls, app: "TsundokuApp", data: dict[str, str]) -> "WebhookBase":
+    async def from_data(cls, app: "TsundokuAppState", data: dict[str, str]) -> "WebhookBase":
         """
         Returns a WebhookBase object from passed data.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         data: Dict[str, str]
             The data.
@@ -247,29 +227,27 @@ class WebhookBase:
         WebhookBase
             The requested webhook base.
         """
-        instance = cls()
-
-        instance._app = app
-
-        instance.base_id = int(data["id"])
-        instance.name = data["name"]
-        instance.service = data["base_service"]
-        instance.url = data["base_url"]
-        instance.content_fmt = data["content_fmt"]
+        instance = cls(
+            base_id=int(data["id"]),
+            name=data["name"],
+            service=data["base_service"],
+            url=data["base_url"],
+            content_fmt=data["content_fmt"],
+        )._bind(app)
 
         await instance.get_default_triggers()
 
         return instance
 
     @classmethod
-    async def all(cls, app: "TsundokuApp") -> list["WebhookBase"]:
+    async def all(cls, app: "TsundokuAppState") -> list["WebhookBase"]:
         """
         Returns all WebhookBase rows from
         the database.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
 
         Returns
@@ -477,36 +455,19 @@ class WebhookBase:
         return resp.status == 200
 
 
-class Webhook:
-    _app: "TsundokuApp"
-
+class Webhook(DBModel):
     show_id: int
     base: WebhookBase
-    triggers: list[str]
-
-    def to_dict(self) -> dict:
-        """
-        Return the Webhook object as a dict.
-
-        Returns
-        -------
-        dict
-            The dict.
-        """
-        return {
-            "show_id": self.show_id,
-            "base": self.base.to_dict(),
-            "triggers": self.triggers,
-        }
+    triggers: list[str] = Field(default_factory=list)
 
     @classmethod
-    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> list["Webhook"]:
+    async def from_show_id(cls, app: "TsundokuAppState", show_id: int) -> list["Webhook"]:
         """
         Returns all webhooks for a specified show ID.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         show_id: int
             The show's ID.
@@ -558,26 +519,24 @@ class Webhook:
             if not base:
                 continue
 
-            instance = cls()
-
-            instance._app = app
-
-            instance.show_id = show_id
-            instance.base = base
-            instance.triggers = [t["trigger"] for t in triggers if t["base"] == base.base_id]
+            instance = cls(
+                show_id=show_id,
+                base=base,
+                triggers=[t["trigger"] for t in triggers if t["base"] == base.base_id],
+            )._bind(app)
 
             instances.append(instance)
 
         return instances
 
     @classmethod
-    async def from_composite(cls, app: "TsundokuApp", show_id: int, base_id: int) -> "Webhook | None":
+    async def from_composite(cls, app: "TsundokuAppState", show_id: int, base_id: int) -> "Webhook | None":
         """
         Returns a webhook from its composite key.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         show_id: int
             The show's ID.
@@ -607,12 +566,7 @@ class Webhook:
         if not base:
             return None
 
-        instance = cls()
-
-        instance._app = app
-
-        instance.show_id = show_id
-        instance.base = base
+        instance = cls(show_id=show_id, base=base)._bind(app)
         instance.triggers = await instance.get_triggers()
 
         return instance
@@ -849,6 +803,9 @@ class Webhook:
             )
 
         if not show_name:
+            return None
+
+        if self.base.content_fmt is None:
             return None
 
         payload: Any = {}

@@ -4,7 +4,7 @@ import sqlite3
 from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 logger = logging.getLogger("tsundoku")
 
@@ -21,10 +21,10 @@ class ConfigInvalidKeyError(Exception): ...
 
 
 class Config:
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
     TABLE_NAME = None
 
-    def __init__(self, app: "TsundokuApp", keys: dict[str, Any]) -> None:
+    def __init__(self, app: "TsundokuAppState", keys: dict[str, Any]) -> None:
         super().__setattr__("app", app)
         super().__setattr__("keys", keys)
 
@@ -53,7 +53,7 @@ class Config:
         self.keys.update(other)
 
     @classmethod
-    async def retrieve(cls, app: "TsundokuApp", ensure_exists: bool = True) -> Self:
+    async def retrieve(cls, app: "TsundokuAppState", ensure_exists: bool = True) -> Self:
         async with app.acquire_db() as con:
             if ensure_exists:
                 await con.execute(
@@ -77,7 +77,7 @@ class Config:
         return cls(app, {k: row[k] for k in row.keys()})
 
     @classmethod
-    def sync_retrieve(cls, app: "TsundokuApp", ensure_exists: bool = True) -> Self:
+    def sync_retrieve(cls, app: "TsundokuAppState", ensure_exists: bool = True) -> Self:
         with app.sync_acquire_db() as con:
             if ensure_exists:
                 con.execute(

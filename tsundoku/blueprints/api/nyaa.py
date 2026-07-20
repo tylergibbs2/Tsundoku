@@ -1,83 +1,62 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING
+from typing import Annotated
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+from fastapi import APIRouter, Query, status
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
-from quart import request, views
-
+from tsundoku.auth import StateDep
+from tsundoku.manager import Entry
 from tsundoku.nyaa import NyaaSearcher, SearchResult
 
-from .response import APIResponse
+from .response import APIError, Success
+from .schemas import NyaaResult, NyaaShowRequest
 
 logger = logging.getLogger("tsundoku")
 
+router = APIRouter()
 
-class NyaaAPI(views.MethodView):
-    async def get(self) -> APIResponse:
-        query = request.args.get("query")
-        if not query:
-            return APIResponse(result=[])
 
-        # Pagination support
-        try:
-            limit = int(request.args.get("limit", 15))
-        except Exception:
-            limit = 15
-        try:
-            page = int(request.args.get("page", 1))
-        except Exception:
-            page = 1
-        if limit < 1 or limit > 100:
-            limit = 15
-        page = max(page, 1)
+@router.get("/nyaa")
+async def search_nyaa(
+    state: StateDep,
+    query: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 15,
+    page: Annotated[int, Query(ge=1)] = 1,
+) -> Success[list[NyaaResult]]:
+    if not query:
+        return Success(result=[])
 
-        try:
-            results = await NyaaSearcher.search(app, query, limit=limit, page=page)
-        except Exception as e:
-            logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
-            return APIResponse(status=400, error="Error searching for the specified query.")
+    try:
+        results = await NyaaSearcher.search(state, query, limit=limit, page=page)
+    except Exception as e:
+        logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Error searching for the specified query.") from e
 
-        return APIResponse(result=[sr.to_dict() for sr in results])
+    return Success(result=[NyaaResult.from_search_result(sr) for sr in results])
 
-    async def post(self) -> APIResponse:
-        arguments = await request.get_json()
 
-        show_id = arguments.get("show_id")
-        torrent_link = arguments.get("torrent_link")
-        overwrite = arguments.get("overwrite")
+@router.post("/nyaa")
+async def add_nyaa_result(state: StateDep, body: NyaaShowRequest) -> Success[list[Entry]]:
+    async with state.acquire_db() as con:
+        show_id = await con.fetchval(
+            """
+            SELECT
+                id
+            FROM
+                shows
+            WHERE id=?;
+        """,
+            body.show_id,
+        )
 
-        if not show_id or not torrent_link:
-            return APIResponse(status=400, error="Missing required parameters.")
+    if not show_id:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Show ID does not exist in the database.")
 
-        try:
-            show_id = int(show_id)
-        except ValueError:
-            return APIResponse(status=400, error="Show ID passed is not an integer.")
+    search_result = SearchResult.from_necessary(state, show_id, body.torrent_link)
 
-        async with app.acquire_db() as con:
-            show_id = await con.fetchval(
-                """
-                SELECT
-                    id
-                FROM
-                    shows
-                WHERE id=?;
-            """,
-                show_id,
-            )
+    logger.info(f"Processing new search result for Show <s{show_id}>")
 
-        if not show_id:
-            return APIResponse(status=404, error="Show ID does not exist in the database.")
+    entries = await search_result.process(overwrite=body.overwrite)
 
-        search_result = SearchResult.from_necessary(app, show_id, torrent_link)
-
-        logger.info(f"Processing new search result for Show <s{show_id}>")
-
-        entries = await search_result.process(overwrite=overwrite)
-
-        return APIResponse(result=[e.to_dict() for e in entries])
+    return Success(result=entries)

@@ -1,3 +1,3 @@
-from .routes import ux_blueprint
+from .routes import ux_router
 
-__all__ = ["ux_blueprint"]
+__all__ = ["ux_router"]

@@ -1,47 +1,41 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+from fastapi import APIRouter, status
 
-    app: TsundokuApp
-else:
-    from quart import current_app as app
-
-from quart import request, views
-
+from tsundoku.auth import StateDep
 from tsundoku.constants import VALID_TRIGGERS
 from tsundoku.webhooks import Webhook
 
-from .response import APIResponse
+from .response import APIError, Success
+from .schemas import WebhookUpdate
+
+router = APIRouter()
 
 
-class WebhooksAPI(views.MethodView):
-    async def get(self, show_id: int) -> APIResponse:
-        webhooks = [wh.to_dict() for wh in await Webhook.from_show_id(app, show_id)]
-        return APIResponse(result=webhooks)
+@router.get("/shows/{show_id}/webhooks")
+async def get_show_webhooks(state: StateDep, show_id: int) -> Success[list[Webhook]]:
+    return Success(result=await Webhook.from_show_id(state, show_id))
 
-    async def put(self, show_id: int, base_id: int) -> APIResponse:
-        arguments = await request.get_json()
 
-        triggers = arguments.get("triggers")
-        triggers = triggers.split(",")
+@router.put("/shows/{show_id}/webhooks/{base_id}")
+async def update_show_webhook(state: StateDep, show_id: int, base_id: int, body: WebhookUpdate) -> Success[Webhook]:
+    triggers = body.triggers.split(",")
+    if len(triggers) == 1 and not triggers[0]:
+        triggers = []
 
-        if len(triggers) == 1 and not triggers[0]:
-            triggers = []
+    wh = await Webhook.from_composite(state, show_id, base_id)
 
-        wh = await Webhook.from_composite(app, show_id, base_id)
+    if not wh:
+        raise APIError(status.HTTP_404_NOT_FOUND, "Webhook with specified ID does not exist.")
+    if any(t not in VALID_TRIGGERS for t in triggers):
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook triggers.")
 
-        if not wh:
-            return APIResponse(status=404, error="Webhook with specified ID does not exist.")
-        if any(t not in VALID_TRIGGERS for t in triggers):
-            return APIResponse(status=400, error="Invalid webhook triggers.")
+    all_triggers = await wh.get_triggers()
+    for trigger in all_triggers:
+        if trigger not in triggers:
+            await wh.remove_trigger(trigger)
 
-        all_triggers = await wh.get_triggers()
-        for trigger in all_triggers:
-            if trigger not in triggers:
-                await wh.remove_trigger(trigger)
+    for trigger in triggers:
+        await wh.add_trigger(trigger)
 
-        for trigger in triggers:
-            await wh.add_trigger(trigger)
-
-        return APIResponse(result=wh.to_dict())
+    return Success(result=wh)

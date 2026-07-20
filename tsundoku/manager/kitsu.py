@@ -2,63 +2,58 @@ import datetime
 import logging
 from typing import TYPE_CHECKING, ClassVar
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+from pydantic import computed_field
 
-    app: TsundokuApp
+from tsundoku.model import DBModel
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuAppState
 
 import aiohttp
-from quart import url_for
 
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import STATUS_HTML_MAP
+from tsundoku.urls import static_url
 
 API_URL = "https://kitsu.io/api/edge/anime"
 logger = logging.getLogger("tsundoku")
 
 
-class KitsuManager:
+class KitsuManager(DBModel):
     HEADERS: ClassVar[dict[str, str]] = {
         "Accept": "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
     }
-
-    app: "TsundokuApp"
+    SHOW_BASE: ClassVar[str] = "https://kitsu.io/anime/{}"
+    MEDIA_BASE: ClassVar[str] = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
 
     show_id: int
 
-    kitsu_id: int | None
-    slug: str | None
-    status: str | None
-    poster: str | None
+    kitsu_id: int | None = None
+    slug: str | None = None
+    status: str | None = None
+    poster: str | None = None
 
-    def __init__(self) -> None:
-        self.SHOW_BASE = "https://kitsu.io/anime/{}"
-        self.MEDIA_BASE = "https://media.kitsu.io/anime/poster_images/{}/{}.jpg"
+    @computed_field
+    @property
+    def link(self) -> str | None:
+        """The show's page on Kitsu, derived from its Kitsu ID."""
+        if self.kitsu_id:
+            return self.SHOW_BASE.format(self.kitsu_id)
+        return None
 
-    def to_dict(self) -> dict:
-        """
-        Serializes the KitsuManager object.
+    @computed_field
+    @property
+    def html_status(self) -> str | None:
+        """A localized, styled HTML span describing the show's status."""
+        if not self.status:
+            return None
 
-        Returns
-        -------
-        dict
-            The serialized object.
-        """
         fluent = self.app.get_fluent()
-
-        return {
-            "show_id": self.show_id,
-            "kitsu_id": self.kitsu_id,
-            "link": self.link,
-            "slug": self.slug,
-            "status": self.status,
-            "html_status": STATUS_HTML_MAP[self.status].format(fluent._(f"status-{self.status}")) if self.status else None,
-            "poster": self.poster,
-        }
+        return STATUS_HTML_MAP[self.status].format(fluent._(f"status-{self.status}"))
 
     @classmethod
-    async def fetch(cls, app: "TsundokuApp", show_id: int, show_name: str) -> "KitsuManager":
+    async def fetch(cls, app: "TsundokuAppState", show_id: int, show_name: str) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show name from the Kitsu API.
@@ -88,13 +83,12 @@ class KitsuManager:
 
         attributes = result.get("attributes", {})
 
-        instance = cls()
-        instance.app = app
-        instance.show_id = show_id
-        instance.kitsu_id = int(result["id"]) if result else None
-        instance.slug = attributes.get("slug")
-        instance.status = attributes.get("status")
-
+        instance = cls(
+            show_id=show_id,
+            kitsu_id=int(result["id"]) if result else None,
+            slug=attributes.get("slug"),
+            status=attributes.get("status"),
+        )._bind(app)
         instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
@@ -128,7 +122,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def fetch_by_kitsu(cls, app: "TsundokuApp", show_id: int, kitsu_id: int) -> "KitsuManager":
+    async def fetch_by_kitsu(cls, app: "TsundokuAppState", show_id: int, kitsu_id: int) -> "KitsuManager":
         """
         Attempts to retrieve Kitsu information
         for a specified show ID from the Kitsu API.
@@ -161,13 +155,12 @@ class KitsuManager:
 
         attributes = result.get("attributes", {})
 
-        instance = cls()
-        instance.app = app
-        instance.show_id = show_id
-        instance.kitsu_id = int(result["id"]) if result else None
-        instance.slug = attributes.get("slug")
-        instance.status = attributes.get("status")
-
+        instance = cls(
+            show_id=show_id,
+            kitsu_id=int(result["id"]) if result else None,
+            slug=attributes.get("slug"),
+            status=attributes.get("status"),
+        )._bind(app)
         instance.poster = await instance.get_poster_image(attributes.get("posterImage", {}))
 
         async with app.acquire_db() as con:
@@ -201,7 +194,7 @@ class KitsuManager:
         return instance
 
     @classmethod
-    async def from_show_id(cls, app: "TsundokuApp", show_id: int) -> "KitsuManager":
+    async def from_show_id(cls, app: "TsundokuAppState", show_id: int) -> "KitsuManager":
         """
         Retrieves Kitsu information from the database based
         on a show's ID.
@@ -244,19 +237,18 @@ class KitsuManager:
                 )
                 return await KitsuManager.fetch(app, show_id, show_name)
 
-        instance = cls()
-        instance.app = app
-        instance.show_id = show_id
-        instance.kitsu_id = row["kitsu_id"]
-        instance.slug = row["slug"]
-        instance.status = row["show_status"]
-
+        instance = cls(
+            show_id=show_id,
+            kitsu_id=row["kitsu_id"],
+            slug=row["slug"],
+            status=row["show_status"],
+        )._bind(app)
         instance.poster = await instance.get_poster_image()
 
         return instance
 
     @classmethod
-    async def from_data(cls, app: "TsundokuApp", data: dict[str, str]) -> "KitsuManager":
+    async def from_data(cls, app: "TsundokuAppState", data: dict[str, str]) -> "KitsuManager":
         """
         Creates a metadata object from already queried SQL
         data.
@@ -288,12 +280,12 @@ class KitsuManager:
                 )
                 return await KitsuManager.fetch(app, show_id, show_name)
 
-        instance = cls()
-        instance.app = app
-        instance.show_id = show_id
-        instance.kitsu_id = int(data["kitsu_id"]) if data.get("kitsu_id") else None
-        instance.slug = data.get("slug")
-        instance.status = data.get("show_status")
+        instance = cls(
+            show_id=show_id,
+            kitsu_id=int(data["kitsu_id"]) if data.get("kitsu_id") else None,
+            slug=data.get("slug"),
+            status=data.get("show_status"),
+        )._bind(app)
 
         if data.get("cached_poster_url"):
             instance.poster = data["cached_poster_url"]
@@ -301,21 +293,6 @@ class KitsuManager:
             instance.poster = await instance.get_poster_image()
 
         return instance
-
-    @property
-    def link(self) -> str | None:
-        """
-        Returns the link to the show on Kitsu
-        from the show's ID.
-
-        Returns
-        -------
-        Optional[str]
-            The show's link.
-        """
-        if self.kitsu_id:
-            return self.SHOW_BASE.format(self.kitsu_id)
-        return None
 
     async def clear_cache(self) -> None:
         """
@@ -355,7 +332,7 @@ class KitsuManager:
             poster_images = attributes.get("posterImage", {})
 
         if self.kitsu_id is None or poster_images is None:
-            return url_for("ux.static", filename="img/missing.png")
+            return static_url("img/missing.png")
 
         async with self.app.acquire_db() as con:
             url = await con.fetchval(
@@ -382,7 +359,7 @@ class KitsuManager:
 
         if to_cache is None:
             logger.info(f"Unable to find new poster for <s{self.show_id}>")
-            return url_for("ux.static", filename="img/missing.png")
+            return static_url("img/missing.png")
 
         async with self.app.acquire_db() as con:
             await con.execute(

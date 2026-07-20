@@ -1,25 +1,24 @@
-from dataclasses import dataclass
 from datetime import datetime
 import logging
 from sqlite3 import Row
 from typing import TYPE_CHECKING, Self
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+from pydantic import Field
 
+from tsundoku.model import DBModel
 from tsundoku.webhooks.webhook import Webhook
 
 from .entry import Entry
 from .kitsu import KitsuManager
 from .library import Library
 
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuAppState
+
 logger = logging.getLogger("tsundoku")
 
 
-@dataclass
-class Show:
-    app: "TsundokuApp"
-
+class Show(DBModel):
     id_: int
     library_id: int
     title: str
@@ -32,43 +31,17 @@ class Show:
     preferred_release_group: str | None
     created_at: datetime
 
-    metadata: KitsuManager | None
+    metadata: KitsuManager | None = None
 
-    _entries: list[Entry]
-    _webhooks: list[Webhook]
+    entries: list[Entry] = Field(default_factory=list)
+    webhooks: list[Webhook] = Field(default_factory=list)
 
     @property
     def internal_title(self) -> str:
         return self.title_local if self.title_local else self.title
 
-    def to_dict(self) -> dict:
-        """
-        Serializes a show object.
-
-        Returns
-        -------
-        dict
-            The serialized Show.
-        """
-        return {
-            "id_": self.id_,
-            "library_id": self.library_id,
-            "title": self.title,
-            "title_local": self.title_local,
-            "desired_format": self.desired_format,
-            "season": self.season,
-            "episode_offset": self.episode_offset,
-            "watch": self.watch,
-            "preferred_resolution": self.preferred_resolution,
-            "preferred_release_group": self.preferred_release_group,
-            "created_at": self.created_at,
-            "entries": [e.to_dict() for e in self._entries],
-            "metadata": self.metadata.to_dict() if self.metadata else None,
-            "webhooks": [wh.to_dict() for wh in self._webhooks],
-        }
-
     @classmethod
-    async def from_data(cls, app: "TsundokuApp", data: Row) -> Self:
+    async def from_data(cls, app: "TsundokuAppState", data: Row) -> Self:
         """
         Creates a Show object from a sqlite3.Row
         of a Show in the database.
@@ -95,15 +68,15 @@ class Show:
         }
         metadata = await KitsuManager.from_data(app, metadata_dict)
 
-        instance = cls(app, **data_dict, metadata=metadata, _entries=[], _webhooks=[])
+        instance = cls(**data_dict, metadata=metadata)._bind(app)
 
-        await instance.entries()
-        await instance.webhooks()
+        await instance.load_entries()
+        await instance.load_webhooks()
 
         return instance
 
     @classmethod
-    async def from_id(cls, app: "TsundokuApp", id_: int, lazy_metadata: bool = False, lazy_entries: bool = False, lazy_webhooks: bool = False) -> Self:
+    async def from_id(cls, app: "TsundokuAppState", id_: int, lazy_metadata: bool = False, lazy_entries: bool = False, lazy_webhooks: bool = False) -> Self:
         """
         Retrieves a Show from the database based on
         a passed identifier.
@@ -155,12 +128,12 @@ class Show:
         else:
             metadata = await KitsuManager.from_show_id(app, show["id_"])
 
-        instance = cls(app, **show, metadata=metadata, _entries=[], _webhooks=[])
+        instance = cls(**show, metadata=metadata)._bind(app)
 
         if not lazy_entries:
-            await instance.entries()
+            await instance.load_entries()
         if not lazy_webhooks:
-            await instance.webhooks()
+            await instance.load_webhooks()
 
         return instance
 
@@ -189,7 +162,7 @@ class Show:
 
     @staticmethod
     async def insert(
-        app: "TsundokuApp",
+        app: "TsundokuAppState",
         /,
         library_id: int,
         title: str,
@@ -287,7 +260,7 @@ class Show:
                 self.id_,
             )
 
-    async def entries(self) -> list[Entry]:
+    async def load_entries(self) -> list[Entry]:
         """
         Retrieves and sets a list of this Show's
         entries.
@@ -297,10 +270,10 @@ class Show:
         List[Entry]
             The Show's entries.
         """
-        self._entries = await Entry.from_show_id(self.app, self.id_)
-        return self._entries
+        self.entries = await Entry.from_show_id(self.app, self.id_)
+        return self.entries
 
-    async def webhooks(self) -> list[Webhook]:
+    async def load_webhooks(self) -> list[Webhook]:
         """
         Retrieves and sets a list of this Show's
         webhooks.
@@ -310,8 +283,8 @@ class Show:
         List[Webhook]
             The Show's webhooks.
         """
-        self._webhooks = await Webhook.from_show_id(self.app, self.id_)
-        return self._webhooks
+        self.webhooks = await Webhook.from_show_id(self.app, self.id_)
+        return self.webhooks
 
     def __repr__(self) -> str:
         return f"<Show id={self.id_} title={self.title}>"

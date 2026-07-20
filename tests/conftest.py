@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 
 from tests.mock import (
-    MockTsundokuApp,
+    MockTsundokuAppState,
     filesystem,
     mock_feedparser_parse,
     mock_get_all_sources,
@@ -14,7 +14,7 @@ from tests.mock import (
 @pytest_asyncio.fixture(name="app")
 async def create_app(
     monkeypatch: pytest.MonkeyPatch,
-) -> AsyncGenerator[MockTsundokuApp, None]:
+) -> AsyncGenerator[MockTsundokuAppState, None]:
     monkeypatch.setattr("feedparser.parse", mock_feedparser_parse)
     monkeypatch.setattr("tsundoku.feeds.poller.get_all_sources", mock_get_all_sources)
 
@@ -27,7 +27,7 @@ async def create_app(
     monkeypatch.setattr("aiofiles.os.rename", filesystem.mock_rename)
     monkeypatch.setattr("tsundoku.feeds.downloader.move", filesystem.mock_move)
 
-    app = MockTsundokuApp()
+    app = MockTsundokuAppState()
     await app.setup()
 
     yield app

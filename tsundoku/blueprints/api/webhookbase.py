@@ -1,116 +1,110 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
-if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-    from tsundoku.user import User
+from fastapi import APIRouter, status
 
-    app: TsundokuApp
-    current_user: User
-else:
-    from quart import current_app as app
-    from quart_auth import current_user
-
-from quart import request, views
-
+from tsundoku.auth import ApiUserDep, StateDep
 from tsundoku.constants import VALID_SERVICES, VALID_TRIGGERS
 from tsundoku.webhooks import WebhookBase
 
-from .response import APIResponse
+from .response import APIError, Success
+from .schemas import WebhookBaseCreate, WebhookBaseUpdate
+
+router = APIRouter()
+
+_CREATE_SERVICES = ("discord", "slack", "custom")
+_MASKED_URL = "********"
 
 
-class WebhookBaseAPI(views.MethodView):
-    async def get(self, base_id: int | None = None) -> APIResponse:
-        hidden_url = await current_user.readonly
-        if not base_id:
-            return APIResponse(result=[base.to_dict(secure=hidden_url) for base in await WebhookBase.all(app)])
+def _mask(base: WebhookBase, *, readonly: bool) -> WebhookBase:
+    """Hide the webhook URL from readonly users."""
+    if not readonly:
+        return base
+    return base.model_copy(update={"url": _MASKED_URL})
 
-        base = await WebhookBase.from_id(app, base_id)
-        if base:
-            return APIResponse(result=[base.to_dict(secure=hidden_url)])
 
-        return APIResponse(status=404, error="BaseWebhook with specified ID does not exist.")
+def _parse_triggers(raw: str) -> list[str]:
+    triggers = raw.split(",")
+    if len(triggers) == 1 and not triggers[0]:
+        return []
+    return triggers
 
-    async def post(self) -> APIResponse:
-        wh_services = ("discord", "slack", "custom")
-        arguments = await request.get_json()
 
-        name = arguments.get("name")
-        service = arguments.get("service")
-        url = arguments.get("url")
-        content_fmt = arguments.get("content_fmt")
+@router.get("/webhooks")
+async def get_webhook_bases(state: StateDep, user: ApiUserDep) -> Success[list[WebhookBase]]:
+    bases = [_mask(base, readonly=user.readonly) for base in await WebhookBase.all(state)]
+    return Success(result=bases)
 
-        triggers = arguments.get("default_triggers", "")
-        triggers = triggers.split(",")
-        if len(triggers) == 1 and not triggers[0]:
-            triggers = []
 
-        if service not in wh_services:
-            return APIResponse(status=400, error="Invalid webhook service.")
-        if not url:
-            return APIResponse(status=400, error="Invalid webhook URL.")
-        if not name:
-            return APIResponse(status=400, error="Invalid webhook name.")
-        if any(t not in VALID_TRIGGERS for t in triggers):
-            return APIResponse(status=400, error="Invalid webhook triggers.")
-        if content_fmt == "":
-            content_fmt = None
+@router.get("/webhooks/{base_id}")
+async def get_webhook_base(state: StateDep, user: ApiUserDep, base_id: int) -> Success[list[WebhookBase]]:
+    base = await WebhookBase.from_id(state, base_id)
+    if base:
+        return Success(result=[_mask(base, readonly=user.readonly)])
 
-        base = await WebhookBase.new(app, name, service, url, content_fmt, triggers)
+    raise APIError(status.HTTP_404_NOT_FOUND, "BaseWebhook with specified ID does not exist.")
 
-        if base:
-            return APIResponse(result=base.to_dict())
-        return APIResponse(status=500, error="The server failed to create the new WebhookBase.")
 
-    async def put(self, base_id: int) -> APIResponse:
-        arguments = await request.get_json()
+@router.post("/webhooks", status_code=status.HTTP_201_CREATED)
+async def create_webhook_base(state: StateDep, body: WebhookBaseCreate) -> Success[WebhookBase]:
+    triggers = _parse_triggers(body.default_triggers)
 
-        name = arguments.get("name")
-        service = arguments.get("service")
-        url = arguments.get("url")
-        content_fmt = arguments.get("content_fmt")
+    if body.service not in _CREATE_SERVICES:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook service.")
+    if not body.url:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook URL.")
+    if not body.name:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook name.")
+    if any(t not in VALID_TRIGGERS for t in triggers):
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook triggers.")
 
-        base = await WebhookBase.from_id(app, base_id)
+    base = await WebhookBase.new(state, body.name, body.service, body.url, body.content_fmt or None, triggers)
 
-        if not base:
-            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
-        if service not in VALID_SERVICES:
-            return APIResponse(status=400, error="Invalid webhook service.")
-        if not url:
-            return APIResponse(status=400, error="Invalid webhook URL.")
-        if not content_fmt:
-            return APIResponse(status=400, error="Invalid content format.")
-        if not name:
-            return APIResponse(status=400, error="Invalid name.")
+    if base:
+        return Success(status=status.HTTP_201_CREATED, result=base)
+    raise APIError(status.HTTP_500_INTERNAL_SERVER_ERROR, "The server failed to create the new WebhookBase.")
 
-        base.name = name
-        base.service = service
-        base.url = url
-        base.content_fmt = content_fmt
 
-        triggers = arguments.get("default_triggers", "")
-        triggers = triggers.split(",")
+@router.put("/webhooks/{base_id}")
+async def update_webhook_base(state: StateDep, base_id: int, body: WebhookBaseUpdate) -> Success[WebhookBase]:
+    base = await WebhookBase.from_id(state, base_id)
 
-        if len(triggers) == 1 and not triggers[0]:
-            triggers = []
-        elif any(t not in VALID_TRIGGERS for t in triggers):
-            return APIResponse(status=400, error="Invalid webhook triggers.")
+    if not base:
+        raise APIError(status.HTTP_404_NOT_FOUND, "WebhookBase with specified ID does not exist.")
+    if body.service not in VALID_SERVICES:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook service.")
+    if not body.url:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook URL.")
+    if not body.content_fmt:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid content format.")
+    if not body.name:
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid name.")
 
-        all_triggers = await base.get_default_triggers()
-        for trigger in all_triggers:
-            if trigger not in triggers:
-                await base.remove_default_trigger(trigger)
+    base.name = body.name
+    base.service = body.service
+    base.url = body.url
+    base.content_fmt = body.content_fmt
 
-        for trigger in triggers:
-            await base.add_default_trigger(trigger)
+    triggers = _parse_triggers(body.default_triggers)
+    if any(t not in VALID_TRIGGERS for t in triggers):
+        raise APIError(status.HTTP_400_BAD_REQUEST, "Invalid webhook triggers.")
 
-        await base.save()
+    all_triggers = await base.get_default_triggers()
+    for trigger in all_triggers:
+        if trigger not in triggers:
+            await base.remove_default_trigger(trigger)
 
-        return APIResponse(result=base.to_dict())
+    for trigger in triggers:
+        await base.add_default_trigger(trigger)
 
-    async def delete(self, base_id: int) -> APIResponse:
-        base = await WebhookBase.from_id(app, base_id)
-        if not base:
-            return APIResponse(status=404, error="WebhookBase with specified ID does not exist.")
+    await base.save()
 
-        await base.delete()
-        return APIResponse(result=base.to_dict())
+    return Success(result=base)
+
+
+@router.delete("/webhooks/{base_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_webhook_base(state: StateDep, base_id: int) -> None:
+    base = await WebhookBase.from_id(state, base_id)
+    if not base:
+        raise APIError(status.HTTP_404_NOT_FOUND, "WebhookBase with specified ID does not exist.")
+
+    await base.delete()

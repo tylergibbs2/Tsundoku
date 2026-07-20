@@ -1,33 +1,30 @@
-from dataclasses import dataclass
 from pathlib import Path
 from sqlite3 import Row
 from typing import TYPE_CHECKING
 
+from pydantic import field_serializer
+
+from tsundoku.model import DBModel
+
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 
-@dataclass
-class Library:
-    app: "TsundokuApp"
-
+class Library(DBModel):
     id_: int
     folder: Path
     is_default: bool
 
-    def to_dict(self) -> dict:
-        return {
-            "id_": self.id_,
-            "folder": str(self.folder),
-            "is_default": self.is_default,
-        }
+    @field_serializer("folder")
+    def _serialize_folder(self, folder: Path) -> str:
+        return str(folder)
 
     @classmethod
-    def from_data(cls, app: "TsundokuApp", row: Row) -> "Library":
-        return cls(app, id_=row["id"], folder=Path(row["folder"]), is_default=row["is_default"])
+    def from_data(cls, app: "TsundokuAppState", row: Row) -> "Library":
+        return cls(id_=row["id"], folder=Path(row["folder"]), is_default=bool(row["is_default"]))._bind(app)
 
     @classmethod
-    async def from_id(cls, app: "TsundokuApp", id_: int) -> "Library":
+    async def from_id(cls, app: "TsundokuAppState", id_: int) -> "Library":
         async with app.acquire_db() as con:
             library = await con.fetchone(
                 """
@@ -49,7 +46,7 @@ class Library:
         return Library.from_data(app, library)
 
     @classmethod
-    async def all(cls, app: "TsundokuApp") -> list["Library"]:
+    async def all(cls, app: "TsundokuAppState") -> list["Library"]:
         async with app.acquire_db() as con:
             libraries = await con.fetchall(
                 """
@@ -66,7 +63,7 @@ class Library:
         return [Library.from_data(app, row) for row in libraries]
 
     @classmethod
-    async def new(cls, app: "TsundokuApp", folder: Path, is_default: bool = False) -> "Library":
+    async def new(cls, app: "TsundokuAppState", folder: Path, is_default: bool = False) -> "Library":
         async with app.acquire_db() as con, con.cursor() as cur:
             await cur.execute(
                 """
@@ -84,7 +81,7 @@ class Library:
             if id_ is None:
                 raise Exception("Failed to create new library, lastrowid is None")
 
-        instance = cls(app, id_=id_, folder=folder, is_default=False)
+        instance = cls(id_=id_, folder=folder, is_default=False)._bind(app)
         if is_default:
             await instance.set_default()
 
