@@ -562,6 +562,9 @@ class Webhook(DBModel):
                 base_id,
             )
 
+        if webhook is None:
+            return None
+
         base = await WebhookBase.from_id(app, webhook["base"])
         if not base:
             return None

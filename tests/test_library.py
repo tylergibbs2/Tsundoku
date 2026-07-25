@@ -5,6 +5,7 @@ import pytest
 
 from tests.mock import MockTsundokuAppState
 from tsundoku.manager import Library, ShowCollection
+from tsundoku.manager.kitsu import API_URL as KITSU_API_URL
 
 
 async def test_retrieve_all_libraries(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
@@ -71,6 +72,11 @@ async def test_only_one_default_library_from_existing(app: MockTsundokuAppState,
 
 async def test_all_shows_have_a_library(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
+
+    # Shows in the fixture data have no cached kitsu_info row, so building the
+    # collection falls through to KitsuManager.fetch. Stub the lookup out with
+    # an empty result -- this test is only about library_id.
+    app.session.stub("GET", KITSU_API_URL, json={"data": []})
 
     for show in await ShowCollection.all(app):  # type: ignore
         assert show.library_id is not None

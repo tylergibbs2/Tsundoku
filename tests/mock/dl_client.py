@@ -30,11 +30,23 @@ class InMemoryTorrent:
 MAGNET_RE = re.compile(r"magnet:\?.+btih:([\d\w]+)")
 
 
+class UnregisteredTorrentError(BaseException):
+    """Raised when app code inspects a torrent the test never described.
+
+    Inherits from :class:`BaseException` for the same reason as
+    :class:`tests.mock.session.UnstubbedRequestError`: the call sites that
+    read a torrent's contents sit near broad ``except Exception`` handlers
+    that would turn a missing fixture into an empty episode list, and a test
+    asserting "no episodes were added" would then pass for the wrong reason.
+    """
+
+
 class MockDownloadManager(Manager):
     _client: "InMemoryDownloadClient"
 
     def __init__(self) -> None:
         self._client = InMemoryDownloadClient()
+        self._file_structures: dict[str, list[str]] = {}
 
     @property
     def torrents(self) -> list[InMemoryTorrent]:
@@ -52,8 +64,20 @@ class MockDownloadManager(Manager):
 
         return await super().get_magnet(location)
 
+    def set_file_structure(self, location: str, files: list[str]) -> None:
+        """Declare the file names carried by the torrent at ``location``.
+
+        Mirrors what the real manager derives by fetching the ``.torrent`` and
+        bencode-decoding it: a single-file torrent yields one name, a folder
+        torrent yields one name per contained file.
+        """
+        self._file_structures[location] = list(files)
+
     async def get_file_structure(self, location: str) -> list[str]:
-        raise NotImplementedError()
+        try:
+            return list(self._file_structures[location])
+        except KeyError:
+            raise UnregisteredTorrentError(f"No file structure registered for torrent: {location}\nDeclare one with app.dl_client.set_file_structure({location!r}, [...]).") from None
 
 
 class InMemoryDownloadClient(TorrentClient):

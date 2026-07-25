@@ -15,6 +15,7 @@ from tsundoku.feeds import Downloader, Poller
 from tsundoku.ratelimit import limiter
 
 from .dl_client import MockDownloadManager
+from .session import MockClientSession
 
 
 class UserType(Enum):
@@ -31,14 +32,22 @@ class MockTsundokuAppState(TsundokuAppState):
     """An in-memory, test-oriented variant of :class:`TsundokuAppState`.
 
     The application lifespan is stubbed out; the database lives in a shared
-    in-memory SQLite instance, and the download manager is mocked.
+    in-memory SQLite instance, and the download manager and HTTP session are
+    mocked.
     """
 
     dl_client: MockDownloadManager
+    session: MockClientSession
 
     def __init__(self) -> None:
         super().__init__()
         self.dl_client = MockDownloadManager()
+
+        # The real session is only ever created in TsundokuAppState._setup_session,
+        # which the stubbed lifespan never runs. Without this, every code path
+        # that reaches for app.session raises AttributeError -- which the broad
+        # `except Exception` handlers around those calls quietly swallow.
+        self.session = MockClientSession()
 
         # The rate limiter uses global in-memory state that would otherwise
         # bleed across tests; disable it for the test app.
@@ -116,5 +125,6 @@ class MockTsundokuAppState(TsundokuAppState):
         return client
 
     async def cleanup(self) -> None:
+        await self.session.close()
         await self._async_db.close()
         self._sync_db.close()

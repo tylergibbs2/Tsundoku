@@ -9,8 +9,6 @@ from tsundoku.model import DBModel
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuAppState
 
-import aiohttp
-
 from tsundoku.config import GeneralConfig
 from tsundoku.constants import STATUS_HTML_MAP
 from tsundoku.urls import static_url
@@ -72,14 +70,13 @@ class KitsuManager(DBModel):
         """
         logger.info(f"Fetching Kitsu ID for {show_name}")
 
-        async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
-            payload = {"filter[text]": show_name, "fields[anime]": "id,status,slug,posterImage,startDate,popularityRank", "sort": "-startDate,-popularityRank"}
-            async with sess.get(API_URL, params=payload) as resp:
-                data = await resp.json()
-                try:
-                    result = data["data"][0]
-                except (IndexError, KeyError):
-                    result = {}
+        payload = {"filter[text]": show_name, "fields[anime]": "id,status,slug,posterImage,startDate,popularityRank", "sort": "-startDate,-popularityRank"}
+        async with app.session.get(API_URL, headers=cls.HEADERS, params=payload) as resp:
+            data = await resp.json()
+            try:
+                result = data["data"][0]
+            except (IndexError, KeyError):
+                result = {}
 
         attributes = result.get("attributes", {})
 
@@ -141,17 +138,16 @@ class KitsuManager(DBModel):
         """
         logger.info(f"Fetching Kitsu ID for <s{show_id}>")
 
-        async with aiohttp.ClientSession(headers=cls.HEADERS) as sess:
-            payload = {
-                "filter[id]": kitsu_id,
-                "fields[anime]": "status,slug,posterImage",
-            }
-            async with sess.get(API_URL, params=payload) as resp:
-                data = await resp.json()
-                try:
-                    result = data["data"][0]
-                except IndexError:
-                    result = {}
+        payload = {
+            "filter[id]": kitsu_id,
+            "fields[anime]": "status,slug,posterImage",
+        }
+        async with app.session.get(API_URL, headers=cls.HEADERS, params=payload) as resp:
+            data = await resp.json()
+            try:
+                result = data["data"][0]
+            except IndexError:
+                result = {}
 
         attributes = result.get("attributes", {})
 
@@ -319,14 +315,13 @@ class KitsuManager(DBModel):
             The desired poster.
         """
         if poster_images is None and self.kitsu_id is not None:
-            async with aiohttp.ClientSession(headers=KitsuManager.HEADERS) as sess:
-                payload = {"filter[id]": self.kitsu_id, "fields[anime]": "posterImage"}
-                async with sess.get(API_URL, params=payload) as resp:
-                    data = await resp.json()
-                    try:
-                        result = data["data"][0]
-                    except (IndexError, KeyError):
-                        result = {}
+            payload = {"filter[id]": self.kitsu_id, "fields[anime]": "posterImage"}
+            async with self.app.session.get(API_URL, headers=KitsuManager.HEADERS, params=payload) as resp:
+                data = await resp.json()
+                try:
+                    result = data["data"][0]
+                except (IndexError, KeyError):
+                    result = {}
 
             attributes = result.get("attributes", {})
             poster_images = attributes.get("posterImage", {})

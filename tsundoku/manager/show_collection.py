@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuAppState
 
-import aiohttp
-
 from .kitsu import API_URL
 from .show import Show
 
@@ -169,17 +167,20 @@ class ShowCollection:
             return
 
         status_map: dict[int, str] = {}
-        async with aiohttp.ClientSession() as sess:
-            payload = {
-                "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
-                "fields[anime]": "status",
-            }
-            async with sess.get(API_URL, params=payload) as resp:
-                data = await resp.json()
-                for show in data.get("data", []):
-                    show_id = int(show["id"])
-                    status = show.get("attributes", {}).get("status", None)
-                    status_map[show_id] = status
+        # Every manager is bound to the same app state, and the early return
+        # above guarantees the list is non-empty.
+        session = managers[0].app.session
+
+        payload = {
+            "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
+            "fields[anime]": "status",
+        }
+        async with session.get(API_URL, params=payload) as resp:
+            data = await resp.json()
+            for show in data.get("data", []):
+                show_id = int(show["id"])
+                status = show.get("attributes", {}).get("status", None)
+                status_map[show_id] = status
 
         for manager in managers:
             if manager.kitsu_id is not None and manager.kitsu_id in status_map:
