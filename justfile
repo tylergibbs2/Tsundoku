@@ -21,9 +21,11 @@ check fix="":
     {{ if fix == "--fix" { "uv run ruff check --fix" } else { "uv run ruff check" } }}
     uv run ty check
     uv run pytest
+    # Vite transpiles TS without checking it, unlike ts-loader before it.
+    bun run typecheck
     {{ if fix == "--fix" { "bun run prettier . --write --list-different" } else { "bun run prettier . --list-different" } }}
 
-# Run the webpack frontend build in watch mode
+# Run the Vite frontend build in watch mode
 dev-frontend:
     bun run dev
 

@@ -82,7 +82,7 @@ class TsundokuAppState:
         self.flags = Flags()
         self.secret_key = _resolve_secret_key(self.flags)
 
-        self.cached_bundle_hash: str | None = None
+        self.cached_bundle_assets: tuple[str, list[str]] | None = None
         self._active_localization: CustomFluentLocalization | None = None
         self._tasks: list[asyncio.Task[None]] = []
 

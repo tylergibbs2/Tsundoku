@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -45,33 +46,47 @@ def get_flashed_messages(request: Request, with_categories: bool = False) -> lis
     return [message for _category, message in flashes]
 
 
-def _resolve_bundle_filename(state: "TsundokuAppState", filename: str) -> str:
-    """Rewrite ``js/root.js`` to its content-hashed build output, if present."""
-    if filename != "js/root.js":
-        return filename
+def _load_bundle_assets(state: "TsundokuAppState") -> tuple[str, list[str]]:
+    """Return the built entry chunk and its stylesheets, relative to ``js/``.
 
-    if state.cached_bundle_hash is not None and not state.flags.IS_DEBUG:
-        return f"js/root.{state.cached_bundle_hash}.js"
+    Vite writes a manifest describing the content-hashed output of the entry in
+    ``ts/App.tsx``. It is re-read on every render while debugging so that
+    ``vite build --watch`` rebuilds are picked up without a restart.
+    """
+    if state.cached_bundle_assets is not None and not state.flags.IS_DEBUG:
+        return state.cached_bundle_assets
 
-    if not _STATIC_JS_DIR.exists():
-        logger.error("Could not find static JS folder!")
-        return filename
+    fallback = ("js/root.js", [])
 
-    for file in _STATIC_JS_DIR.glob("root.*.js"):
-        split = file.name.split(".")
-        if len(split) == 2:
-            return filename
+    manifest_path = _STATIC_JS_DIR / ".vite" / "manifest.json"
+    if not manifest_path.exists():
+        logger.error("Could not find the frontend build manifest, run `bun run build`!")
+        return fallback
 
-        state.cached_bundle_hash = split[1]
-        return f"js/root.{state.cached_bundle_hash}.js"
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        logger.exception("Could not read the frontend build manifest!")
+        return fallback
 
-    return filename
+    entry = next((chunk for chunk in manifest.values() if chunk.get("isEntry")), None)
+    if entry is None:
+        logger.error("Frontend build manifest has no entry chunk!")
+        return fallback
+
+    assets = (f"js/{entry['file']}", [f"js/{css}" for css in entry.get("css", [])])
+    state.cached_bundle_assets = assets
+    return assets
 
 
 def _make_url_for(state: "TsundokuAppState") -> Callable[..., str]:
     def url_for(name: str, **params: str) -> str:
         if name == "ux.static":
-            filename = _resolve_bundle_filename(state, params["filename"])
+            filename = params["filename"]
+            # Rewrite the logical entry name to its content-hashed build output.
+            if filename == "js/root.js":
+                filename, _css = _load_bundle_assets(state)
+
             return f"{STATIC_URL_PATH}/{filename}"
 
         return _NAMED_ROUTES[name]
@@ -93,8 +108,11 @@ def render(
     """Render ``template_name`` with Tsundoku's shared template context."""
     fluent = state.get_fluent()
 
+    _js, css = _load_bundle_assets(state)
+
     full_context: dict[str, object] = {
         "url_for": _make_url_for(state),
+        "bundle_css": [f"{STATIC_URL_PATH}/{filename}" for filename in css],
         "get_flashed_messages": lambda with_categories=False: get_flashed_messages(request, with_categories),
         "_": fluent.format_value,
         "LOCALE": state.flags.LOCALE,

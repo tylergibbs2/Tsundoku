@@ -2,12 +2,18 @@
   "compilerOptions": {
     "target": "es2020",
     "jsx": "react-jsx",
-    "module": "commonjs",
+    "module": "esnext",
     "lib": ["ES2020", "ES2016", "DOM", "DOM.Iterable"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    // Declares the `*.css` / `*.scss` side-effect imports that Vite resolves.
+    "types": ["vite/client"]
   },
   "include": ["tsundoku/blueprints/ux/static/ts/App.tsx"]
 }

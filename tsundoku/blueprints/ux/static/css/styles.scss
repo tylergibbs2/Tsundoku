@@ -1,4 +1,6 @@
-@import "bulma";
+// Full path rather than bare "bulma": Sass' modern JS API (the only one Vite
+// supports) resolves neither the package `main` field nor loadPaths for this.
+@import "bulma/bulma.sass";
 
 body.do-theme-transition {
   transition: all 0.6s ease;

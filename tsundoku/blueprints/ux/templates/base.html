@@ -75,6 +75,15 @@
     ></script>
 
     {% block extralib %} {% endblock %}
+
+    <!--
+      Bundled CSS goes last so it keeps winning the cascade over base.css and
+      the CDN stylesheets above, which is the order style-loader produced when
+      it injected these at runtime.
+    -->
+    {% for href in bundle_css %}
+    <link rel="stylesheet" href="{{ href }}" />
+    {% endfor %}
   </head>
 
   <body style="visibility: hidden">
@@ -154,5 +163,5 @@
     </div>
   </body>
 
-  {% block webpack %} {% endblock %}
+  {% block bundle %} {% endblock %}
 </html>

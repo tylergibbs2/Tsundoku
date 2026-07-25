@@ -1,5 +1,8 @@
-{% extends "base.html" %} {% block webpack %}
-<script src="{{ url_for('ux.static', filename='js/root.js') }}"></script>
+{% extends "base.html" %} {% block bundle %}
+<script
+  type="module"
+  src="{{ url_for('ux.static', filename='js/root.js') }}"
+></script>
 {% endblock %} {% block content %} {% include "messages.html" %}
 
 <section id="root" class="section"></section>
