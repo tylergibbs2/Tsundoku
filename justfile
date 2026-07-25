@@ -25,6 +25,20 @@ check fix="":
     bun run typecheck
     {{ if fix == "--fix" { "bun run prettier . --write --list-different" } else { "bun run prettier . --list-different" } }}
 
+# Regenerate the typed frontend SDK and Zod schemas from the FastAPI schema
+generate-frontend-sdk:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # create_app() builds the router graph without touching the database, so
+    # the schema can be dumped without a running server.
+    uv run python -c "import json; from tsundoku.app import create_app; print(json.dumps(create_app().openapi(), indent=2))" > openapi.json
+    # Invoked by path so openapi-ts resolves the TypeScript 5 pinned in
+    # tools/codegen rather than the app's TypeScript 7 (see that package.json).
+    # Run through bun explicitly: the bin shebang wants node, which we do not
+    # install.
+    bun tools/codegen/node_modules/@hey-api/openapi-ts/bin/run.js -f openapi-ts.config.mjs
+    bun run prettier tsundoku/blueprints/ux/static/ts/api --write --list-different
+
 # Run the Vite frontend build in watch mode
 dev-frontend:
     bun run dev

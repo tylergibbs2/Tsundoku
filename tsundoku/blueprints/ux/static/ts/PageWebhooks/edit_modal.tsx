@@ -1,16 +1,16 @@
 import { toast } from "bulma-toast";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { WebhookBase } from "../interfaces";
-import { updateWebhookById } from "../queries";
+import type { WebhookBase } from "../api";
+import { editWebhook, webhookKeys } from "./queries";
 
 const _ = getInjector();
 
 interface EditModalParams {
-  activeModal?: string;
+  activeModal: string | null;
   setActiveModal: Dispatch<SetStateAction<string | null>>;
   activeWebhook: WebhookBase | null;
   setActiveWebhook: Dispatch<SetStateAction<WebhookBase | null>>;
@@ -33,12 +33,19 @@ export const EditModal = ({
 }: EditModalParams) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(updateWebhookById, {
+  const mutation = useMutation({
+    mutationFn: ({ base_id, ...body }: EditWebhookFormValues) =>
+      editWebhook(base_id, body),
     onSuccess: (updatedWebhook) => {
-      queryClient.setQueryData(["webhooks"], (oldWebhooks: WebhookBase[]) => [
-        ...oldWebhooks.filter((wh) => wh.base_id !== updatedWebhook.base_id),
-        updatedWebhook,
-      ]);
+      queryClient.setQueryData(
+        webhookKeys.bases,
+        (oldWebhooks: WebhookBase[] | undefined) => [
+          ...(oldWebhooks ?? []).filter(
+            (wh) => wh.base_id !== updatedWebhook.base_id
+          ),
+          updatedWebhook,
+        ]
+      );
       toast({
         message: _("webhook-edit-success"),
         duration: 5000,
@@ -57,36 +64,40 @@ export const EditModal = ({
     name: activeWebhook?.name,
     service: activeWebhook?.service,
     url: activeWebhook?.url,
-    content_fmt: activeWebhook?.content_fmt,
+    content_fmt: activeWebhook?.content_fmt ?? "",
   };
 
-  const { register, handleSubmit, reset } = useForm({
+  // `base_id` and `default_triggers` are not registered fields -- they come
+  // from `activeWebhook` and the `triggers` state, folded in on submit.
+  const { register, handleSubmit, reset } = useForm<EditWebhookFormValues>({
     defaultValues: defaultValues,
   });
 
   const [triggers, setTriggers] = useState<string[]>(
-    activeWebhook?.default_triggers
+    activeWebhook?.default_triggers ?? []
   );
 
   useEffect(() => {
     if (activeWebhook) {
       reset(defaultValues);
-      setTriggers(activeWebhook.default_triggers);
+      setTriggers(activeWebhook.default_triggers ?? []);
     }
   }, [activeModal, activeWebhook]);
 
   const submitHandler: SubmitHandler<EditWebhookFormValues> = (
     formData: EditWebhookFormValues
   ) => {
+    if (!activeWebhook) return;
+
     mutation.mutate({
       ...formData,
-      base_id: activeWebhook?.base_id,
+      base_id: activeWebhook.base_id,
       default_triggers: triggers.join(","),
     });
   };
 
   const cancel = () => {
-    if (mutation.isLoading) return;
+    if (mutation.isPending) return;
 
     setActiveModal(null);
     setActiveWebhook(null);
@@ -339,7 +350,7 @@ export const EditModal = ({
         <footer className="modal-card-foot is-size-7">
           <button
             className={
-              "button is-success " + (mutation.isLoading ? "is-loading" : "")
+              "button is-success " + (mutation.isPending ? "is-loading" : "")
             }
             type="submit"
             form="edit-webhook-form"

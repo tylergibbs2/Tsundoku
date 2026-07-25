@@ -1,10 +1,10 @@
 import { JSX, useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { getInjector } from "../fluent";
 import ReactHtmlParser from "react-html-parser";
-import { fetchEntryById, fetchShowById, fetchShows } from "../queries";
+import { entryQuery, showQuery, showsPageQuery } from "./queries";
 import { GlobalLoading } from "../Components/GlobalLoading";
 
 import "../../css/logs.css";
@@ -15,15 +15,14 @@ const codeRe = /`[^`]+`/g;
 const contextRe = /<[es]\d+>/g;
 
 export const LogsApp = () => {
-  document.getElementById("navLogs").classList.add("is-active");
-  document.getElementById("root").style.maxHeight = "100%";
+  document.getElementById("navLogs")?.classList.add("is-active");
+  const rootElement = document.getElementById("root");
+  if (rootElement) rootElement.style.maxHeight = "100%";
 
   let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
   let protocol = location.protocol === "https:" ? "wss:" : "ws:";
 
-  const shows = useQuery(["shows", 1], async () => {
-    return await fetchShows(1, 15);
-  });
+  const shows = useQuery(showsPageQuery(1, 15));
 
   let ws_url = `${protocol}//${ws_host}/ws/logs`;
 
@@ -40,7 +39,7 @@ export const LogsApp = () => {
       });
   }, [lastMessage, setMessageHistory]);
 
-  if (shows.isLoading) return <GlobalLoading withText={true} />;
+  if (shows.isPending || !shows.data) return <GlobalLoading withText={true} />;
 
   return (
     <>
@@ -92,8 +91,13 @@ const LogRow = ({ row }: LogRowParams) => {
       row.data
     );
 
-  let logLevel: JSX.Element;
-  switch (match.groups.level) {
+  // Anything that does not look like a log line is not renderable here.
+  if (!match?.groups) return <></>;
+
+  const { time: rawTime, level, name, content } = match.groups;
+
+  let logLevel: JSX.Element | null = null;
+  switch (level) {
     case "[INFO]":
       logLevel = <span className="tag is-info">{_("log-level-info")}</span>;
       break;
@@ -110,17 +114,16 @@ const LogRow = ({ row }: LogRowParams) => {
       break;
   }
 
-  let time = match.groups.time.slice(0, -4);
+  let time = rawTime.slice(0, -4);
   let dt = new Date(time);
-  let localized = new Intl.DateTimeFormat(window["LOCALE"], {
+  let localized = new Intl.DateTimeFormat(window.LOCALE, {
     dateStyle: "long",
     timeStyle: "long",
   }).format(dt);
 
   return (
     <div className="is-size-5">
-      {localized} {logLevel} <b>{match.groups.name}</b>:{" "}
-      <Content raw_content={match.groups.content} />
+      {localized} {logLevel} <b>{name}</b>: <Content raw_content={content} />
     </div>
   );
 };
@@ -193,37 +196,15 @@ interface ContextParams {
 }
 
 const Context = ({ show_id, entry_id }: ContextParams) => {
-  const entry = useQuery(
-    ["entries", { id: entry_id }],
-    async () => {
-      return await fetchEntryById(entry_id);
-    },
-    {
-      enabled: !!entry_id,
-      retry: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    }
-  );
+  const entry = useQuery(entryQuery(entry_id));
 
   const entryShowId = !!entry_id ? entry.data?.show_id : show_id;
   const show = useQuery(
-    ["shows", { id_: entryShowId }],
-    async () => {
-      return await fetchShowById(entryShowId);
-    },
-    {
-      enabled: !entry_id || (!!entry_id && !!entryShowId),
-      retry: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-    }
+    showQuery(entryShowId, !entry_id || (!!entry_id && !!entryShowId))
   );
 
   const [isUp, setIsUp] = useState<boolean>(true);
-  let ref = useRef(null);
+  let ref = useRef<HTMLDivElement>(null);
 
   const calcPos = () => {
     if (!ref.current) {
@@ -239,8 +220,9 @@ const Context = ({ show_id, entry_id }: ContextParams) => {
     setIsUp(true);
   };
 
-  if (entry.isLoading || show.isLoading || entry.isError || show.isError)
-    return <div></div>;
+  // `show` drives the whole tooltip, so its data is required. Checking it
+  // directly also covers the disabled/pending cases the flags alone miss.
+  if (entry.isError || show.isError || !show.data) return <div></div>;
 
   return (
     <div
@@ -273,7 +255,10 @@ const Context = ({ show_id, entry_id }: ContextParams) => {
             <div className="columns is-vcentered">
               <div className="column is-4">
                 <figure className="image is-3by4">
-                  <img loading="lazy" src={show.data.metadata.poster} />
+                  <img
+                    loading="lazy"
+                    src={show.data.metadata?.poster ?? undefined}
+                  />
                 </figure>
               </div>
               <div className="column is-8">
@@ -282,7 +267,7 @@ const Context = ({ show_id, entry_id }: ContextParams) => {
             </div>
           </div>
           <div className="dropdown-item has-text-centered">
-            {ReactHtmlParser(show.data.metadata.html_status)}
+            {ReactHtmlParser(show.data.metadata?.html_status ?? "")}
           </div>
 
           {entry.data && (

@@ -1,16 +1,16 @@
 import { toast } from "bulma-toast";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { WebhookBase } from "../interfaces";
-import { addNewWebhook } from "../queries";
+import type { WebhookBase } from "../api";
+import { addWebhook, webhookKeys } from "./queries";
 
 const _ = getInjector();
 
 interface AddModalParams {
-  activeModal?: string;
+  activeModal: string | null;
   setActiveModal: Dispatch<SetStateAction<string | null>>;
 }
 
@@ -25,12 +25,16 @@ export type AddWebhookFormValues = {
 export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(addNewWebhook, {
+  const mutation = useMutation({
+    mutationFn: addWebhook,
     onSuccess: (newWebhook) => {
-      queryClient.setQueryData(["webhooks"], (oldWebhooks: WebhookBase[]) => [
-        ...oldWebhooks,
-        newWebhook,
-      ]);
+      queryClient.setQueryData(
+        webhookKeys.bases,
+        (oldWebhooks: WebhookBase[] | undefined) => [
+          ...(oldWebhooks ?? []),
+          newWebhook,
+        ]
+      );
       toast({
         message: _("webhook-add-success"),
         duration: 5000,
@@ -53,7 +57,9 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
 
   const [triggers, setTriggers] = useState<string[]>([]);
 
-  const { register, handleSubmit, reset } = useForm({
+  // `default_triggers` is not a registered field -- it is driven by the
+  // `triggers` state below and folded in on submit.
+  const { register, handleSubmit, reset } = useForm<AddWebhookFormValues>({
     defaultValues: defaultValues,
   });
 
@@ -68,7 +74,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
   };
 
   const cancel = () => {
-    if (mutation.isLoading) return;
+    if (mutation.isPending) return;
 
     setActiveModal(null);
   };
@@ -297,7 +303,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
         <footer className="modal-card-foot is-size-7">
           <button
             className={
-              "button is-success " + (mutation.isLoading ? "is-loading" : "")
+              "button is-success " + (mutation.isPending ? "is-loading" : "")
             }
             type="submit"
             form="add-webhook-form"

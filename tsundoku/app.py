@@ -226,8 +226,15 @@ def create_app(state: TsundokuAppState | None = None, *, lifespan_handler: Lifes
     app.add_exception_handler(RequestValidationError, _validation_error_handler)
     app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
-    app.include_router(api_router)
-    app.include_router(ux_router)
+    # Name operations after the handler alone. FastAPI's default appends the
+    # path and verb, which would bake routing details into the identifiers the
+    # generated frontend SDK exposes (`getShowsApiV1ShowsGet`). Handler names
+    # within api_router are already unique.
+    app.include_router(api_router, generate_unique_id_function=lambda route: route.name)
+    # The UX routes render HTML pages, so they are not part of the API surface:
+    # excluding them keeps them out of both /docs and the generated SDK. They
+    # are also the only operation-id collision (four handlers named `index`).
+    app.include_router(ux_router, include_in_schema=False)
 
     app.mount(STATIC_URL_PATH, StaticFiles(directory=str(_STATIC_DIR)), name="static")
 

@@ -1,9 +1,9 @@
 import { getInjector } from "../fluent";
 import { Dispatch, SetStateAction } from "react";
-import { WebhookBase } from "../interfaces";
+import type { WebhookBase } from "../api";
 import ReactHtmlParser from "react-html-parser";
-import { useMutation, useQueryClient } from "react-query";
-import { deleteWebhookById } from "../queries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { removeWebhook, webhookKeys } from "./queries";
 import { toast } from "bulma-toast";
 
 const _ = getInjector();
@@ -11,7 +11,7 @@ const _ = getInjector();
 interface DeleteModalParams {
   activeModal: string | null;
   setActiveModal: Dispatch<SetStateAction<string | null>>;
-  activeWebhook: WebhookBase;
+  activeWebhook: WebhookBase | null;
   setActiveWebhook: Dispatch<SetStateAction<WebhookBase | null>>;
 }
 
@@ -23,10 +23,15 @@ export const DeleteModal = ({
 }: DeleteModalParams) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(deleteWebhookById, {
+  const mutation = useMutation({
+    mutationFn: removeWebhook,
     onSuccess: () => {
-      queryClient.setQueryData(["webhooks"], (oldWebhooks: WebhookBase[]) =>
-        oldWebhooks.filter((wh) => wh.base_id !== activeWebhook?.base_id)
+      queryClient.setQueryData(
+        webhookKeys.bases,
+        (oldWebhooks: WebhookBase[] | undefined) =>
+          (oldWebhooks ?? []).filter(
+            (wh) => wh.base_id !== activeWebhook?.base_id
+          )
       );
       toast({
         message: _("webhook-delete-success"),
@@ -43,11 +48,11 @@ export const DeleteModal = ({
   });
 
   const performDelete = () => {
-    mutation.mutate(activeWebhook.base_id);
+    if (activeWebhook) mutation.mutate(activeWebhook.base_id);
   };
 
   const cancel = () => {
-    if (mutation.isLoading) return;
+    if (mutation.isPending) return;
 
     setActiveWebhook(null);
     setActiveModal(null);

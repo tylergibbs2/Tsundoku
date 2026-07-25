@@ -11,9 +11,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     // Declares the `*.css` / `*.scss` side-effect imports that Vite resolves.
     "types": ["vite/client"]
   },
-  "include": ["tsundoku/blueprints/ux/static/ts/App.tsx"]
+  "include": [
+    "tsundoku/blueprints/ux/static/ts/App.tsx",
+    "tsundoku/blueprints/ux/static/ts/globals.d.ts"
+  ]
 }

@@ -1,4 +1,4 @@
-import { PaginationInfo } from "../../interfaces";
+import type { Pagination as PaginationInfo } from "../../api";
 import { getInjector } from "../../fluent";
 
 const _ = getInjector();

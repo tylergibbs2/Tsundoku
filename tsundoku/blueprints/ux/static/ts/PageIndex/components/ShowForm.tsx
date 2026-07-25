@@ -1,7 +1,7 @@
 import { getInjector } from "../../fluent";
-import { useQuery } from "react-query";
-import { Show, GeneralConfig } from "../../interfaces";
-import { fetchConfig } from "../../queries";
+import { useQuery } from "@tanstack/react-query";
+import { Show, GeneralConfigResponse } from "../../api";
+import { generalConfigQuery } from "../queries";
 import { LibrarySelect } from "./library_select";
 
 const _ = getInjector();
@@ -11,7 +11,7 @@ interface ShowFormParams {
   show?: Show;
   register: any;
   tab?: string;
-  generalConfig?: GeneralConfig;
+  generalConfig?: GeneralConfigResponse;
 }
 
 export const ShowForm = ({
@@ -21,9 +21,7 @@ export const ShowForm = ({
   tab,
   generalConfig,
 }: ShowFormParams) => {
-  const configQuery = useQuery(["config", "general"], async () => {
-    return await fetchConfig<GeneralConfig>("general");
-  });
+  const configQuery = useQuery(generalConfigQuery());
 
   // Use provided generalConfig or fetch it
   const config = generalConfig || configQuery.data;

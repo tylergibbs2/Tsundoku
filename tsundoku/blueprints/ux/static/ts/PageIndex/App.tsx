@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { AddModal } from "./add_modal";
 import { EditModal } from "./edit_modal";
 import { DeleteModal } from "./delete_modal";
-import { Show, GeneralConfig, PaginatedShowsResponse } from "../interfaces";
+import type { Show } from "../api";
 import { getInjector } from "../fluent";
 import { Filters } from "./components/filters";
 import { Shows } from "./components/shows";
 import { Pagination } from "./components/pagination";
-import { fetchConfig, fetchShows } from "../queries";
+import { generalConfigQuery, showsQuery } from "./queries";
 
 import "../../css/index.css";
 import { GlobalLoading } from "../Components/GlobalLoading";
@@ -17,7 +17,7 @@ import { GlobalLoading } from "../Components/GlobalLoading";
 const _ = getInjector();
 
 export const IndexApp = () => {
-  document.getElementById("navIndex").classList.add("is-active");
+  document.getElementById("navIndex")?.classList.add("is-active");
 
   let storedFilters = localStorage.getItem("showFilters");
   let storedViewType = localStorage.getItem("viewType");
@@ -35,7 +35,7 @@ export const IndexApp = () => {
   );
 
   const [filters, setFilters] = useState<string[]>(
-    JSON.parse(storedFilters) || [
+    JSON.parse(storedFilters ?? "null") || [
       "current",
       "finished",
       "tba",
@@ -50,26 +50,19 @@ export const IndexApp = () => {
   );
   const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 
-  const generalConfig = useQuery(["config", "general"], async () => {
-    return await fetchConfig<GeneralConfig>("general");
-  });
+  const generalConfig = useQuery(generalConfigQuery());
 
-  const shows = useQuery(
-    ["shows", currentPage, filters, textFilter, sortKey, sortDirection],
-    async () => {
-      return await fetchShows(
-        currentPage,
-        17,
-        filters,
-        textFilter,
-        sortKey,
-        sortDirection
-      );
-    },
-    {
-      keepPreviousData: true,
-    }
-  );
+  const shows = useQuery({
+    ...showsQuery({
+      page: currentPage,
+      limit: 17,
+      ...(filters.length > 0 ? { filters: filters.join(",") } : {}),
+      ...(textFilter ? { text_filter: textFilter } : {}),
+      ...(sortKey ? { sort_key: sortKey } : {}),
+      ...(sortDirection ? { sort_direction: sortDirection } : {}),
+    }),
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
     localStorage.setItem("showFilters", JSON.stringify(filters));
@@ -93,7 +86,7 @@ export const IndexApp = () => {
     setCurrentPage(page);
   };
 
-  if (shows.isLoading) return <GlobalLoading withText={true} />;
+  if (shows.isPending) return <GlobalLoading withText={true} />;
 
   const showsData = shows.data?.shows || [];
   const pagination = shows.data?.pagination;

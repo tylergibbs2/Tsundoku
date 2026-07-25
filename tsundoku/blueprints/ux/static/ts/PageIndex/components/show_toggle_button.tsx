@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 
-import { Show } from "../../interfaces";
+import { Show } from "../../api";
 import { IonIcon } from "../../icon";
 import { getInjector } from "../../fluent";
 
@@ -35,16 +35,16 @@ export const ShowToggleButton = ({
   labelOn,
   labelOff,
 }: ShowToggleButtonParams) => {
-  const btn = useRef(null);
+  const btn = useRef<HTMLButtonElement>(null);
 
   let existingState: boolean;
   if (typeof show === "undefined" || show === null) existingState = true;
-  else existingState = show[attribute];
+  else existingState = !!show[attribute as keyof Show];
 
   const [state, setState] = useState(existingState);
 
   useEffect(() => {
-    if (show) setState(show[attribute]);
+    if (show) setState(!!show[attribute as keyof Show]);
     else setState(true);
   }, [show]);
 

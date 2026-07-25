@@ -5,11 +5,11 @@ import {
   forwardRef,
   useState,
 } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
-import { MutateConfigVars } from "../../interfaces";
-import { fetchConfig, setConfig } from "../../queries";
+import type { FeedsConfigResponse, FeedsConfigUpdate } from "../../api";
+import { configKeys, feedsConfigQuery, saveFeedsConfig } from "../queries";
 
 const _ = getInjector();
 
@@ -21,22 +21,16 @@ export const FeedsConfig = forwardRef(
   ({ onDirtyChange }: FeedsConfigProps, ref) => {
     const queryClient = useQueryClient();
 
-    const config = useQuery(["config", "feeds"], async () => {
-      return await fetchConfig("feeds");
+    const config = useQuery(feedsConfigQuery());
+
+    const mutation = useMutation({
+      mutationFn: saveFeedsConfig,
+      onSuccess: (newConfig) => {
+        queryClient.setQueryData(configKeys.feeds, newConfig);
+      },
     });
 
-    const mutation = useMutation(
-      async ({ key, value }: MutateConfigVars) => {
-        return await setConfig("feeds", key, value);
-      },
-      {
-        onSuccess: (newConfig) => {
-          queryClient.setQueryData(["config", "feeds"], newConfig);
-        },
-      }
-    );
-
-    const [fields, setFields] = useState<any>({});
+    const [fields, setFields] = useState<Partial<FeedsConfigResponse>>({});
     const [dirty, setDirty] = useState(false);
 
     useEffect(() => {
@@ -47,31 +41,37 @@ export const FeedsConfig = forwardRef(
       }
     }, [config.data]);
 
+    // Returns only the fields that differ from what the server last sent.
+    const changedFields = (saved: FeedsConfigResponse): FeedsConfigUpdate =>
+      Object.fromEntries(
+        Object.entries(fields).filter(
+          ([key, value]) => value !== saved[key as keyof FeedsConfigResponse]
+        )
+      );
+
     useEffect(() => {
       if (!config.data) return;
-      const isDirty = Object.keys(fields).some(
-        (key) => fields[key] !== config.data[key]
-      );
+      const isDirty = Object.keys(changedFields(config.data)).length > 0;
       setDirty(isDirty);
       onDirtyChange(isDirty);
     }, [fields, config.data]);
 
     useImperativeHandle(ref, () => ({
       async save() {
-        if (!dirty) return;
-        const promises = Object.keys(fields).map((key) => {
-          if (fields[key] !== config.data[key]) {
-            return mutation.mutateAsync({ key, value: fields[key] });
-          }
-          return null;
-        });
-        await Promise.all(promises);
+        if (!dirty || !config.data) return;
+
+        // One PATCH for the whole delta; see generalconfig.tsx.
+        const changed = changedFields(config.data);
+        if (Object.keys(changed).length > 0)
+          await mutation.mutateAsync(changed);
+
         setDirty(false);
         onDirtyChange(false);
       },
     }));
 
-    if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
+    if (config.isPending || !config.data)
+      return <GlobalLoading heightTranslation="none" />;
 
     const handleChange = (key: string, value: any) => {
       setFields((prev) => ({ ...prev, [key]: value }));

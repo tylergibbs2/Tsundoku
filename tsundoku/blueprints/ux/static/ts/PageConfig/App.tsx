@@ -14,7 +14,7 @@ import "../../css/config.css";
 const _ = getInjector();
 
 export const ConfigApp = () => {
-  document.getElementById("navConfig").classList.add("is-active");
+  document.getElementById("navConfig")?.classList.add("is-active");
 
   const generalRef = useRef<any>(null);
   const libraryRef = useRef<any>(null);

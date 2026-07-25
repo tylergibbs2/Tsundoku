@@ -2,7 +2,7 @@ import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
 import ReactHtmlParser from "react-html-parser";
 import { getInjector } from "../../fluent";
 
-import { Entry, Show } from "../../interfaces";
+import { Entry, Show } from "../../api";
 import { IonIcon } from "../../icon";
 import {
   localizePythonTimeAbsolute,
@@ -34,12 +34,12 @@ export const ListItem = ({
   setActiveShow,
 }: ListItemParams) => {
   let title: any;
-  if (show.metadata.link)
+  if (show.metadata?.link)
     title = (
       <a
         className="ml-1"
         title={show.title}
-        href={show.metadata.link}
+        href={show.metadata?.link ?? undefined}
         target="_blank"
       >
         <b>{show.title}</b>
@@ -53,8 +53,8 @@ export const ListItem = ({
     );
 
   let timeDisplay: any;
-  if (show.entries.length !== 0) {
-    let sorted = [...show.entries].sort(sortByDate);
+  if ((show.entries ?? []).length !== 0) {
+    let sorted = [...(show.entries ?? [])].sort(sortByDate);
     let entry = sorted[0];
 
     const localized = localizePythonTimeRelative(entry.last_update);
@@ -90,10 +90,10 @@ export const ListItem = ({
   return (
     <tr>
       <td className="is-vcentered">
-        <a href={show.metadata.link} target="_blank">
+        <a href={show.metadata?.link ?? undefined} target="_blank">
           <figure className="image is-3by4">
             <img
-              src={show.metadata.poster}
+              src={show.metadata?.poster ?? undefined}
               loading="lazy"
               onError={reportPoster404}
             />
@@ -108,8 +108,8 @@ export const ListItem = ({
           whiteSpace: "nowrap",
         }}
       >
-        {show.metadata.html_status &&
-          ReactHtmlParser(show.metadata.html_status)}{" "}
+        {show.metadata?.html_status &&
+          ReactHtmlParser(show.metadata?.html_status)}{" "}
         {title}
       </td>
       <td className="is-vcentered">{timeDisplay}</td>
@@ -138,7 +138,7 @@ export const ListItem = ({
 };
 
 interface AddShowLIParams {
-  setCurrentModal: Dispatch<SetStateAction<string>>;
+  setCurrentModal: Dispatch<SetStateAction<string | null>>;
 }
 
 export const AddShowLI = ({ setCurrentModal }: AddShowLIParams) => {

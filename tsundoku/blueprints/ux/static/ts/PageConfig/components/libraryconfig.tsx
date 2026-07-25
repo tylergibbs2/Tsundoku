@@ -5,20 +5,21 @@ import {
   forwardRef,
   useState,
 } from "react";
-import { Library } from "../../interfaces";
+import type { Library } from "../../api";
 import { getInjector } from "../../fluent";
 import {
   useMutation,
   useQuery,
   useQueryClient,
   UseMutationResult,
-} from "react-query";
+} from "@tanstack/react-query";
 import {
-  addNewLibrary,
-  deleteLibraryById,
-  fetchLibraries,
-  updateLibraryById,
-} from "../../queries";
+  addLibrary as createLibraryRequest,
+  configKeys,
+  editLibrary,
+  librariesQuery as librariesQueryOptions,
+  removeLibrary,
+} from "../queries";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 import { DirectorySelect } from "../../Components/DirectorySelect";
 import { toast } from "bulma-toast";
@@ -34,23 +35,28 @@ export const LibraryConfigApp = forwardRef(
   ({ onDirtyChange }: LibraryConfigAppProps, ref) => {
     const queryClient = useQueryClient();
 
-    const librariesQuery = useQuery(["libraries"], async () => {
-      return await fetchLibraries();
-    });
+    const librariesQuery = useQuery(librariesQueryOptions());
 
-    const addLibraryMutation = useMutation(addNewLibrary, {
+    const addLibraryMutation = useMutation({
+      mutationFn: createLibraryRequest,
       onSuccess: (newLibrary) => {
-        queryClient.setQueryData(["libraries"], (oldLibraries: Library[]) => [
-          ...oldLibraries,
-          newLibrary,
-        ]);
+        queryClient.setQueryData(
+          configKeys.libraries,
+          (oldLibraries: Library[] | undefined) => [
+            ...(oldLibraries ?? []),
+            newLibrary,
+          ]
+        );
       },
     });
 
-    const deleteLibraryMutation = useMutation(deleteLibraryById, {
+    const deleteLibraryMutation = useMutation({
+      mutationFn: removeLibrary,
       onSuccess: (_data: void, deletedId: number) => {
-        queryClient.setQueryData(["libraries"], (oldLibraries: Library[]) =>
-          oldLibraries.filter((l) => l.id_ !== deletedId)
+        queryClient.setQueryData(
+          configKeys.libraries,
+          (oldLibraries: Library[] | undefined) =>
+            (oldLibraries ?? []).filter((l) => l.id_ !== deletedId)
         );
         toast({
           message: _("libraries-delete-success"),
@@ -63,16 +69,19 @@ export const LibraryConfigApp = forwardRef(
       },
     });
 
-    const updateLibraryMutation = useMutation(updateLibraryById, {
+    const updateLibraryMutation = useMutation({
+      mutationFn: editLibrary,
       onSuccess: (updatedLibrary: Library) => {
-        queryClient.setQueryData(["libraries"], (oldLibraries: Library[]) =>
-          oldLibraries.map((l) => {
-            if (updatedLibrary.is_default) l.is_default = false;
-            if (l.id_ === updatedLibrary.id_) {
-              l = updatedLibrary;
-            }
-            return l;
-          })
+        queryClient.setQueryData(
+          configKeys.libraries,
+          (oldLibraries: Library[] | undefined) =>
+            (oldLibraries ?? []).map((l) => {
+              if (updatedLibrary.is_default) l.is_default = false;
+              if (l.id_ === updatedLibrary.id_) {
+                l = updatedLibrary;
+              }
+              return l;
+            })
         );
         toast({
           message: _("libraries-update-success"),
@@ -132,35 +141,41 @@ export const LibraryConfigApp = forwardRef(
       },
     }));
 
-    if (librariesQuery.isLoading)
+    if (librariesQuery.isPending || !librariesQuery.data)
       return <GlobalLoading heightTranslation="none" />;
 
     const setDefault = (id_: number) => {
+      const target = localLibraries.find((l) => l.id_ === id_);
+      if (!target) return;
+
       setLocalLibraries((libs) =>
         libs.map((l) => ({ ...l, is_default: l.id_ === id_ }))
       );
       setUpdated((prev) => [
         ...prev.filter((l) => l.id_ !== id_),
-        { ...localLibraries.find((l) => l.id_ === id_), is_default: true },
+        { ...target, is_default: true },
       ]);
     };
 
     const setNewLibraryFolder = (id_: number, newFolder: string) => {
+      const target = localLibraries.find((l) => l.id_ === id_);
+      if (!target) return;
+
       setLocalLibraries((libs) =>
         libs.map((l) => (l.id_ === id_ ? { ...l, folder: newFolder } : l))
       );
       setUpdated((prev) => [
         ...prev.filter((l) => l.id_ !== id_),
-        { ...localLibraries.find((l) => l.id_ === id_), folder: newFolder },
+        { ...target, folder: newFolder },
       ]);
     };
 
     const deleteThisLibrary = (id_: number) => {
+      const target = localLibraries.find((l) => l.id_ === id_);
+      if (!target) return;
+
       setLocalLibraries((libs) => libs.filter((l) => l.id_ !== id_));
-      setDeleted((prev) => [
-        ...prev,
-        localLibraries.find((l) => l.id_ === id_),
-      ]);
+      setDeleted((prev) => [...prev, target]);
     };
 
     const addLibrary = (folder: string) => {

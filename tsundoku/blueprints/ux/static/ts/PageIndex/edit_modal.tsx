@@ -9,22 +9,24 @@ import {
 import { useForm } from "react-hook-form";
 
 import { ShowToggleButton } from "./components/show_toggle_button";
-import { Show, Entry, Webhook, APIResponse } from "../interfaces";
+import { deleteShowEntry, updateShowWebhook } from "../api";
+import type { Show, Entry, Webhook } from "../api";
 import { IonIcon } from "../icon";
-import { useMutation, useQueryClient } from "react-query";
-import { updateShowById } from "../queries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { editShow } from "./queries";
 import { toast } from "bulma-toast";
 import { NyaaSearchPanel } from "./NyaaSearchPanel";
 import { EditShowForm } from "./components/EditShowForm";
 import { EditShowEntries } from "./components/EditShowEntries";
+import type { StagedEntry } from "./components/EditShowEntries";
 import { EditShowWebhooks } from "./components/EditShowWebhooks";
 
 const _ = getInjector();
 
 interface EditModalParams {
-  activeShow?: Show;
+  activeShow: Show | null;
   setActiveShow: Dispatch<SetStateAction<Show | null>>;
-  currentModal?: string;
+  currentModal: string | null;
   setCurrentModal: Dispatch<SetStateAction<string | null>>;
 }
 
@@ -37,8 +39,8 @@ export const EditModal = ({
   const [tab, setTab] = useState<string>("info");
   const [fixMatch, setFixMatch] = useState<boolean>(false);
 
-  const [entriesToAdd, setEntriesToAdd] = useState<Entry[]>([]);
-  const [entriesToDelete, setEntriesToDelete] = useState<Entry[]>([]);
+  const [entriesToAdd, setEntriesToAdd] = useState<StagedEntry[]>([]);
+  const [entriesToDelete, setEntriesToDelete] = useState<StagedEntry[]>([]);
   const [webhooksToUpdate, setWebhooksToUpdate] = useState<Webhook[]>([]);
 
   const [highlightNewEntryId, setHighlightNewEntryId] = useState<number | null>(
@@ -49,13 +51,14 @@ export const EditModal = ({
 
   const queryClient = useQueryClient();
 
-  const showMutation = useMutation(updateShowById, {
+  const showMutation = useMutation({
+    mutationFn: editShow,
     onSuccess: async (updatedShow) => {
       updatedShow = await finalizeEntries(updatedShow);
       updatedShow = await finalizeWebhooks(updatedShow);
 
       // Instead of manually updating the cache, just refetch the paginated shows queries
-      queryClient.invalidateQueries(["shows"]);
+      queryClient.invalidateQueries({ queryKey: ["shows"] });
 
       // Reset local state after save
       setEntriesToAdd([]);
@@ -90,7 +93,7 @@ export const EditModal = ({
         season: activeShow.season,
         episode_offset: activeShow.episode_offset,
         watch: activeShow.watch,
-        kitsu_id: activeShow.metadata.kitsu_id,
+        kitsu_id: activeShow.metadata?.kitsu_id,
         preferred_resolution: activeShow.preferred_resolution ?? "0",
         preferred_release_group: activeShow.preferred_release_group,
       });
@@ -98,8 +101,10 @@ export const EditModal = ({
   }, [activeShow]);
 
   const finalizeEntries = async (show: Show) => {
+    if (!activeShow) return show;
+
     let addedEntries: Entry[] = [];
-    let removedEntries: Entry[] = [];
+    let removedEntries: StagedEntry[] = [];
 
     let request: Object;
     if (entriesToAdd.length > 0) {
@@ -112,7 +117,7 @@ export const EditModal = ({
           ...entriesToAdd.filter(
             (entry) =>
               entriesToDelete.findIndex(
-                (toRemove: Entry) => toRemove.id === entry.id
+                (toRemove: StagedEntry) => toRemove.id === entry.id
               ) === -1
           ),
         ]),
@@ -123,7 +128,7 @@ export const EditModal = ({
         request
       );
       if (response.ok) {
-        let data: APIResponse<Entry[]> = await response.json();
+        let data: { result: Entry[] } = await response.json();
         addedEntries = data.result;
       }
     }
@@ -148,6 +153,7 @@ export const EditModal = ({
     setEntriesToDelete([]);
 
     let newShow: Show = JSON.parse(JSON.stringify(show));
+    newShow.entries ??= [];
     for (const entry of addedEntries) newShow.entries.push(entry);
 
     for (const entry of removedEntries) {
@@ -165,6 +171,8 @@ export const EditModal = ({
   };
 
   const finalizeWebhooks = async (show: Show) => {
+    if (!activeShow) return show;
+
     let updatedWebhooks: Webhook[] = [];
 
     for (const wh of webhooksToUpdate) {
@@ -174,7 +182,7 @@ export const EditModal = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          triggers: wh.triggers.join(","),
+          triggers: (wh.triggers ?? []).join(","),
         }),
       };
 
@@ -190,6 +198,7 @@ export const EditModal = ({
     }
 
     let newShow: Show = JSON.parse(JSON.stringify(show));
+    newShow.webhooks ??= [];
 
     for (const wh of updatedWebhooks) {
       let idx = newShow.webhooks.findIndex(
@@ -204,7 +213,7 @@ export const EditModal = ({
   };
 
   const anyMutationIsLoading = (): boolean => {
-    return showMutation.isLoading;
+    return showMutation.isPending;
   };
 
   const cancel = () => {
@@ -215,13 +224,16 @@ export const EditModal = ({
   };
 
   const submitHandler = (data: any) => {
-    showMutation.mutate({ id_: activeShow.id_, ...data });
+    if (activeShow) showMutation.mutate({ id_: activeShow.id_, ...data });
   };
 
   const triggerForm = async () => {
     await trigger();
     submitHandler(getValues());
   };
+
+  // Everything below renders show details, so bail out when there is none.
+  if (!activeShow) return <></>;
 
   return (
     <div
@@ -462,7 +474,7 @@ const FixMatchDropdown = ({
   useEffect(() => {
     if (selectedId) setValue("kitsu_id", selectedId);
     else if (show && selectedId === "") {
-      setValue("kitsu_id", show.metadata.kitsu_id);
+      setValue("kitsu_id", show.metadata?.kitsu_id);
     }
   }, [selectedId]);
 
@@ -546,9 +558,9 @@ const FixMatchDropdown = ({
 };
 
 // Helper to get all episode numbers from show.entries and entriesToAdd
-function getAllEpisodes(show: Show, entriesToAdd: Entry[]): number[] {
+function getAllEpisodes(show: Show, entriesToAdd: StagedEntry[]): number[] {
   const all = new Set<number>();
   (show.entries || []).forEach((e: Entry) => all.add(e.episode));
-  (entriesToAdd || []).forEach((e: Entry) => all.add(e.episode));
+  (entriesToAdd || []).forEach((e: StagedEntry) => all.add(e.episode));
   return Array.from(all);
 }

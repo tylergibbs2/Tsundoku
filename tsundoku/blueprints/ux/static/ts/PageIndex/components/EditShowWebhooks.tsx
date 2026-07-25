@@ -1,7 +1,7 @@
 import { getInjector } from "../../fluent";
 import { useState, Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
-import { Show, Webhook } from "../../interfaces";
+import { Show, Webhook } from "../../api";
 import { IonIcon } from "../../icon";
 
 const _ = getInjector();
@@ -23,7 +23,7 @@ export const EditShowWebhooks = ({
 
   return (
     <div className={tab !== "webhooks" ? "is-hidden" : ""}>
-      {show.webhooks.length !== 0 && (
+      {(show.webhooks ?? []).length !== 0 && (
         <table className="table is-fullwidth is-hoverable">
           <thead>
             <tr className="has-text-centered">
@@ -79,7 +79,7 @@ export const EditShowWebhooks = ({
             </tr>
           </thead>
           <tbody>
-            {show.webhooks.map((webhook) => (
+            {(show.webhooks ?? []).map((webhook) => (
               <EditWebhookTableRow
                 key={webhook.base.base_id}
                 webhook={webhook}
@@ -90,7 +90,7 @@ export const EditShowWebhooks = ({
           </tbody>
         </table>
       )}
-      {show.webhooks.length === 0 && (
+      {(show.webhooks ?? []).length === 0 && (
         <div className="container has-text-centered mb-5">
           <h2 className="subtitle">{_("edit-webhooks-is-empty")}</h2>
         </div>
@@ -110,7 +110,7 @@ const EditWebhookTableRow = ({
   webhooksToUpdate,
   setWebhooksToUpdate,
 }: EditWebhookTableRowParams) => {
-  const [triggers, setTriggers] = useState(webhook.triggers);
+  const [triggers, setTriggers] = useState<string[]>(webhook.triggers ?? []);
 
   const { register } = useForm({
     defaultValues: {

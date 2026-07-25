@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { IonIcon } from "../icon";
-import { TreeResponse } from "../interfaces";
-import { fetchTree } from "../queries";
+import { tree } from "../api";
+import type { DirectoryTree } from "../api";
 
 interface DirectorySelectParams {
   defaultValue: string;
@@ -15,13 +15,16 @@ export const DirectorySelect = ({
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [currentState, setCurrentState] = useState<TreeResponse | null>(null);
+  const [currentState, setCurrentState] = useState<DirectoryTree | null>(null);
 
   const getNewState = async (dir: string, subdir: string | null = null) => {
     setIsLoading(true);
 
-    let newState = await fetchTree(dir, subdir);
-    setCurrentState(newState);
+    const { data } = await tree({
+      body: { dir, subdir },
+      throwOnError: true,
+    });
+    setCurrentState(data.result);
 
     setIsLoading(false);
   };
@@ -34,7 +37,7 @@ export const DirectorySelect = ({
   const save = () => {
     if (isLoading) return;
 
-    if (onChange) onChange(currentState.current_path);
+    if (onChange && currentState) onChange(currentState.current_path);
     setIsActive(false);
   };
 
@@ -46,11 +49,11 @@ export const DirectorySelect = ({
   };
 
   const goToParentDirectory = async () => {
-    await getNewState(currentState.current_path, "..");
+    if (currentState) await getNewState(currentState.current_path, "..");
   };
 
   const goToSubDirectory = async (subdir: string) => {
-    await getNewState(currentState.current_path, subdir);
+    if (currentState) await getNewState(currentState.current_path, subdir);
   };
 
   useEffect(() => {

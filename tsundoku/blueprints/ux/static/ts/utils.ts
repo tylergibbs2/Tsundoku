@@ -14,7 +14,7 @@ export const localizePythonTimeAbsolute = (
 ): string => {
   const date = pythonTimeToDate(pythonTime);
 
-  return new Intl.DateTimeFormat(window["LOCALE"], {
+  return new Intl.DateTimeFormat(window.LOCALE, {
     dateStyle: dateStyle,
     timeStyle: timeStyle,
   }).format(date);
@@ -25,7 +25,7 @@ export const localizePythonTimeRelative = (pythonTime: string): string => {
   const diff = date.getTime() - Date.now();
 
   return humanizeDuration(diff, {
-    language: window["LOCALE"],
+    language: window.LOCALE,
     fallbacks: ["en"],
     round: true,
     largest: 2,

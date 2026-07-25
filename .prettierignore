@@ -40,3 +40,5 @@ data
 # Bundled app
 *.zip
 run.py
+# Generated OpenAPI schema dump (see `just generate-frontend-sdk`)
+openapi.json

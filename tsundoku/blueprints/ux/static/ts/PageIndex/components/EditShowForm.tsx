@@ -1,5 +1,5 @@
 import { getInjector } from "../../fluent";
-import { Show } from "../../interfaces";
+import { Show } from "../../api";
 import { ShowForm } from "./ShowForm";
 
 const _ = getInjector();

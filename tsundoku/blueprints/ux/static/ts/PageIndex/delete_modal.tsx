@@ -1,17 +1,17 @@
 import { getInjector } from "../fluent";
 import { Dispatch, SetStateAction } from "react";
-import { Show } from "../interfaces";
+import { Show } from "../api";
 import ReactHtmlParser from "react-html-parser";
-import { useMutation, useQueryClient } from "react-query";
-import { deleteShowById } from "../queries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { removeShow } from "./queries";
 import { toast } from "bulma-toast";
 
 const _ = getInjector();
 
 interface DeleteModalParams {
-  show?: Show;
+  show: Show | null;
   setActiveShow: Dispatch<SetStateAction<Show | null>>;
-  currentModal?: string;
+  currentModal: string | null;
   setCurrentModal: Dispatch<SetStateAction<string | null>>;
 }
 
@@ -23,9 +23,10 @@ export const DeleteModal = ({
 }: DeleteModalParams) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(deleteShowById, {
+  const mutation = useMutation({
+    mutationFn: removeShow,
     onSuccess: () => {
-      queryClient.invalidateQueries(["shows"]);
+      queryClient.invalidateQueries({ queryKey: ["shows"] });
       toast({
         message: _("show-delete-success"),
         duration: 5000,
@@ -41,11 +42,11 @@ export const DeleteModal = ({
   });
 
   const performDelete = () => {
-    mutation.mutate(show.id_);
+    if (show) mutation.mutate(show.id_);
   };
 
   const cancel = () => {
-    if (mutation.isLoading) return;
+    if (mutation.isPending) return;
 
     setActiveShow(null);
     setCurrentModal(null);

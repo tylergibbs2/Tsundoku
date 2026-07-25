@@ -1,5 +1,5 @@
 import { useState, ChangeEvent } from "react";
-import { NyaaSearchResult, NyaaIndividualResult } from "../interfaces";
+import type { NyaaResult } from "../api";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
 
@@ -10,7 +10,7 @@ const _ = getInjector();
 interface NyaaSearchPanelProps {
   initialQuery?: string;
   showId: number;
-  onEntryAdd: (entry: NyaaIndividualResult, overwrite: boolean) => void;
+  onEntryAdd: (entry: NyaaResult, overwrite: boolean) => void;
   existingEpisodes?: number[];
 }
 
@@ -21,9 +21,9 @@ export const NyaaSearchPanel = ({
   existingEpisodes = [],
 }: NyaaSearchPanelProps) => {
   const [query, setQuery] = useState<string>(initialQuery);
-  const [results, setResults] = useState<NyaaIndividualResult[]>([]);
+  const [results, setResults] = useState<NyaaResult[]>([]);
   const [isSearching, setSearchingState] = useState<boolean>(false);
-  const [selected, setSelected] = useState<NyaaIndividualResult | null>(null);
+  const [selected, setSelected] = useState<NyaaResult | null>(null);
   const [adding, setAdding] = useState<boolean>(false);
   const [overwrite, setOverwrite] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
@@ -49,12 +49,12 @@ export const NyaaSearchPanel = ({
         })
     )
       .then((res) => res.json())
-      .then((data: NyaaSearchResult) => setResults(data.result || []))
+      .then((data: { result?: NyaaResult[] }) => setResults(data.result || []))
       .finally(() => setSearchingState(false));
     if (typeof newPage === "number") setPage(newPage);
   };
 
-  const handleAdd = async (entry: NyaaIndividualResult) => {
+  const handleAdd = async (entry: NyaaResult) => {
     setAdding(true);
     // Call the parent callback to add the entry (should POST to /api/v1/nyaa)
     await onEntryAdd(entry, overwrite);
@@ -150,7 +150,7 @@ export const NyaaSearchPanel = ({
               </tr>
             </thead>
             <tbody>
-              {results.map((show: NyaaIndividualResult) => {
+              {results.map((show: NyaaResult) => {
                 const episodeNum = parseInt(
                   show.title.match(/\b(?:ep?|episode)\s*(\d+)/i)?.[1] || "NaN",
                   10

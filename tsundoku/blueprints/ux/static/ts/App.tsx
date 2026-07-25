@@ -7,7 +7,7 @@ import {
   QueryCache,
   QueryClient,
   QueryClientProvider,
-} from "react-query";
+} from "@tanstack/react-query";
 import { toast } from "bulma-toast";
 
 import { IndexApp } from "./PageIndex/App";
@@ -91,5 +91,5 @@ const RootApp = () => {
   );
 };
 
-const root = createRoot(document.getElementById("root"));
-root.render(<RootApp />);
+const rootElement = document.getElementById("root");
+if (rootElement) createRoot(rootElement).render(<RootApp />);

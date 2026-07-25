@@ -1,6 +1,6 @@
 import { getInjector } from "../../fluent";
 import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
-import { Show } from "../../interfaces";
+import { Show } from "../../api";
 
 import ReactHtmlParser from "react-html-parser";
 import { IonIcon } from "../../icon";
@@ -23,9 +23,9 @@ export const Card = ({
   setActiveShow,
 }: CardParams) => {
   let title: any;
-  if (show.metadata.link)
+  if (show.metadata?.link)
     title = (
-      <a href={show.metadata.link}>
+      <a href={show.metadata?.link ?? undefined}>
         <b>{show.title}</b>
       </a>
     );
@@ -55,14 +55,14 @@ export const Card = ({
   return (
     <div className="column is-12-mobile is-4-tablet is-2-desktop">
       <div className="card">
-        {show.metadata.poster && (
+        {show.metadata?.poster && (
           <div className="card-image">
-            {show.metadata.html_status &&
-              ReactHtmlParser(show.metadata.html_status)}
-            <a href={show.metadata.link} target="_blank">
+            {show.metadata?.html_status &&
+              ReactHtmlParser(show.metadata?.html_status)}
+            <a href={show.metadata?.link ?? undefined} target="_blank">
               <figure className="image is-3by4">
                 <img
-                  src={show.metadata.poster}
+                  src={show.metadata?.poster ?? undefined}
                   loading="lazy"
                   onError={reportPoster404}
                 />
@@ -92,7 +92,7 @@ export const Card = ({
 };
 
 interface AddShowCardParams {
-  setCurrentModal: Dispatch<SetStateAction<string>>;
+  setCurrentModal: Dispatch<SetStateAction<string | null>>;
   isOnlyCardInRow: boolean;
 }
 

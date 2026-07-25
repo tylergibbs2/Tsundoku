@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { APITokenComponent } from "./apitoken";
 import { IonIcon } from "../../icon";
 import { toast } from "bulma-toast";
@@ -12,7 +12,7 @@ const AccountSection = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast({

@@ -3,7 +3,7 @@ import { AddShowCard, Card } from "./card";
 import { ListItem, AddShowLI } from "./li";
 import { getInjector } from "../../fluent";
 
-import { Entry, Show } from "../../interfaces";
+import { Entry, Show } from "../../api";
 
 const _ = getInjector();
 
@@ -35,18 +35,18 @@ const getSortedShows = (
         return dateB > dateA ? 1 : -1;
       };
       sortFunc = (a: Show, b: Show) => {
-        let aEntries = [...a.entries].sort(entrySortFunc);
-        let bEntries = [...b.entries].sort(entrySortFunc);
+        let aEntries = [...(a.entries ?? [])].sort(entrySortFunc);
+        let bEntries = [...(b.entries ?? [])].sort(entrySortFunc);
         let dateA, dateB;
         try {
           dateA = new Date(aEntries[0].last_update);
         } catch {
-          dateA = new Date(null);
+          dateA = new Date(0);
         }
         try {
           dateB = new Date(bEntries[0].last_update);
         } catch {
-          dateB = new Date(null);
+          dateB = new Date(0);
         }
         return dateA > dateB ? first : second;
       };
@@ -67,12 +67,12 @@ const getSortedShows = (
 
 interface ShowsParams {
   shows: Show[];
-  setActiveShow: Dispatch<SetStateAction<Show>>;
+  setActiveShow: Dispatch<SetStateAction<Show | null>>;
   filters: string[];
   textFilter: string;
   sortDirection: string;
   sortKey: string;
-  setCurrentModal: Dispatch<SetStateAction<string>>;
+  setCurrentModal: Dispatch<SetStateAction<string | null>>;
   viewType: string;
 }
 
@@ -115,12 +115,12 @@ export const Shows = ({
 
 interface ViewTypeParams {
   shows: Show[];
-  setActiveShow: Dispatch<SetStateAction<Show>>;
+  setActiveShow: Dispatch<SetStateAction<Show | null>>;
   filters: string[];
   textFilter: string;
   sortDirection: string;
   sortKey: string;
-  setCurrentModal: Dispatch<SetStateAction<string>>;
+  setCurrentModal: Dispatch<SetStateAction<string | null>>;
 }
 
 const CardView = ({

@@ -5,11 +5,16 @@ import {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
-import { MutateConfigVars } from "../../interfaces";
-import { fetchConfig, setConfig } from "../../queries";
+import { testTorrentClient } from "../../api";
+import type {
+  TorrentConfigResponse,
+  TorrentConfigUpdate,
+  TorrentTestResult,
+} from "../../api";
+import { configKeys, saveTorrentConfig, torrentConfigQuery } from "../queries";
 
 const _ = getInjector();
 
@@ -21,25 +26,19 @@ export const TorrentConfig = forwardRef(
   ({ onDirtyChange }: TorrentConfigProps, ref) => {
     const queryClient = useQueryClient();
 
-    const config = useQuery(["config", "torrent"], async () => {
-      return await fetchConfig("torrent");
+    const config = useQuery(torrentConfigQuery());
+
+    const mutation = useMutation({
+      mutationFn: saveTorrentConfig,
+      onSuccess: (newConfig) => {
+        queryClient.setQueryData(configKeys.torrent, newConfig);
+      },
     });
 
-    const mutation = useMutation(
-      async ({ key, value }: MutateConfigVars) => {
-        return await setConfig("torrent", key, value);
-      },
-      {
-        onSuccess: (newConfig) => {
-          queryClient.setQueryData(["config", "torrent"], newConfig);
-        },
-      }
-    );
-
-    const [fields, setFields] = useState<any>({});
+    const [fields, setFields] = useState<Partial<TorrentConfigResponse>>({});
     const [dirty, setDirty] = useState(false);
     const [fetchingStatus, setFetchingStatus] = useState<boolean>(false);
-    const [clientStatus, setClientStatus] = useState<ClientTestResult | null>(
+    const [clientStatus, setClientStatus] = useState<TorrentTestResult | null>(
       null
     );
 
@@ -51,25 +50,30 @@ export const TorrentConfig = forwardRef(
       }
     }, [config.data]);
 
+    // Returns only the fields that differ from what the server last sent.
+    const changedFields = (saved: TorrentConfigResponse): TorrentConfigUpdate =>
+      Object.fromEntries(
+        Object.entries(fields).filter(
+          ([key, value]) => value !== saved[key as keyof TorrentConfigResponse]
+        )
+      );
+
     useEffect(() => {
       if (!config.data) return;
-      const isDirty = Object.keys(fields).some(
-        (key) => fields[key] !== config.data[key]
-      );
+      const isDirty = Object.keys(changedFields(config.data)).length > 0;
       setDirty(isDirty);
       onDirtyChange(isDirty);
     }, [fields, config.data]);
 
     useImperativeHandle(ref, () => ({
       async save() {
-        if (!dirty) return;
-        const promises = Object.keys(fields).map((key) => {
-          if (fields[key] !== config.data[key]) {
-            return mutation.mutateAsync({ key, value: fields[key] });
-          }
-          return null;
-        });
-        await Promise.all(promises);
+        if (!dirty || !config.data) return;
+
+        // One PATCH for the whole delta; see generalconfig.tsx.
+        const changed = changedFields(config.data);
+        if (Object.keys(changed).length > 0)
+          await mutation.mutateAsync(changed);
+
         setDirty(false);
         onDirtyChange(false);
       },
@@ -79,20 +83,16 @@ export const TorrentConfig = forwardRef(
       if (fetchingStatus) return;
       setFetchingStatus(true);
       try {
-        let resp = await fetch("/api/v1/config/torrent/test");
-        if (resp.ok) {
-          let data = await resp.json();
-          setClientStatus(data.result);
-        } else {
-          setClientStatus({ success: false, error: _("config-test-failure") });
-        }
+        const { data } = await testTorrentClient({ throwOnError: true });
+        setClientStatus(data.result);
       } catch (e) {
         setClientStatus({ success: false, error: String(e) });
       }
       setFetchingStatus(false);
     };
 
-    if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
+    if (config.isPending || !config.data)
+      return <GlobalLoading heightTranslation="none" />;
 
     const handleChange = (key: string, value: any) => {
       setClientStatus(null);
@@ -107,7 +107,7 @@ export const TorrentConfig = forwardRef(
             <h2 className="subtitle is-6">{_("torrent-client-subtitle")}</h2>
             <div className="select is-fullwidth">
               <select
-                value={fields.client ?? (config.data as any)?.client}
+                value={fields.client}
                 onChange={(e) => handleChange("client", e.target.value)}
               >
                 <option value="deluge">Deluge</option>
@@ -125,7 +125,7 @@ export const TorrentConfig = forwardRef(
                   className="input"
                   type="text"
                   placeholder="localhost"
-                  value={fields.host ?? (config.data as any)?.host ?? ""}
+                  value={fields.host ?? ""}
                   onChange={(e) => handleChange("host", e.target.value)}
                 />
               </div>
@@ -136,7 +136,7 @@ export const TorrentConfig = forwardRef(
                   placeholder="8080"
                   min="1"
                   max="65535"
-                  value={fields.port ?? (config.data as any)?.port ?? ""}
+                  value={fields.port ?? ""}
                   onChange={(e) => handleChange("port", e.target.value)}
                 />
               </div>
@@ -148,7 +148,7 @@ export const TorrentConfig = forwardRef(
             <input
               className="input"
               type="text"
-              value={fields.username ?? (config.data as any)?.username ?? ""}
+              value={fields.username ?? ""}
               onChange={(e) => handleChange("username", e.target.value)}
               placeholder="admin"
               name="disableAuto"
@@ -161,7 +161,7 @@ export const TorrentConfig = forwardRef(
             <input
               className="input"
               type="password"
-              value={fields.password ?? (config.data as any)?.password ?? ""}
+              value={fields.password ?? ""}
               onChange={(e) => handleChange("password", e.target.value)}
               placeholder="********"
               name="disableAuto"
@@ -176,7 +176,7 @@ export const TorrentConfig = forwardRef(
                 id="secureCheck"
                 type="checkbox"
                 className="switch"
-                checked={fields.secure ?? (config.data as any)?.secure ?? false}
+                checked={fields.secure ?? false}
                 onChange={(e) => handleChange("secure", e.target.checked)}
               />
               <label htmlFor="secureCheck">{_("checkbox-enabled")}</label>
@@ -197,13 +197,8 @@ export const TorrentConfig = forwardRef(
   }
 );
 
-interface ClientTestResult {
-  success: boolean;
-  error?: string;
-}
-
 interface ConnectionStatusParams {
-  status?: ClientTestResult;
+  status?: TorrentTestResult | null;
 }
 
 const ConnectionStatus = ({ status }: ConnectionStatusParams) => {
