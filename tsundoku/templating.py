@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Callable
 import logging
 from pathlib import Path
@@ -47,7 +45,7 @@ def get_flashed_messages(request: Request, with_categories: bool = False) -> lis
     return [message for _category, message in flashes]
 
 
-def _resolve_bundle_filename(state: TsundokuAppState, filename: str) -> str:
+def _resolve_bundle_filename(state: "TsundokuAppState", filename: str) -> str:
     """Rewrite ``js/root.js`` to its content-hashed build output, if present."""
     if filename != "js/root.js":
         return filename
@@ -70,7 +68,7 @@ def _resolve_bundle_filename(state: TsundokuAppState, filename: str) -> str:
     return filename
 
 
-def _make_url_for(state: TsundokuAppState) -> Callable[..., str]:
+def _make_url_for(state: "TsundokuAppState") -> Callable[..., str]:
     def url_for(name: str, **params: str) -> str:
         if name == "ux.static":
             filename = _resolve_bundle_filename(state, params["filename"])
@@ -87,7 +85,7 @@ def static_url(filename: str) -> str:
 
 
 def render(
-    state: TsundokuAppState,
+    state: "TsundokuAppState",
     request: Request,
     template_name: str,
     **context: object,

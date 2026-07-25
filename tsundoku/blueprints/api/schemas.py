@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -172,7 +170,7 @@ class NyaaResult(BaseModel):
     leechers: int
 
     @classmethod
-    def from_search_result(cls, result: SearchResult) -> NyaaResult:
+    def from_search_result(cls, result: "SearchResult") -> "NyaaResult":
         return cls(
             show_id=result.show_id,
             title=result.title,

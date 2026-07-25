@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -22,7 +20,7 @@ class User:
     readonly: bool
 
     @classmethod
-    async def from_id(cls, state: TsundokuAppState, user_id: int) -> User | None:
+    async def from_id(cls, state: "TsundokuAppState", user_id: int) -> "User | None":
         """Resolve a :class:`User` from its database identifier.
 
         Returns ``None`` if no user with that identifier exists.
@@ -53,7 +51,7 @@ class User:
         )
 
     @classmethod
-    async def from_api_key(cls, state: TsundokuAppState, api_key: str) -> User | None:
+    async def from_api_key(cls, state: "TsundokuAppState", api_key: str) -> "User | None":
         """Resolve a :class:`User` from a bearer API key."""
         async with state.acquire_db() as con:
             record = await con.fetchone(

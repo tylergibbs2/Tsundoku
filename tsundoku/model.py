@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr
@@ -20,13 +18,13 @@ class DBModel(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    _app: TsundokuAppState = PrivateAttr()
+    _app: "TsundokuAppState" = PrivateAttr()
 
     @property
-    def app(self) -> TsundokuAppState:
+    def app(self) -> "TsundokuAppState":
         return self._app
 
-    def _bind(self, app: TsundokuAppState) -> Self:
+    def _bind(self, app: "TsundokuAppState") -> Self:
         """Attach the application state and return ``self`` for chaining."""
         self._app = app
         return self

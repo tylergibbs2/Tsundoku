@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 STATIC_URL_PATH = "/ux/static"
 
 

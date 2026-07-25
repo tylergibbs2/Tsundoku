@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, Request, Response
@@ -28,15 +26,15 @@ class NotAuthenticatedError(Exception):
     """
 
 
-def _serializer(state: TsundokuAppState) -> URLSafeTimedSerializer:
+def _serializer(state: "TsundokuAppState") -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(state.secret_key, salt=_AUTH_SALT)
 
 
-def dump_auth_token(state: TsundokuAppState, user_id: int) -> str:
+def dump_auth_token(state: "TsundokuAppState", user_id: int) -> str:
     return _serializer(state).dumps(user_id)
 
 
-def load_auth_token(state: TsundokuAppState, token: str) -> int | None:
+def load_auth_token(state: "TsundokuAppState", token: str) -> int | None:
     try:
         user_id = _serializer(state).loads(token, max_age=_MAX_AGE_SECONDS)
     except (BadSignature, SignatureExpired):
@@ -45,7 +43,7 @@ def load_auth_token(state: TsundokuAppState, token: str) -> int | None:
     return user_id if isinstance(user_id, int) else None
 
 
-def login_user(response: Response, state: TsundokuAppState, user: User, *, remember: bool = False) -> None:
+def login_user(response: Response, state: "TsundokuAppState", user: User, *, remember: bool = False) -> None:
     """Attach an authentication cookie for ``user`` to ``response``."""
     response.set_cookie(
         AUTH_COOKIE_NAME,
@@ -62,7 +60,7 @@ def logout_user(response: Response) -> None:
     response.delete_cookie(AUTH_COOKIE_NAME)
 
 
-def get_state(request: Request) -> TsundokuAppState:
+def get_state(request: Request) -> "TsundokuAppState":
     """Dependency returning the shared application state container."""
     return request.app.state.ctx
 
