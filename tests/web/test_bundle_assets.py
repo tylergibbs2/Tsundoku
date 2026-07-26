@@ -50,6 +50,28 @@ async def test_index_references_built_assets(app: MockTsundokuAppState) -> None:
 
 
 @requires_build
+async def test_bundled_css_has_no_unresolved_sass_variables(app: MockTsundokuAppState) -> None:
+    """Guard against shipping a stylesheet that leaked Sass variables.
+
+    bulma-extensions publishes bulma-switch/dist/css with `$switch-*` intact,
+    so the paddle compiled to `width: calc($switch-height - ...)` -- invalid,
+    silently dropped by the browser, and the switch rendered with no knob.
+    """
+    client = await app.test_client(user_type=UserType.REGULAR)
+    href = _CSS_HREF.search((await client.get("/")).text)
+    assert href is not None
+
+    css = (await client.get(href.group(1))).text
+    leaked = sorted(set(re.findall(r"\$[a-zA-Z][\w-]*", css)))
+    assert not leaked, f"unresolved Sass variables in bundled CSS: {leaked[:10]}"
+
+    # The switch paddle in particular must have real dimensions.
+    paddle = re.search(r"\.switch\[type=checkbox\]\+label:{1,2}after[^{}]*\{([^{}]*)\}", css)
+    assert paddle is not None, "switch paddle rule missing from bundle"
+    assert re.search(r"width:\s*[\d.]", paddle.group(1)), paddle.group(1)
+
+
+@requires_build
 async def test_rebuild_is_picked_up_without_restart(app: MockTsundokuAppState, restore_manifest: None) -> None:
     """A rebuild changes every content hash; templates must follow it.
 

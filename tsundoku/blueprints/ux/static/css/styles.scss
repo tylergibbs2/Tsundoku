@@ -2,6 +2,12 @@
 // supports) resolves neither the package `main` field nor loadPaths for this.
 @import "bulma/bulma.sass";
 
+// Compiled from source rather than imported as CSS: bulma-extensions ships
+// bulma-switch/dist/css with its Sass variables unresolved, so the paddle came
+// out as `width: calc($switch-height - ...)` and rendered with no size. The
+// source needs bulma's variables, hence the import order.
+@import "bulma-extensions/bulma-switch/src/sass/index";
+
 body.do-theme-transition {
   transition: all 0.6s ease;
 }

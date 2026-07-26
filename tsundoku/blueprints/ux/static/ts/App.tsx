@@ -19,10 +19,10 @@ import "bulma/css/bulma.min.css";
 import "bulma-dashboard/dist/bulma-dashboard.min.css";
 // `switch` is the only class we use that bulma core does not already provide;
 // the `has-tooltip-*` classes come from the @creativebulma/bulma-tooltip CDN
-// link in base.html, not from here. Importing the combined extensions bundle
-// instead pulls in bulma-steps, whose `.step-item::before .step-marker`
-// selector is invalid CSS and hard-fails the Lightning CSS minifier.
-import "bulma-extensions/bulma-switch/dist/css/bulma-switch.min.css";
+// link in base.html, not from here. It is compiled from Sass in styles.scss --
+// see the note there. Importing the combined extensions bundle instead would
+// pull in bulma-steps, whose `.step-item::before .step-marker` selector is
+// invalid CSS and hard-fails the Lightning CSS minifier.
 
 import "../css/styles.scss";
 import { APIError } from "./errors";
