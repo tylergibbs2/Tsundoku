@@ -32,6 +32,11 @@ delete-cancel = No, take me back
 
 ## Errors
 
+error-boundary-title = Something went wrong
+error-boundary-subtitle = This part of the page failed to render. The full error is in the browser console.
+error-boundary-retry = Try again
+error-boundary-reload = Reload page
+
 no-rss-parsers = No RSS sources installed.
 no-shows-found = No shows found, is there an error with your sources?
 dl-client-connection-error = There was an error connecting to the download client.
