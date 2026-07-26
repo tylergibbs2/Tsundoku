@@ -5,7 +5,7 @@ import re
 import pytest
 
 from tests.mock import MockTsundokuAppState, UserType
-from tsundoku.templating import _STATIC_JS_DIR
+from tsundoku.templating import _STATIC_JS_DIR, VITE_DEV_ORIGIN
 
 MANIFEST = _STATIC_JS_DIR / ".vite" / "manifest.json"
 
@@ -99,3 +99,41 @@ async def test_rebuild_is_picked_up_without_restart(app: MockTsundokuAppState, r
     assert js.group(1).endswith("root-rebuilt.js")
     assert css is not None
     assert css.group(1).endswith("root-rebuilt.css")
+
+
+async def test_debug_serves_from_vite_dev_server(app: MockTsundokuAppState) -> None:
+    """IS_DEBUG swaps the built bundle for the Vite dev server.
+
+    The react-refresh preamble must precede the client, and no built asset may
+    be referenced -- the dev server compiles on demand and injects its own CSS.
+    """
+    previous = app.flags.IS_DEBUG
+    app.flags.IS_DEBUG = True
+    try:
+        client = await app.test_client(user_type=UserType.REGULAR)
+        html = (await client.get("/")).text
+    finally:
+        app.flags.IS_DEBUG = previous
+
+    assert f"{VITE_DEV_ORIGIN}/@react-refresh" in html
+    assert f"{VITE_DEV_ORIGIN}/@vite/client" in html
+    assert f"{VITE_DEV_ORIGIN}/tsundoku/blueprints/ux/static/ts/App.tsx" in html
+
+    assert html.index("@react-refresh") < html.index("/@vite/client")
+    assert _JS_SRC.search(html) is None
+    assert _CSS_HREF.search(html) is None
+
+
+@requires_build
+async def test_without_debug_serves_the_built_bundle(app: MockTsundokuAppState) -> None:
+    previous = app.flags.IS_DEBUG
+    app.flags.IS_DEBUG = False
+    try:
+        client = await app.test_client(user_type=UserType.REGULAR)
+        html = (await client.get("/")).text
+    finally:
+        app.flags.IS_DEBUG = previous
+
+    assert _JS_SRC.search(html) is not None
+    assert _CSS_HREF.search(html) is not None
+    assert VITE_DEV_ORIGIN not in html

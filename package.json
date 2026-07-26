@@ -42,7 +42,7 @@
   "homepage": "https://github.com/tylergibbs2/Tsundoku#readme",
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --mode development --watch",
+    "dev": "vite",
     "typecheck": "tsc --noEmit",
     "fmt": "biome format --write",
     "check": "biome check --reporter=summary",

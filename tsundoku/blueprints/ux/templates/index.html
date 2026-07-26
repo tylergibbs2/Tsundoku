@@ -1,9 +1,24 @@
-{% extends "base.html" %} {% block bundle %}
+{% extends "base.html" %} {% block bundle %} {% if vite_hot %}
+<!--
+  Hot reloading via the Vite dev server (`just dev-frontend`). The react-refresh
+  preamble has to run before any component module: @vitejs/plugin-react cannot
+  inject it itself when the HTML is rendered by another server.
+-->
+<script type="module">
+  import RefreshRuntime from "{{ vite_dev_origin }}/@react-refresh";
+  RefreshRuntime.injectIntoGlobalHook(window);
+  window.$RefreshReg$ = () => {};
+  window.$RefreshSig$ = () => (type) => type;
+  window.__vite_plugin_react_preamble_installed__ = true;
+</script>
+<script type="module" src="{{ vite_dev_origin }}/@vite/client"></script>
+<script type="module" src="{{ vite_dev_origin }}{{ vite_dev_entry }}"></script>
+{% else %}
 <script
   type="module"
   src="{{ url_for('ux.static', filename='js/root.js') }}"
 ></script>
-{% endblock %} {% block content %} {% include "messages.html" %}
+{% endif %} {% endblock %} {% block content %} {% include "messages.html" %}
 
 <section id="root" class="section"></section>
 

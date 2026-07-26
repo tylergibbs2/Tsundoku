@@ -21,6 +21,12 @@ STATIC_URL_PATH = "/ux/static"
 # app.py, so the manifest resolves wherever the server is started from.
 _STATIC_JS_DIR = Path(__file__).parent / "blueprints" / "ux" / "static" / "js"
 
+# Must match `server` in vite.config.mjs. While IS_DEBUG is set, pages load
+# their modules from the Vite dev server (`just dev-frontend`) instead of the
+# built bundle, which is what provides hot module replacement.
+VITE_DEV_ORIGIN = "http://localhost:5173"
+_VITE_DEV_ENTRY = "/tsundoku/blueprints/ux/static/ts/App.tsx"
+
 _NAMED_ROUTES = {
     "ux.index": "/",
     "ux.login": "/login",
@@ -116,11 +122,17 @@ def render(
     """Render ``template_name`` with Tsundoku's shared template context."""
     fluent = state.get_fluent()
 
-    _js, css = _load_bundle_assets(state)
+    hot = state.flags.IS_DEBUG
+    # The dev server compiles on demand and injects styles itself, so it needs
+    # no stylesheet link and no manifest lookup.
+    css: list[str] = [] if hot else _load_bundle_assets(state)[1]
 
     full_context: dict[str, object] = {
         "url_for": _make_url_for(state),
         "bundle_css": [f"{STATIC_URL_PATH}/{filename}" for filename in css],
+        "vite_hot": hot,
+        "vite_dev_origin": VITE_DEV_ORIGIN,
+        "vite_dev_entry": _VITE_DEV_ENTRY,
         "get_flashed_messages": lambda with_categories=False: get_flashed_messages(request, with_categories),
         "_": fluent.format_value,
         "LOCALE": state.flags.LOCALE,

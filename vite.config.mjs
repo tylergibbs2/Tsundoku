@@ -7,46 +7,50 @@ import fluent from "./l10n/VitePluginFluent.mjs";
 
 const OUT_DIR = "tsundoku/blueprints/ux/static/js";
 
-export default defineConfig(({ mode }) => {
-  const isDev = mode === "development";
+// The dev server only ever serves modules to pages rendered by FastAPI on
+// :6439, so it needs a fixed port to be referenced from a template, and CORS
+// for that origin.
+const DEV_PORT = 5173;
+const BACKEND_ORIGIN = "http://localhost:6439";
 
-  return {
-    // Built assets are served from the UX static mount (see tsundoku/urls.py),
-    // so url() references emitted into CSS need this prefix.
-    base: "/ux/static/js/",
-    plugins: [react(), fluent()],
-    // `vite build` forces NODE_ENV=production, which would give us React's
-    // production build even in watch mode. Opt back into the development
-    // build so component warnings survive, as they did under webpack.
-    define: isDev
-      ? { "process.env.NODE_ENV": JSON.stringify("development") }
-      : {},
-    css: {
-      preprocessorOptions: {
-        scss: {
-          // Our stylesheets and bulma 0.9.x still use `@import`, which Sass has
-          // deprecated. Silence it (and bulma's internal color-function use)
-          // rather than migrating; that is blocked on bulma 1.x.
-          silenceDeprecations: ["import", "global-builtin", "color-functions"],
-          quietDeps: true,
-        },
+export default defineConfig(({ command }) => ({
+  // Built assets are served from the UX static mount (see tsundoku/urls.py),
+  // so url() references emitted into CSS need this prefix. It is build-only:
+  // applying it in dev would push every module behind the same prefix, which
+  // the dev server has no reason to mirror.
+  base: command === "build" ? "/ux/static/js/" : "/",
+  plugins: [react(), fluent()],
+  // `just dev-frontend` serves modules from here and templating.py points the
+  // page at them while IS_DEBUG is set. Asset URLs have to be absolute because
+  // the HTML itself is served from a different origin.
+  server: {
+    port: DEV_PORT,
+    strictPort: true,
+    origin: `http://localhost:${DEV_PORT}`,
+    cors: { origin: BACKEND_ORIGIN },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Our stylesheets and bulma 0.9.x still use `@import`, which Sass has
+        // deprecated. Silence it (and bulma's internal color-function use)
+        // rather than migrating; that is blocked on bulma 1.x.
+        silenceDeprecations: ["import", "global-builtin", "color-functions"],
+        quietDeps: true,
       },
     },
-    build: {
-      outDir: OUT_DIR,
-      // Flat output so everything lands directly in static/js/, which is the
-      // directory the Dockerfile copies out of the frontend build stage.
-      assetsDir: ".",
-      emptyOutDir: true,
-      manifest: true,
-      // Readable output while watching, matching the old webpack.dev.js.
-      minify: !isDev,
-      sourcemap: isDev ? "inline" : false,
-      rolldownOptions: {
-        input: {
-          root: path.resolve("tsundoku/blueprints/ux/static/ts/App.tsx"),
-        },
+  },
+  build: {
+    outDir: OUT_DIR,
+    // Flat output so everything lands directly in static/js/, which is the
+    // directory the Dockerfile copies out of the frontend build stage.
+    assetsDir: ".",
+    emptyOutDir: true,
+    manifest: true,
+    rolldownOptions: {
+      input: {
+        root: path.resolve("tsundoku/blueprints/ux/static/ts/App.tsx"),
       },
     },
-  };
-});
+  },
+}));

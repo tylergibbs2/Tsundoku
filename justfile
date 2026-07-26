@@ -40,10 +40,12 @@ generate-frontend-sdk:
     bun tools/codegen/node_modules/@hey-api/openapi-ts/bin/run.js -f openapi-ts.config.mjs
     bun x biome format --write tsundoku/blueprints/ux/static/ts/api
 
-# Run the Vite frontend build in watch mode
+# Run the Vite dev server, which hot-reloads the frontend and l10n catalogs.
+# Requires the backend to run with IS_DEBUG set so pages load modules from it.
 dev-frontend:
     bun run dev
 
-# Run the Tsundoku backend server
+# Run the Tsundoku backend server in debug mode, pointing pages at the Vite
+# dev server above. Drop IS_DEBUG to serve the built bundle instead.
 dev-backend:
-    uv run python -m tsundoku
+    IS_DEBUG=1 uv run python -m tsundoku
