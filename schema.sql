@@ -54,6 +54,13 @@ CREATE TABLE library (
     is_default BOOLEAN NOT NULL
 );
 
+CREATE TABLE path_mapping (
+    id INTEGER PRIMARY KEY,
+    remote_prefix TEXT NOT NULL,
+    remote_prefix_key TEXT NOT NULL UNIQUE,
+    local_prefix TEXT NOT NULL
+);
+
 CREATE TABLE shows (
     id INTEGER PRIMARY KEY,
     library_id INTEGER REFERENCES library(id) ON DELETE SET NULL,

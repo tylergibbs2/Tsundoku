@@ -19,6 +19,7 @@ MUTATING_METHODS = ("POST", "PUT", "PATCH", "DELETE")
 #: rejected before the handler runs, so these only need to be well-typed.
 PATH_PARAM_VALUES = {
     "library_id": "1",
+    "mapping_id": "1",
     "show_id": "1",
     "entry_id": "1",
     "base_id": "1",

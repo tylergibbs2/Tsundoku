@@ -16,6 +16,7 @@ from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
 from tsundoku.dl_client.deluge import DelugeClient
 from tsundoku.dl_client.qbittorrent import qBittorrentClient
 from tsundoku.dl_client.transmission import TransmissionClient
+from tsundoku.manager import PathMapping
 
 logger = logging.getLogger("tsundoku")
 
@@ -219,6 +220,11 @@ class Manager:
         """
         Retrieves a torrent's downloaded location from a download client.
 
+        The client reports this path in its own filesystem namespace, which is
+        not necessarily ours. Every adapter returns through here, so this is
+        the single point where the configured path mappings are applied and
+        the rest of the app can treat the result as a local path.
+
         Parameters
         ----------
         torrent_id: str
@@ -231,7 +237,11 @@ class Manager:
         """
         await self.update_config()
 
-        return await self._client.get_torrent_fp(torrent_id)
+        fp = await self._client.get_torrent_fp(torrent_id)
+        if fp is None:
+            return None
+
+        return await PathMapping.translate(self.app, fp)
 
     async def add_torrent(self, magnet_url: str) -> str | None:
         """

@@ -24,6 +24,7 @@ from tsundoku.webhooks import WebhookBase
 from .entries import router as entries_router
 from .libraries import router as libraries_router
 from .nyaa import router as nyaa_router
+from .path_mappings import router as path_mappings_router
 from .response import APIError, Success
 from .schemas import (
     ChangePasswordRequest,
@@ -240,5 +241,6 @@ for _router in (
     seen_releases_router,
     nyaa_router,
     libraries_router,
+    path_mappings_router,
 ):
     api_router.include_router(_router)

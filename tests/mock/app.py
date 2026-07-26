@@ -41,7 +41,7 @@ class MockTsundokuAppState(TsundokuAppState):
 
     def __init__(self) -> None:
         super().__init__()
-        self.dl_client = MockDownloadManager()
+        self.dl_client = MockDownloadManager(self)
 
         # The real session is only ever created in TsundokuAppState._setup_session,
         # which the stubbed lifespan never runs. Without this, every code path

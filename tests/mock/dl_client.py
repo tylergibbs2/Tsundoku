@@ -2,9 +2,13 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 import re
+from typing import TYPE_CHECKING
 
 from tsundoku.dl_client import Manager
 from tsundoku.dl_client.abstract import TestClientResult, TorrentClient
+
+if TYPE_CHECKING:
+    from tsundoku.app import TsundokuAppState
 
 
 class TorrentStatus(Enum):
@@ -44,7 +48,11 @@ class UnregisteredTorrentError(BaseException):
 class MockDownloadManager(Manager):
     _client: "InMemoryDownloadClient"
 
-    def __init__(self) -> None:
+    def __init__(self, app: "TsundokuAppState") -> None:
+        # The app is needed even though the config is never read from it:
+        # Manager.get_torrent_fp resolves path mappings through it, so the
+        # mock exercises the same translation the real manager does.
+        self.app = app
         self._client = InMemoryDownloadClient()
         self._file_structures: dict[str, list[str]] = {}
 

@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from tsundoku.manager import Show
+from tsundoku.manager.path_mapping import normalize_local_prefix, normalize_remote_prefix
 
 if TYPE_CHECKING:
     from tsundoku.nyaa import SearchResult
@@ -124,6 +125,34 @@ class LibraryCreate(BaseModel):
 class LibraryUpdate(BaseModel):
     folder: str
     is_default: bool = False
+
+
+class PathMappingBody(BaseModel):
+    """Shared validation for the path mapping create and update bodies.
+
+    The normalizers are the same ones the domain model uses, so the rules
+    cannot drift between the two; raising here means a bad prefix comes back
+    as a 422 instead of surfacing as an error from the model layer.
+    """
+
+    remote_prefix: str = Field(min_length=1)
+    local_prefix: str = Field(min_length=1)
+
+    @field_validator("remote_prefix")
+    @classmethod
+    def _check_remote(cls, value: str) -> str:
+        return normalize_remote_prefix(value)
+
+    @field_validator("local_prefix")
+    @classmethod
+    def _check_local(cls, value: str) -> str:
+        return normalize_local_prefix(value)
+
+
+class PathMappingCreate(PathMappingBody): ...
+
+
+class PathMappingUpdate(PathMappingBody): ...
 
 
 class IssueRequest(BaseModel):
