@@ -137,8 +137,8 @@ export const AddModal = ({
               offTooltip={_("watching-disabled")}
               additionalClasses="is-success"
               showLabel={true}
-              labelOn={_("Watching")}
-              labelOff={_("Not Watching")}
+              labelOn={_("watching-label-on")}
+              labelOff={_("watching-label-off")}
             />
           </div>
         </header>

@@ -110,6 +110,11 @@ add-form-local-title-field = Local Title Override
 add-form-add-button = Add show
 add-form-cancel-button = Cancel
 
+watching-enabled = Tsundoku is watching this show for new releases
+watching-disabled = Tsundoku is not watching this show for new releases
+watching-label-on = Watching
+watching-label-off = Not Watching
+
 delete-modal-header = Delete Show
 
 edit-modal-header = Edit Show
@@ -453,3 +458,7 @@ change-password-title = Change Password
 current-password = Current Password
 new-password = New Password
 change-password-button = Change Password
+change-password-all-fields = Please fill in all password fields.
+change-password-mismatch = The new passwords do not match.
+change-password-success = Your password has been changed.
+change-password-failed = Could not change your password.
