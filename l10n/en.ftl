@@ -217,9 +217,6 @@ config-test-failure = Error connecting
 config-save-button = Save Configuration
 config-save-success = Configuration saved
 
-feedback-request = Request a Feature
-feedback-bug = Report a Bug
-
 section-general-title = General
 section-general-subtitle = General app settings and configuration
 

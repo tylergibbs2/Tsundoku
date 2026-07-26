@@ -1,7 +1,6 @@
 import { APITokenComponent } from "./components/apitoken";
 import { GeneralConfigApp } from "./components/generalconfig";
 import { LibraryConfigApp } from "./components/libraryconfig";
-import { FeedbackBtns } from "./components/feedback_btns";
 import { TorrentConfig } from "./components/torrentclient";
 import { getInjector } from "../fluent";
 import { FeedsConfig } from "./components/feedsconfig";
@@ -73,7 +72,6 @@ export const ConfigApp = () => {
           <h2 className="subtitle">{_("config-page-subtitle")}</h2>
         </div>
       </div>
-      <FeedbackBtns />
       <section className="section">
         <h1 className="title is-4">{_("section-general-title")}</h1>
         <h2 className="subtitle is-6">{_("section-general-subtitle")}</h2>

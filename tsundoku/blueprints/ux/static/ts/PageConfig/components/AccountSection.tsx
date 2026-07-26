@@ -80,7 +80,9 @@ const AccountSection = () => {
         <h3 className="title is-6 mb-2">{_("config-api-title")}</h3>
         <APITokenComponent />
         <a
-          href="https://tsundoku.moe/docs"
+          href="/redoc"
+          target="_blank"
+          rel="noopener"
           className="button is-info mt-2 mb-4"
         >
           {_("config-api-documentation")}
