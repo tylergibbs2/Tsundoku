@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 import logging
 from typing import TYPE_CHECKING
 
+from pydantic import AwareDatetime
+
 from tsundoku.constants import VALID_RESOLUTIONS
 from tsundoku.model import DBModel
 from tsundoku.utils import ParserResult, compare_version_strings, normalize_resolution
@@ -19,7 +21,7 @@ class SeenRelease(DBModel):
     resolution: str
     version: str
     torrent_destination: str
-    seen_at: datetime
+    seen_at: AwareDatetime
 
     @classmethod
     async def distinct(
@@ -276,5 +278,5 @@ class SeenRelease(DBModel):
             resolution=resolution,
             version=version,
             torrent_destination=torrent_destination,
-            seen_at=datetime.now(UTC).replace(tzinfo=None),
+            seen_at=datetime.now(UTC),
         )._bind(app)

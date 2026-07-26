@@ -1,10 +1,9 @@
-from datetime import datetime
 from enum import StrEnum, auto
 from pathlib import Path
 from sqlite3 import Row
 from typing import TYPE_CHECKING
 
-from pydantic import field_serializer
+from pydantic import AwareDatetime, field_serializer
 
 from tsundoku.model import DBModel
 
@@ -37,7 +36,7 @@ class Entry(DBModel):
     state: EntryState
     torrent_hash: str
     created_manually: bool
-    last_update: datetime
+    last_update: AwareDatetime
 
     file_path: Path | None = None
 

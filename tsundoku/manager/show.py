@@ -1,9 +1,8 @@
-from datetime import datetime
 import logging
 from sqlite3 import Row
 from typing import TYPE_CHECKING, Self
 
-from pydantic import Field
+from pydantic import AwareDatetime, Field
 
 from tsundoku.model import DBModel, InsertFailedError
 from tsundoku.webhooks.webhook import Webhook
@@ -29,7 +28,7 @@ class Show(DBModel):
     watch: bool
     preferred_resolution: str | None
     preferred_release_group: str | None
-    created_at: datetime
+    created_at: AwareDatetime
 
     metadata: KitsuManager | None = None
 

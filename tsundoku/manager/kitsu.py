@@ -403,7 +403,7 @@ class KitsuManager(DBModel):
                 self.kitsu_id,
             )
 
-        now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        now = datetime.datetime.now(datetime.UTC)
 
         if row["last_updated"] is None:
             return True
