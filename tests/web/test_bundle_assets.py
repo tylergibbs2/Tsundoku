@@ -95,5 +95,7 @@ async def test_rebuild_is_picked_up_without_restart(app: MockTsundokuAppState, r
     html = (await client.get("/")).text
     js = _JS_SRC.search(html)
     css = _CSS_HREF.search(html)
-    assert js is not None and js.group(1).endswith("root-rebuilt.js")
-    assert css is not None and css.group(1).endswith("root-rebuilt.css")
+    assert js is not None
+    assert js.group(1).endswith("root-rebuilt.js")
+    assert css is not None
+    assert css.group(1).endswith("root-rebuilt.css")

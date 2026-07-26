@@ -110,7 +110,7 @@ class SearchResult:
         try:
             parsed_files = parse_anime_titles(files)
         except Exception:
-            logger.error(f"Could not parse files in `{self.torrent_link}`, skipping", exc_info=True)
+            logger.exception(f"Could not parse files in `{self.torrent_link}`, skipping")
             return []
 
         episodes = []
@@ -278,7 +278,7 @@ class NyaaSearcher:
             try:
                 parse_anime_title(title)
             except Exception:
-                logger.error(f"Could not parse `{title}`, skipping", exc_info=True)
+                logger.exception(f"Could not parse `{title}`, skipping")
                 continue
 
             found.append(SearchResult.from_dict(app, item))

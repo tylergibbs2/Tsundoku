@@ -38,7 +38,7 @@ async def test_expected_file_paths(app: MockTsundokuAppState, caplog: pytest.Log
 async def test_no_season_folder(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    config = await GeneralConfig.retrieve(app)  # type: ignore
+    config = await GeneralConfig.retrieve(app)
     config.use_season_folder = False
     await config.save()
     await app.downloader.update_config()

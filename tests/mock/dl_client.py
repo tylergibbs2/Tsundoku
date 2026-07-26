@@ -60,7 +60,7 @@ class MockDownloadManager(Manager):
 
     async def get_magnet(self, location: str) -> str:
         if not location.startswith("magnet:?"):
-            raise Exception("Can only get_manget with magnet URLs when testing")
+            raise ValueError("Can only get_magnet with magnet URLs when testing")
 
         return await super().get_magnet(location)
 

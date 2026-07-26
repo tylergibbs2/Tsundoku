@@ -208,7 +208,7 @@ def directory_is_writable(directory: Path) -> bool:
         canary = directory / str(uuid4())
         canary.write_bytes(b"\0")
         canary.unlink(missing_ok=True)
-    except Exception:
+    except OSError:
         return False
 
     return True

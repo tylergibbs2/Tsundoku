@@ -28,7 +28,7 @@ async def search_nyaa(
     try:
         results = await NyaaSearcher.search(state, query, limit=limit, page=page)
     except Exception as e:
-        logger.error(f"Nyaa API - Search Error: {e}", exc_info=True)
+        logger.exception("Nyaa API - Search Error")
         raise APIError(status.HTTP_400_BAD_REQUEST, "Error searching for the specified query.") from e
 
     return Success(result=[NyaaResult.from_search_result(sr) for sr in results])

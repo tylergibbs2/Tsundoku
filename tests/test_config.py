@@ -14,43 +14,43 @@ from tsundoku.config import (
 async def test_async_retrieve_general_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    await GeneralConfig.retrieve(app)  # type: ignore
+    await GeneralConfig.retrieve(app)
 
 
 async def test_async_retrieve_feeds_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    await FeedsConfig.retrieve(app)  # type: ignore
+    await FeedsConfig.retrieve(app)
 
 
 async def test_async_retrieve_torrent_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    await TorrentConfig.retrieve(app)  # type: ignore
+    await TorrentConfig.retrieve(app)
 
 
 def test_sync_retrieve_general_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    GeneralConfig.sync_retrieve(app)  # type: ignore
+    GeneralConfig.sync_retrieve(app)
 
 
 def test_sync_retrieve_feeds_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    FeedsConfig.sync_retrieve(app)  # type: ignore
+    FeedsConfig.sync_retrieve(app)
 
 
 def test_sync_retrieve_torrent_config(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    TorrentConfig.sync_retrieve(app)  # type: ignore
+    TorrentConfig.sync_retrieve(app)
 
 
 async def test_general_config_invalid_port(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    config = await GeneralConfig.retrieve(app)  # type: ignore
+    config = await GeneralConfig.retrieve(app)
     config.port = 1023
     with pytest.raises(ConfigCheckFailError):
         await config.save()
@@ -59,6 +59,6 @@ async def test_general_config_invalid_port(app: MockTsundokuAppState, caplog: py
 async def test_general_config_valid_port(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    config = await GeneralConfig.retrieve(app)  # type: ignore
+    config = await GeneralConfig.retrieve(app)
     config.port = 1024
     await config.save()

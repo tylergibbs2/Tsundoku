@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import pytest
@@ -18,7 +18,7 @@ def make_client(session: MockClientSession, **overrides: Any) -> qBittorrentClie
     kwargs: dict[str, Any] = {"host": "qb.test", "port": 8080, "secure": False}
     kwargs.update(overrides)
     auth = kwargs.pop("auth", {"username": "admin", "password": "adminadmin"})
-    return qBittorrentClient(session, auth, **kwargs)
+    return qBittorrentClient(cast("aiohttp.ClientSession", session), auth, **kwargs)
 
 
 @pytest.fixture(name="session")

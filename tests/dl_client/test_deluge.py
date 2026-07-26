@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import pytest
@@ -13,7 +13,7 @@ URL = "http://deluge.test:8112/json"
 def make_client(session: MockClientSession, **overrides: Any) -> DelugeClient:
     kwargs: dict[str, Any] = {"host": "deluge.test", "port": 8112, "secure": False, "auth": "hunter2"}
     kwargs.update(overrides)
-    return DelugeClient(session, **kwargs)
+    return DelugeClient(cast("aiohttp.ClientSession", session), **kwargs)
 
 
 def stub_rpc(session: MockClientSession, results: dict[str, Any], *, authed: bool = True) -> None:

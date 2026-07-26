@@ -63,7 +63,7 @@ async def test_authorized_index_readonly(app: MockTsundokuAppState, caplog: pyte
 async def test_authorized_readonly_hidden_webhook_url(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    await WebhookBase.new(app, "My Webhook", "discord", "https://super-secret.com")  # type: ignore
+    await WebhookBase.new(app, "My Webhook", "discord", "https://super-secret.com")
 
     client = await app.test_client(user_type=UserType.READONLY)
     response = await client.get("/api/v1/webhooks")

@@ -1,6 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
+import aiohttp
+
 from tsundoku.model import DBModel
 
 if TYPE_CHECKING:
@@ -444,13 +446,13 @@ class WebhookBase(DBModel):
         if self.service == "slack":
             try:
                 resp = await self._app.session.post(self.url, json={"text": ""})
-            except Exception:
+            except (aiohttp.ClientError, TimeoutError):
                 return False
             text = await resp.text()
             return text == "no_text"
         try:
             resp = await self._app.session.head(self.url)
-        except Exception:
+        except (aiohttp.ClientError, TimeoutError):
             return False
         return resp.status == 200
 
@@ -863,5 +865,5 @@ class Webhook(DBModel):
         try:
             await self._app.session.post(self.base.url, json=payload)
             logger.debug(f"Webhooks - Webhook for show <s{self.show_id}> payload sent")
-        except Exception:
-            pass
+        except (aiohttp.ClientError, TimeoutError):
+            logger.warning(f"Webhooks - Webhook for show <s{self.show_id}> failed to send payload", exc_info=True)

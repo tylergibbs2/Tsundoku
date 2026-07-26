@@ -35,13 +35,13 @@ def sync_acquire() -> Iterator[sqlite3.Connection]:
 
 
 def spawn_shell() -> None:
-    subprocess.run(["sqlite3", f"{DATA_DIR / DATABASE_FILE_NAME}", "-header", "-column"])
+    subprocess.run(["sqlite3", f"{DATA_DIR / DATABASE_FILE_NAME}", "-header", "-column"], check=False)
 
 
 def get_cfg_value(parser: ConfigParser, key: str, value: str, default: Any | None = None) -> Any:
     try:
         value = parser[key][value]
-    except Exception:
+    except KeyError:
         return default
 
     try:
@@ -180,8 +180,8 @@ def migrate_to_data_dir() -> None:
 async def migrate(database_source: Path | str) -> None:
     try:
         migrate_to_data_dir()
-    except Exception as e:
-        logger.error(f"Error migrating to data directory: {e}", exc_info=True)
+    except Exception:
+        logger.exception("Error migrating to data directory")
 
     if isinstance(database_source, Path):
         logger.info("Backing up database before performing migrations...")
@@ -193,8 +193,8 @@ async def migrate(database_source: Path | str) -> None:
             )
         except FileNotFoundError:
             logger.info("No existing database found, skipping backup.")
-        except Exception as e:
-            logger.error(f"Failed to backup database: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Failed to backup database")
 
     backend = get_backend(f"sqlite:///{database_source}")
     migrations = read_migrations("migrations")
@@ -206,7 +206,7 @@ async def migrate(database_source: Path | str) -> None:
 
     try:
         await transfer_config()
-    except Exception as e:
-        logger.error(f"Error importing old configuration: {e}", exc_info=True)
+    except Exception:
+        logger.exception("Error importing old configuration")
 
     logger.info("Database migrations applied.")

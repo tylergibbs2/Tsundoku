@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import Field
 
-from tsundoku.model import DBModel
+from tsundoku.model import DBModel, InsertFailedError
 from tsundoku.webhooks.webhook import Webhook
 
 from .entry import Entry
@@ -221,7 +221,7 @@ class Show(DBModel):
             new_id = cur.lastrowid
 
         if new_id is None:
-            raise Exception("Failed to insert show into database")
+            raise InsertFailedError("Failed to insert show into database")
 
         return await Show.from_id(app, new_id)
 

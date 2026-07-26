@@ -6,6 +6,10 @@ if TYPE_CHECKING:
     from tsundoku.app import TsundokuAppState
 
 
+class InsertFailedError(Exception):
+    """Raised when an ``INSERT`` completes without yielding a row ID."""
+
+
 class DBModel(BaseModel):
     """Base class for database-backed domain models.
 

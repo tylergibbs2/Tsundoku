@@ -79,7 +79,7 @@ async def add_seen_releases(state: StateDep, body: SeenReleaseAddRequest) -> Suc
     try:
         results = await NyaaSearcher.search(state, f"[{body.release_group}] {body.title}", limit=75, page=1)
     except Exception as e:
-        logger.error(f"Seen Releases API - Nyaa search error: {e}", exc_info=True)
+        logger.exception("Seen Releases API - Nyaa search error")
         raise APIError(status.HTTP_400_BAD_REQUEST, "Error searching Nyaa for more releases.") from e
 
     for result in results:

@@ -60,7 +60,7 @@ class MockResponse:
     async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, *_: Any) -> None:
+    async def __aexit__(self, *_: object) -> None:
         return None
 
 
@@ -84,7 +84,7 @@ class _RequestContextManager:
     async def __aenter__(self) -> MockResponse:
         return self._response
 
-    async def __aexit__(self, *_: Any) -> None:
+    async def __aexit__(self, *_: object) -> None:
         return None
 
 
@@ -108,6 +108,15 @@ class RecordedRequest:
 
     def __repr__(self) -> str:
         return f"<RecordedRequest {self.method} {self.url}>"
+
+
+def _always(response: MockResponse) -> Responder:
+    """Adapt a prepared response into a responder callable."""
+
+    def responder(_url: str, _kwargs: dict[str, Any]) -> MockResponse:
+        return response
+
+    return responder
 
 
 class MockClientSession:
@@ -141,7 +150,7 @@ class MockClientSession:
         if response is None:
             response = MockResponse(**response_kwargs)
 
-        responder: Responder = response if callable(response) else (lambda _u, _k, r=response: r)  # type: ignore[assignment,misc]
+        responder: Responder = _always(response) if isinstance(response, MockResponse) else response
         self._stubs.append((method.upper(), url, responder))
 
     def _dispatch(self, method: str, url: str, kwargs: dict[str, Any]) -> _RequestContextManager:

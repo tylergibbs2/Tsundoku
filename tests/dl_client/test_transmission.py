@@ -1,7 +1,7 @@
 import asyncio
 import base64
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import pytest
@@ -22,7 +22,7 @@ def make_client(session: MockClientSession, **overrides: Any) -> TransmissionCli
         "auth": {"username": "user", "password": "pass"},
     }
     kwargs.update(overrides)
-    return TransmissionClient(session, **kwargs)
+    return TransmissionClient(cast("aiohttp.ClientSession", session), **kwargs)
 
 
 def sequence(session: MockClientSession, *responses: MockResponse) -> None:

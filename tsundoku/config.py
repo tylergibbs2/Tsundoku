@@ -30,18 +30,18 @@ class Config:
 
         super().__setattr__("valid_keys", set(self.keys.keys()))
 
-    def __getattribute__(self, __name: str) -> Any:
+    def __getattribute__(self, name: str, /) -> Any:
         keys = super().__getattribute__("keys")
-        if __name in keys:
-            return keys[__name]
+        if name in keys:
+            return keys[name]
 
-        return super().__getattribute__(__name)
+        return super().__getattribute__(name)
 
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if __name not in self.valid_keys:
-            raise ConfigInvalidKeyError(f"Invalid key '{__name}'")
+    def __setattr__(self, name: str, value: Any, /) -> None:
+        if name not in self.valid_keys:
+            raise ConfigInvalidKeyError(f"Invalid key '{name}'")
 
-        self.keys[__name] = __value
+        self.keys[name] = value
 
     def __hash__(self) -> int:
         return hash(self.keys.values())
@@ -74,7 +74,7 @@ class Config:
 
         # row is a sqlite3.Row: iterating it directly yields values, not column
         # names, so .keys() is required here (unlike a plain dict).
-        return cls(app, {k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})  # noqa: SIM118
 
     @classmethod
     def sync_retrieve(cls, app: "TsundokuAppState", ensure_exists: bool = True) -> Self:
@@ -102,7 +102,7 @@ class Config:
 
         # row is a sqlite3.Row: iterating it directly yields values, not column
         # names, so .keys() is required here (unlike a plain dict).
-        return cls(app, {k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})  # noqa: SIM118
 
     async def save(self) -> None:
         for key, value in self.keys.items():

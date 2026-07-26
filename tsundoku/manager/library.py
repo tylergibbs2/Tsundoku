@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import field_serializer
 
-from tsundoku.model import DBModel
+from tsundoku.model import DBModel, InsertFailedError
 
 if TYPE_CHECKING:
     from tsundoku.app import TsundokuAppState
@@ -79,7 +79,7 @@ class Library(DBModel):
             )
             id_ = cur.lastrowid
             if id_ is None:
-                raise Exception("Failed to create new library, lastrowid is None")
+                raise InsertFailedError("Failed to create new library, lastrowid is None")
 
         instance = cls(id_=id_, folder=folder, is_default=False)._bind(app)
         if is_default:

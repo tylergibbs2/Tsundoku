@@ -159,7 +159,7 @@ class Manager:
         try:
             return await self._client.test_client()
         except Exception as e:
-            logger.error(f"Failed to test torrent client. [{e}]", exc_info=True)
+            logger.exception("Failed to test torrent client.")
             return TestClientResult(False, f"Unexpected error while testing the torrent client: {e}")
 
     async def check_torrent_completed(self, torrent_id: str) -> bool:

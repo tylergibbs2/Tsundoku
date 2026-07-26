@@ -21,14 +21,14 @@ async def test_retrieve_all_libraries(app: MockTsundokuAppState, caplog: pytest.
         """
         )
 
-    libraries = await Library.all(app)  # type: ignore
+    libraries = await Library.all(app)
     assert len(libraries) == library_count
 
 
 async def test_library_folder_is_path(app: MockTsundokuAppState, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
-    library, *_ = await Library.all(app)  # type: ignore
+    library, *_ = await Library.all(app)
     assert isinstance(library.folder, Path)
 
 
@@ -36,7 +36,7 @@ async def test_only_one_default_library(app: MockTsundokuAppState, caplog: pytes
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries() -> int:
-        return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
+        return sum(1 for lib in await Library.all(app) if lib.is_default)
 
     assert await count_default_libraries() == 1
 
@@ -45,9 +45,9 @@ async def test_only_one_default_library_from_new(app: MockTsundokuAppState, capl
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries() -> int:
-        return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
+        return sum(1 for lib in await Library.all(app) if lib.is_default)
 
-    new_library = await Library.new(app, Path("/anime3"), is_default=True)  # type: ignore
+    new_library = await Library.new(app, Path("/anime3"), is_default=True)
     assert new_library.is_default
     assert await count_default_libraries() == 1
 
@@ -56,9 +56,9 @@ async def test_only_one_default_library_from_existing(app: MockTsundokuAppState,
     caplog.set_level(logging.ERROR, logger="tsundoku")
 
     async def count_default_libraries() -> int:
-        return sum(1 for lib in await Library.all(app) if lib.is_default)  # type: ignore
+        return sum(1 for lib in await Library.all(app) if lib.is_default)
 
-    libraries = await Library.all(app)  # type: ignore
+    libraries = await Library.all(app)
     assert len(libraries) > 1  # can't test if there's only one library in the testing data
 
     default, nondefault, *_ = libraries
@@ -78,5 +78,5 @@ async def test_all_shows_have_a_library(app: MockTsundokuAppState, caplog: pytes
     # an empty result -- this test is only about library_id.
     app.session.stub("GET", KITSU_API_URL, json={"data": []})
 
-    for show in await ShowCollection.all(app):  # type: ignore
+    for show in await ShowCollection.all(app):
         assert show.library_id is not None

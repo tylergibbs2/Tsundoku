@@ -62,11 +62,11 @@ class Downloader:
 
             try:
                 await self.check_show_entries()
-            except Exception as e:
+            except Exception:
                 import traceback
 
                 traceback.print_exc()
-                logger.error(f"Error occurred while checking show entries, '{e}'", exc_info=True)
+                logger.exception("Error occurred while checking show entries")
 
             await asyncio.sleep(self.complete_check)
 
@@ -143,8 +143,8 @@ class Downloader:
         """
         try:
             torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
-        except Exception as e:
-            logger.exception(f"Failed to begin handling, could not connect to download client: {e}")
+        except Exception:
+            logger.exception("Failed to begin handling, could not connect to download client")
             self.app.flags.DL_CLIENT_CONNECTION_ERROR = True
             return None
 
@@ -241,8 +241,8 @@ class Downloader:
             await move(str(entry.file_path), str(desired_path))
         except PermissionError:
             logger.error(f"Error Moving Release <e{entry.id}> - Invalid Permissions")
-        except Exception as e:
-            logger.error(f"Error Moving Release <e{entry.id}> - {e}", exc_info=True)
+        except Exception:
+            logger.exception(f"Error Moving Release <e{entry.id}>")
         else:
             try:
                 entry.file_path.symlink_to(desired_path)
@@ -297,8 +297,8 @@ class Downloader:
             await aiofiles.os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error(f"Error Renaming Release <e{entry.id}> - Invalid Permissions")
-        except Exception as e:
-            logger.error(f"Error Renaming Release <e{entry.id}> - {e}", exc_info=True)
+        except Exception:
+            logger.exception(f"Error Renaming Release <e{entry.id}>")
         else:
             return new_path
 
@@ -335,9 +335,8 @@ class Downloader:
         try:
             parsed_files = parse_anime_titles([subpath.name for subpath in subpaths])
         except Exception:
-            logger.error(
+            logger.exception(
                 f"Could not parse files in `{root}`, skipping",
-                exc_info=True,
             )
             return None  # TODO: maybe ask user on UI to match manually
 
