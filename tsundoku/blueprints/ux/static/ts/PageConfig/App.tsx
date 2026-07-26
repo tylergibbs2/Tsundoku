@@ -1,13 +1,12 @@
-import { APITokenComponent } from "./components/apitoken";
+import { toast } from "bulma-toast";
+import { useEffect, useRef, useState } from "react";
+import { getInjector } from "../fluent";
+import { IonIcon } from "../icon";
+import AccountSection from "./components/AccountSection";
+import { FeedsConfig } from "./components/feedsconfig";
 import { GeneralConfigApp } from "./components/generalconfig";
 import { LibraryConfigApp } from "./components/libraryconfig";
 import { TorrentConfig } from "./components/torrentclient";
-import { getInjector } from "../fluent";
-import { FeedsConfig } from "./components/feedsconfig";
-import { useRef, useState, useEffect } from "react";
-import { toast } from "bulma-toast";
-import { IonIcon } from "../icon";
-import AccountSection from "./components/AccountSection";
 import "../../css/config.css";
 
 const _ = getInjector();
@@ -19,7 +18,7 @@ export const ConfigApp = () => {
   const libraryRef = useRef<any>(null);
   const feedsRef = useRef<any>(null);
   const torrentRef = useRef<any>(null);
-  const encodeRef = useRef<any>(null);
+  const _encodeRef = useRef<any>(null);
 
   const [dirty, setDirty] = useState({
     general: false,

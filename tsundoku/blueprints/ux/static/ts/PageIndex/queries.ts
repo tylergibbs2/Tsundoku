@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-
+import type { Show, ShowCreate } from "../api";
 import {
   createShow,
   deleteShow,
@@ -10,7 +10,6 @@ import {
   getShows,
   updateShow,
 } from "../api";
-import type { Show, ShowCreate } from "../api";
 
 // Keys and options for the shows index. Add to this as call sites here need
 // it, rather than mirroring the whole API surface up front.
@@ -63,7 +62,7 @@ export const generalConfigQuery = () =>
 
 export const distinctReleasesQuery = (
   field: string,
-  filters: SeenReleaseFilters = {}
+  filters: SeenReleaseFilters = {},
 ) =>
   queryOptions({
     queryKey: indexKeys.distinctReleases(field, filters),

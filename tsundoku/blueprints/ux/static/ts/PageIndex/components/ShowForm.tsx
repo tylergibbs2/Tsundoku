@@ -1,6 +1,6 @@
-import { getInjector } from "../../fluent";
 import { useQuery } from "@tanstack/react-query";
-import { Show, GeneralConfigResponse } from "../../api";
+import type { GeneralConfigResponse, Show } from "../../api";
+import { getInjector } from "../../fluent";
 import { generalConfigQuery } from "../queries";
 import { LibrarySelect } from "./library_select";
 
@@ -26,10 +26,10 @@ export const ShowForm = ({
   // Use provided generalConfig or fetch it
   const config = generalConfig || configQuery.data;
 
-  if (mode === "edit" && show === null) return <></>;
+  if (mode === "edit" && show === null) return null;
 
   const isEditMode = mode === "edit";
-  const shouldShow = isEditMode ? tab === "info" : true;
+  const _shouldShow = isEditMode ? tab === "info" : true;
 
   return (
     <form
@@ -45,7 +45,7 @@ export const ShowForm = ({
               <span
                 className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                 data-tooltip={_(
-                  isEditMode ? "edit-form-name-tt" : "add-form-name-tt"
+                  isEditMode ? "edit-form-name-tt" : "add-form-name-tt",
                 )}
               >
                 {_(isEditMode ? "edit-form-name-field" : "add-form-name-field")}
@@ -59,7 +59,7 @@ export const ShowForm = ({
                 placeholder={_(
                   isEditMode
                     ? "edit-form-name-placeholder"
-                    : "add-form-name-placeholder"
+                    : "add-form-name-placeholder",
                 )}
               />
             </div>
@@ -119,13 +119,13 @@ export const ShowForm = ({
               <span
                 className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                 data-tooltip={_(
-                  isEditMode ? "edit-form-season-tt" : "add-form-season-tt"
+                  isEditMode ? "edit-form-season-tt" : "add-form-season-tt",
                 )}
               >
                 {_(
                   isEditMode
                     ? "edit-form-season-field"
-                    : "add-form-season-field"
+                    : "add-form-season-field",
                 )}
               </span>
             </label>
@@ -147,13 +147,13 @@ export const ShowForm = ({
                 data-tooltip={_(
                   isEditMode
                     ? "edit-form-episode-offset-tt"
-                    : "add-form-episode-offset-tt"
+                    : "add-form-episode-offset-tt",
                 )}
               >
                 {_(
                   isEditMode
                     ? "edit-form-episode-offset-field"
-                    : "add-form-episode-offset-field"
+                    : "add-form-episode-offset-field",
                 )}
               </span>
             </label>
@@ -173,13 +173,13 @@ export const ShowForm = ({
               <span
                 className="has-tooltip-arrow has-tooltip-multiline has-tooltip-right"
                 data-tooltip={_(
-                  isEditMode ? "edit-form-library-tt" : "add-form-library-tt"
+                  isEditMode ? "edit-form-library-tt" : "add-form-library-tt",
                 )}
               >
                 {_(
                   isEditMode
                     ? "edit-form-library-field"
-                    : "add-form-library-field"
+                    : "add-form-library-field",
                 )}
               </span>
             </label>
@@ -204,13 +204,13 @@ export const ShowForm = ({
                       data-tooltip={_(
                         isEditMode
                           ? "edit-form-desired-format-tt"
-                          : "add-form-desired-format-tt"
+                          : "add-form-desired-format-tt",
                       )}
                     >
                       {_(
                         isEditMode
                           ? "edit-form-desired-format-field"
-                          : "add-form-desired-format-field"
+                          : "add-form-desired-format-field",
                       )}
                     </span>
                   </label>
@@ -237,13 +237,13 @@ export const ShowForm = ({
                       data-tooltip={_(
                         isEditMode
                           ? "edit-form-local-title-tt"
-                          : "add-form-local-title-tt"
+                          : "add-form-local-title-tt",
                       )}
                     >
                       {_(
                         isEditMode
                           ? "edit-form-local-title-field"
-                          : "add-form-local-title-field"
+                          : "add-form-local-title-field",
                       )}
                     </span>
                   </label>

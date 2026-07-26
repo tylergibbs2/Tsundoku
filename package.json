@@ -4,6 +4,7 @@
   "description": "Streamlined anime downloading, moving, and renaming.",
   "private": true,
   "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
     "@fluent/bundle": "^0.16.0",
     "@tanstack/react-query": "^5.101.4",
     "@types/domutils": "^2.1.0",
@@ -18,7 +19,6 @@
     "http-status-codes": "^2.2.0",
     "humanize-duration": "^3.25.1",
     "intl-pluralrules": "^1.2.2",
-    "prettier": "^2.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.2.3",
@@ -43,7 +43,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --mode development --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fmt": "biome format --write",
+    "check": "biome check --reporter=summary",
+    "check:fix": "biome check --write --reporter=summary"
   },
   "dependencies": {}
 }

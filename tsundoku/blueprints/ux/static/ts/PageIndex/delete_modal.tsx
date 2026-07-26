@@ -1,10 +1,10 @@
-import { getInjector } from "../fluent";
-import { Dispatch, SetStateAction } from "react";
-import { Show } from "../api";
-import ReactHtmlParser from "react-html-parser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { removeShow } from "./queries";
 import { toast } from "bulma-toast";
+import type { Dispatch, SetStateAction } from "react";
+import ReactHtmlParser from "react-html-parser";
+import type { Show } from "../api";
+import { getInjector } from "../fluent";
+import { removeShow } from "./queries";
 
 const _ = getInjector();
 

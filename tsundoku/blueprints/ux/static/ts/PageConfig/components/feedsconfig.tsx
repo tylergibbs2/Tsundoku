@@ -1,14 +1,8 @@
-import {
-  ChangeEvent,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-  useState,
-} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { FeedsConfigResponse, FeedsConfigUpdate } from "../../api";
 import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
-import type { FeedsConfigResponse, FeedsConfigUpdate } from "../../api";
 import { configKeys, feedsConfigQuery, saveFeedsConfig } from "../queries";
 
 const _ = getInjector();
@@ -45,8 +39,8 @@ export const FeedsConfig = forwardRef(
     const changedFields = (saved: FeedsConfigResponse): FeedsConfigUpdate =>
       Object.fromEntries(
         Object.entries(fields).filter(
-          ([key, value]) => value !== saved[key as keyof FeedsConfigResponse]
-        )
+          ([key, value]) => value !== saved[key as keyof FeedsConfigResponse],
+        ),
       );
 
     useEffect(() => {
@@ -177,5 +171,5 @@ export const FeedsConfig = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );

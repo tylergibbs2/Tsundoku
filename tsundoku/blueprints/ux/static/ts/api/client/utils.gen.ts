@@ -71,7 +71,7 @@ export const createQuerySerializer = <T = unknown>({
  * Infers parseAs value from provided Content-Type header.
  */
 export const getParseAs = (
-  contentType: string | null
+  contentType: string | null,
 ): Exclude<Config["parseAs"], "auto"> => {
   if (!contentType) {
     // If no Content-Type header is provided, the best we can do is return the raw response body,
@@ -98,7 +98,7 @@ export const getParseAs = (
 
   if (
     ["application/", "audio/", "image/", "video/"].some((type) =>
-      cleanContent.startsWith(type)
+      cleanContent.startsWith(type),
     )
   ) {
     return "blob";
@@ -115,7 +115,7 @@ const checkForExistence = (
   options: Pick<RequestOptions, "auth" | "query"> & {
     headers: Headers;
   },
-  name?: string
+  name?: string,
 ): boolean => {
   if (!name) {
     return false;
@@ -133,7 +133,7 @@ const checkForExistence = (
 export async function setAuthParams(
   options: Pick<RequestOptions, "auth" | "query" | "security"> & {
     headers: Headers;
-  }
+  },
 ): Promise<void> {
   for (const auth of options.security ?? []) {
     if (checkForExistence(options, auth.name)) {
@@ -221,7 +221,7 @@ export const mergeHeaders = (
         // content value in OpenAPI specification is 'application/json'
         mergedHeaders.set(
           key,
-          typeof value === "object" ? JSON.stringify(value) : (value as string)
+          typeof value === "object" ? JSON.stringify(value) : (value as string),
         );
       }
     }
@@ -235,18 +235,18 @@ type ErrInterceptor<Err, Res, Req, Options> = (
   response: Res | undefined,
   /** request may be undefined, because error may be from building the request object itself */
   request: Req | undefined,
-  options: Options
+  options: Options,
 ) => Err | Promise<Err>;
 
 type ReqInterceptor<Req, Options> = (
   request: Req,
-  options: Options
+  options: Options,
 ) => Req | Promise<Req>;
 
 type ResInterceptor<Res, Req, Options> = (
   response: Res,
   request: Req,
-  options: Options
+  options: Options,
 ) => Res | Promise<Res>;
 
 class Interceptors<Interceptor> {
@@ -277,7 +277,7 @@ class Interceptors<Interceptor> {
 
   update(
     id: number | Interceptor,
-    fn: Interceptor
+    fn: Interceptor,
   ): number | Interceptor | false {
     const index = this.getInterceptorIndex(id);
     if (this.fns[index]) {
@@ -327,7 +327,7 @@ const defaultHeaders = {
 };
 
 export const createConfig = <T extends ClientOptions = ClientOptions>(
-  override: Config<Omit<ClientOptions, keyof T> & T> = {}
+  override: Config<Omit<ClientOptions, keyof T> & T> = {},
 ): Config<Omit<ClientOptions, keyof T> & T> => ({
   ...jsonBodySerializer,
   headers: defaultHeaders,

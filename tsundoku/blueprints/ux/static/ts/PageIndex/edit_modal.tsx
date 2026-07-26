@@ -1,25 +1,23 @@
-import { getInjector } from "../fluent";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "bulma-toast";
 import {
-  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
   useEffect,
-  Dispatch,
-  SetStateAction,
-  ChangeEvent,
+  useState,
 } from "react";
 import { useForm } from "react-hook-form";
-
-import { ShowToggleButton } from "./components/show_toggle_button";
-import { deleteShowEntry, updateShowWebhook } from "../api";
-import type { Show, Entry, Webhook } from "../api";
+import type { Entry, Show, Webhook } from "../api";
+import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { editShow } from "./queries";
-import { toast } from "bulma-toast";
-import { NyaaSearchPanel } from "./NyaaSearchPanel";
-import { EditShowForm } from "./components/EditShowForm";
-import { EditShowEntries } from "./components/EditShowEntries";
 import type { StagedEntry } from "./components/EditShowEntries";
+import { EditShowEntries } from "./components/EditShowEntries";
+import { EditShowForm } from "./components/EditShowForm";
 import { EditShowWebhooks } from "./components/EditShowWebhooks";
+import { ShowToggleButton } from "./components/show_toggle_button";
+import { NyaaSearchPanel } from "./NyaaSearchPanel";
+import { editShow } from "./queries";
 
 const _ = getInjector();
 
@@ -44,7 +42,7 @@ export const EditModal = ({
   const [webhooksToUpdate, setWebhooksToUpdate] = useState<Webhook[]>([]);
 
   const [highlightNewEntryId, setHighlightNewEntryId] = useState<number | null>(
-    null
+    null,
   );
 
   const { register, reset, trigger, getValues, setValue } = useForm();
@@ -104,9 +102,9 @@ export const EditModal = ({
     if (!activeShow) return show;
 
     let addedEntries: Entry[] = [];
-    let removedEntries: StagedEntry[] = [];
+    const removedEntries: StagedEntry[] = [];
 
-    let request: Object;
+    let request: RequestInit;
     if (entriesToAdd.length > 0) {
       request = {
         method: "POST",
@@ -117,18 +115,18 @@ export const EditModal = ({
           ...entriesToAdd.filter(
             (entry) =>
               entriesToDelete.findIndex(
-                (toRemove: StagedEntry) => toRemove.id === entry.id
-              ) === -1
+                (toRemove: StagedEntry) => toRemove.id === entry.id,
+              ) === -1,
           ),
         ]),
       };
 
-      let response = await fetch(
+      const response = await fetch(
         `/api/v1/shows/${activeShow.id_}/entries`,
-        request
+        request,
       );
       if (response.ok) {
-        let data: { result: Entry[] } = await response.json();
+        const data: { result: Entry[] } = await response.json();
         addedEntries = data.result;
       }
     }
@@ -142,9 +140,9 @@ export const EditModal = ({
 
     for (const entry of entriesToDelete) {
       if (entry.id < 0) continue;
-      let response = await fetch(
+      const response = await fetch(
         `/api/v1/shows/${activeShow.id_}/entries/${entry.id}`,
-        request
+        request,
       );
       if (response.ok) removedEntries.push(entry);
     }
@@ -152,13 +150,13 @@ export const EditModal = ({
     setEntriesToAdd([]);
     setEntriesToDelete([]);
 
-    let newShow: Show = JSON.parse(JSON.stringify(show));
+    const newShow: Show = JSON.parse(JSON.stringify(show));
     newShow.entries ??= [];
     for (const entry of addedEntries) newShow.entries.push(entry);
 
     for (const entry of removedEntries) {
-      let idx = newShow.entries.findIndex(
-        (toRemove) => toRemove.id === entry.id
+      const idx = newShow.entries.findIndex(
+        (toRemove) => toRemove.id === entry.id,
       );
       if (idx !== -1) newShow.entries.splice(idx, 1);
     }
@@ -173,10 +171,10 @@ export const EditModal = ({
   const finalizeWebhooks = async (show: Show) => {
     if (!activeShow) return show;
 
-    let updatedWebhooks: Webhook[] = [];
+    const updatedWebhooks: Webhook[] = [];
 
     for (const wh of webhooksToUpdate) {
-      let request = {
+      const request = {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -186,9 +184,9 @@ export const EditModal = ({
         }),
       };
 
-      let resp = await fetch(
+      const resp = await fetch(
         `/api/v1/shows/${show.id_}/webhooks/${wh.base.base_id}`,
-        request
+        request,
       );
       let resp_json: any;
       if (resp.ok) resp_json = await resp.json();
@@ -197,12 +195,12 @@ export const EditModal = ({
       updatedWebhooks.push(resp_json.result);
     }
 
-    let newShow: Show = JSON.parse(JSON.stringify(show));
+    const newShow: Show = JSON.parse(JSON.stringify(show));
     newShow.webhooks ??= [];
 
     for (const wh of updatedWebhooks) {
-      let idx = newShow.webhooks.findIndex(
-        (toReplace) => toReplace.base.base_id === wh.base.base_id
+      const idx = newShow.webhooks.findIndex(
+        (toReplace) => toReplace.base.base_id === wh.base.base_id,
       );
       if (idx === -1) continue;
 
@@ -233,7 +231,7 @@ export const EditModal = ({
   };
 
   // Everything below renders show details, so bail out when there is none.
-  if (!activeShow) return <></>;
+  if (!activeShow) return null;
 
   return (
     <div
@@ -244,7 +242,7 @@ export const EditModal = ({
     >
       <div className="modal-background" onClick={cancel}></div>
       <div
-        className={"modal-card" + (tab === "entries" ? " is-wide" : "")}
+        className={`modal-card${tab === "entries" ? " is-wide" : ""}`}
         style={{
           maxWidth: tab === "entries" ? "90vw" : undefined,
           width: tab === "entries" ? "1200px" : undefined,
@@ -270,9 +268,7 @@ export const EditModal = ({
               labelOn={_("watching-label-on")}
               labelOff={_("watching-label-off")}
             />
-            <div
-              className={"dropdown is-right " + (fixMatch ? "is-active" : "")}
-            >
+            <div className={`dropdown is-right ${fixMatch ? "is-active" : ""}`}>
               <div className="dropdown-trigger">
                 <button
                   className="button is-link"
@@ -372,7 +368,7 @@ export const EditModal = ({
                         animate: { in: "fadeIn", out: "fadeOut" },
                       });
                     }
-                  } catch (e) {
+                  } catch (_e) {
                     toast({
                       message: _("entry-add-failed"),
                       duration: 4000,
@@ -448,11 +444,9 @@ const FixMatchRow = ({
   return (
     <tr
       onClick={setSelf}
-      className={
-        "is-clickable " + (result.id === selectedId ? "is-selected" : "")
-      }
+      className={`is-clickable ${result.id === selectedId ? "is-selected" : ""}`}
     >
-      <td>{result.attributes.titles["en_jp"]}</td>
+      <td>{result.attributes.titles.en_jp}</td>
     </tr>
   );
 };
@@ -521,9 +515,7 @@ const FixMatchDropdown = ({
       <input type="hidden" {...register("kitsu_id")} />
       <div className="dropdown-item">
         <div
-          className={
-            "control has-icons-left " + (isSearching ? "is-loading" : "")
-          }
+          className={`control has-icons-left ${isSearching ? "is-loading" : ""}`}
         >
           <input
             type="text"
@@ -560,7 +552,7 @@ const FixMatchDropdown = ({
 // Helper to get all episode numbers from show.entries and entriesToAdd
 function getAllEpisodes(show: Show, entriesToAdd: StagedEntry[]): number[] {
   const all = new Set<number>();
-  (show.entries || []).forEach((e: Entry) => all.add(e.episode));
-  (entriesToAdd || []).forEach((e: StagedEntry) => all.add(e.episode));
+  for (const e of show.entries ?? []) all.add(e.episode);
+  for (const e of entriesToAdd ?? []) all.add(e.episode);
   return Array.from(all);
 }

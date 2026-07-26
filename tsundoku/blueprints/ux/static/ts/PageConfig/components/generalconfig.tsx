@@ -1,17 +1,9 @@
-import {
-  ChangeEvent,
-  useEffect,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-  useState,
-} from "react";
-import type { GeneralConfigResponse, GeneralConfigUpdate } from "../../api";
-import { getInjector } from "../../fluent";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { configKeys, generalConfigQuery, saveGeneralConfig } from "../queries";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { GeneralConfigResponse, GeneralConfigUpdate } from "../../api";
 import { GlobalLoading } from "../../Components/GlobalLoading";
-import { DirectorySelect } from "../../Components/DirectorySelect";
+import { getInjector } from "../../fluent";
+import { configKeys, generalConfigQuery, saveGeneralConfig } from "../queries";
 
 const _ = getInjector();
 
@@ -45,8 +37,8 @@ export const GeneralConfigApp = forwardRef(
     const changedFields = (saved: GeneralConfigResponse): GeneralConfigUpdate =>
       Object.fromEntries(
         Object.entries(fields).filter(
-          ([key, value]) => value !== saved[key as keyof GeneralConfigResponse]
-        )
+          ([key, value]) => value !== saved[key as keyof GeneralConfigResponse],
+        ),
       );
 
     // Dirty tracking
@@ -237,5 +229,5 @@ export const GeneralConfigApp = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );

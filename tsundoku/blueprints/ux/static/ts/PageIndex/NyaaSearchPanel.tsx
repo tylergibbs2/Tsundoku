@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from "react";
+import { type ChangeEvent, useState } from "react";
 import type { NyaaResult } from "../api";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
@@ -16,14 +16,13 @@ interface NyaaSearchPanelProps {
 
 export const NyaaSearchPanel = ({
   initialQuery = "",
-  showId,
   onEntryAdd,
   existingEpisodes = [],
 }: NyaaSearchPanelProps) => {
   const [query, setQuery] = useState<string>(initialQuery);
   const [results, setResults] = useState<NyaaResult[]>([]);
   const [isSearching, setSearchingState] = useState<boolean>(false);
-  const [selected, setSelected] = useState<NyaaResult | null>(null);
+  const [_selected, _setSelected] = useState<NyaaResult | null>(null);
   const [adding, setAdding] = useState<boolean>(false);
   const [overwrite, setOverwrite] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
@@ -46,7 +45,7 @@ export const NyaaSearchPanel = ({
           query: query,
           limit: limit.toString(),
           page: pageToFetch.toString(),
-        })
+        }),
     )
       .then((res) => res.json())
       .then((data: { result?: NyaaResult[] }) => setResults(data.result || []))
@@ -153,7 +152,7 @@ export const NyaaSearchPanel = ({
               {results.map((show: NyaaResult) => {
                 const episodeNum = parseInt(
                   show.title.match(/\b(?:ep?|episode)\s*(\d+)/i)?.[1] || "NaN",
-                  10
+                  10,
                 );
                 const alreadyAdded = existingEpisodes.includes(episodeNum);
                 return (

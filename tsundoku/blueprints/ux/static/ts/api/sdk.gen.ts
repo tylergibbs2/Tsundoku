@@ -209,7 +209,7 @@ import {
 export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
-  TResponse = unknown
+  TResponse = unknown,
 > = Options2<TData, ThrowOnError, TResponse> & {
   /**
    * You can provide a client instance returned by `createClient()` instead of
@@ -228,7 +228,7 @@ export type Options<
  * Tree
  */
 export const tree = <ThrowOnError extends boolean = false>(
-  options: Options<TreeData, ThrowOnError>
+  options: Options<TreeData, ThrowOnError>,
 ): RequestResult<TreeResponses, TreeErrors, ThrowOnError> =>
   (options.client ?? client).post<TreeResponses, TreeErrors, ThrowOnError>({
     requestValidator: async (data) =>
@@ -252,7 +252,7 @@ export const tree = <ThrowOnError extends boolean = false>(
  * Get Api Token
  */
 export const getApiToken = <ThrowOnError extends boolean = false>(
-  options?: Options<GetApiTokenData, ThrowOnError>
+  options?: Options<GetApiTokenData, ThrowOnError>,
 ): RequestResult<GetApiTokenResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<GetApiTokenResponses, unknown, ThrowOnError>({
     requestValidator: async (data) =>
@@ -273,7 +273,7 @@ export const getApiToken = <ThrowOnError extends boolean = false>(
  * Regenerate Api Token
  */
 export const regenerateApiToken = <ThrowOnError extends boolean = false>(
-  options?: Options<RegenerateApiTokenData, ThrowOnError>
+  options?: Options<RegenerateApiTokenData, ThrowOnError>,
 ): RequestResult<RegenerateApiTokenResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).post<
     RegenerateApiTokenResponses,
@@ -298,7 +298,7 @@ export const regenerateApiToken = <ThrowOnError extends boolean = false>(
  * Get General Config
  */
 export const getGeneralConfig = <ThrowOnError extends boolean = false>(
-  options?: Options<GetGeneralConfigData, ThrowOnError>
+  options?: Options<GetGeneralConfigData, ThrowOnError>,
 ): RequestResult<GetGeneralConfigResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     GetGeneralConfigResponses,
@@ -323,7 +323,7 @@ export const getGeneralConfig = <ThrowOnError extends boolean = false>(
  * Update General Config
  */
 export const updateGeneralConfig = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateGeneralConfigData, ThrowOnError>
+  options: Options<UpdateGeneralConfigData, ThrowOnError>,
 ): RequestResult<
   UpdateGeneralConfigResponses,
   UpdateGeneralConfigErrors,
@@ -356,7 +356,7 @@ export const updateGeneralConfig = <ThrowOnError extends boolean = false>(
  * Get Feeds Config
  */
 export const getFeedsConfig = <ThrowOnError extends boolean = false>(
-  options?: Options<GetFeedsConfigData, ThrowOnError>
+  options?: Options<GetFeedsConfigData, ThrowOnError>,
 ): RequestResult<GetFeedsConfigResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     GetFeedsConfigResponses,
@@ -381,7 +381,7 @@ export const getFeedsConfig = <ThrowOnError extends boolean = false>(
  * Update Feeds Config
  */
 export const updateFeedsConfig = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateFeedsConfigData, ThrowOnError>
+  options: Options<UpdateFeedsConfigData, ThrowOnError>,
 ): RequestResult<
   UpdateFeedsConfigResponses,
   UpdateFeedsConfigErrors,
@@ -414,7 +414,7 @@ export const updateFeedsConfig = <ThrowOnError extends boolean = false>(
  * Get Torrent Config
  */
 export const getTorrentConfig = <ThrowOnError extends boolean = false>(
-  options?: Options<GetTorrentConfigData, ThrowOnError>
+  options?: Options<GetTorrentConfigData, ThrowOnError>,
 ): RequestResult<GetTorrentConfigResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     GetTorrentConfigResponses,
@@ -439,7 +439,7 @@ export const getTorrentConfig = <ThrowOnError extends boolean = false>(
  * Update Torrent Config
  */
 export const updateTorrentConfig = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateTorrentConfigData, ThrowOnError>
+  options: Options<UpdateTorrentConfigData, ThrowOnError>,
 ): RequestResult<
   UpdateTorrentConfigResponses,
   UpdateTorrentConfigErrors,
@@ -472,7 +472,7 @@ export const updateTorrentConfig = <ThrowOnError extends boolean = false>(
  * Test Torrent Client
  */
 export const testTorrentClient = <ThrowOnError extends boolean = false>(
-  options?: Options<TestTorrentClientData, ThrowOnError>
+  options?: Options<TestTorrentClientData, ThrowOnError>,
 ): RequestResult<TestTorrentClientResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     TestTorrentClientResponses,
@@ -499,7 +499,7 @@ export const testTorrentClient = <ThrowOnError extends boolean = false>(
  * Force Tsundoku to check all enabled RSS feeds for new releases.
  */
 export const checkForReleases = <ThrowOnError extends boolean = false>(
-  options?: Options<CheckForReleasesData, ThrowOnError>
+  options?: Options<CheckForReleasesData, ThrowOnError>,
 ): RequestResult<CheckForReleasesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     CheckForReleasesResponses,
@@ -526,7 +526,7 @@ export const checkForReleases = <ThrowOnError extends boolean = false>(
  * Force Tsundoku to delete the poster cache for a show.
  */
 export const deleteShowCache = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteShowCacheData, ThrowOnError>
+  options: Options<DeleteShowCacheData, ThrowOnError>,
 ): RequestResult<
   DeleteShowCacheResponses,
   DeleteShowCacheErrors,
@@ -557,7 +557,7 @@ export const deleteShowCache = <ThrowOnError extends boolean = false>(
  * Check if a Webhook is valid with the service it is for.
  */
 export const webhookIsValid = <ThrowOnError extends boolean = false>(
-  options: Options<WebhookIsValidData, ThrowOnError>
+  options: Options<WebhookIsValidData, ThrowOnError>,
 ): RequestResult<WebhookIsValidResponses, WebhookIsValidErrors, ThrowOnError> =>
   (options.client ?? client).get<
     WebhookIsValidResponses,
@@ -582,7 +582,7 @@ export const webhookIsValid = <ThrowOnError extends boolean = false>(
  * Change Password
  */
 export const changePassword = <ThrowOnError extends boolean = false>(
-  options: Options<ChangePasswordData, ThrowOnError>
+  options: Options<ChangePasswordData, ThrowOnError>,
 ): RequestResult<ChangePasswordResponses, ChangePasswordErrors, ThrowOnError> =>
   (options.client ?? client).post<
     ChangePasswordResponses,
@@ -611,7 +611,7 @@ export const changePassword = <ThrowOnError extends boolean = false>(
  * Get Shows
  */
 export const getShows = <ThrowOnError extends boolean = false>(
-  options?: Options<GetShowsData, ThrowOnError>
+  options?: Options<GetShowsData, ThrowOnError>,
 ): RequestResult<GetShowsResponses, GetShowsErrors, ThrowOnError> =>
   (options?.client ?? client).get<
     GetShowsResponses,
@@ -635,7 +635,7 @@ export const getShows = <ThrowOnError extends boolean = false>(
  * Create Show
  */
 export const createShow = <ThrowOnError extends boolean = false>(
-  options: Options<CreateShowData, ThrowOnError>
+  options: Options<CreateShowData, ThrowOnError>,
 ): RequestResult<CreateShowResponses, CreateShowErrors, ThrowOnError> =>
   (options.client ?? client).post<
     CreateShowResponses,
@@ -664,7 +664,7 @@ export const createShow = <ThrowOnError extends boolean = false>(
  * Delete Show
  */
 export const deleteShow = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteShowData, ThrowOnError>
+  options: Options<DeleteShowData, ThrowOnError>,
 ): RequestResult<DeleteShowResponses, DeleteShowErrors, ThrowOnError> =>
   (options.client ?? client).delete<
     DeleteShowResponses,
@@ -689,7 +689,7 @@ export const deleteShow = <ThrowOnError extends boolean = false>(
  * Get Show
  */
 export const getShow = <ThrowOnError extends boolean = false>(
-  options: Options<GetShowData, ThrowOnError>
+  options: Options<GetShowData, ThrowOnError>,
 ): RequestResult<GetShowResponses, GetShowErrors, ThrowOnError> =>
   (options.client ?? client).get<GetShowResponses, GetShowErrors, ThrowOnError>(
     {
@@ -705,14 +705,14 @@ export const getShow = <ThrowOnError extends boolean = false>(
         await zGetShowResponse.parseAsync(data),
       url: "/api/v1/shows/{show_id}",
       ...options,
-    }
+    },
   );
 
 /**
  * Update Show
  */
 export const updateShow = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateShowData, ThrowOnError>
+  options: Options<UpdateShowData, ThrowOnError>,
 ): RequestResult<UpdateShowResponses, UpdateShowErrors, ThrowOnError> =>
   (options.client ?? client).put<
     UpdateShowResponses,
@@ -741,7 +741,7 @@ export const updateShow = <ThrowOnError extends boolean = false>(
  * Get Show Entries
  */
 export const getShowEntries = <ThrowOnError extends boolean = false>(
-  options: Options<GetShowEntriesData, ThrowOnError>
+  options: Options<GetShowEntriesData, ThrowOnError>,
 ): RequestResult<GetShowEntriesResponses, GetShowEntriesErrors, ThrowOnError> =>
   (options.client ?? client).get<
     GetShowEntriesResponses,
@@ -766,7 +766,7 @@ export const getShowEntries = <ThrowOnError extends boolean = false>(
  * Create Show Entries
  */
 export const createShowEntries = <ThrowOnError extends boolean = false>(
-  options: Options<CreateShowEntriesData, ThrowOnError>
+  options: Options<CreateShowEntriesData, ThrowOnError>,
 ): RequestResult<
   CreateShowEntriesResponses,
   CreateShowEntriesErrors,
@@ -795,7 +795,7 @@ export const createShowEntries = <ThrowOnError extends boolean = false>(
  * Delete Show Entry
  */
 export const deleteShowEntry = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteShowEntryData, ThrowOnError>
+  options: Options<DeleteShowEntryData, ThrowOnError>,
 ): RequestResult<
   DeleteShowEntryResponses,
   DeleteShowEntryErrors,
@@ -824,7 +824,7 @@ export const deleteShowEntry = <ThrowOnError extends boolean = false>(
  * Get Show Entry
  */
 export const getShowEntry = <ThrowOnError extends boolean = false>(
-  options: Options<GetShowEntryData, ThrowOnError>
+  options: Options<GetShowEntryData, ThrowOnError>,
 ): RequestResult<GetShowEntryResponses, GetShowEntryErrors, ThrowOnError> =>
   (options.client ?? client).get<
     GetShowEntryResponses,
@@ -849,7 +849,7 @@ export const getShowEntry = <ThrowOnError extends boolean = false>(
  * Get Entry
  */
 export const getEntry = <ThrowOnError extends boolean = false>(
-  options: Options<GetEntryData, ThrowOnError>
+  options: Options<GetEntryData, ThrowOnError>,
 ): RequestResult<GetEntryResponses, GetEntryErrors, ThrowOnError> =>
   (options.client ?? client).get<
     GetEntryResponses,
@@ -873,7 +873,7 @@ export const getEntry = <ThrowOnError extends boolean = false>(
  * Get Show Webhooks
  */
 export const getShowWebhooks = <ThrowOnError extends boolean = false>(
-  options: Options<GetShowWebhooksData, ThrowOnError>
+  options: Options<GetShowWebhooksData, ThrowOnError>,
 ): RequestResult<
   GetShowWebhooksResponses,
   GetShowWebhooksErrors,
@@ -902,7 +902,7 @@ export const getShowWebhooks = <ThrowOnError extends boolean = false>(
  * Update Show Webhook
  */
 export const updateShowWebhook = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateShowWebhookData, ThrowOnError>
+  options: Options<UpdateShowWebhookData, ThrowOnError>,
 ): RequestResult<
   UpdateShowWebhookResponses,
   UpdateShowWebhookErrors,
@@ -935,7 +935,7 @@ export const updateShowWebhook = <ThrowOnError extends boolean = false>(
  * Get Webhook Bases
  */
 export const getWebhookBases = <ThrowOnError extends boolean = false>(
-  options?: Options<GetWebhookBasesData, ThrowOnError>
+  options?: Options<GetWebhookBasesData, ThrowOnError>,
 ): RequestResult<GetWebhookBasesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<
     GetWebhookBasesResponses,
@@ -960,7 +960,7 @@ export const getWebhookBases = <ThrowOnError extends boolean = false>(
  * Create Webhook Base
  */
 export const createWebhookBase = <ThrowOnError extends boolean = false>(
-  options: Options<CreateWebhookBaseData, ThrowOnError>
+  options: Options<CreateWebhookBaseData, ThrowOnError>,
 ): RequestResult<
   CreateWebhookBaseResponses,
   CreateWebhookBaseErrors,
@@ -993,7 +993,7 @@ export const createWebhookBase = <ThrowOnError extends boolean = false>(
  * Delete Webhook Base
  */
 export const deleteWebhookBase = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteWebhookBaseData, ThrowOnError>
+  options: Options<DeleteWebhookBaseData, ThrowOnError>,
 ): RequestResult<
   DeleteWebhookBaseResponses,
   DeleteWebhookBaseErrors,
@@ -1022,7 +1022,7 @@ export const deleteWebhookBase = <ThrowOnError extends boolean = false>(
  * Get Webhook Base
  */
 export const getWebhookBase = <ThrowOnError extends boolean = false>(
-  options: Options<GetWebhookBaseData, ThrowOnError>
+  options: Options<GetWebhookBaseData, ThrowOnError>,
 ): RequestResult<GetWebhookBaseResponses, GetWebhookBaseErrors, ThrowOnError> =>
   (options.client ?? client).get<
     GetWebhookBaseResponses,
@@ -1047,7 +1047,7 @@ export const getWebhookBase = <ThrowOnError extends boolean = false>(
  * Update Webhook Base
  */
 export const updateWebhookBase = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateWebhookBaseData, ThrowOnError>
+  options: Options<UpdateWebhookBaseData, ThrowOnError>,
 ): RequestResult<
   UpdateWebhookBaseResponses,
   UpdateWebhookBaseErrors,
@@ -1080,7 +1080,7 @@ export const updateWebhookBase = <ThrowOnError extends boolean = false>(
  * Filter Seen Releases
  */
 export const filterSeenReleases = <ThrowOnError extends boolean = false>(
-  options?: Options<FilterSeenReleasesData, ThrowOnError>
+  options?: Options<FilterSeenReleasesData, ThrowOnError>,
 ): RequestResult<
   FilterSeenReleasesResponses,
   FilterSeenReleasesErrors,
@@ -1109,7 +1109,7 @@ export const filterSeenReleases = <ThrowOnError extends boolean = false>(
  * Distinct Seen Releases
  */
 export const distinctSeenReleases = <ThrowOnError extends boolean = false>(
-  options: Options<DistinctSeenReleasesData, ThrowOnError>
+  options: Options<DistinctSeenReleasesData, ThrowOnError>,
 ): RequestResult<
   DistinctSeenReleasesResponses,
   DistinctSeenReleasesErrors,
@@ -1144,7 +1144,7 @@ export const distinctSeenReleases = <ThrowOnError extends boolean = false>(
  * episode list.
  */
 export const addSeenReleases = <ThrowOnError extends boolean = false>(
-  options: Options<AddSeenReleasesData, ThrowOnError>
+  options: Options<AddSeenReleasesData, ThrowOnError>,
 ): RequestResult<
   AddSeenReleasesResponses,
   AddSeenReleasesErrors,
@@ -1177,7 +1177,7 @@ export const addSeenReleases = <ThrowOnError extends boolean = false>(
  * Search Nyaa
  */
 export const searchNyaa = <ThrowOnError extends boolean = false>(
-  options?: Options<SearchNyaaData, ThrowOnError>
+  options?: Options<SearchNyaaData, ThrowOnError>,
 ): RequestResult<SearchNyaaResponses, SearchNyaaErrors, ThrowOnError> =>
   (options?.client ?? client).get<
     SearchNyaaResponses,
@@ -1202,7 +1202,7 @@ export const searchNyaa = <ThrowOnError extends boolean = false>(
  * Add Nyaa Result
  */
 export const addNyaaResult = <ThrowOnError extends boolean = false>(
-  options: Options<AddNyaaResultData, ThrowOnError>
+  options: Options<AddNyaaResultData, ThrowOnError>,
 ): RequestResult<AddNyaaResultResponses, AddNyaaResultErrors, ThrowOnError> =>
   (options.client ?? client).post<
     AddNyaaResultResponses,
@@ -1231,7 +1231,7 @@ export const addNyaaResult = <ThrowOnError extends boolean = false>(
  * Get Libraries
  */
 export const getLibraries = <ThrowOnError extends boolean = false>(
-  options?: Options<GetLibrariesData, ThrowOnError>
+  options?: Options<GetLibrariesData, ThrowOnError>,
 ): RequestResult<GetLibrariesResponses, unknown, ThrowOnError> =>
   (options?.client ?? client).get<GetLibrariesResponses, unknown, ThrowOnError>(
     {
@@ -1247,14 +1247,14 @@ export const getLibraries = <ThrowOnError extends boolean = false>(
         await zGetLibrariesResponse.parseAsync(data),
       url: "/api/v1/libraries",
       ...options,
-    }
+    },
   );
 
 /**
  * Create Library
  */
 export const createLibrary = <ThrowOnError extends boolean = false>(
-  options: Options<CreateLibraryData, ThrowOnError>
+  options: Options<CreateLibraryData, ThrowOnError>,
 ): RequestResult<CreateLibraryResponses, CreateLibraryErrors, ThrowOnError> =>
   (options.client ?? client).post<
     CreateLibraryResponses,
@@ -1283,7 +1283,7 @@ export const createLibrary = <ThrowOnError extends boolean = false>(
  * Delete Library
  */
 export const deleteLibrary = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteLibraryData, ThrowOnError>
+  options: Options<DeleteLibraryData, ThrowOnError>,
 ): RequestResult<DeleteLibraryResponses, DeleteLibraryErrors, ThrowOnError> =>
   (options.client ?? client).delete<
     DeleteLibraryResponses,
@@ -1308,7 +1308,7 @@ export const deleteLibrary = <ThrowOnError extends boolean = false>(
  * Get Library
  */
 export const getLibrary = <ThrowOnError extends boolean = false>(
-  options: Options<GetLibraryData, ThrowOnError>
+  options: Options<GetLibraryData, ThrowOnError>,
 ): RequestResult<GetLibraryResponses, GetLibraryErrors, ThrowOnError> =>
   (options.client ?? client).get<
     GetLibraryResponses,
@@ -1333,7 +1333,7 @@ export const getLibrary = <ThrowOnError extends boolean = false>(
  * Update Library
  */
 export const updateLibrary = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateLibraryData, ThrowOnError>
+  options: Options<UpdateLibraryData, ThrowOnError>,
 ): RequestResult<UpdateLibraryResponses, UpdateLibraryErrors, ThrowOnError> =>
   (options.client ?? client).put<
     UpdateLibraryResponses,

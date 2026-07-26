@@ -1,11 +1,10 @@
-import { JSX, useEffect, useRef, useState } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useQuery } from "@tanstack/react-query";
-
-import { getInjector } from "../fluent";
+import { type JSX, useEffect, useRef, useState } from "react";
 import ReactHtmlParser from "react-html-parser";
-import { entryQuery, showQuery, showsPageQuery } from "./queries";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import { GlobalLoading } from "../Components/GlobalLoading";
+import { getInjector } from "../fluent";
+import { entryQuery, showQuery, showsPageQuery } from "./queries";
 
 import "../../css/logs.css";
 
@@ -19,16 +18,17 @@ export const LogsApp = () => {
   const rootElement = document.getElementById("root");
   if (rootElement) rootElement.style.maxHeight = "100%";
 
-  let ws_host = location.hostname + (location.port ? `:${location.port}` : "");
-  let protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws_host =
+    location.hostname + (location.port ? `:${location.port}` : "");
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
 
   const shows = useQuery(showsPageQuery(1, 15));
 
-  let ws_url = `${protocol}//${ws_host}/ws/logs`;
+  const ws_url = `${protocol}//${ws_host}/ws/logs`;
 
   const { readyState, lastMessage } = useWebSocket(ws_url);
   const [messageHistory, setMessageHistory] = useState<MessageEvent<string>[]>(
-    []
+    [],
   );
 
   useEffect(() => {
@@ -84,15 +84,15 @@ interface LogRowParams {
 }
 
 const LogRow = ({ row }: LogRowParams) => {
-  if (!row || row.data === "ACCEPT") return <></>;
+  if (!row || row.data === "ACCEPT") return null;
 
-  let match =
+  const match =
     /(?<time>.+) (?<level>\[\w+\]) (?<name>[^:]+): (?<content>.+)/g.exec(
-      row.data
+      row.data,
     );
 
   // Anything that does not look like a log line is not renderable here.
-  if (!match?.groups) return <></>;
+  if (!match?.groups) return null;
 
   const { time: rawTime, level, name, content } = match.groups;
 
@@ -114,9 +114,9 @@ const LogRow = ({ row }: LogRowParams) => {
       break;
   }
 
-  let time = rawTime.slice(0, -4);
-  let dt = new Date(time);
-  let localized = new Intl.DateTimeFormat(window.LOCALE, {
+  const time = rawTime.slice(0, -4);
+  const dt = new Date(time);
+  const localized = new Intl.DateTimeFormat(window.LOCALE, {
     dateStyle: "long",
     timeStyle: "long",
   }).format(dt);
@@ -139,19 +139,19 @@ const Content = ({ raw_content }: ContentParams) => {
 
   const render = async () => {
     let temp: ContentPart[] = [];
-    let formatted = raw_content.replace(codeRe, (match, _) => {
+    const formatted = raw_content.replace(codeRe, (match, _) => {
       return `<code>${match.substring(1, match.length - 1)}</code>`;
     });
 
-    let matches = formatted.matchAll(contextRe);
+    const matches = formatted.matchAll(contextRe);
 
     for (const match of matches) {
-      let data = match[0];
+      const data = match[0];
 
-      let [front, end] = formatted.split(data);
+      const [front, end] = formatted.split(data);
 
-      let type = data.charAt(1);
-      let id = parseInt(data.substring(2, data.length - 1));
+      const type = data.charAt(1);
+      const id = parseInt(data.substring(2, data.length - 1), 10);
 
       let res: ContentPart;
       switch (type) {
@@ -198,21 +198,21 @@ interface ContextParams {
 const Context = ({ show_id, entry_id }: ContextParams) => {
   const entry = useQuery(entryQuery(entry_id));
 
-  const entryShowId = !!entry_id ? entry.data?.show_id : show_id;
+  const entryShowId = entry_id ? entry.data?.show_id : show_id;
   const show = useQuery(
-    showQuery(entryShowId, !entry_id || (!!entry_id && !!entryShowId))
+    showQuery(entryShowId, !entry_id || (!!entry_id && !!entryShowId)),
   );
 
   const [isUp, setIsUp] = useState<boolean>(true);
-  let ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   const calcPos = () => {
     if (!ref.current) {
       setIsUp(true);
       return;
     }
-    let elem = ref.current;
-    let rect = elem.getBoundingClientRect();
+    const elem = ref.current;
+    const rect = elem.getBoundingClientRect();
     if (isUp) setIsUp(elem.clientHeight < rect.top);
   };
 
@@ -228,7 +228,7 @@ const Context = ({ show_id, entry_id }: ContextParams) => {
     <div
       onMouseOver={calcPos}
       onMouseOut={makeUp}
-      className={"dropdown is-hoverable is-right " + (isUp ? "is-up" : "")}
+      className={`dropdown is-hoverable is-right ${isUp ? "is-up" : ""}`}
     >
       <div className="dropdown-trigger">
         <a>

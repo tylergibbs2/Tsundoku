@@ -1,10 +1,10 @@
-import { getInjector } from "../fluent";
-import { Dispatch, SetStateAction } from "react";
-import type { WebhookBase } from "../api";
-import ReactHtmlParser from "react-html-parser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { removeWebhook, webhookKeys } from "./queries";
 import { toast } from "bulma-toast";
+import type { Dispatch, SetStateAction } from "react";
+import ReactHtmlParser from "react-html-parser";
+import type { WebhookBase } from "../api";
+import { getInjector } from "../fluent";
+import { removeWebhook, webhookKeys } from "./queries";
 
 const _ = getInjector();
 
@@ -30,8 +30,8 @@ export const DeleteModal = ({
         webhookKeys.bases,
         (oldWebhooks: WebhookBase[] | undefined) =>
           (oldWebhooks ?? []).filter(
-            (wh) => wh.base_id !== activeWebhook?.base_id
-          )
+            (wh) => wh.base_id !== activeWebhook?.base_id,
+          ),
       );
       toast({
         message: _("webhook-delete-success"),
@@ -80,7 +80,7 @@ export const DeleteModal = ({
           <p>
             {activeWebhook &&
               ReactHtmlParser(
-                _("delete-confirm-text", { name: activeWebhook.name })
+                _("delete-confirm-text", { name: activeWebhook.name }),
               )}
           </p>
         </section>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { IonIcon } from "../icon";
-import { tree } from "../api";
 import type { DirectoryTree } from "../api";
+import { tree } from "../api";
+import { IonIcon } from "../icon";
 
 interface DirectorySelectParams {
   defaultValue: string;
@@ -64,7 +64,7 @@ export const DirectorySelect = ({
 
   return (
     <div
-      className={"dropdown " + (isActive ? "is-active" : "")}
+      className={`dropdown ${isActive ? "is-active" : ""}`}
       style={{ minWidth: "100%" }}
     >
       <div className="field has-addons" style={{ width: "100%" }}>
@@ -109,10 +109,10 @@ export const DirectorySelect = ({
                     <span>..</span>
                   </div>
                 )}
-                {currentState.children.map((folder, i) => {
+                {currentState.children.map((folder) => {
                   return (
                     <div
-                      key={i}
+                      key={folder}
                       onClick={() => goToSubDirectory(folder)}
                       className="is-clickable is-unselectable folder-item"
                     >

@@ -1,7 +1,7 @@
-import { getInjector } from "../../fluent";
-import { useState, Dispatch, SetStateAction, JSX } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Entry, Show } from "../../api";
+import { getInjector } from "../../fluent";
 
 /**
  * An entry staged in the modal before it is saved.
@@ -15,10 +15,10 @@ export type StagedEntry = Omit<Entry, "state" | "torrent_hash"> & {
   torrent_hash?: string;
   magnet?: string;
 };
+
 import {
   localizePythonTimeAbsolute,
   localizePythonTimeRelative,
-  formatBytes,
 } from "../../utils";
 
 const _ = getInjector();
@@ -45,26 +45,27 @@ export const EditShowEntries = ({
   const [fakeId, setFakeId] = useState<number>(-1);
   const { register, handleSubmit, reset } = useForm();
 
-  if (show === null) return <></>;
+  if (show === null) return null;
 
   // Compute deleted IDs for filtering
   const deletedIds = new Set(entriesToDelete.map((e) => e.id));
   // Combine show.entries and entriesToAdd, removing duplicates by id, and filter out deleted
   const allEntries = [...(show.entries || []), ...(entriesToAdd || [])]
     .filter(
-      (entry, index, self) => index === self.findIndex((e) => e.id === entry.id)
+      (entry, index, self) =>
+        index === self.findIndex((e) => e.id === entry.id),
     )
     .filter((entry) => !deletedIds.has(entry.id))
     .sort((a, b) => a.episode - b.episode);
 
   const bufferAddEntry = (data: any) => {
-    let newEpNum = parseInt(data.episode);
+    const newEpNum = parseInt(data.episode, 10);
     if (newEpNum < 0) {
       reset();
       return;
     }
 
-    let entry: StagedEntry = {
+    const entry: StagedEntry = {
       id: fakeId,
       episode: newEpNum,
       version: "v0",
@@ -75,8 +76,8 @@ export const EditShowEntries = ({
       last_update: new Date().toISOString(),
     };
 
-    let exists = allEntries.findIndex(
-      (existing: StagedEntry) => existing.episode === newEpNum
+    const exists = allEntries.findIndex(
+      (existing: StagedEntry) => existing.episode === newEpNum,
     );
     if (exists !== -1) {
       reset();

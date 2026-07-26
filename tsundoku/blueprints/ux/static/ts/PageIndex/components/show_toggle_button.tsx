@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Show } from "../../api";
-import { IonIcon } from "../../icon";
+import type { Show } from "../../api";
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
 
 const _ = getInjector();
 
@@ -64,7 +64,7 @@ export const ShowToggleButton = ({
     return (
       <button
         ref={btn}
-        className={"button " + additionalClasses}
+        className={`button ${additionalClasses}`}
         title={onTooltip}
         onClick={setStateOff}
         disabled={disabled}
@@ -77,7 +77,7 @@ export const ShowToggleButton = ({
     return (
       <button
         ref={btn}
-        className={"button is-outlined " + additionalClasses}
+        className={`button is-outlined ${additionalClasses}`}
         title={offTooltip}
         onClick={setStateOn}
         disabled={disabled}

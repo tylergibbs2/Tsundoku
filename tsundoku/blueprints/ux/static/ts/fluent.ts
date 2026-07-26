@@ -2,10 +2,10 @@ import "intl-pluralrules";
 import { FluentBundle, FluentResource } from "@fluent/bundle";
 
 export const getInjector = () => {
-  let locale: string = window.LOCALE;
+  const locale: string = window.LOCALE;
 
-  let bundle = new FluentBundle(locale);
-  let fallbackBundle = new FluentBundle("en");
+  const bundle = new FluentBundle(locale);
+  const fallbackBundle = new FluentBundle("en");
 
   let key = `${locale}.ftl`;
   let ftl_resource = new FluentResource(window.TRANSLATIONS[key]);
@@ -16,17 +16,15 @@ export const getInjector = () => {
   ftl_resource = new FluentResource(window.TRANSLATIONS[key]);
   fallbackBundle.addResource(ftl_resource);
 
-  let injector = (key: string, ctx: any = {}) => {
+  const injector = (key: string, ctx: any = {}) => {
     let msg = bundle.getMessage(key);
-    if (typeof msg !== "undefined" && msg.value)
-      return bundle.formatPattern(msg.value, ctx);
+    if (msg?.value) return bundle.formatPattern(msg.value, ctx);
     else msg = fallbackBundle.getMessage(key);
-    if (typeof msg !== "undefined" && msg.value)
-      return fallbackBundle.formatPattern(msg.value, ctx);
+    if (msg?.value) return fallbackBundle.formatPattern(msg.value, ctx);
 
     if (typeof msg === "undefined")
       console.error(
-        `Key ${key} missing completely from desired and fallback locales.`
+        `Key ${key} missing completely from desired and fallback locales.`,
       );
     return key;
   };

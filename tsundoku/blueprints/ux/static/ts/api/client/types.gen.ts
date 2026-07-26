@@ -68,7 +68,7 @@ export interface RequestOptions<
   TData = unknown,
   TResponseStyle extends ResponseStyle = "fields",
   ThrowOnError extends boolean = boolean,
-  Url extends string = string
+  Url extends string = string,
 > extends Config<{
       responseStyle: TResponseStyle;
       throwOnError: ThrowOnError;
@@ -100,7 +100,7 @@ export interface RequestOptions<
 export interface ResolvedRequestOptions<
   TResponseStyle extends ResponseStyle = "fields",
   ThrowOnError extends boolean = boolean,
-  Url extends string = string
+  Url extends string = string,
 > extends RequestOptions<unknown, TResponseStyle, ThrowOnError, Url> {
   headers: Headers;
   serializedBody?: string;
@@ -110,7 +110,7 @@ export type RequestResult<
   TData = unknown,
   TError = unknown,
   ThrowOnError extends boolean = boolean,
-  TResponseStyle extends ResponseStyle = "fields"
+  TResponseStyle extends ResponseStyle = "fields",
 > = ThrowOnError extends true
   ? Promise<
       TResponseStyle extends "data"
@@ -163,9 +163,9 @@ type MethodFn = <
   TData = unknown,
   TError = unknown,
   ThrowOnError extends boolean = false,
-  TResponseStyle extends ResponseStyle = "fields"
+  TResponseStyle extends ResponseStyle = "fields",
 >(
-  options: Omit<RequestOptions<TData, TResponseStyle, ThrowOnError>, "method">
+  options: Omit<RequestOptions<TData, TResponseStyle, ThrowOnError>, "method">,
 ) => RequestResult<TData, TError, ThrowOnError, TResponseStyle>;
 
 type SseFn = <
@@ -173,22 +173,22 @@ type SseFn = <
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _TError = unknown,
   ThrowOnError extends boolean = false,
-  TResponseStyle extends ResponseStyle = "fields"
+  TResponseStyle extends ResponseStyle = "fields",
 >(
-  options: Omit<RequestOptions<never, TResponseStyle, ThrowOnError>, "method">
+  options: Omit<RequestOptions<never, TResponseStyle, ThrowOnError>, "method">,
 ) => Promise<ServerSentEventsResult<TData>>;
 
 type RequestFn = <
   TData = unknown,
   TError = unknown,
   ThrowOnError extends boolean = false,
-  TResponseStyle extends ResponseStyle = "fields"
+  TResponseStyle extends ResponseStyle = "fields",
 >(
   options: Omit<RequestOptions<TData, TResponseStyle, ThrowOnError>, "method"> &
     Pick<
       Required<RequestOptions<TData, TResponseStyle, ThrowOnError>>,
       "method"
-    >
+    >,
 ) => RequestResult<TData, TError, ThrowOnError, TResponseStyle>;
 
 type BuildUrlFn = <
@@ -197,9 +197,9 @@ type BuildUrlFn = <
     path?: Record<string, unknown>;
     query?: Record<string, unknown>;
     url: string;
-  }
+  },
 >(
-  options: TData & Options<TData>
+  options: TData & Options<TData>,
 ) => string;
 
 export type Client = CoreClient<
@@ -221,7 +221,7 @@ export type Client = CoreClient<
  * to ensure your client always has the correct values.
  */
 export type CreateClientConfig<T extends ClientOptions = ClientOptions> = (
-  override?: Config<ClientOptions & T>
+  override?: Config<ClientOptions & T>,
 ) => Config<Required<ClientOptions> & T>;
 
 export interface TDataShape {
@@ -238,7 +238,7 @@ export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
   TResponse = unknown,
-  TResponseStyle extends ResponseStyle = "fields"
+  TResponseStyle extends ResponseStyle = "fields",
 > = OmitKeys<
   RequestOptions<TResponse, TResponseStyle, ThrowOnError>,
   "body" | "path" | "query" | "url"

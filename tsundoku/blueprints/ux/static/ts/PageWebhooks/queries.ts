@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-
+import type { WebhookBaseCreate, WebhookBaseUpdate } from "../api";
 import {
   createWebhookBase,
   deleteWebhookBase,
@@ -7,7 +7,6 @@ import {
   updateWebhookBase,
   webhookIsValid,
 } from "../api";
-import type { WebhookBaseCreate, WebhookBaseUpdate } from "../api";
 
 // Keys and options for the webhooks page. Add to this as call sites here need
 // it, rather than mirroring the whole API surface up front.

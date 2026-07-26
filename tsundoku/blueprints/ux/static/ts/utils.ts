@@ -1,7 +1,7 @@
 import humanizeDuration from "humanize-duration";
 
 export const pythonTimeToDate = (pythonTime: string): Date => {
-  let timeString = pythonTime + (pythonTime.endsWith("Z") ? "" : "Z");
+  const timeString = pythonTime + (pythonTime.endsWith("Z") ? "" : "Z");
   return new Date(timeString);
 };
 
@@ -10,7 +10,7 @@ type DateTimeStyle = "full" | "medium" | "long" | "short";
 export const localizePythonTimeAbsolute = (
   pythonTime: string,
   dateStyle: DateTimeStyle = "full",
-  timeStyle: DateTimeStyle = "medium"
+  timeStyle: DateTimeStyle = "medium",
 ): string => {
   const date = pythonTimeToDate(pythonTime);
 
@@ -41,5 +41,5 @@ export const formatBytes = (bytes: number, decimals: number = 2): string => {
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 };

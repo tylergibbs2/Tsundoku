@@ -1,7 +1,3 @@
-import * as React from "react";
-
-import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import {
   MutationCache,
   QueryCache,
@@ -9,11 +5,13 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { toast } from "bulma-toast";
-
-import { IndexApp } from "./PageIndex/App";
-import { WebhooksApp } from "./PageWebhooks/App";
+import * as React from "react";
+import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ConfigApp } from "./PageConfig/App";
+import { IndexApp } from "./PageIndex/App";
 import { LogsApp } from "./PageLogs/App";
+import { WebhooksApp } from "./PageWebhooks/App";
 
 import "bulma/css/bulma.min.css";
 import "bulma-dashboard/dist/bulma-dashboard.min.css";

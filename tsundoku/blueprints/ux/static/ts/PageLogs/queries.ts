@@ -43,7 +43,7 @@ export const entryQuery = (entryId: number | null | undefined) =>
 
 export const showQuery = (
   showId: number | null | undefined,
-  enabled: boolean
+  enabled: boolean,
 ) =>
   queryOptions({
     queryKey: logKeys.show(showId ?? -1),

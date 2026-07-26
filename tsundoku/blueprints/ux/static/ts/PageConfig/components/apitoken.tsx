@@ -12,11 +12,11 @@ export const APITokenComponent = () => {
   const getToken = async () => {
     setIsFetching(true);
 
-    let request = {
+    const request = {
       method: "GET",
     };
 
-    let resp = await fetch("/api/v1/config/token", request);
+    const resp = await fetch("/api/v1/config/token", request);
     let resp_json: any;
     if (resp.ok) resp_json = await resp.json();
     else return;
@@ -28,11 +28,11 @@ export const APITokenComponent = () => {
   const setToken = async () => {
     setIsFetching(true);
 
-    let request = {
+    const request = {
       method: "POST",
     };
 
-    let resp = await fetch("/api/v1/config/token", request);
+    const resp = await fetch("/api/v1/config/token", request);
     let resp_json: any;
     if (resp.ok) resp_json = await resp.json();
     else return;
@@ -59,7 +59,7 @@ export const APITokenComponent = () => {
         <button
           onClick={setToken}
           title={_("api-key-refresh")}
-          className={"button is-danger " + (isFetching ? "is-loading" : "")}
+          className={`button is-danger ${isFetching ? "is-loading" : ""}`}
         >
           <span className="icon">
             <IonIcon name="refresh" />

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import type { UseFormRegister } from "react-hook-form";
+import type { AddShowFormValues } from "../add_modal";
 import { librariesQuery } from "../queries";
-import { UseFormRegister } from "react-hook-form";
-import { AddShowFormValues } from "../add_modal";
 
 type LibrarySelectParams = {
   register: UseFormRegister<AddShowFormValues>;

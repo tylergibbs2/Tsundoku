@@ -1,8 +1,7 @@
-import { getInjector } from "../../fluent";
-import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
-import { Show } from "../../api";
-
+import type { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
 import ReactHtmlParser from "react-html-parser";
+import type { Show } from "../../api";
+import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
 const _ = getInjector();
@@ -16,8 +15,8 @@ interface CardParams {
 }
 
 export const Card = ({
-  textFilter,
-  filters,
+  textFilter: _textFilter,
+  filters: _filters,
   show,
   setCurrentModal,
   setActiveShow,
@@ -41,8 +40,8 @@ export const Card = ({
     setCurrentModal("delete");
   };
 
-  const reportPoster404 = async (err: BaseSyntheticEvent) => {
-    let request = {
+  const reportPoster404 = async (_err: BaseSyntheticEvent) => {
+    const request = {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -59,7 +58,11 @@ export const Card = ({
           <div className="card-image">
             {show.metadata?.html_status &&
               ReactHtmlParser(show.metadata?.html_status)}
-            <a href={show.metadata?.link ?? undefined} target="_blank">
+            <a
+              href={show.metadata?.link ?? undefined}
+              target="_blank"
+              rel="noopener"
+            >
               <figure className="image is-3by4">
                 <img
                   src={show.metadata?.poster ?? undefined}

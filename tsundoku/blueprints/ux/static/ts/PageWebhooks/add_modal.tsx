@@ -1,10 +1,10 @@
-import { toast } from "bulma-toast";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "bulma-toast";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import type { WebhookBase } from "../api";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import type { WebhookBase } from "../api";
 import { addWebhook, webhookKeys } from "./queries";
 
 const _ = getInjector();
@@ -33,7 +33,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
         (oldWebhooks: WebhookBase[] | undefined) => [
           ...(oldWebhooks ?? []),
           newWebhook,
-        ]
+        ],
       );
       toast({
         message: _("webhook-add-success"),
@@ -48,7 +48,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
     },
   });
 
-  let defaultValues = {
+  const defaultValues = {
     name: "",
     service: "discord",
     url: "",
@@ -68,7 +68,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
   }, [activeModal]);
 
   const submitHandler: SubmitHandler<AddWebhookFormValues> = (
-    formData: AddWebhookFormValues
+    formData: AddWebhookFormValues,
   ) => {
     mutation.mutate({ ...formData, default_triggers: triggers.join(",") });
   };
@@ -80,7 +80,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
   };
 
   const updateTriggers = (e: any) => {
-    let idx = triggers.findIndex((tr) => tr === e.target.name);
+    const idx = triggers.indexOf(e.target.name);
     let newTrs: string[];
     if (idx === -1) {
       newTrs = [e.target.name, ...triggers];
@@ -302,9 +302,7 @@ export const AddModal = ({ activeModal, setActiveModal }: AddModalParams) => {
 
         <footer className="modal-card-foot is-size-7">
           <button
-            className={
-              "button is-success " + (mutation.isPending ? "is-loading" : "")
-            }
+            className={`button is-success ${mutation.isPending ? "is-loading" : ""}`}
             type="submit"
             form="add-webhook-form"
           >

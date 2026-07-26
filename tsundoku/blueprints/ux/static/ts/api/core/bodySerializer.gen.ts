@@ -27,7 +27,7 @@ export type QuerySerializerOptions = QuerySerializerOptionsObject & {
 const serializeFormDataPair = (
   data: FormData,
   key: string,
-  value: unknown
+  value: unknown,
 ): void => {
   if (typeof value === "string" || value instanceof Blob) {
     data.append(key, value);
@@ -41,7 +41,7 @@ const serializeFormDataPair = (
 const serializeUrlSearchParamsPair = (
   data: URLSearchParams,
   key: string,
-  value: unknown
+  value: unknown,
 ): void => {
   if (typeof value === "string") {
     data.append(key, value);
@@ -72,7 +72,7 @@ export const formDataBodySerializer = {
 export const jsonBodySerializer = {
   bodySerializer: (body: unknown): string =>
     JSON.stringify(body, (_key, value) =>
-      typeof value === "bigint" ? value.toString() : value
+      typeof value === "bigint" ? value.toString() : value,
     ),
 };
 

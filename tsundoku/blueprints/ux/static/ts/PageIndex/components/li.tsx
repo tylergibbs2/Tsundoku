@@ -1,8 +1,7 @@
-import { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
+import type { BaseSyntheticEvent, Dispatch, SetStateAction } from "react";
 import ReactHtmlParser from "react-html-parser";
+import type { Entry, Show } from "../../api";
 import { getInjector } from "../../fluent";
-
-import { Entry, Show } from "../../api";
 import { IonIcon } from "../../icon";
 import {
   localizePythonTimeAbsolute,
@@ -12,8 +11,8 @@ import {
 const _ = getInjector();
 
 const sortByDate = (a: Entry, b: Entry): number => {
-  let dateA = new Date(a.last_update);
-  let dateB = new Date(b.last_update);
+  const dateA = new Date(a.last_update);
+  const dateB = new Date(b.last_update);
 
   return dateB > dateA ? 1 : -1;
 };
@@ -27,8 +26,8 @@ interface ListItemParams {
 }
 
 export const ListItem = ({
-  textFilter,
-  filters,
+  textFilter: _textFilter,
+  filters: _filters,
   show,
   setCurrentModal,
   setActiveShow,
@@ -41,6 +40,7 @@ export const ListItem = ({
         title={show.title}
         href={show.metadata?.link ?? undefined}
         target="_blank"
+        rel="noopener"
       >
         <b>{show.title}</b>
       </a>
@@ -54,8 +54,8 @@ export const ListItem = ({
 
   let timeDisplay: any;
   if ((show.entries ?? []).length !== 0) {
-    let sorted = [...(show.entries ?? [])].sort(sortByDate);
-    let entry = sorted[0];
+    const sorted = [...(show.entries ?? [])].sort(sortByDate);
+    const entry = sorted[0];
 
     const localized = localizePythonTimeRelative(entry.last_update);
     const localizedTitle = localizePythonTimeAbsolute(entry.last_update);
@@ -76,8 +76,8 @@ export const ListItem = ({
     setCurrentModal("delete");
   };
 
-  const reportPoster404 = async (err: BaseSyntheticEvent) => {
-    let request = {
+  const reportPoster404 = async (_err: BaseSyntheticEvent) => {
+    const request = {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -90,7 +90,11 @@ export const ListItem = ({
   return (
     <tr>
       <td className="is-vcentered">
-        <a href={show.metadata?.link ?? undefined} target="_blank">
+        <a
+          href={show.metadata?.link ?? undefined}
+          target="_blank"
+          rel="noopener"
+        >
           <figure className="image is-3by4">
             <img
               src={show.metadata?.poster ?? undefined}

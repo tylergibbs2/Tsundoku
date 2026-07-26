@@ -45,9 +45,9 @@ export const createClient = (config: Config = {}): Client => {
     TData = unknown,
     TResponseStyle extends "data" | "fields" = "fields",
     ThrowOnError extends boolean = boolean,
-    Url extends string = string
+    Url extends string = string,
   >(
-    options: RequestOptions<TData, TResponseStyle, ThrowOnError, Url>
+    options: RequestOptions<TData, TResponseStyle, ThrowOnError, Url>,
   ) => {
     const opts = {
       ..._config,
@@ -220,7 +220,7 @@ export const createClient = (config: Config = {}): Client => {
             finalError,
             response,
             request,
-            options as ResolvedRequestOptions
+            options as ResolvedRequestOptions,
           );
         }
       }

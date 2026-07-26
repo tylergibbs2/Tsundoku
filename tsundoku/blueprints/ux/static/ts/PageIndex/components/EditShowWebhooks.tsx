@@ -1,7 +1,7 @@
-import { getInjector } from "../../fluent";
-import { useState, Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Show, Webhook } from "../../api";
+import type { Show, Webhook } from "../../api";
+import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
 const _ = getInjector();
@@ -19,7 +19,7 @@ export const EditShowWebhooks = ({
   webhooksToUpdate,
   setWebhooksToUpdate,
 }: EditShowWebhooksParams) => {
-  if (show === null) return <></>;
+  if (show === null) return null;
 
   return (
     <div className={tab !== "webhooks" ? "is-hidden" : ""}>
@@ -124,7 +124,7 @@ const EditWebhookTableRow = ({
   });
 
   const update = (e: any) => {
-    let idx = triggers.findIndex((tr) => tr === e.target.name);
+    let idx = triggers.indexOf(e.target.name);
     let newTrs: string[];
     if (idx === -1) {
       newTrs = [e.target.name, ...triggers];
@@ -135,15 +135,15 @@ const EditWebhookTableRow = ({
       setTriggers(newTrs);
     }
 
-    let newWh: Webhook = JSON.parse(JSON.stringify(webhook));
+    const newWh: Webhook = JSON.parse(JSON.stringify(webhook));
     newWh.triggers = newTrs;
 
     idx = webhooksToUpdate.findIndex(
-      (toFind) => toFind.base.base_id === newWh.base.base_id
+      (toFind) => toFind.base.base_id === newWh.base.base_id,
     );
     if (idx === -1) setWebhooksToUpdate([newWh, ...webhooksToUpdate]);
     else {
-      let temp = [...webhooksToUpdate];
+      const temp = [...webhooksToUpdate];
       temp[idx] = newWh;
       setWebhooksToUpdate(temp);
     }

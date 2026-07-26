@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction } from "react";
-import { getInjector } from "../../fluent";
-import type { WebhookBase } from "../../api";
 import { useQuery } from "@tanstack/react-query";
+import type { Dispatch, SetStateAction } from "react";
+import type { WebhookBase } from "../../api";
+import { getInjector } from "../../fluent";
 
 import { webhookValidityQuery } from "../queries";
 

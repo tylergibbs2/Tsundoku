@@ -1,19 +1,13 @@
-import {
-  ChangeEvent,
-  useState,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GlobalLoading } from "../../Components/GlobalLoading";
-import { getInjector } from "../../fluent";
-import { testTorrentClient } from "../../api";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type {
   TorrentConfigResponse,
   TorrentConfigUpdate,
   TorrentTestResult,
 } from "../../api";
+import { testTorrentClient } from "../../api";
+import { GlobalLoading } from "../../Components/GlobalLoading";
+import { getInjector } from "../../fluent";
 import { configKeys, saveTorrentConfig, torrentConfigQuery } from "../queries";
 
 const _ = getInjector();
@@ -39,7 +33,7 @@ export const TorrentConfig = forwardRef(
     const [dirty, setDirty] = useState(false);
     const [fetchingStatus, setFetchingStatus] = useState<boolean>(false);
     const [clientStatus, setClientStatus] = useState<TorrentTestResult | null>(
-      null
+      null,
     );
 
     useEffect(() => {
@@ -54,8 +48,8 @@ export const TorrentConfig = forwardRef(
     const changedFields = (saved: TorrentConfigResponse): TorrentConfigUpdate =>
       Object.fromEntries(
         Object.entries(fields).filter(
-          ([key, value]) => value !== saved[key as keyof TorrentConfigResponse]
-        )
+          ([key, value]) => value !== saved[key as keyof TorrentConfigResponse],
+        ),
       );
 
     useEffect(() => {
@@ -186,7 +180,7 @@ export const TorrentConfig = forwardRef(
         <div>
           <a
             onClick={testTorrentConnection}
-            className={"button is-info " + (fetchingStatus ? "is-loading" : "")}
+            className={`button is-info ${fetchingStatus ? "is-loading" : ""}`}
           >
             {_("config-test")}
           </a>
@@ -194,7 +188,7 @@ export const TorrentConfig = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );
 
 interface ConnectionStatusParams {
@@ -202,7 +196,7 @@ interface ConnectionStatusParams {
 }
 
 const ConnectionStatus = ({ status }: ConnectionStatusParams) => {
-  if (!status) return <></>;
+  if (!status) return null;
 
   if (status.success)
     return (

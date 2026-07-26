@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-
-import { AddModal } from "./add_modal";
-import { EditModal } from "./edit_modal";
-import { DeleteModal } from "./delete_modal";
+import { useEffect, useState } from "react";
 import type { Show } from "../api";
 import { getInjector } from "../fluent";
+import { AddModal } from "./add_modal";
 import { Filters } from "./components/filters";
-import { Shows } from "./components/shows";
 import { Pagination } from "./components/pagination";
+import { Shows } from "./components/shows";
+import { DeleteModal } from "./delete_modal";
+import { EditModal } from "./edit_modal";
 import { generalConfigQuery, showsQuery } from "./queries";
 
 import "../../css/index.css";
@@ -19,19 +18,19 @@ const _ = getInjector();
 export const IndexApp = () => {
   document.getElementById("navIndex")?.classList.add("is-active");
 
-  let storedFilters = localStorage.getItem("showFilters");
-  let storedViewType = localStorage.getItem("viewType");
+  const storedFilters = localStorage.getItem("showFilters");
+  const storedViewType = localStorage.getItem("viewType");
 
-  let storedSortDirection = localStorage.getItem("sortDirection");
-  let storedSortKey = localStorage.getItem("sortKey");
-  let storedPage = localStorage.getItem("currentPage");
+  const storedSortDirection = localStorage.getItem("sortDirection");
+  const storedSortKey = localStorage.getItem("sortKey");
+  const storedPage = localStorage.getItem("currentPage");
 
   const [activeShow, setActiveShow] = useState<Show | null>(null);
   const [currentModal, setCurrentModal] = useState<string | null>(null);
 
   const [viewType, setViewType] = useState<string>(storedViewType || "cards");
   const [currentPage, setCurrentPage] = useState<number>(
-    parseInt(storedPage || "1")
+    parseInt(storedPage || "1", 10),
   );
 
   const [filters, setFilters] = useState<string[]>(
@@ -41,12 +40,12 @@ export const IndexApp = () => {
       "tba",
       "unreleased",
       "upcoming",
-    ]
+    ],
   );
   const [textFilter, setTextFilter] = useState<string>("");
 
   const [sortDirection, setSortDirection] = useState<string>(
-    storedSortDirection || "+"
+    storedSortDirection || "+",
   );
   const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 

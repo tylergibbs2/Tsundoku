@@ -1,10 +1,10 @@
-import { toast } from "bulma-toast";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "bulma-toast";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import type { WebhookBase } from "../api";
 import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import type { WebhookBase } from "../api";
 import { editWebhook, webhookKeys } from "./queries";
 
 const _ = getInjector();
@@ -41,10 +41,10 @@ export const EditModal = ({
         webhookKeys.bases,
         (oldWebhooks: WebhookBase[] | undefined) => [
           ...(oldWebhooks ?? []).filter(
-            (wh) => wh.base_id !== updatedWebhook.base_id
+            (wh) => wh.base_id !== updatedWebhook.base_id,
           ),
           updatedWebhook,
-        ]
+        ],
       );
       toast({
         message: _("webhook-edit-success"),
@@ -60,7 +60,7 @@ export const EditModal = ({
     },
   });
 
-  let defaultValues = {
+  const defaultValues = {
     name: activeWebhook?.name,
     service: activeWebhook?.service,
     url: activeWebhook?.url,
@@ -74,7 +74,7 @@ export const EditModal = ({
   });
 
   const [triggers, setTriggers] = useState<string[]>(
-    activeWebhook?.default_triggers ?? []
+    activeWebhook?.default_triggers ?? [],
   );
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export const EditModal = ({
   }, [activeModal, activeWebhook]);
 
   const submitHandler: SubmitHandler<EditWebhookFormValues> = (
-    formData: EditWebhookFormValues
+    formData: EditWebhookFormValues,
   ) => {
     if (!activeWebhook) return;
 
@@ -104,7 +104,7 @@ export const EditModal = ({
   };
 
   const updateTriggers = (e: any) => {
-    let idx = triggers.findIndex((tr) => tr === e.target.name);
+    const idx = triggers.indexOf(e.target.name);
     let newTrs: string[];
     if (idx === -1) {
       newTrs = [e.target.name, ...triggers];
@@ -349,9 +349,7 @@ export const EditModal = ({
 
         <footer className="modal-card-foot is-size-7">
           <button
-            className={
-              "button is-success " + (mutation.isPending ? "is-loading" : "")
-            }
+            className={`button is-success ${mutation.isPending ? "is-loading" : ""}`}
             type="submit"
             form="edit-webhook-form"
           >

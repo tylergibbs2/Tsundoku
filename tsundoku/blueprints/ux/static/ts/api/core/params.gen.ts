@@ -110,7 +110,7 @@ function stripEmptySlots(params: Params): void {
 
 export function buildClientParams(
   args: ReadonlyArray<unknown>,
-  fields: FieldsConfig
+  fields: FieldsConfig,
 ): Params {
   const params: Params = {
     headers: Object.create(null),
@@ -163,7 +163,7 @@ export function buildClientParams(
           }
         } else {
           const extra = extraPrefixes.find(([prefix]) =>
-            key.startsWith(prefix)
+            key.startsWith(prefix),
           );
 
           if (extra) {

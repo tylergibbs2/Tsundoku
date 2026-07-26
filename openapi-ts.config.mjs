@@ -8,9 +8,8 @@
 // Paths are relative to the repo root, which is the cwd the recipe runs in.
 export default {
   input: "./openapi.json",
-  // Formatting is done by the recipe via `bun run prettier`, not openapi-ts's
-  // own postProcess, which shells out to a `prettier` binary that is not on
-  // PATH under bun.
+  // Formatting is done by the recipe via biome, not openapi-ts's own
+  // postProcess, which shells out to a binary that is not on PATH under bun.
   output: {
     path: "tsundoku/blueprints/ux/static/ts/api",
   },

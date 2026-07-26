@@ -28,7 +28,7 @@ interface SerializePrimitiveParam extends SerializePrimitiveOptions {
 }
 
 export const separatorArrayExplode = (
-  style: ArraySeparatorStyle
+  style: ArraySeparatorStyle,
 ): "." | ";" | "," | "&" => {
   switch (style) {
     case "label":
@@ -43,7 +43,7 @@ export const separatorArrayExplode = (
 };
 
 export const separatorArrayNoExplode = (
-  style: ArraySeparatorStyle
+  style: ArraySeparatorStyle,
 ): "," | "|" | "%20" => {
   switch (style) {
     case "form":
@@ -58,7 +58,7 @@ export const separatorArrayNoExplode = (
 };
 
 export const separatorObjectExplode = (
-  style: ObjectSeparatorStyle
+  style: ObjectSeparatorStyle,
 ): "." | ";" | "," | "&" => {
   switch (style) {
     case "label":
@@ -127,7 +127,7 @@ export const serializePrimitiveParam = ({
 
   if (typeof value === "object") {
     throw new Error(
-      "Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these."
+      "Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these.",
     );
   }
 
@@ -178,7 +178,7 @@ export const serializeObjectParam = ({
         allowReserved,
         name: style === "deepObject" ? `${name}[${key}]` : key,
         value: v as string,
-      })
+      }),
     )
     .join(separator);
   return style === "label" || style === "matrix"

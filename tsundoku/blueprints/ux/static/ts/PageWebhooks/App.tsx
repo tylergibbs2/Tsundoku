@@ -2,14 +2,14 @@ import { getInjector } from "../fluent";
 
 import "../../css/webhooks.css";
 import { useQuery } from "@tanstack/react-query";
-import type { WebhookBase } from "../api";
-import { webhookBasesQuery } from "./queries";
-import { WebhookCard } from "./components/WebhookCard";
-import { AddModal } from "./add_modal";
-import { EditModal } from "./edit_modal";
-import { DeleteModal } from "./delete_modal";
 import { useEffect, useState } from "react";
+import type { WebhookBase } from "../api";
 import { GlobalLoading } from "../Components/GlobalLoading";
+import { AddModal } from "./add_modal";
+import { WebhookCard } from "./components/WebhookCard";
+import { DeleteModal } from "./delete_modal";
+import { EditModal } from "./edit_modal";
+import { webhookBasesQuery } from "./queries";
 
 const _ = getInjector();
 

@@ -1,29 +1,18 @@
-import {
-  ChangeEvent,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-  useState,
-} from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "bulma-toast";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type { Library } from "../../api";
+import { DirectorySelect } from "../../Components/DirectorySelect";
+import { GlobalLoading } from "../../Components/GlobalLoading";
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  UseMutationResult,
-} from "@tanstack/react-query";
-import {
-  addLibrary as createLibraryRequest,
   configKeys,
+  addLibrary as createLibraryRequest,
   editLibrary,
   librariesQuery as librariesQueryOptions,
   removeLibrary,
 } from "../queries";
-import { GlobalLoading } from "../../Components/GlobalLoading";
-import { DirectorySelect } from "../../Components/DirectorySelect";
-import { toast } from "bulma-toast";
-import { IonIcon } from "../../icon";
 
 const _ = getInjector();
 
@@ -45,18 +34,19 @@ export const LibraryConfigApp = forwardRef(
           (oldLibraries: Library[] | undefined) => [
             ...(oldLibraries ?? []),
             newLibrary,
-          ]
+          ],
         );
       },
     });
 
     const deleteLibraryMutation = useMutation({
       mutationFn: removeLibrary,
+      // biome-ignore lint/suspicious/noConfusingVoidType: removeLibrary resolves to void; narrowing it to undefined breaks the MutationFunction signature.
       onSuccess: (_data: void, deletedId: number) => {
         queryClient.setQueryData(
           configKeys.libraries,
           (oldLibraries: Library[] | undefined) =>
-            (oldLibraries ?? []).filter((l) => l.id_ !== deletedId)
+            (oldLibraries ?? []).filter((l) => l.id_ !== deletedId),
         );
         toast({
           message: _("libraries-delete-success"),
@@ -81,7 +71,7 @@ export const LibraryConfigApp = forwardRef(
                 l = updatedLibrary;
               }
               return l;
-            })
+            }),
         );
         toast({
           message: _("libraries-update-success"),
@@ -95,7 +85,7 @@ export const LibraryConfigApp = forwardRef(
     });
 
     const [localLibraries, setLocalLibraries] = useState<Library[]>([]);
-    const [dirty, setDirty] = useState(false);
+    const [_dirty, setDirty] = useState(false);
     const [added, setAdded] = useState<Library[]>([]);
     const [deleted, setDeleted] = useState<Library[]>([]);
     const [updated, setUpdated] = useState<Library[]>([]);
@@ -149,7 +139,7 @@ export const LibraryConfigApp = forwardRef(
       if (!target) return;
 
       setLocalLibraries((libs) =>
-        libs.map((l) => ({ ...l, is_default: l.id_ === id_ }))
+        libs.map((l) => ({ ...l, is_default: l.id_ === id_ })),
       );
       setUpdated((prev) => [
         ...prev.filter((l) => l.id_ !== id_),
@@ -162,7 +152,7 @@ export const LibraryConfigApp = forwardRef(
       if (!target) return;
 
       setLocalLibraries((libs) =>
-        libs.map((l) => (l.id_ === id_ ? { ...l, folder: newFolder } : l))
+        libs.map((l) => (l.id_ === id_ ? { ...l, folder: newFolder } : l)),
       );
       setUpdated((prev) => [
         ...prev.filter((l) => l.id_ !== id_),
@@ -248,5 +238,5 @@ export const LibraryConfigApp = forwardRef(
         </table>
       </div>
     );
-  }
+  },
 );

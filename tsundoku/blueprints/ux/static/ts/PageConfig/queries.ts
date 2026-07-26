@@ -1,5 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
-
+import type {
+  FeedsConfigUpdate,
+  GeneralConfigUpdate,
+  Library,
+  LibraryCreate,
+  TorrentConfigUpdate,
+} from "../api";
 import {
   createLibrary,
   deleteLibrary,
@@ -11,13 +17,6 @@ import {
   updateGeneralConfig,
   updateLibrary,
   updateTorrentConfig,
-} from "../api";
-import type {
-  FeedsConfigUpdate,
-  GeneralConfigUpdate,
-  Library,
-  LibraryCreate,
-  TorrentConfigUpdate,
 } from "../api";
 
 // Keys and options for the config page. Add to this as call sites here need

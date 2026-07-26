@@ -5,13 +5,13 @@ sync:
     uv sync --all-extras
     bun install
 
-# Format Python (ruff) and frontend (prettier). Pass --fix to also apply lint autofixes.
+# Format Python (ruff) and frontend (biome). Pass --fix to also apply lint autofixes.
 fmt fix="":
     #!/usr/bin/env bash
     set -euo pipefail
     uv run ruff format
     {{ if fix == "--fix" { "uv run ruff check --fix" } else { "true" } }}
-    bun run prettier . --write --list-different
+    bun run fmt
 
 # Lint, type-check, and test everything. Pass --fix to auto-apply fixes.
 check fix="":
@@ -23,7 +23,8 @@ check fix="":
     uv run pytest
     # Vite transpiles TS without checking it, unlike ts-loader before it.
     bun run typecheck
-    {{ if fix == "--fix" { "bun run prettier . --write --list-different" } else { "bun run prettier . --list-different" } }}
+    # Biome replaces prettier and adds linting, which this repo had none of.
+    {{ if fix == "--fix" { "bun run check:fix" } else { "bun run check" } }}
 
 # Regenerate the typed frontend SDK and Zod schemas from the FastAPI schema
 generate-frontend-sdk:
@@ -37,7 +38,7 @@ generate-frontend-sdk:
     # Run through bun explicitly: the bin shebang wants node, which we do not
     # install.
     bun tools/codegen/node_modules/@hey-api/openapi-ts/bin/run.js -f openapi-ts.config.mjs
-    bun run prettier tsundoku/blueprints/ux/static/ts/api --write --list-different
+    bun x biome format --write tsundoku/blueprints/ux/static/ts/api
 
 # Run the Vite frontend build in watch mode
 dev-frontend:

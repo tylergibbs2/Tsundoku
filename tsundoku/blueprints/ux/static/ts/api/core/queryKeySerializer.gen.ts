@@ -16,7 +16,7 @@ export type JsonValue =
  */
 export const queryKeyJsonReplacer = (
   _key: string,
-  value: unknown
+  value: unknown,
 ): unknown | undefined => {
   if (
     value === undefined ||
@@ -65,7 +65,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
  */
 const serializeSearchParams = (params: URLSearchParams): JsonValue => {
   const entries = Array.from(params.entries()).sort(([a], [b]) =>
-    a.localeCompare(b)
+    a.localeCompare(b),
   );
   const result: Record<string, JsonValue> = {};
 
@@ -90,7 +90,7 @@ const serializeSearchParams = (params: URLSearchParams): JsonValue => {
  * Normalizes any accepted value into a JSON-friendly shape for query keys.
  */
 export const serializeQueryKeyValue = (
-  value: unknown
+  value: unknown,
 ): JsonValue | undefined => {
   if (value === null) {
     return null;
