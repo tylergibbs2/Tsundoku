@@ -17,7 +17,9 @@ logger = logging.getLogger("tsundoku")
 
 TEMPLATES_DIR = Path(__file__).parent / "blueprints" / "ux" / "templates"
 STATIC_URL_PATH = "/ux/static"
-_STATIC_JS_DIR = Path("tsundoku", "blueprints", "ux", "static", "js")
+# Anchored to this file rather than the cwd, matching the static mount in
+# app.py, so the manifest resolves wherever the server is started from.
+_STATIC_JS_DIR = Path(__file__).parent / "blueprints" / "ux" / "static" / "js"
 
 _NAMED_ROUTES = {
     "ux.index": "/",
@@ -50,18 +52,24 @@ def _load_bundle_assets(state: "TsundokuAppState") -> tuple[str, list[str]]:
     """Return the built entry chunk and its stylesheets, relative to ``js/``.
 
     Vite writes a manifest describing the content-hashed output of the entry in
-    ``ts/App.tsx``. It is re-read on every render while debugging so that
-    ``vite build --watch`` rebuilds are picked up without a restart.
+    ``ts/App.tsx``. The result is cached against the manifest's mtime: every
+    rebuild changes the content hash, so caching it for the process lifetime
+    would leave templates pointing at a filename that no longer exists, and the
+    resulting 404 reaches the browser as JSON -- which it refuses to load as a
+    module. Re-reading costs one stat() per render.
     """
-    if state.cached_bundle_assets is not None and not state.flags.IS_DEBUG:
-        return state.cached_bundle_assets
-
     fallback = ("js/root.js", [])
 
     manifest_path = _STATIC_JS_DIR / ".vite" / "manifest.json"
-    if not manifest_path.exists():
+    try:
+        mtime = manifest_path.stat().st_mtime_ns
+    except OSError:
         logger.error("Could not find the frontend build manifest, run `bun run build`!")
         return fallback
+
+    cached = state.cached_bundle_assets
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
 
     try:
         manifest = json.loads(manifest_path.read_text())
@@ -75,7 +83,7 @@ def _load_bundle_assets(state: "TsundokuAppState") -> tuple[str, list[str]]:
         return fallback
 
     assets = (f"js/{entry['file']}", [f"js/{css}" for css in entry.get("css", [])])
-    state.cached_bundle_assets = assets
+    state.cached_bundle_assets = (mtime, assets)
     return assets
 
 
