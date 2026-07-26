@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "bulma-toast";
 import * as React from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ConfigApp } from "./PageConfig/App";
 import { IndexApp } from "./PageIndex/App";
@@ -89,5 +89,15 @@ const RootApp = () => {
   );
 };
 
-const rootElement = document.getElementById("root");
-if (rootElement) createRoot(rootElement).render(<RootApp />);
+// This module has no exports, so react-refresh cannot hot-update it and Vite
+// re-executes it instead. Creating a second root over the same container would
+// leave two React trees reconciling the same DOM, which surfaces as
+// "removeChild: The node to be removed is not a child of this node" the next
+// time any subtree unmounts. Reuse the existing root instead.
+type RootContainer = HTMLElement & { _reactRoot?: Root };
+
+const rootElement = document.getElementById("root") as RootContainer | null;
+if (rootElement) {
+  rootElement._reactRoot ??= createRoot(rootElement);
+  rootElement._reactRoot.render(<RootApp />);
+}
