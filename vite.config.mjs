@@ -13,13 +13,44 @@ const OUT_DIR = "tsundoku/blueprints/ux/static/js";
 const DEV_PORT = 5173;
 const BACKEND_ORIGIN = "http://localhost:6439";
 
+/**
+ * Sends `/` on the dev server to the backend.
+ *
+ * There is no index.html here -- FastAPI renders the page and only pulls
+ * modules from this server -- so the "Local:" URL Vite prints would otherwise
+ * 404 and read as a broken dev server.
+ */
+function redirectRootToBackend() {
+  return {
+    name: "redirect-root-to-backend",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url !== "/") return next();
+
+        res.writeHead(302, { Location: BACKEND_ORIGIN });
+        res.end();
+      });
+
+      const print = server.printUrls.bind(server);
+      server.printUrls = () => {
+        print();
+        server.config.logger.info(
+          `  ->  App:     ${BACKEND_ORIGIN}  (run \`just dev-backend\`)\n` +
+            "      This server only supplies modules; its own URL redirects there.\n",
+        );
+      };
+    },
+  };
+}
+
 export default defineConfig(({ command }) => ({
   // Built assets are served from the UX static mount (see tsundoku/urls.py),
   // so url() references emitted into CSS need this prefix. It is build-only:
   // applying it in dev would push every module behind the same prefix, which
   // the dev server has no reason to mirror.
   base: command === "build" ? "/ux/static/js/" : "/",
-  plugins: [react(), fluent()],
+  plugins: [react(), fluent(), redirectRootToBackend()],
   // `just dev-frontend` serves modules from here and templating.py points the
   // page at them while IS_DEBUG is set. Asset URLs have to be absolute because
   // the HTML itself is served from a different origin.
