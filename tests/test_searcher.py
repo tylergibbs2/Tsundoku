@@ -8,7 +8,11 @@ from tests.mock import MockTsundokuAppState, UnregisteredTorrentError, make_nyaa
 from tsundoku.nyaa import NyaaSearcher, SearchResult
 from tsundoku.utils import parse_anime_title
 
-TORRENT = "magnet:?xt=urn:btih:aabbcc112233"
+#: A .torrent URL, matching what the searcher actually yields -- nyaa's RSS
+#: <link> is always https://nyaa.si/download/<id>.torrent. A magnet cannot
+#: stand in here: it carries an info hash and at most a display name, never
+#: the file list these tests register.
+TORRENT = "https://nyaa.si/download/1234567.torrent"
 
 
 def install_feed(monkeypatch: pytest.MonkeyPatch, feed: Any) -> list[str]:
@@ -164,7 +168,7 @@ async def test_get_episodes_ignores_files_without_an_episode_number(app: MockTsu
 
 async def test_get_episodes_on_unregistered_torrent_is_loud(app: MockTsundokuAppState) -> None:
     """A missing fixture must not masquerade as "this torrent has no episodes"."""
-    result = SearchResult.from_necessary(app, 1, "magnet:?xt=urn:btih:unknown")
+    result = SearchResult.from_necessary(app, 1, "https://nyaa.si/download/unregistered.torrent")
 
     with pytest.raises(UnregisteredTorrentError):
         await result.get_episodes()
@@ -265,8 +269,10 @@ async def test_process_without_a_show_id_adds_nothing(app: MockTsundokuAppState)
 
 async def test_process_handles_a_rejected_magnet(app: MockTsundokuAppState) -> None:
     """add_torrent returning None must not leave half-written entries behind."""
-    link = "magnet:?xt=urn:btih:"  # no info hash for the client to extract
-    app.dl_client.set_file_structure(link, ["[Group] Chainsaw Man - 01 (1080p).mkv"])
+    # A display name, so the episode resolves, but no info hash for the client
+    # to extract -- which is what makes add_torrent return None. The file list
+    # comes from the display name itself, so no fixture is needed.
+    link = "magnet:?xt=urn:btih:&dn=%5BGroup%5D%20Chainsaw%20Man%20-%2001%20%281080p%29.mkv"
 
     added = await SearchResult.from_necessary(app, 1, link).process()
 

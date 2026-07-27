@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+import hashlib
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -51,8 +52,11 @@ class MockDownloadManager(Manager):
     def __init__(self, app: "TsundokuAppState") -> None:
         # The app is needed even though the config is never read from it:
         # Manager.get_torrent_fp resolves path mappings through it, so the
-        # mock exercises the same translation the real manager does.
+        # mock exercises the same translation the real manager does. The
+        # session comes along for the same reason -- Manager.fetch_torrent
+        # uses it to reach the development torrent mirror.
         self.app = app
+        self.session = app.session
         self._client = InMemoryDownloadClient()
         self._file_structures: dict[str, list[str]] = {}
 
@@ -67,10 +71,15 @@ class MockDownloadManager(Manager):
     async def update_config(self) -> None: ...
 
     async def get_magnet(self, location: str) -> str:
-        if not location.startswith("magnet:?"):
-            raise ValueError("Can only get_magnet with magnet URLs when testing")
+        if location.startswith("magnet:?"):
+            return await super().get_magnet(location)
 
-        return await super().get_magnet(location)
+        # For a .torrent URL the real manager downloads the file and hashes
+        # its info dict. There is no network here, so a deterministic hash of
+        # the URL stands in: callers only need a stable magnet that maps one
+        # to one with the source link.
+        digest = hashlib.sha1(location.encode()).hexdigest()
+        return f"magnet:?xt=urn:btih:{digest}"
 
     def set_file_structure(self, location: str, files: list[str]) -> None:
         """Declare the file names carried by the torrent at ``location``.
@@ -82,6 +91,12 @@ class MockDownloadManager(Manager):
         self._file_structures[location] = list(files)
 
     async def get_file_structure(self, location: str) -> list[str]:
+        # A magnet's file name is carried in the URL itself, so the real
+        # implementation reaches no network and is used as-is; stubbing it
+        # would only let the mock disagree with production.
+        if location.startswith("magnet:?"):
+            return await super().get_file_structure(location)
+
         try:
             return list(self._file_structures[location])
         except KeyError:

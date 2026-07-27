@@ -134,6 +134,9 @@ class TsundokuAppState:
         logger.debug("Creating interface to downloader client...")
         self.dl_client = Manager(self, self.session)
 
+        if self.flags.TORRENT_MIRROR_URL:
+            logger.warning(f"TORRENT MIRROR ACTIVE ({self.flags.TORRENT_MIRROR_URL}) - torrents will be replaced with synthetic local content and will NOT be the real release. Unset TORRENT_MIRROR_URL outside of development.")
+
         res = await self.dl_client.test_client()
         self.flags.DL_CLIENT_CONNECTION_ERROR = not res.success
 

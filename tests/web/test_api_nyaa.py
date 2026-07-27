@@ -8,7 +8,12 @@ from tests.mock import MockTsundokuAppState, make_nyaa_entry, mock_nyaa_feed
 
 from .envelope import API, error, success
 
-TORRENT = "magnet:?xt=urn:btih:aabbcc112233"
+#: A .torrent URL, matching what the nyaa searcher actually yields -- its RSS
+#: <link> is always https://nyaa.si/download/<id>.torrent. These tests used to
+#: use a magnet here and register multi-file structures against it, which no
+#: real magnet can describe: a magnet carries an info hash and at most a
+#: display name, never a file list.
+TORRENT = "https://nyaa.si/download/1234567.torrent"
 
 
 def install_feed(monkeypatch: pytest.MonkeyPatch, feed: Any) -> None:

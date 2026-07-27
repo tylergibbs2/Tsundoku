@@ -41,13 +41,14 @@ class MockTsundokuAppState(TsundokuAppState):
 
     def __init__(self) -> None:
         super().__init__()
-        self.dl_client = MockDownloadManager(self)
 
         # The real session is only ever created in TsundokuAppState._setup_session,
         # which the stubbed lifespan never runs. Without this, every code path
         # that reaches for app.session raises AttributeError -- which the broad
         # `except Exception` handlers around those calls quietly swallow.
+        # Built before the download manager, which takes a reference to it.
         self.session = MockClientSession()
+        self.dl_client = MockDownloadManager(self)
 
         # The rate limiter uses global in-memory state that would otherwise
         # bleed across tests; disable it for the test app.
