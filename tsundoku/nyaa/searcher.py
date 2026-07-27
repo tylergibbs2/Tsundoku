@@ -15,6 +15,15 @@ from tsundoku.utils import parse_anime_title, parse_anime_titles
 logger = logging.getLogger("tsundoku")
 
 
+class MagnetIsNotSingleEpisodeError(Exception):
+    """Raised when a magnet does not describe exactly one episode.
+
+    Magnets only carry a display name, so Tsundoku can identify at most one
+    episode from one. A batch or season pack has to be added by .torrent,
+    where the real file list is available to enumerate episodes from.
+    """
+
+
 class SearchResult:
     show_id: int | None
 
@@ -122,6 +131,13 @@ class SearchResult:
                 continue
 
             episodes.append(int(parsed["episode_number"]))
+
+        # An empty result from a .torrent is unremarkable -- the release may
+        # genuinely hold nothing episodic. From a magnet it means the single
+        # name we had did not resolve to one episode, which is exactly the
+        # batch case, and silently adding nothing is the worst answer.
+        if not episodes and self.torrent_link.startswith("magnet:?"):
+            raise MagnetIsNotSingleEpisodeError("Magnet links are supported for single-episode releases only, and no single episode could be identified from this one. If this is a batch or season pack, add it using its .torrent link instead, which carries the full file list.")
 
         return episodes
 

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query, status
 
 from tsundoku.auth import StateDep
 from tsundoku.manager import Entry
-from tsundoku.nyaa import NyaaSearcher, SearchResult
+from tsundoku.nyaa import MagnetIsNotSingleEpisodeError, NyaaSearcher, SearchResult
 
 from .response import APIError, Success
 from .schemas import NyaaResult, NyaaShowRequest
@@ -55,6 +55,9 @@ async def add_nyaa_result(state: StateDep, body: NyaaShowRequest) -> Success[lis
 
     logger.info(f"Processing new search result for Show <s{show_id}>")
 
-    entries = await search_result.process(overwrite=body.overwrite)
+    try:
+        entries = await search_result.process(overwrite=body.overwrite)
+    except MagnetIsNotSingleEpisodeError as e:
+        raise APIError(status.HTTP_400_BAD_REQUEST, str(e)) from e
 
     return Success(result=entries)

@@ -1,3 +1,3 @@
-from .searcher import NyaaSearcher, SearchResult
+from .searcher import MagnetIsNotSingleEpisodeError, NyaaSearcher, SearchResult
 
-__all__ = ["NyaaSearcher", "SearchResult"]
+__all__ = ["MagnetIsNotSingleEpisodeError", "NyaaSearcher", "SearchResult"]

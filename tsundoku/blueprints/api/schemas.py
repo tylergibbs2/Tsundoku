@@ -114,7 +114,7 @@ class SeenReleaseAddRequest(BaseModel):
 
 class NyaaShowRequest(BaseModel):
     show_id: int
-    torrent_link: str
+    torrent_link: str = Field(description="A .torrent URL, or a magnet URL. Magnets carry no file list, so they are only supported for single-episode releases; batches and season packs must be added by .torrent.")
     overwrite: bool = False
 
 
