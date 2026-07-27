@@ -32,6 +32,9 @@ tsundoku.db-wal
 sources
 data
 
+# Downloads and library for the local integration environment (compose.test.yml)
+.devdata
+
 # Bundled app
 *.zip
 run.py
