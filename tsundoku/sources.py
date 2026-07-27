@@ -8,6 +8,10 @@ import aiofiles
 from tsundoku.constants import DATA_DIR
 
 
+class InvalidSourceError(Exception):
+    """Raised when an RSS source definition is malformed."""
+
+
 @dataclass
 class SourceKeyMapping:
     filename: str
@@ -18,19 +22,19 @@ class SourceKeyMapping:
         required_keys = ("filename", "torrent")
         for key in required_keys:
             if key not in obj:
-                raise Exception(f"Invalid RSS Source Key Mapping object, missing required key '{key}'")
+                raise InvalidSourceError(f"Invalid RSS Source Key Mapping object, missing required key '{key}'")
 
         return cls(cls._get_true_key(obj["filename"]), cls._get_true_key(obj["torrent"]))
 
     @staticmethod
     def _get_true_key(value: str) -> str:
         if not value.startswith("$."):
-            raise Exception(f"Invalid key mapping '{value}', must start with '$.'")
+            raise InvalidSourceError(f"Invalid key mapping '{value}', must start with '$.'")
 
         value = value[2:]
 
         if len(value.split(".")) > 1:
-            raise Exception(f"Invalid key mapping '{value}', must not contain '.'")
+            raise InvalidSourceError(f"Invalid key mapping '{value}', must not contain '.'")
 
         return value
 
@@ -54,7 +58,7 @@ class Source:
         required_keys = ("name", "version", "url", "rssItemKeyMapping")
         for key in required_keys:
             if key not in obj:
-                raise Exception(f"Invalid RSS Source object, missing required key '{key}'")
+                raise InvalidSourceError(f"Invalid RSS Source object, missing required key '{key}'")
 
         if not isinstance(obj["name"], str):
             raise TypeError("Invalid RSS Source object, name must be a string")

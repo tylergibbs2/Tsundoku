@@ -32,7 +32,15 @@ tsundoku.db-wal
 sources
 data
 
+# Downloads and library for the local integration environment (compose.test.yml)
+.devdata
+
 # Bundled app
 *.zip
 run.py
 file
+# Generated OpenAPI schema dump (see `just generate-frontend-sdk`)
+openapi.json
+
+# Codegen toolchain deps (see tools/codegen/package.json)
+tools/codegen/node_modules

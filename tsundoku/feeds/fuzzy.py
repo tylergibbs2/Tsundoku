@@ -43,6 +43,6 @@ def extract_one(
 
     try:
         return max(it, key=key)
-    except Exception:
+    except ValueError:
         # iterator could return nothing
         return None

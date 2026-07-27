@@ -149,7 +149,11 @@ class TransmissionClient(TorrentClient):
         return resp["arguments"]["torrent-added"]["hashString"]
 
     async def login(self) -> TestClientResult:
-        return await super().login()
+        # Transmission has no login endpoint: credentials go out as HTTP basic
+        # auth on every request, and the session-id handshake is the only thing
+        # resembling an authorization step. test_client performs exactly that,
+        # so it is the honest implementation of this contract.
+        return await self.test_client()
 
     async def request(self, method: str, arguments: dict | None = None) -> dict:
         """

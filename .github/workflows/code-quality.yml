@@ -27,7 +27,7 @@ jobs:
       - name: Run Tests
         run: uv run pytest
 
-  prettier:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,5 +38,8 @@ jobs:
       - name: Install JS dependencies
         run: bun install
 
-      - name: Run Prettier Check
-        run: bun run prettier . --check
+      - name: Run Biome
+        run: bun run check
+
+      - name: Run TypeScript Type Checking
+        run: bun run typecheck

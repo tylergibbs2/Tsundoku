@@ -32,6 +32,11 @@ delete-cancel = No, take me back
 
 ## Errors
 
+error-boundary-title = Something went wrong
+error-boundary-subtitle = This part of the page failed to render. The full error is in the browser console.
+error-boundary-retry = Try again
+error-boundary-reload = Reload page
+
 no-rss-parsers = No RSS sources installed.
 no-shows-found = No shows found, is there an error with your sources?
 dl-client-connection-error = There was an error connecting to the download client.
@@ -109,6 +114,11 @@ add-form-local-title-field = Local Title Override
 
 add-form-add-button = Add show
 add-form-cancel-button = Cancel
+
+watching-enabled = Tsundoku is watching this show for new releases
+watching-disabled = Tsundoku is not watching this show for new releases
+watching-label-on = Watching
+watching-label-off = Not Watching
 
 delete-modal-header = Delete Show
 
@@ -211,9 +221,6 @@ config-test-failure = Error connecting
 
 config-save-button = Save Configuration
 config-save-success = Configuration saved
-
-feedback-request = Request a Feature
-feedback-bug = Report a Bug
 
 section-general-title = General
 section-general-subtitle = General app settings and configuration
@@ -453,3 +460,7 @@ change-password-title = Change Password
 current-password = Current Password
 new-password = New Password
 change-password-button = Change Password
+change-password-all-fields = Please fill in all password fields.
+change-password-mismatch = The new passwords do not match.
+change-password-success = Your password has been changed.
+change-password-failed = Could not change your password.

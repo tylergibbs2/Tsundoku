@@ -1,10 +1,11 @@
 import asyncio
+from datetime import UTC, datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import aiofiles.os
 
@@ -13,6 +14,20 @@ from tsundoku.manager import Entry, EntryState, Show
 from tsundoku.utils import ExprDict, move, parse_anime_titles
 
 logger = logging.getLogger("tsundoku")
+
+#: How many completion checks an entry may fail to resolve its file before it
+#: is given up on. A download client can report a torrent as complete a moment
+#: before the file is readable, so some tolerance is needed -- but without an
+#: upper bound an entry that will never resolve is retried forever, which is
+#: how these used to sit in `downloading` indefinitely with nothing surfaced.
+STALL_ATTEMPT_ALLOWANCE = 20
+#: Floor for the same allowance, so a very short check interval still gives a
+#: slow filesystem a few minutes rather than seconds.
+STALL_GRACE_SECONDS = 300
+
+#: States in which an entry has already taken possession of its file: it has
+#: been renamed in place, and usually moved into a library as well.
+CONSUMED_STATES = (EntryState.renamed, EntryState.moved, EntryState.completed)
 
 
 class Downloader:
@@ -31,7 +46,7 @@ class Downloader:
     `show_entry` table.
     """
 
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
 
     complete_check: int
     seed_ratio_limit: float
@@ -39,8 +54,8 @@ class Downloader:
     default_desired_format: str
     use_season_folder: bool
 
-    def __init__(self, app_context: Any) -> None:
-        self.app = app_context.app
+    def __init__(self, app: "TsundokuAppState") -> None:
+        self.app = app
 
     async def update_config(self) -> None:
         """
@@ -62,11 +77,11 @@ class Downloader:
 
             try:
                 await self.check_show_entries()
-            except Exception as e:
+            except Exception:
                 import traceback
 
                 traceback.print_exc()
-                logger.error(f"Error occurred while checking show entries, '{e}'", exc_info=True)
+                logger.exception("Error occurred while checking show entries")
 
             await asyncio.sleep(self.complete_check)
 
@@ -143,8 +158,8 @@ class Downloader:
         """
         try:
             torrent_hash = await self.app.dl_client.add_torrent(magnet_url)
-        except Exception as e:
-            logger.exception(f"Failed to begin handling, could not connect to download client: {e}")
+        except Exception:
+            logger.exception("Failed to begin handling, could not connect to download client")
             self.app.flags.DL_CLIENT_CONNECTION_ERROR = True
             return None
 
@@ -198,7 +213,7 @@ class Downloader:
             )
             entry = await cur.fetchone()
 
-        entry = Entry(self.app, entry)
+        entry = Entry.from_record(self.app, entry)
         await entry.set_state(EntryState.downloading)
 
         logger.info(f"Release Marked as Downloading - <e{entry.id}>")
@@ -241,8 +256,8 @@ class Downloader:
             await move(str(entry.file_path), str(desired_path))
         except PermissionError:
             logger.error(f"Error Moving Release <e{entry.id}> - Invalid Permissions")
-        except Exception as e:
-            logger.error(f"Error Moving Release <e{entry.id}> - {e}", exc_info=True)
+        except Exception:
+            logger.exception(f"Error Moving Release <e{entry.id}>")
         else:
             try:
                 entry.file_path.symlink_to(desired_path)
@@ -297,8 +312,8 @@ class Downloader:
             await aiofiles.os.rename(entry.file_path, new_path)
         except PermissionError:
             logger.error(f"Error Renaming Release <e{entry.id}> - Invalid Permissions")
-        except Exception as e:
-            logger.error(f"Error Renaming Release <e{entry.id}> - {e}", exc_info=True)
+        except Exception:
+            logger.exception(f"Error Renaming Release <e{entry.id}>")
         else:
             return new_path
 
@@ -335,9 +350,8 @@ class Downloader:
         try:
             parsed_files = parse_anime_titles([subpath.name for subpath in subpaths])
         except Exception:
-            logger.error(
+            logger.exception(
                 f"Could not parse files in `{root}`, skipping",
-                exc_info=True,
             )
             return None  # TODO: maybe ask user on UI to match manually
 
@@ -352,6 +366,77 @@ class Downloader:
                 return subpath
 
         return None
+
+    async def find_consuming_entry(self, entry: Entry) -> Entry | None:
+        """Another entry that has already taken this torrent's file.
+
+        Entries may legitimately share a torrent hash -- a batch release
+        covers many episodes -- and that case resolves itself, because the
+        batch folder survives and each entry finds its own file inside it. A
+        single-file torrent is different: the first entry renames that file in
+        place, while the download client goes on reporting the original name
+        forever. Every later entry on the same hash is then hunting a path
+        that cannot come back.
+        """
+        async with self.app.acquire_db() as con:
+            record = await con.fetchone(
+                f"""
+                SELECT
+                    id,
+                    show_id,
+                    episode,
+                    version,
+                    current_state,
+                    torrent_hash,
+                    file_path,
+                    created_manually,
+                    last_update
+                FROM
+                    show_entry
+                WHERE
+                    torrent_hash = ?
+                    AND id != ?
+                    AND current_state IN ({", ".join("?" * len(CONSUMED_STATES))})
+                ORDER BY id ASC;
+                """,
+                entry.torrent_hash,
+                entry.id,
+                *(state.value for state in CONSUMED_STATES),
+            )
+
+        return Entry.from_record(self.app, record) if record else None
+
+    def has_stalled(self, entry: Entry) -> bool:
+        """Whether an entry has sat in its current state past all patience."""
+        allowance = max(STALL_GRACE_SECONDS, self.complete_check * STALL_ATTEMPT_ALLOWANCE)
+        return (datetime.now(UTC) - entry.last_update).total_seconds() > allowance
+
+    async def handle_unresolvable(self, entry: Entry, reason: str) -> None:
+        """Decide what to do about an entry whose file cannot be found.
+
+        Every branch either resolves the entry or explains itself. Returning
+        quietly here is what used to leave entries checking forever with
+        nothing written to the log and nothing shown in the UI.
+        """
+        consumer = await self.find_consuming_entry(entry)
+
+        if consumer is not None:
+            if consumer.episode == entry.episode and consumer.file_path is not None:
+                logger.info(f"Release Already Handled - <e{entry.id}> duplicates <e{consumer.id}>, adopting `{consumer.file_path}`")
+                await entry.set_path(consumer.file_path)
+                await entry.set_state(EntryState.completed)
+                return
+
+            logger.error(f"Marking Release as Failed - <e{entry.id}> - torrent `{entry.torrent_hash}` was already consumed by <e{consumer.id}> for episode {consumer.episode}, so it cannot also provide episode {entry.episode}")
+            await entry.set_state(EntryState.failed)
+            return
+
+        if self.has_stalled(entry):
+            logger.error(f"Marking Release as Failed - <e{entry.id}> - unresolved since {entry.last_update:%Y-%m-%d %H:%M:%S} UTC: {reason}")
+            await entry.set_state(EntryState.failed)
+            return
+
+        logger.warning(f"<e{entry.id}> {reason}; will retry")
 
     async def check_show_entry(self, entry: Entry) -> None:
         """
@@ -384,7 +469,7 @@ class Downloader:
                 await entry.set_state(EntryState.failed)
                 return
             if not path.parent.is_dir():
-                logger.error(f"<e{entry.id}>, `{path}` could not be read")
+                await self.handle_unresolvable(entry, f"`{path}` could not be read; its parent directory does not exist")
                 return
 
             await entry.set_path(path)
@@ -397,9 +482,12 @@ class Downloader:
         # This ensures that the path is an actual file rather than
         # a directory. Sometimes with torrents the files can be in
         # folders. Batch releases are typically always in folders.
-        path = self.resolve_file(path, entry.episode)
-        if path is None:
+        resolved = self.resolve_file(path, entry.episode)
+        if resolved is None:
+            await self.handle_unresolvable(entry, f"no file for episode {entry.episode} could be found at `{path}`")
             return
+
+        path = resolved
 
         logger.info(f"Found Release to Process - <e{entry.id}>")
 
@@ -490,5 +578,5 @@ class Downloader:
             )
 
         for entry in entries:
-            entry = Entry(self.app, entry)
+            entry = Entry.from_record(self.app, entry)
             await self.check_show_entry(entry)

@@ -1,26 +1,24 @@
-import { APITokenComponent } from "./components/apitoken";
-import { GeneralConfigApp } from "./components/generalconfig";
-import { LibraryConfigApp } from "./components/libraryconfig";
-import { FeedbackBtns } from "./components/feedback_btns";
-import { TorrentConfig } from "./components/torrentclient";
-import { getInjector } from "../fluent";
-import { FeedsConfig } from "./components/feedsconfig";
-import { useRef, useState, useEffect } from "react";
 import { toast } from "bulma-toast";
+import { useEffect, useRef, useState } from "react";
+import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
 import AccountSection from "./components/AccountSection";
+import { FeedsConfig } from "./components/feedsconfig";
+import { GeneralConfigApp } from "./components/generalconfig";
+import { LibraryConfigApp } from "./components/libraryconfig";
+import { TorrentConfig } from "./components/torrentclient";
 import "../../css/config.css";
 
 const _ = getInjector();
 
 export const ConfigApp = () => {
-  document.getElementById("navConfig").classList.add("is-active");
+  document.getElementById("navConfig")?.classList.add("is-active");
 
   const generalRef = useRef<any>(null);
   const libraryRef = useRef<any>(null);
   const feedsRef = useRef<any>(null);
   const torrentRef = useRef<any>(null);
-  const encodeRef = useRef<any>(null);
+  const _encodeRef = useRef<any>(null);
 
   const [dirty, setDirty] = useState({
     general: false,
@@ -73,7 +71,6 @@ export const ConfigApp = () => {
           <h2 className="subtitle">{_("config-page-subtitle")}</h2>
         </div>
       </div>
-      <FeedbackBtns />
       <section className="section">
         <h1 className="title is-4">{_("section-general-title")}</h1>
         <h2 className="subtitle is-6">{_("section-general-subtitle")}</h2>

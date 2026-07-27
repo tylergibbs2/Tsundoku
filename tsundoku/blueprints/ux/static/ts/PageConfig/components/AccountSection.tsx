@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { APITokenComponent } from "./apitoken";
-import { IonIcon } from "../../icon";
 import { toast } from "bulma-toast";
+import { type FormEvent, useState } from "react";
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
+import { APITokenComponent } from "./apitoken";
 
 const _ = getInjector();
 
@@ -12,7 +12,7 @@ const AccountSection = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast({
@@ -61,7 +61,7 @@ const AccountSection = () => {
           position: "bottom-right",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       toast({
         message: _("change-password-failed"),
         type: "is-danger",
@@ -80,7 +80,9 @@ const AccountSection = () => {
         <h3 className="title is-6 mb-2">{_("config-api-title")}</h3>
         <APITokenComponent />
         <a
-          href="https://tsundoku.moe/docs"
+          href="/redoc"
+          target="_blank"
+          rel="noopener"
           className="button is-info mt-2 mb-4"
         >
           {_("config-api-documentation")}
@@ -129,7 +131,7 @@ const AccountSection = () => {
           </div>
           <div className="field mt-4">
             <button
-              className={"button is-primary " + (loading ? "is-loading" : "")}
+              className={`button is-primary ${loading ? "is-loading" : ""}`}
               type="submit"
               disabled={loading}
             >

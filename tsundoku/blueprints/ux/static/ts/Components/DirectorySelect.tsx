@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import type { DirectoryTree } from "../api";
+import { tree } from "../api";
 import { IonIcon } from "../icon";
-import { TreeResponse } from "../interfaces";
-import { fetchTree } from "../queries";
 
 interface DirectorySelectParams {
   defaultValue: string;
@@ -15,13 +15,16 @@ export const DirectorySelect = ({
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [currentState, setCurrentState] = useState<TreeResponse | null>(null);
+  const [currentState, setCurrentState] = useState<DirectoryTree | null>(null);
 
   const getNewState = async (dir: string, subdir: string | null = null) => {
     setIsLoading(true);
 
-    let newState = await fetchTree(dir, subdir);
-    setCurrentState(newState);
+    const { data } = await tree({
+      body: { dir, subdir },
+      throwOnError: true,
+    });
+    setCurrentState(data.result);
 
     setIsLoading(false);
   };
@@ -34,7 +37,7 @@ export const DirectorySelect = ({
   const save = () => {
     if (isLoading) return;
 
-    if (onChange) onChange(currentState.current_path);
+    if (onChange && currentState) onChange(currentState.current_path);
     setIsActive(false);
   };
 
@@ -46,11 +49,11 @@ export const DirectorySelect = ({
   };
 
   const goToParentDirectory = async () => {
-    await getNewState(currentState.current_path, "..");
+    if (currentState) await getNewState(currentState.current_path, "..");
   };
 
   const goToSubDirectory = async (subdir: string) => {
-    await getNewState(currentState.current_path, subdir);
+    if (currentState) await getNewState(currentState.current_path, subdir);
   };
 
   useEffect(() => {
@@ -61,7 +64,7 @@ export const DirectorySelect = ({
 
   return (
     <div
-      className={"dropdown " + (isActive ? "is-active" : "")}
+      className={`dropdown ${isActive ? "is-active" : ""}`}
       style={{ minWidth: "100%" }}
     >
       <div className="field has-addons" style={{ width: "100%" }}>
@@ -106,10 +109,10 @@ export const DirectorySelect = ({
                     <span>..</span>
                   </div>
                 )}
-                {currentState.children.map((folder, i) => {
+                {currentState.children.map((folder) => {
                   return (
                     <div
-                      key={i}
+                      key={folder}
                       onClick={() => goToSubDirectory(folder)}
                       className="is-clickable is-unselectable folder-item"
                     >

@@ -1,17 +1,9 @@
-import {
-  ChangeEvent,
-  useEffect,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-  useState,
-} from "react";
-import { GeneralConfig, MutateConfigVars } from "../../interfaces";
-import { getInjector } from "../../fluent";
-import { useMutation, useQuery, useQueryClient } from "react-query";
-import { fetchConfig, setConfig } from "../../queries";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { GeneralConfigResponse, GeneralConfigUpdate } from "../../api";
 import { GlobalLoading } from "../../Components/GlobalLoading";
-import { DirectorySelect } from "../../Components/DirectorySelect";
+import { getInjector } from "../../fluent";
+import { configKeys, generalConfigQuery, saveGeneralConfig } from "../queries";
 
 const _ = getInjector();
 
@@ -19,23 +11,17 @@ export const GeneralConfigApp = forwardRef(
   ({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }, ref) => {
     const queryClient = useQueryClient();
 
-    const config = useQuery(["config", "general"], async () => {
-      return await fetchConfig<GeneralConfig>("general");
+    const config = useQuery(generalConfigQuery());
+
+    const mutation = useMutation({
+      mutationFn: saveGeneralConfig,
+      onSuccess: (newConfig) => {
+        queryClient.setQueryData(configKeys.general, newConfig);
+      },
     });
 
-    const mutation = useMutation(
-      async ({ key, value }: MutateConfigVars) => {
-        return await setConfig<GeneralConfig>("general", key, value);
-      },
-      {
-        onSuccess: (newConfig) => {
-          queryClient.setQueryData(["config", "general"], newConfig);
-        },
-      }
-    );
-
     // Local state for all fields
-    const [fields, setFields] = useState<Partial<GeneralConfig>>({});
+    const [fields, setFields] = useState<Partial<GeneralConfigResponse>>({});
     const [dirty, setDirty] = useState(false);
 
     // Initialize local state from config
@@ -47,12 +33,18 @@ export const GeneralConfigApp = forwardRef(
       }
     }, [config.data]);
 
+    // Returns only the fields that differ from what the server last sent.
+    const changedFields = (saved: GeneralConfigResponse): GeneralConfigUpdate =>
+      Object.fromEntries(
+        Object.entries(fields).filter(
+          ([key, value]) => value !== saved[key as keyof GeneralConfigResponse],
+        ),
+      );
+
     // Dirty tracking
     useEffect(() => {
       if (!config.data) return;
-      const isDirty = Object.keys(fields).some(
-        (key) => fields[key] !== config.data[key]
-      );
+      const isDirty = Object.keys(changedFields(config.data)).length > 0;
       setDirty(isDirty);
       onDirtyChange(isDirty);
     }, [fields, config.data]);
@@ -60,23 +52,25 @@ export const GeneralConfigApp = forwardRef(
     // Expose save method to parent
     useImperativeHandle(ref, () => ({
       async save() {
-        if (!dirty) return;
-        const promises = Object.keys(fields).map((key) => {
-          if (fields[key] !== config.data[key]) {
-            return mutation.mutateAsync({ key, value: fields[key] });
-          }
-          return null;
-        });
-        await Promise.all(promises);
+        if (!dirty || !config.data) return;
+
+        // One PATCH for the whole delta. Sending a request per changed key
+        // raced: each response carries the full config, so whichever landed
+        // last won the cache.
+        const changed = changedFields(config.data);
+        if (Object.keys(changed).length > 0)
+          await mutation.mutateAsync(changed);
+
         setDirty(false);
         onDirtyChange(false);
       },
     }));
 
-    if (config.isLoading) return <GlobalLoading heightTranslation="none" />;
+    if (config.isPending || !config.data)
+      return <GlobalLoading heightTranslation="none" />;
 
     // Handlers for each field
-    const handleChange = (key: keyof GeneralConfig, value: any) => {
+    const handleChange = (key: keyof GeneralConfigResponse, value: any) => {
       setFields((prev) => ({ ...prev, [key]: value }));
     };
 
@@ -235,5 +229,5 @@ export const GeneralConfigApp = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );

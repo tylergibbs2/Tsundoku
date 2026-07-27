@@ -1,0 +1,90 @@
+name: tsundoku-test
+
+services:
+  tracker:
+    build: ./integration
+    command: python tracker.py
+    networks: [swarm]
+    ports:
+      - "127.0.0.1:6969:6969"
+
+  mirror:
+    build: ./integration
+    command: python mirror.py
+    environment:
+      TRACKER_ANNOUNCE: http://tracker:6969/announce
+      SYNTHETIC_FILE_BYTES: "1048576"
+    volumes:
+      - seed-data:/seed/data
+      - seed-watch:/seed/watch
+      - seed-cache:/seed/cache
+    networks: [swarm]
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on: [tracker]
+
+  # Seeds the synthetic content the mirror generates. Picks torrents up from
+  # the watch directory with the data already in place, so it hash-checks and
+  # goes straight to seeding.
+  seeder:
+    image: lscr.io/linuxserver/transmission:latest
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+    volumes:
+      - seeder-config:/config
+      - seed-data:/downloads/complete
+      - seed-watch:/watch
+    networks: [swarm]
+
+  # --- clients under test -------------------------------------------------
+  # These download to /downloads, while Tsundoku on the host sees the same
+  # files at ./.devdata/downloads. That mismatch is deliberate: it is the
+  # arrangement real NAS and seedbox deployments are in, and it exercises the
+  # path_mapping translation.
+  # Drops a known config in before qBittorrent's first start, so the random
+  # temporary password it would otherwise generate never comes into play.
+  # Only writes when absent, so settings changed in the UI survive a restart;
+  # `down -v` gets you back to a clean slate.
+  qbittorrent-init:
+    image: alpine:3
+    command: >
+      sh -c "mkdir -p /config/qBittorrent &&
+             if [ ! -f /config/qBittorrent/qBittorrent.conf ]; then
+               cp /seed.conf /config/qBittorrent/qBittorrent.conf &&
+               chown -R 1000:1000 /config &&
+               echo 'seeded qBittorrent.conf';
+             else echo 'qBittorrent.conf already present, leaving it alone'; fi"
+    volumes:
+      - qbittorrent-config:/config
+      - ./integration/config/qbittorrent.conf:/seed.conf:ro
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      WEBUI_PORT: "8080"
+    volumes:
+      - qbittorrent-config:/config
+      - ./.devdata/downloads:/downloads
+    networks: [swarm]
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      tracker:
+        condition: service_started
+      qbittorrent-init:
+        condition: service_completed_successfully
+
+volumes:
+  seed-data:
+  seed-watch:
+  seed-cache:
+  seeder-config:
+  qbittorrent-config:
+
+networks:
+  swarm:

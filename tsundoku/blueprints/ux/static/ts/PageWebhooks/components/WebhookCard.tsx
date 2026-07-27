@@ -1,9 +1,9 @@
-import { Dispatch, SetStateAction } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { Dispatch, SetStateAction } from "react";
+import type { WebhookBase } from "../../api";
 import { getInjector } from "../../fluent";
-import { WebhookBase } from "../../interfaces";
-import { useQuery } from "react-query";
 
-import { fetchWebhookValidityById } from "../../queries";
+import { webhookValidityQuery } from "../queries";
 
 interface WebhookCardParams {
   setActiveModal: Dispatch<SetStateAction<string | null>>;
@@ -18,10 +18,7 @@ export const WebhookCard = ({
   setActiveWebhook,
   webhook,
 }: WebhookCardParams) => {
-  const { data, isLoading } = useQuery(
-    ["webhook_validity", webhook.base_id],
-    async () => fetchWebhookValidityById(webhook.base_id)
-  );
+  const { data, isPending } = useQuery(webhookValidityQuery(webhook.base_id));
 
   const openEditModal = () => {
     setActiveModal("edit");
@@ -53,9 +50,9 @@ export const WebhookCard = ({
         </header>
         <div className="card-content">
           <p className="is-size-6 has-text-centered py-4">
-            {isLoading && <b>{_("webhook-status-loading")}</b>}
-            {!isLoading && data && <b>{_("webhook-status-valid")}</b>}
-            {!isLoading && !data && <b>{_("webhook-status-invalid")}</b>}
+            {isPending && <b>{_("webhook-status-loading")}</b>}
+            {!isPending && data && <b>{_("webhook-status-valid")}</b>}
+            {!isPending && !data && <b>{_("webhook-status-invalid")}</b>}
           </p>
         </div>
         <footer className="card-footer">

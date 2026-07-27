@@ -1,0 +1,9 @@
+{
+  "name": "tsundoku-codegen",
+  "private": true,
+  "description": "Isolated toolchain for `just generate-frontend-sdk`. @hey-api/openapi-ts uses the classic TypeScript compiler API (ts.SyntaxKind et al), which TypeScript 7 no longer exposes -- it ships only `tsc` and `unstable/ast`. Pinning TypeScript 5 here lets the app keep TypeScript 7 for type checking.",
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "typescript": "^5.9.3"
+  }
+}

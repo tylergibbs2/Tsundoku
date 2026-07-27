@@ -1,22 +1,22 @@
-import { WebhookBase } from "../interfaces";
 import { getInjector } from "../fluent";
 
 import "../../css/webhooks.css";
-import { useQuery } from "react-query";
-import { fetchWebhookBases } from "../queries";
-import { WebhookCard } from "./components/WebhookCard";
-import { AddModal } from "./add_modal";
-import { EditModal } from "./edit_modal";
-import { DeleteModal } from "./delete_modal";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import type { WebhookBase } from "../api";
 import { GlobalLoading } from "../Components/GlobalLoading";
+import { AddModal } from "./add_modal";
+import { WebhookCard } from "./components/WebhookCard";
+import { DeleteModal } from "./delete_modal";
+import { EditModal } from "./edit_modal";
+import { webhookBasesQuery } from "./queries";
 
 const _ = getInjector();
 
 export const WebhooksApp = () => {
-  document.getElementById("navWebhooks").classList.add("is-active");
+  document.getElementById("navWebhooks")?.classList.add("is-active");
 
-  const bases = useQuery("webhooks", fetchWebhookBases);
+  const bases = useQuery(webhookBasesQuery());
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [activeWebhook, setActiveWebhook] = useState<WebhookBase | null>(null);
@@ -26,7 +26,9 @@ export const WebhooksApp = () => {
     else document.body.classList.remove("is-clipped");
   }, [activeModal]);
 
-  if (bases.isLoading) return <GlobalLoading withText={true} />;
+  // `data` stays optional in the types until it has actually resolved, so it
+  // is checked alongside the pending flag rather than asserted below.
+  if (bases.isPending || !bases.data) return <GlobalLoading withText={true} />;
 
   return (
     <>

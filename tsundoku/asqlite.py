@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 from collections.abc import Callable, Generator, Iterable
+import datetime
 import queue
 import sqlite3
 import threading
@@ -42,6 +43,36 @@ __version__ = "2.0.0a"
 
 PARSE_DECLTYPES = sqlite3.PARSE_DECLTYPES
 PARSE_COLNAMES = sqlite3.PARSE_COLNAMES
+
+
+def _adapt_datetime(value: datetime.datetime) -> str:
+    """Store datetimes as naive UTC, matching SQLite's CURRENT_TIMESTAMP.
+
+    Columns default to CURRENT_TIMESTAMP, which writes ``YYYY-MM-DD HH:MM:SS``
+    in UTC with no offset. Writing an offset-bearing string alongside those
+    would break the lexicographic comparisons the queries rely on (``MAX(
+    seen_at)`` and ``ORDER BY``), so the offset is normalised away here and
+    reattached on read.
+
+    Adapters are registered process-wide, so this also sees writes from
+    libraries we do not control -- yoyo stamps its migration log with naive
+    datetimes. Those are assumed to be UTC rather than rejected; the
+    ``AwareDatetime`` fields on our own models are what enforce the invariant.
+    """
+    if value.tzinfo is not None:
+        value = value.astimezone(datetime.UTC).replace(tzinfo=None)
+
+    return value.isoformat(sep=" ")
+
+
+def _convert_timestamp(raw: bytes) -> datetime.datetime:
+    """Read TIMESTAMP columns back as timezone-aware UTC.
+
+    Everything on disk is UTC -- both CURRENT_TIMESTAMP defaults and values
+    written by ``_adapt_datetime`` -- so the offset is simply reattached.
+    """
+    return datetime.datetime.fromisoformat(raw.decode()).replace(tzinfo=datetime.UTC)
+
 
 T = TypeVar("T")
 U = TypeVar("U", covariant=True, bound=AsyncContextManager[Any])
@@ -485,6 +516,8 @@ def _connect_pragmas(db: str | bytes, **kwargs: Any) -> sqlite3.Connection:
     connection = sqlite3.connect(db, **kwargs)
     sqlite3.register_adapter(bool, int)
     sqlite3.register_converter("BOOLEAN", lambda v: bool(int(v)))
+    sqlite3.register_adapter(datetime.datetime, _adapt_datetime)
+    sqlite3.register_converter("TIMESTAMP", _convert_timestamp)
     connection.execute("pragma journal_mode=wal")
     connection.execute("pragma foreign_keys=ON")
     connection.isolation_level = None

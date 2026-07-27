@@ -1,30 +1,30 @@
-import { getInjector } from "../fluent";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "bulma-toast";
 import {
-  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
   useEffect,
-  Dispatch,
-  SetStateAction,
-  ChangeEvent,
+  useState,
 } from "react";
 import { useForm } from "react-hook-form";
-
-import { ShowToggleButton } from "./components/show_toggle_button";
-import { Show, Entry, Webhook, APIResponse } from "../interfaces";
+import type { Entry, Show, Webhook } from "../api";
+import { getInjector } from "../fluent";
 import { IonIcon } from "../icon";
-import { useMutation, useQueryClient } from "react-query";
-import { updateShowById } from "../queries";
-import { toast } from "bulma-toast";
-import { NyaaSearchPanel } from "./NyaaSearchPanel";
-import { EditShowForm } from "./components/EditShowForm";
+import type { StagedEntry } from "./components/EditShowEntries";
 import { EditShowEntries } from "./components/EditShowEntries";
+import { EditShowForm } from "./components/EditShowForm";
 import { EditShowWebhooks } from "./components/EditShowWebhooks";
+import { ShowToggleButton } from "./components/show_toggle_button";
+import { NyaaSearchPanel } from "./NyaaSearchPanel";
+import { editShow } from "./queries";
 
 const _ = getInjector();
 
 interface EditModalParams {
-  activeShow?: Show;
+  activeShow: Show | null;
   setActiveShow: Dispatch<SetStateAction<Show | null>>;
-  currentModal?: string;
+  currentModal: string | null;
   setCurrentModal: Dispatch<SetStateAction<string | null>>;
 }
 
@@ -37,25 +37,26 @@ export const EditModal = ({
   const [tab, setTab] = useState<string>("info");
   const [fixMatch, setFixMatch] = useState<boolean>(false);
 
-  const [entriesToAdd, setEntriesToAdd] = useState<Entry[]>([]);
-  const [entriesToDelete, setEntriesToDelete] = useState<Entry[]>([]);
+  const [entriesToAdd, setEntriesToAdd] = useState<StagedEntry[]>([]);
+  const [entriesToDelete, setEntriesToDelete] = useState<StagedEntry[]>([]);
   const [webhooksToUpdate, setWebhooksToUpdate] = useState<Webhook[]>([]);
 
   const [highlightNewEntryId, setHighlightNewEntryId] = useState<number | null>(
-    null
+    null,
   );
 
   const { register, reset, trigger, getValues, setValue } = useForm();
 
   const queryClient = useQueryClient();
 
-  const showMutation = useMutation(updateShowById, {
+  const showMutation = useMutation({
+    mutationFn: editShow,
     onSuccess: async (updatedShow) => {
       updatedShow = await finalizeEntries(updatedShow);
       updatedShow = await finalizeWebhooks(updatedShow);
 
       // Instead of manually updating the cache, just refetch the paginated shows queries
-      queryClient.invalidateQueries(["shows"]);
+      queryClient.invalidateQueries({ queryKey: ["shows"] });
 
       // Reset local state after save
       setEntriesToAdd([]);
@@ -90,7 +91,7 @@ export const EditModal = ({
         season: activeShow.season,
         episode_offset: activeShow.episode_offset,
         watch: activeShow.watch,
-        kitsu_id: activeShow.metadata.kitsu_id,
+        kitsu_id: activeShow.metadata?.kitsu_id,
         preferred_resolution: activeShow.preferred_resolution ?? "0",
         preferred_release_group: activeShow.preferred_release_group,
       });
@@ -98,10 +99,12 @@ export const EditModal = ({
   }, [activeShow]);
 
   const finalizeEntries = async (show: Show) => {
-    let addedEntries: Entry[] = [];
-    let removedEntries: Entry[] = [];
+    if (!activeShow) return show;
 
-    let request: Object;
+    let addedEntries: Entry[] = [];
+    const removedEntries: StagedEntry[] = [];
+
+    let request: RequestInit;
     if (entriesToAdd.length > 0) {
       request = {
         method: "POST",
@@ -112,18 +115,18 @@ export const EditModal = ({
           ...entriesToAdd.filter(
             (entry) =>
               entriesToDelete.findIndex(
-                (toRemove: Entry) => toRemove.id === entry.id
-              ) === -1
+                (toRemove: StagedEntry) => toRemove.id === entry.id,
+              ) === -1,
           ),
         ]),
       };
 
-      let response = await fetch(
+      const response = await fetch(
         `/api/v1/shows/${activeShow.id_}/entries`,
-        request
+        request,
       );
       if (response.ok) {
-        let data: APIResponse<Entry[]> = await response.json();
+        const data: { result: Entry[] } = await response.json();
         addedEntries = data.result;
       }
     }
@@ -137,9 +140,9 @@ export const EditModal = ({
 
     for (const entry of entriesToDelete) {
       if (entry.id < 0) continue;
-      let response = await fetch(
+      const response = await fetch(
         `/api/v1/shows/${activeShow.id_}/entries/${entry.id}`,
-        request
+        request,
       );
       if (response.ok) removedEntries.push(entry);
     }
@@ -147,12 +150,13 @@ export const EditModal = ({
     setEntriesToAdd([]);
     setEntriesToDelete([]);
 
-    let newShow: Show = JSON.parse(JSON.stringify(show));
+    const newShow: Show = JSON.parse(JSON.stringify(show));
+    newShow.entries ??= [];
     for (const entry of addedEntries) newShow.entries.push(entry);
 
     for (const entry of removedEntries) {
-      let idx = newShow.entries.findIndex(
-        (toRemove) => toRemove.id === entry.id
+      const idx = newShow.entries.findIndex(
+        (toRemove) => toRemove.id === entry.id,
       );
       if (idx !== -1) newShow.entries.splice(idx, 1);
     }
@@ -165,22 +169,24 @@ export const EditModal = ({
   };
 
   const finalizeWebhooks = async (show: Show) => {
-    let updatedWebhooks: Webhook[] = [];
+    if (!activeShow) return show;
+
+    const updatedWebhooks: Webhook[] = [];
 
     for (const wh of webhooksToUpdate) {
-      let request = {
+      const request = {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          triggers: wh.triggers.join(","),
+          triggers: (wh.triggers ?? []).join(","),
         }),
       };
 
-      let resp = await fetch(
+      const resp = await fetch(
         `/api/v1/shows/${show.id_}/webhooks/${wh.base.base_id}`,
-        request
+        request,
       );
       let resp_json: any;
       if (resp.ok) resp_json = await resp.json();
@@ -189,11 +195,12 @@ export const EditModal = ({
       updatedWebhooks.push(resp_json.result);
     }
 
-    let newShow: Show = JSON.parse(JSON.stringify(show));
+    const newShow: Show = JSON.parse(JSON.stringify(show));
+    newShow.webhooks ??= [];
 
     for (const wh of updatedWebhooks) {
-      let idx = newShow.webhooks.findIndex(
-        (toReplace) => toReplace.base.base_id === wh.base.base_id
+      const idx = newShow.webhooks.findIndex(
+        (toReplace) => toReplace.base.base_id === wh.base.base_id,
       );
       if (idx === -1) continue;
 
@@ -204,7 +211,7 @@ export const EditModal = ({
   };
 
   const anyMutationIsLoading = (): boolean => {
-    return showMutation.isLoading;
+    return showMutation.isPending;
   };
 
   const cancel = () => {
@@ -215,13 +222,16 @@ export const EditModal = ({
   };
 
   const submitHandler = (data: any) => {
-    showMutation.mutate({ id_: activeShow.id_, ...data });
+    if (activeShow) showMutation.mutate({ id_: activeShow.id_, ...data });
   };
 
   const triggerForm = async () => {
     await trigger();
     submitHandler(getValues());
   };
+
+  // Everything below renders show details, so bail out when there is none.
+  if (!activeShow) return null;
 
   return (
     <div
@@ -232,7 +242,7 @@ export const EditModal = ({
     >
       <div className="modal-background" onClick={cancel}></div>
       <div
-        className={"modal-card" + (tab === "entries" ? " is-wide" : "")}
+        className={`modal-card${tab === "entries" ? " is-wide" : ""}`}
         style={{
           maxWidth: tab === "entries" ? "90vw" : undefined,
           width: tab === "entries" ? "1200px" : undefined,
@@ -255,12 +265,10 @@ export const EditModal = ({
               offTooltip={_("watching-disabled")}
               additionalClasses="is-success"
               showLabel={true}
-              labelOn={_("Watching")}
-              labelOff={_("Not Watching")}
+              labelOn={_("watching-label-on")}
+              labelOff={_("watching-label-off")}
             />
-            <div
-              className={"dropdown is-right " + (fixMatch ? "is-active" : "")}
-            >
+            <div className={`dropdown is-right ${fixMatch ? "is-active" : ""}`}>
               <div className="dropdown-trigger">
                 <button
                   className="button is-link"
@@ -360,7 +368,7 @@ export const EditModal = ({
                         animate: { in: "fadeIn", out: "fadeOut" },
                       });
                     }
-                  } catch (e) {
+                  } catch (_e) {
                     toast({
                       message: _("entry-add-failed"),
                       duration: 4000,
@@ -436,11 +444,9 @@ const FixMatchRow = ({
   return (
     <tr
       onClick={setSelf}
-      className={
-        "is-clickable " + (result.id === selectedId ? "is-selected" : "")
-      }
+      className={`is-clickable ${result.id === selectedId ? "is-selected" : ""}`}
     >
-      <td>{result.attributes.titles["en_jp"]}</td>
+      <td>{result.attributes.titles.en_jp}</td>
     </tr>
   );
 };
@@ -462,7 +468,7 @@ const FixMatchDropdown = ({
   useEffect(() => {
     if (selectedId) setValue("kitsu_id", selectedId);
     else if (show && selectedId === "") {
-      setValue("kitsu_id", show.metadata.kitsu_id);
+      setValue("kitsu_id", show.metadata?.kitsu_id);
     }
   }, [selectedId]);
 
@@ -509,9 +515,7 @@ const FixMatchDropdown = ({
       <input type="hidden" {...register("kitsu_id")} />
       <div className="dropdown-item">
         <div
-          className={
-            "control has-icons-left " + (isSearching ? "is-loading" : "")
-          }
+          className={`control has-icons-left ${isSearching ? "is-loading" : ""}`}
         >
           <input
             type="text"
@@ -546,9 +550,9 @@ const FixMatchDropdown = ({
 };
 
 // Helper to get all episode numbers from show.entries and entriesToAdd
-function getAllEpisodes(show: Show, entriesToAdd: Entry[]): number[] {
+function getAllEpisodes(show: Show, entriesToAdd: StagedEntry[]): number[] {
   const all = new Set<number>();
-  (show.entries || []).forEach((e: Entry) => all.add(e.episode));
-  (entriesToAdd || []).forEach((e: Entry) => all.add(e.episode));
+  for (const e of show.entries ?? []) all.add(e.episode);
+  for (const e of entriesToAdd ?? []) all.add(e.episode);
   return Array.from(all);
 }

@@ -4,11 +4,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-    app = TsundokuApp()
-else:
-    from quart import current_app as app
+    from tsundoku.app import TsundokuAppState
 
 from tsundoku import __version__ as current_version
 from tsundoku.config import GeneralConfig
@@ -27,7 +23,7 @@ class UpdateInformation:
     url: str
 
 
-async def check_for_updates() -> UpdateInformation | None:
+async def check_for_updates(app: "TsundokuAppState") -> UpdateInformation | None:
     config = await GeneralConfig.retrieve(app)
     if not config.update_do_check:
         logger.info("Update checks disabled by configuration, skipping.")

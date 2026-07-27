@@ -1,4 +1,4 @@
-import { PaginationInfo } from "../../interfaces";
+import type { Pagination as PaginationInfo } from "../../api";
 import { getInjector } from "../../fluent";
 
 const _ = getInjector();
@@ -69,7 +69,8 @@ export const Pagination = ({ pagination, onPageChange }: PaginationProps) => {
           style={{ display: "flex", alignItems: "center" }}
         >
           {getPageNumbers().map((pageNum, index) => (
-            <li key={index}>
+            // biome-ignore lint/suspicious/noArrayIndexKey: getPageNumbers() repeats "..." separators, so the index is needed to disambiguate.
+            <li key={`${pageNum}-${index}`}>
               {pageNum === "..." ? (
                 <span className="pagination-ellipsis">&hellip;</span>
               ) : (

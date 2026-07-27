@@ -1,37 +1,35 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "bulma-toast";
 import {
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
   useEffect,
-  Dispatch,
-  SetStateAction,
   useState,
-  ChangeEvent,
 } from "react";
 import {
-  SubmitHandler,
+  type SubmitHandler,
+  type UseFormSetValue,
   useForm,
-  UseFormHandleSubmit,
-  UseFormRegister,
-  UseFormSetValue,
 } from "react-hook-form";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import type { GeneralConfigResponse } from "../api";
 import { getInjector } from "../fluent";
-import { Show, GeneralConfig } from "../interfaces";
-import {
-  addNewShow,
-  fetchDistinctSeenReleases,
-  fetchFilteredSeenReleases,
-  fetchLibraries,
-} from "../queries";
-import { ShowToggleButton } from "./components/show_toggle_button";
-import { LibrarySelect } from "./components/library_select";
 import { ShowForm } from "./components/ShowForm";
+import { ShowToggleButton } from "./components/show_toggle_button";
+import {
+  addShow,
+  distinctReleasesQuery,
+  filteredReleasesQuery,
+  librariesQuery,
+} from "./queries";
 
 const _ = getInjector();
 
 interface AddModalParams {
-  currentModal?: string;
+  currentModal: string | null;
   setCurrentModal: Dispatch<SetStateAction<string | null>>;
-  generalConfig: GeneralConfig;
+  // Undefined until the config query resolves; ShowForm falls back to its own.
+  generalConfig?: GeneralConfigResponse;
 }
 
 export type AddShowFormValues = {
@@ -53,9 +51,10 @@ export const AddModal = ({
 }: AddModalParams) => {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(addNewShow, {
-    onSuccess: (newShow) => {
-      queryClient.invalidateQueries(["shows"]);
+  const mutation = useMutation({
+    mutationFn: addShow,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shows"] });
       toast({
         message: _("show-add-success"),
         duration: 5000,
@@ -69,14 +68,12 @@ export const AddModal = ({
     },
   });
 
-  const libraries = useQuery(["libraries"], async () => {
-    return await fetchLibraries();
-  });
+  const libraries = useQuery(librariesQuery());
 
   let defaultLibrary = libraries.data?.filter((l) => l.is_default);
   defaultLibrary ??= [];
 
-  let defaultValues = {
+  const defaultValues = {
     title: "",
     library_id: defaultLibrary.length > 0 ? defaultLibrary[0].id_ : null,
     title_local: "",
@@ -102,13 +99,15 @@ export const AddModal = ({
   }, [currentModal]);
 
   const submitHandler: SubmitHandler<AddShowFormValues> = (
-    formData: AddShowFormValues
+    formData: AddShowFormValues,
   ) => {
-    mutation.mutate(formData);
+    if (formData.library_id === null) return;
+
+    mutation.mutate({ ...formData, library_id: formData.library_id });
   };
 
   const cancel = () => {
-    if (mutation.isLoading) return;
+    if (mutation.isPending) return;
 
     setCurrentModal(null);
   };
@@ -134,8 +133,8 @@ export const AddModal = ({
               offTooltip={_("watching-disabled")}
               additionalClasses="is-success"
               showLabel={true}
-              labelOn={_("Watching")}
-              labelOff={_("Not Watching")}
+              labelOn={_("watching-label-on")}
+              labelOff={_("watching-label-off")}
             />
           </div>
         </header>
@@ -163,7 +162,7 @@ export const AddModal = ({
               <button
                 className={
                   "button is-success " +
-                  (mutation.isLoading ? "is-loading" : "")
+                  (mutation.isPending ? "is-loading" : "")
                 }
                 type="submit"
                 form="add-show-form"
@@ -209,33 +208,29 @@ const AlreadySeenAddFormComponent = ({
     string | null
   >(null);
   const [selectedResolution, setSelectedResolution] = useState<string | null>(
-    null
+    null,
   );
   const [filter, setFilter] = useState<string>("");
 
-  const seenTitles = useQuery("seenTitles", async () =>
-    fetchDistinctSeenReleases("title")
-  );
-  const seenGroups = useQuery(["seenGroups", selectedTitle], async () =>
-    fetchDistinctSeenReleases("release_group", { title: selectedTitle })
+  const seenTitles = useQuery(distinctReleasesQuery("title"));
+  const seenGroups = useQuery(
+    distinctReleasesQuery("release_group", {
+      title: selectedTitle ?? undefined,
+    }),
   );
   const seenResolutions = useQuery(
-    ["seenResolutions", selectedTitle, selectedReleaseGroup],
-    async () =>
-      fetchDistinctSeenReleases("resolution", {
-        title: selectedTitle,
-        release_group: selectedReleaseGroup,
-      })
+    distinctReleasesQuery("resolution", {
+      title: selectedTitle ?? undefined,
+      release_group: selectedReleaseGroup ?? undefined,
+    }),
   );
 
   const seenReleases = useQuery(
-    ["seenReleases", selectedTitle, selectedReleaseGroup, selectedResolution],
-    async () =>
-      fetchFilteredSeenReleases({
-        title: selectedTitle,
-        release_group: selectedReleaseGroup,
-        resolution: selectedResolution,
-      })
+    filteredReleasesQuery({
+      title: selectedTitle ?? undefined,
+      release_group: selectedReleaseGroup ?? undefined,
+      resolution: selectedResolution ?? undefined,
+    }),
   );
 
   if (
@@ -259,9 +254,9 @@ const AlreadySeenAddFormComponent = ({
   };
 
   const finalize = () => {
-    setValue("title", selectedTitle);
-    setValue("preferred_release_group", selectedReleaseGroup);
-    setValue("preferred_resolution", selectedResolution);
+    setValue("title", selectedTitle ?? "");
+    setValue("preferred_release_group", selectedReleaseGroup ?? "");
+    setValue("preferred_resolution", selectedResolution ?? "");
 
     setIsAddingAlreadySeen(false);
   };
@@ -301,15 +296,17 @@ const AlreadySeenAddFormComponent = ({
   };
 
   const canGoNext = (): boolean => {
-    return selectedValue && selectedResolution === null;
+    return !!selectedValue && selectedResolution === null;
   };
 
   const canGoBack = (): boolean => {
     return currentStage() !== "title";
   };
 
-  if (currentStage() == "result") {
-    let seenEpisodes = seenReleases.data.map((release) => release.episode);
+  if (currentStage() === "result") {
+    const seenEpisodes = (seenReleases.data ?? []).map(
+      (release) => release.episode,
+    );
 
     return (
       <>
@@ -319,7 +316,7 @@ const AlreadySeenAddFormComponent = ({
 
         <p className="mt-1 has-text-centered">
           {_("add-form-discover-mode-result-amount", {
-            releaseCount: seenReleases.data.length,
+            releaseCount: (seenReleases.data ?? []).length,
           })}
         </p>
 
@@ -350,11 +347,11 @@ const AlreadySeenAddFormComponent = ({
   const stage = currentStage();
 
   const rawOptions =
-    stage === "title"
+    (stage === "title"
       ? seenTitles.data
       : stage === "release-group"
-      ? seenGroups.data
-      : seenResolutions.data;
+        ? seenGroups.data
+        : seenResolutions.data) ?? [];
 
   // Normalize for matching so punctuation/spacing variants of the same show
   // (e.g. "Show: Sub" vs "Show_ Sub") both match a single search query, and
@@ -368,7 +365,7 @@ const AlreadySeenAddFormComponent = ({
   const needle = normalize(filter);
   const visibleOptions = [...rawOptions]
     .sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
     )
     .filter((value) => needle === "" || normalize(value).includes(needle));
 
@@ -380,13 +377,13 @@ const AlreadySeenAddFormComponent = ({
         {selectedResolution !== null ? ` - ${selectedResolution}` : ""}
       </h5>
 
-      {stage == "title" && (
+      {stage === "title" && (
         <p className="mb-1">{_("add-form-discover-select-title")}</p>
       )}
-      {stage == "release-group" && (
+      {stage === "release-group" && (
         <p className="mb-1">{_("add-form-discover-select-release-group")}</p>
       )}
-      {stage == "resolution" && (
+      {stage === "resolution" && (
         <p className="mb-1">{_("add-form-discover-select-resolution")}</p>
       )}
 
@@ -409,8 +406,8 @@ const AlreadySeenAddFormComponent = ({
           size={8}
           style={{ height: "100%" }}
         >
-          {visibleOptions.map((value, i) => (
-            <option key={i} value={value}>
+          {visibleOptions.map((value) => (
+            <option key={value} value={value}>
               {value}
             </option>
           ))}

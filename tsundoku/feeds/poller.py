@@ -6,10 +6,10 @@ import hashlib
 import logging
 import os
 from sqlite3 import Row
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import feedparser
 
@@ -86,11 +86,11 @@ class Poller:
     renaming, and moving.
     """
 
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
     source_cache: dict[str, SourceCache]
 
-    def __init__(self, app_context: Any) -> None:
-        self.app = app_context.app
+    def __init__(self, app: "TsundokuAppState") -> None:
+        self.app = app
         self.loop = asyncio.get_running_loop()
 
         self.source_cache = defaultdict(SourceCache)
@@ -121,12 +121,12 @@ class Poller:
             try:
                 await self.poll()
             except Exception:
-                logger.error("An error occurred while polling RSS sources.", exc_info=True)
+                logger.exception("An error occurred while polling RSS sources.")
 
             try:
                 await SeenRelease.delete_old(self.app, days=30)
             except Exception:
-                logger.error("An error occurred while deleting old seen releases.", exc_info=True)
+                logger.exception("An error occurred while deleting old seen releases.")
 
             logger.info(f"Sleeping {self.interval} seconds before polling RSS sources again...")
             await asyncio.sleep(self.interval)
@@ -211,7 +211,6 @@ class Poller:
             except Exception:
                 logger.exception(
                     f"`{source.name}@{source.version}` - poller failed to check item '{item!r}'",
-                    exc_info=True,
                 )
 
         return found_items
@@ -328,7 +327,6 @@ class Poller:
         except Exception:
             logger.exception(
                 f"`{source.name}@{source.version}` - anitomy failed to parse '{filename}'",
-                exc_info=True,
             )
             return None
 

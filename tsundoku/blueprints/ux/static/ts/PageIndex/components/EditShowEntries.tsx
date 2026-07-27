@@ -1,11 +1,24 @@
-import { getInjector } from "../../fluent";
-import { useState, Dispatch, SetStateAction, JSX } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Show, Entry, EntryEncodeInfo } from "../../interfaces";
+import type { Entry, Show } from "../../api";
+import { getInjector } from "../../fluent";
+
+/**
+ * An entry staged in the modal before it is saved.
+ *
+ * `buffered` is a client-only state (rendered via `entry-status-buffered`) and
+ * `magnet` is consumed by the create-entries route, which declares no request
+ * body in the OpenAPI schema -- so neither exists on the generated `Entry`.
+ */
+export type StagedEntry = Omit<Entry, "state" | "torrent_hash"> & {
+  state: Entry["state"] | "buffered";
+  torrent_hash?: string;
+  magnet?: string;
+};
+
 import {
   localizePythonTimeAbsolute,
   localizePythonTimeRelative,
-  formatBytes,
 } from "../../utils";
 
 const _ = getInjector();
@@ -13,10 +26,10 @@ const _ = getInjector();
 interface EditShowEntriesParams {
   tab: string;
   show: Show;
-  setEntriesToAdd: Dispatch<SetStateAction<Entry[]>>;
-  setEntriesToDelete: Dispatch<SetStateAction<Entry[]>>;
-  entriesToAdd: Entry[];
-  entriesToDelete: Entry[];
+  setEntriesToAdd: Dispatch<SetStateAction<StagedEntry[]>>;
+  setEntriesToDelete: Dispatch<SetStateAction<StagedEntry[]>>;
+  entriesToAdd: StagedEntry[];
+  entriesToDelete: StagedEntry[];
   highlightNewEntryId: number | null;
 }
 
@@ -32,26 +45,27 @@ export const EditShowEntries = ({
   const [fakeId, setFakeId] = useState<number>(-1);
   const { register, handleSubmit, reset } = useForm();
 
-  if (show === null) return <></>;
+  if (show === null) return null;
 
   // Compute deleted IDs for filtering
   const deletedIds = new Set(entriesToDelete.map((e) => e.id));
   // Combine show.entries and entriesToAdd, removing duplicates by id, and filter out deleted
   const allEntries = [...(show.entries || []), ...(entriesToAdd || [])]
     .filter(
-      (entry, index, self) => index === self.findIndex((e) => e.id === entry.id)
+      (entry, index, self) =>
+        index === self.findIndex((e) => e.id === entry.id),
     )
     .filter((entry) => !deletedIds.has(entry.id))
     .sort((a, b) => a.episode - b.episode);
 
   const bufferAddEntry = (data: any) => {
-    let newEpNum = parseInt(data.episode);
+    const newEpNum = parseInt(data.episode, 10);
     if (newEpNum < 0) {
       reset();
       return;
     }
 
-    let entry = {
+    const entry: StagedEntry = {
       id: fakeId,
       episode: newEpNum,
       version: "v0",
@@ -62,8 +76,8 @@ export const EditShowEntries = ({
       last_update: new Date().toISOString(),
     };
 
-    let exists = allEntries.findIndex(
-      (existing: Entry) => existing.episode === newEpNum
+    const exists = allEntries.findIndex(
+      (existing: StagedEntry) => existing.episode === newEpNum,
     );
     if (exists !== -1) {
       reset();
@@ -75,7 +89,7 @@ export const EditShowEntries = ({
     reset();
   };
 
-  const bufferRemoveEntry = (entry: Entry) => {
+  const bufferRemoveEntry = (entry: StagedEntry) => {
     // Remove from entriesToAdd if present
     setEntriesToAdd(entriesToAdd.filter((e) => e.id !== entry.id));
     // If entry has a positive id (exists in backend), add to entriesToDelete
@@ -96,7 +110,7 @@ export const EditShowEntries = ({
             </tr>
           </thead>
           <tbody>
-            {allEntries.map((entry: Entry) => (
+            {allEntries.map((entry: StagedEntry) => (
               <EntryRow
                 key={entry.id}
                 entry={entry}
@@ -152,7 +166,7 @@ export const EditShowEntries = ({
 };
 
 interface EntryRowParams {
-  entry: Entry;
+  entry: StagedEntry;
   bufferRemoveEntry: any;
   highlightNewEntryId: number | null;
 }

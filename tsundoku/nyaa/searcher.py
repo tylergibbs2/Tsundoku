@@ -5,9 +5,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import quote_plus
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-    app: TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 import feedparser
 
@@ -15,6 +13,15 @@ from tsundoku.manager import Entry, EntryState
 from tsundoku.utils import parse_anime_title, parse_anime_titles
 
 logger = logging.getLogger("tsundoku")
+
+
+class MagnetIsNotSingleEpisodeError(Exception):
+    """Raised when a magnet does not describe exactly one episode.
+
+    Magnets only carry a display name, so Tsundoku can identify at most one
+    episode from one. A batch or season pack has to be added by .torrent,
+    where the real file list is available to enumerate episodes from.
+    """
 
 
 class SearchResult:
@@ -30,17 +37,17 @@ class SearchResult:
     seeders: int
     leechers: int
 
-    def __init__(self, app: "TsundokuApp") -> None:
+    def __init__(self, app: "TsundokuAppState") -> None:
         self._app = app
 
     @classmethod
-    def from_dict(cls, app: "TsundokuApp", _from: dict) -> "SearchResult":
+    def from_dict(cls, app: "TsundokuAppState", _from: dict) -> "SearchResult":
         """
         Returns a valid SearchResult object from a data dict.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         from: dict
             The data dict.
@@ -69,14 +76,14 @@ class SearchResult:
         return instance
 
     @classmethod
-    def from_necessary(cls, app: "TsundokuApp", show_id: int, torrent_link: str) -> "SearchResult":
+    def from_necessary(cls, app: "TsundokuAppState", show_id: int, torrent_link: str) -> "SearchResult":
         """
         Returns a SearchResult object that is capable of
         running the `process` method, and has no other attributes.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The Quart app.
         show_id: int
             The ID of the show to be added to.
@@ -95,18 +102,6 @@ class SearchResult:
 
         return instance
 
-    def to_dict(self) -> dict:
-        return {
-            "show_id": self.show_id,
-            "title": self.title,
-            "published": self.published.strftime("%d %b %Y"),
-            "torrent_link": self.torrent_link,
-            "post_link": self.post_link,
-            "size": self.size,
-            "seeders": self.seeders,
-            "leechers": self.leechers,
-        }
-
     async def get_episodes(self) -> list[int]:
         """
         Returns a list of episodes that are contained
@@ -124,7 +119,7 @@ class SearchResult:
         try:
             parsed_files = parse_anime_titles(files)
         except Exception:
-            logger.error(f"Could not parse files in `{self.torrent_link}`, skipping", exc_info=True)
+            logger.exception(f"Could not parse files in `{self.torrent_link}`, skipping")
             return []
 
         episodes = []
@@ -136,6 +131,13 @@ class SearchResult:
                 continue
 
             episodes.append(int(parsed["episode_number"]))
+
+        # An empty result from a .torrent is unremarkable -- the release may
+        # genuinely hold nothing episodic. From a magnet it means the single
+        # name we had did not resolve to one episode, which is exactly the
+        # batch case, and silently adding nothing is the worst answer.
+        if not episodes and self.torrent_link.startswith("magnet:?"):
+            raise MagnetIsNotSingleEpisodeError("Magnet links are supported for single-episode releases only, and no single episode could be identified from this one. If this is a batch or season pack, add it using its .torrent link instead, which carries the full file list.")
 
         return episodes
 
@@ -243,7 +245,7 @@ class SearchResult:
                 )
                 entry = await cur.fetchone()
 
-                entry = Entry(self._app, entry)
+                entry = Entry.from_record(self._app, entry)
                 await entry.set_state(EntryState.downloading)
                 added.append(entry)
 
@@ -264,13 +266,13 @@ class NyaaSearcher:
         return f"https://nyaa.si/?page=rss&c=1_2&s=seeders&o=desc&q={quote_plus(query)}"
 
     @staticmethod
-    async def search(app: "TsundokuApp", query: str, limit: int = 15, page: int = 1) -> list[SearchResult]:
+    async def search(app: "TsundokuAppState", query: str, limit: int = 15, page: int = 1) -> list[SearchResult]:
         """
         Searches for a query on nyaa.si.
 
         Parameters
         ----------
-        app: TsundokuApp
+        app: TsundokuAppState
             The app.
         query: str
             The search query.
@@ -292,7 +294,7 @@ class NyaaSearcher:
             try:
                 parse_anime_title(title)
             except Exception:
-                logger.error(f"Could not parse `{title}`, skipping", exc_info=True)
+                logger.exception(f"Could not parse `{title}`, skipping")
                 continue
 
             found.append(SearchResult.from_dict(app, item))

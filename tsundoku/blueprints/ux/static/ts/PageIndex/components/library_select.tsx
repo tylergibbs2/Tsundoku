@@ -1,18 +1,16 @@
-import { useQuery } from "react-query";
-import { fetchLibraries } from "../../queries";
-import { UseFormRegister } from "react-hook-form";
-import { AddShowFormValues } from "../add_modal";
+import { useQuery } from "@tanstack/react-query";
+import type { UseFormRegister } from "react-hook-form";
+import type { AddShowFormValues } from "../add_modal";
+import { librariesQuery } from "../queries";
 
 type LibrarySelectParams = {
   register: UseFormRegister<AddShowFormValues>;
 };
 
 export const LibrarySelect = ({ register }: LibrarySelectParams) => {
-  const libraries = useQuery(["libraries"], async () => {
-    return await fetchLibraries();
-  });
+  const libraries = useQuery(librariesQuery());
 
-  if (libraries.isLoading)
+  if (libraries.isPending || !libraries.data)
     return (
       <div className="select is-loading is-fullwidth">
         <select disabled></select>

@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, SetStateAction } from "react";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { getInjector } from "../../fluent";
 import { IonIcon } from "../../icon";
 
@@ -32,57 +32,57 @@ export const Filters = ({
   };
 
   const filterAiring = () => {
-    let idx = filters.indexOf("current");
+    const idx = filters.indexOf("current");
 
     if (idx !== -1) {
-      let copy = [...filters];
+      const copy = [...filters];
       copy.splice(idx, 1);
       setFilters(copy);
     } else setFilters(["current", ...filters]);
   };
 
   const filterFinished = () => {
-    let idx = filters.indexOf("finished");
+    const idx = filters.indexOf("finished");
 
     if (idx !== -1) {
-      let copy = [...filters];
+      const copy = [...filters];
       copy.splice(idx, 1);
       setFilters(copy);
     } else setFilters(["finished", ...filters]);
   };
 
   const filterTba = () => {
-    let idx = filters.indexOf("tba");
+    const idx = filters.indexOf("tba");
 
     if (idx !== -1) {
-      let copy = [...filters];
+      const copy = [...filters];
       copy.splice(idx, 1);
       setFilters(copy);
     } else setFilters(["tba", ...filters]);
   };
 
   const filterUnreleased = () => {
-    let idx = filters.indexOf("unreleased");
+    const idx = filters.indexOf("unreleased");
 
     if (idx !== -1) {
-      let copy = [...filters];
+      const copy = [...filters];
       copy.splice(idx, 1);
       setFilters(copy);
     } else setFilters(["unreleased", ...filters]);
   };
 
   const filterUpcoming = () => {
-    let idx = filters.indexOf("upcoming");
+    const idx = filters.indexOf("upcoming");
 
     if (idx !== -1) {
-      let copy = [...filters];
+      const copy = [...filters];
       copy.splice(idx, 1);
       setFilters(copy);
     } else setFilters(["upcoming", ...filters]);
   };
 
   const filterSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    let query = e.target.value;
+    const query = e.target.value;
     setTextFilter(query);
   };
 
@@ -166,9 +166,7 @@ export const Filters = ({
             <div className="field has-addons is-narrow">
               <div className="control">
                 <a
-                  className={
-                    "button " + (viewType === "cards" ? "is-info" : "")
-                  }
+                  className={`button ${viewType === "cards" ? "is-info" : ""}`}
                   onClick={cardView}
                 >
                   <span className="icon">
@@ -178,7 +176,7 @@ export const Filters = ({
               </div>
               <div className="control">
                 <a
-                  className={"button " + (viewType === "list" ? "is-info" : "")}
+                  className={`button ${viewType === "list" ? "is-info" : ""}`}
                   onClick={listView}
                 >
                   <span className="icon">
@@ -285,25 +283,19 @@ const SortDropdown = ({
           <hr className="dropdown-divider"></hr>
           <a
             onClick={sortKeyTitle}
-            className={
-              "dropdown-item " + (sortKey === "title" ? "is-active" : "")
-            }
+            className={`dropdown-item ${sortKey === "title" ? "is-active" : ""}`}
           >
             {_("sort-key-title")}
           </a>
           <a
             onClick={sortKeyUpdate}
-            className={
-              "dropdown-item " + (sortKey === "update" ? "is-active" : "")
-            }
+            className={`dropdown-item ${sortKey === "update" ? "is-active" : ""}`}
           >
             {_("sort-key-update")}
           </a>
           <a
             onClick={sortKeyAdded}
-            className={
-              "dropdown-item " + (sortKey === "dateAdded" ? "is-active" : "")
-            }
+            className={`dropdown-item ${sortKey === "dateAdded" ? "is-active" : ""}`}
           >
             {_("sort-key-date-added")}
           </a>

@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
-
-import aiohttp
+    from tsundoku.app import TsundokuAppState
 
 from .kitsu import API_URL
 from .show import Show
@@ -21,20 +19,13 @@ class ShowCollection:
     def __iter__(self) -> Iterator[Show]:
         yield from self._shows
 
-    def to_list(self) -> list[dict]:
-        """
-        Serializes all of the Shows in the collection
-        to a list.
-
-        Returns
-        -------
-        List[dict]
-            List of serialized Shows.
-        """
-        return [s.to_dict() for s in self._shows]
+    @property
+    def shows(self) -> list[Show]:
+        """The Shows contained in this collection."""
+        return self._shows
 
     @classmethod
-    async def all(cls, app: "TsundokuApp") -> "ShowCollection":
+    async def all(cls, app: "TsundokuAppState") -> "ShowCollection":
         """
         Retrieves a collection of all Show
         objects presently stored in the database.
@@ -76,7 +67,7 @@ class ShowCollection:
         return cls(_shows=shows_)
 
     @classmethod
-    async def filtered_paginated(cls, app: "TsundokuApp", statuses: list[str], limit: int = 17, offset: int = 0, text_filter: str | None = None, sort_key: str = "title", sort_direction: str = "+") -> tuple["ShowCollection", int]:
+    async def filtered_paginated(cls, app: "TsundokuAppState", statuses: list[str], limit: int = 17, offset: int = 0, text_filter: str | None = None, sort_key: str = "title", sort_direction: str = "+") -> tuple["ShowCollection", int]:
         """
         Retrieves a paginated collection of Show objects filtered by status, text, and sorted.
         """
@@ -176,17 +167,20 @@ class ShowCollection:
             return
 
         status_map: dict[int, str] = {}
-        async with aiohttp.ClientSession() as sess:
-            payload = {
-                "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
-                "fields[anime]": "status",
-            }
-            async with sess.get(API_URL, params=payload) as resp:
-                data = await resp.json()
-                for show in data.get("data", []):
-                    show_id = int(show["id"])
-                    status = show.get("attributes", {}).get("status", None)
-                    status_map[show_id] = status
+        # Every manager is bound to the same app state, and the early return
+        # above guarantees the list is non-empty.
+        session = managers[0].app.session
+
+        payload = {
+            "filter[id]": ",".join(map(str, [m.kitsu_id for m in managers])),
+            "fields[anime]": "status",
+        }
+        async with session.get(API_URL, params=payload) as resp:
+            data = await resp.json()
+            for show in data.get("data", []):
+                show_id = int(show["id"])
+                status = show.get("attributes", {}).get("status", None)
+                status_map[show_id] = status
 
         for manager in managers:
             if manager.kitsu_id is not None and manager.kitsu_id in status_map:

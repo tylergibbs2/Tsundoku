@@ -4,7 +4,7 @@ import sqlite3
 from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
-    from tsundoku.app import TsundokuApp
+    from tsundoku.app import TsundokuAppState
 
 logger = logging.getLogger("tsundoku")
 
@@ -21,27 +21,27 @@ class ConfigInvalidKeyError(Exception): ...
 
 
 class Config:
-    app: "TsundokuApp"
+    app: "TsundokuAppState"
     TABLE_NAME = None
 
-    def __init__(self, app: "TsundokuApp", keys: dict[str, Any]) -> None:
+    def __init__(self, app: "TsundokuAppState", keys: dict[str, Any]) -> None:
         super().__setattr__("app", app)
         super().__setattr__("keys", keys)
 
         super().__setattr__("valid_keys", set(self.keys.keys()))
 
-    def __getattribute__(self, __name: str) -> Any:
+    def __getattribute__(self, name: str, /) -> Any:
         keys = super().__getattribute__("keys")
-        if __name in keys:
-            return keys[__name]
+        if name in keys:
+            return keys[name]
 
-        return super().__getattribute__(__name)
+        return super().__getattribute__(name)
 
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if __name not in self.valid_keys:
-            raise ConfigInvalidKeyError(f"Invalid key '{__name}'")
+    def __setattr__(self, name: str, value: Any, /) -> None:
+        if name not in self.valid_keys:
+            raise ConfigInvalidKeyError(f"Invalid key '{name}'")
 
-        self.keys[__name] = __value
+        self.keys[name] = value
 
     def __hash__(self) -> int:
         return hash(self.keys.values())
@@ -53,7 +53,7 @@ class Config:
         self.keys.update(other)
 
     @classmethod
-    async def retrieve(cls, app: "TsundokuApp", ensure_exists: bool = True) -> Self:
+    async def retrieve(cls, app: "TsundokuAppState", ensure_exists: bool = True) -> Self:
         async with app.acquire_db() as con:
             if ensure_exists:
                 await con.execute(
@@ -74,10 +74,10 @@ class Config:
 
         # row is a sqlite3.Row: iterating it directly yields values, not column
         # names, so .keys() is required here (unlike a plain dict).
-        return cls(app, {k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})  # noqa: SIM118
 
     @classmethod
-    def sync_retrieve(cls, app: "TsundokuApp", ensure_exists: bool = True) -> Self:
+    def sync_retrieve(cls, app: "TsundokuAppState", ensure_exists: bool = True) -> Self:
         with app.sync_acquire_db() as con:
             if ensure_exists:
                 con.execute(
@@ -102,7 +102,7 @@ class Config:
 
         # row is a sqlite3.Row: iterating it directly yields values, not column
         # names, so .keys() is required here (unlike a plain dict).
-        return cls(app, {k: row[k] for k in row.keys()})
+        return cls(app, {k: row[k] for k in row.keys()})  # noqa: SIM118
 
     async def save(self) -> None:
         for key, value in self.keys.items():

@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "react-query";
-
-import { AddModal } from "./add_modal";
-import { EditModal } from "./edit_modal";
-import { DeleteModal } from "./delete_modal";
-import { Show, GeneralConfig, PaginatedShowsResponse } from "../interfaces";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import type { Show } from "../api";
 import { getInjector } from "../fluent";
+import { AddModal } from "./add_modal";
 import { Filters } from "./components/filters";
-import { Shows } from "./components/shows";
 import { Pagination } from "./components/pagination";
-import { fetchConfig, fetchShows } from "../queries";
+import { Shows } from "./components/shows";
+import { DeleteModal } from "./delete_modal";
+import { EditModal } from "./edit_modal";
+import { generalConfigQuery, showsQuery } from "./queries";
 
 import "../../css/index.css";
 import { GlobalLoading } from "../Components/GlobalLoading";
@@ -17,59 +16,52 @@ import { GlobalLoading } from "../Components/GlobalLoading";
 const _ = getInjector();
 
 export const IndexApp = () => {
-  document.getElementById("navIndex").classList.add("is-active");
+  document.getElementById("navIndex")?.classList.add("is-active");
 
-  let storedFilters = localStorage.getItem("showFilters");
-  let storedViewType = localStorage.getItem("viewType");
+  const storedFilters = localStorage.getItem("showFilters");
+  const storedViewType = localStorage.getItem("viewType");
 
-  let storedSortDirection = localStorage.getItem("sortDirection");
-  let storedSortKey = localStorage.getItem("sortKey");
-  let storedPage = localStorage.getItem("currentPage");
+  const storedSortDirection = localStorage.getItem("sortDirection");
+  const storedSortKey = localStorage.getItem("sortKey");
+  const storedPage = localStorage.getItem("currentPage");
 
   const [activeShow, setActiveShow] = useState<Show | null>(null);
   const [currentModal, setCurrentModal] = useState<string | null>(null);
 
   const [viewType, setViewType] = useState<string>(storedViewType || "cards");
   const [currentPage, setCurrentPage] = useState<number>(
-    parseInt(storedPage || "1")
+    parseInt(storedPage || "1", 10),
   );
 
   const [filters, setFilters] = useState<string[]>(
-    JSON.parse(storedFilters) || [
+    JSON.parse(storedFilters ?? "null") || [
       "current",
       "finished",
       "tba",
       "unreleased",
       "upcoming",
-    ]
+    ],
   );
   const [textFilter, setTextFilter] = useState<string>("");
 
   const [sortDirection, setSortDirection] = useState<string>(
-    storedSortDirection || "+"
+    storedSortDirection || "+",
   );
   const [sortKey, setSortKey] = useState<string>(storedSortKey || "title");
 
-  const generalConfig = useQuery(["config", "general"], async () => {
-    return await fetchConfig<GeneralConfig>("general");
-  });
+  const generalConfig = useQuery(generalConfigQuery());
 
-  const shows = useQuery(
-    ["shows", currentPage, filters, textFilter, sortKey, sortDirection],
-    async () => {
-      return await fetchShows(
-        currentPage,
-        17,
-        filters,
-        textFilter,
-        sortKey,
-        sortDirection
-      );
-    },
-    {
-      keepPreviousData: true,
-    }
-  );
+  const shows = useQuery({
+    ...showsQuery({
+      page: currentPage,
+      limit: 17,
+      ...(filters.length > 0 ? { filters: filters.join(",") } : {}),
+      ...(textFilter ? { text_filter: textFilter } : {}),
+      ...(sortKey ? { sort_key: sortKey } : {}),
+      ...(sortDirection ? { sort_direction: sortDirection } : {}),
+    }),
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
     localStorage.setItem("showFilters", JSON.stringify(filters));
@@ -93,7 +85,7 @@ export const IndexApp = () => {
     setCurrentPage(page);
   };
 
-  if (shows.isLoading) return <GlobalLoading withText={true} />;
+  if (shows.isPending) return <GlobalLoading withText={true} />;
 
   const showsData = shows.data?.shows || [];
   const pagination = shows.data?.pagination;

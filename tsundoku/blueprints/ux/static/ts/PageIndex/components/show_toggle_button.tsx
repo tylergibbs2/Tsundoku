@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Show } from "../../interfaces";
-import { IonIcon } from "../../icon";
+import type { Show } from "../../api";
 import { getInjector } from "../../fluent";
+import { IonIcon } from "../../icon";
 
 const _ = getInjector();
 
@@ -35,16 +35,16 @@ export const ShowToggleButton = ({
   labelOn,
   labelOff,
 }: ShowToggleButtonParams) => {
-  const btn = useRef(null);
+  const btn = useRef<HTMLButtonElement>(null);
 
   let existingState: boolean;
   if (typeof show === "undefined" || show === null) existingState = true;
-  else existingState = show[attribute];
+  else existingState = !!show[attribute as keyof Show];
 
   const [state, setState] = useState(existingState);
 
   useEffect(() => {
-    if (show) setState(show[attribute]);
+    if (show) setState(!!show[attribute as keyof Show]);
     else setState(true);
   }, [show]);
 
@@ -64,7 +64,7 @@ export const ShowToggleButton = ({
     return (
       <button
         ref={btn}
-        className={"button " + additionalClasses}
+        className={`button ${additionalClasses}`}
         title={onTooltip}
         onClick={setStateOff}
         disabled={disabled}
@@ -77,7 +77,7 @@ export const ShowToggleButton = ({
     return (
       <button
         ref={btn}
-        className={"button is-outlined " + additionalClasses}
+        className={`button is-outlined ${additionalClasses}`}
         title={offTooltip}
         onClick={setStateOn}
         disabled={disabled}

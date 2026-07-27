@@ -3,6 +3,10 @@ import asyncio
 import aiohttp
 
 
+class TorrentFetchError(Exception):
+    """Raised when a .torrent could not be retrieved from its host."""
+
+
 def describe_connection_error(exc: BaseException, client_name: str, url: str) -> str:
     """
     Converts a low-level aiohttp/asyncio exception into a human-readable
